@@ -20,6 +20,9 @@ extends Resource
 @export var fly_distance_ground := 70.0
 @export var fly_distance_object := 20.0
 @export var bounds_margin := 60.0           # how far past the city edge the camera may go
+@export var fade_radius := 3.0              # how wide a tube between camera and hand clears buildings
+@export_range(0.0, 1.0) var fade_amount := 0.85   # how see-through a faded building gets
+@export var fade_speed := 8.0
 
 @export_group("Hand")
 @export var hover_height := 1.5
@@ -33,6 +36,11 @@ extends Resource
 @export_range(0.0, 1.0) var magnet_strength := 0.3   # how far the hand leans toward an assisted target
 @export var knock_radius := 5.0              # a tap on a wall opens a door this close
 @export var notice_radius := 15.0            # people this close turn toward a knock
+
+@export_group("Trees")
+@export var uproot_effort := 6.0             # metres-seconds of pulling to uproot a big tree
+@export var uproot_slack := 1.5              # pulling closer than this does nothing
+@export var roots_hold_time := 20.0          # holding a tree longer than this kills its roots
 
 @export_group("Wind")
 @export var wind_full_radius := 5.0          # full effect inside this distance, sharper when closer
@@ -48,5 +56,6 @@ extends Resource
 @export var throw_multiplier := 1.0
 @export var throw_max_speed := 60.0
 @export var place_max_speed := 2.0          # slower than this on release = put down, not throw
+@export var place_max_mouse_speed := 150.0  # mouse slower than this (pixels/s) on release = put down
 @export var show_arc := true
 @export var arc_min_speed := 8.0

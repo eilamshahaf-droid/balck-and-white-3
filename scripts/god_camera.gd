@@ -10,9 +10,11 @@ extends Node3D
 const S = preload("res://data/hand_settings.tres")
 const LAYER_WORLD := 1
 const RAY_LENGTH := 3000.0
+const MIN_RAY_DOWN := 0.12      # ignore drag rays this close to the horizon: they jump wildly
 
 @onready var camera: Camera3D = $Camera3D
 @onready var city: Node3D = get_parent()
+@onready var hand: Node3D = get_node("../GodHand")
 
 # Target pose (what input changes). Pitch is measured downward from the horizon.
 var target_pivot := Vector3.ZERO
@@ -36,6 +38,10 @@ var _fly_from_pivot := Vector3.ZERO
 var _fly_to_pivot := Vector3.ZERO
 var _fly_from_distance := 0.0
 var _fly_to_distance := 0.0
+
+# Buildings between the camera and what it looks at fade out, like the Sims' cutaway walls.
+var _fade := {}                 # building body -> current fade (0 solid .. 1 fully faded)
+var _probe := CapsuleShape3D.new()
 
 
 func _ready() -> void:
@@ -90,10 +96,24 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # --- API used by the hand ---
 
-func begin_ground_drag(point: Vector3) -> void:
+## Start dragging the city from a screen point. The grip is always on the
+## street plane, even over a roof, so far-away drags stay stable.
+func begin_ground_drag(screen_pos: Vector2) -> void:
+	var p = _ray_plane(camera.project_ray_origin(screen_pos), camera.project_ray_normal(screen_pos), 0.0)
+	if p == null:
+		return
 	_ground_drag = true
-	_grab_point = point
+	_grab_point = p
 	_flying = false
+
+
+## Buildings currently see-through enough that the hand reaches through them.
+func faded_rids() -> Array[RID]:
+	var rids: Array[RID] = []
+	for body in _fade:
+		if _fade[body] > 0.5 and is_instance_valid(body):
+			rids.append(body.get_rid())
+	return rids
 
 
 func end_ground_drag() -> void:
@@ -166,11 +186,15 @@ func _update_fly(delta: float) -> void:
 
 func _update_ground_drag() -> void:
 	var mouse := get_viewport().get_mouse_position()
-	var hit = _ray_plane(camera.project_ray_origin(mouse), camera.project_ray_normal(mouse), _grab_point.y)
+	var dir := camera.project_ray_normal(mouse)
+	if -dir.y < MIN_RAY_DOWN:
+		return
+	var hit = _ray_plane(camera.project_ray_origin(mouse), dir, _grab_point.y)
 	if hit == null:
 		return
 	var shift: Vector3 = _grab_point - hit
 	shift.y = 0
+	shift = shift.limit_length(distance * 0.15)   # no single-frame leaps
 	target_pivot += shift
 	_clamp_targets()
 	pivot.x = target_pivot.x
@@ -189,23 +213,74 @@ func _clamp_targets() -> void:
 func _place_camera() -> void:
 	var dir := Vector3(sin(yaw) * cos(pitch), sin(pitch), cos(yaw) * cos(pitch))
 	var desired := pivot + dir * distance
-	var space := get_world_3d().direct_space_state
-
-	# Never pass through a building: pull in along the arm if something is in the way.
-	var arm := PhysicsRayQueryParameters3D.create(pivot + Vector3.UP * 0.5, desired, LAYER_WORLD)
-	var blocked := space.intersect_ray(arm)
-	if blocked:
-		desired = blocked.position + blocked.normal * 0.5
-
-	# Stay clear of whatever is below, rooftops included.
-	var down := PhysicsRayQueryParameters3D.create(desired + Vector3.UP * 500.0, desired - Vector3.UP * 500.0, LAYER_WORLD)
-	var below := space.intersect_ray(down)
-	if below:
-		desired.y = maxf(desired.y, below.position.y + S.min_clearance)
-
+	# The camera is never pushed around by buildings (that is what made it jump);
+	# it only keeps off the street, and whatever is in the way fades out instead.
+	desired.y = maxf(desired.y, S.min_clearance)
 	camera.global_position = desired
 	if not desired.is_equal_approx(pivot):
 		camera.look_at(pivot, Vector3.UP)
+	_update_fade(get_process_delta_time())
+
+
+func _update_fade(delta: float) -> void:
+	var wanted := {}
+	var cam := camera.global_position
+	for target in [hand.global_position, pivot]:
+		for body in _bodies_between(cam, target, S.fade_radius):
+			wanted[body] = true
+	for body in _bodies_between(cam, cam + Vector3.UP * 0.1, 1.0):   # the camera is inside it
+		wanted[body] = true
+	for body in wanted:
+		if not _fade.has(body):
+			_fade[body] = 0.0
+	var w := 1.0 - exp(-S.fade_speed * delta)
+	for body in _fade.keys():
+		if not is_instance_valid(body):
+			_fade.erase(body)
+			continue
+		var goal: float = 1.0 if wanted.has(body) else 0.0
+		_fade[body] = lerpf(_fade[body], goal, w)
+		var done: bool = goal == 0.0 and _fade[body] < 0.01
+		for mesh in body.find_children("*", "MeshInstance3D", false, false):
+			_set_ghost(mesh, 0.0 if done else _fade[body] * S.fade_amount)
+		if done:
+			_fade.erase(body)
+
+
+## Swap a building's material for a see-through copy (works on every renderer),
+## and back to the original once it is solid again.
+func _set_ghost(mesh: MeshInstance3D, amount: float) -> void:
+	if amount <= 0.0:
+		if mesh.has_meta("solid_material"):
+			mesh.material_override = mesh.get_meta("solid_material")
+			mesh.remove_meta("solid_material")
+		return
+	if not mesh.has_meta("solid_material"):
+		mesh.set_meta("solid_material", mesh.material_override)
+		var ghost: StandardMaterial3D = mesh.material_override.duplicate()
+		ghost.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ghost.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_ALWAYS
+		mesh.material_override = ghost
+	mesh.material_override.albedo_color.a = 1.0 - amount
+
+
+func _bodies_between(from: Vector3, to: Vector3, radius: float) -> Array:
+	var length := from.distance_to(to)
+	if length < 0.01:
+		return []
+	_probe.radius = radius
+	_probe.height = length + radius * 2.0
+	var params := PhysicsShapeQueryParameters3D.new()
+	params.shape = _probe
+	params.collision_mask = LAYER_WORLD
+	var up := (to - from) / length
+	var side := up.cross(Vector3.FORWARD if absf(up.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT).normalized()
+	params.transform = Transform3D(Basis(side, up, side.cross(up)), (from + to) / 2.0)
+	var found := []
+	for hit in get_world_3d().direct_space_state.intersect_shape(params, 32):
+		if hit.collider.is_in_group("buildings"):
+			found.append(hit.collider)
+	return found
 
 
 func _point_under(screen_pos: Vector2) -> Vector3:

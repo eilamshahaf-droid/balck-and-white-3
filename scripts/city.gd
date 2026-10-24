@@ -132,9 +132,21 @@ func _build_blocks() -> void:
 			if i == 3 and j >= 9:
 				_build_park(center, size)
 			else:
+				_line_street_trees(center, size)
 				# Midtown sits a little south of the middle, like Manhattan.
 				var dist := Vector2(center.x, center.z + half_size.y * 0.25).length()
 				_build_towers(center, size, 1.0 - clampf(dist / max_dist, 0.0, 1.0))
+
+
+func _line_street_trees(center: Vector3, size: Vector2) -> void:
+	# A few trees along the sidewalk on the long sides of the block, NYC style.
+	for side in [-1.0, 1.0]:
+		var z: float = center.z + side * (size.y / 2.0 - SIDEWALK / 2.0)
+		var x := center.x - size.x / 2.0 + rng.randf_range(4.0, 9.0)
+		while x < center.x + size.x / 2.0 - 4.0:
+			if rng.randf() < 0.5:
+				_plant_tree(Vector3(x, 0.2, z), rng.randf_range(1.1, 1.6))
+			x += rng.randf_range(9.0, 16.0)
 
 
 func _build_towers(center: Vector3, size: Vector2, midtown: float) -> void:
@@ -151,7 +163,8 @@ func _build_towers(center: Vector3, size: Vector2, midtown: float) -> void:
 		var depth := inner.y
 		var pos := Vector3(x + width / 2.0, 0.2 + height / 2.0, center.z)
 		var color: Color = palette[rng.randi_range(0, palette.size() - 1)]
-		_make_box(Vector3(width - 0.6, height, depth), pos, _mat(color), true)
+		var building := _make_box(Vector3(width - 0.6, height, depth), pos, _mat(color), true)
+		building.add_to_group("buildings")
 		_add_door(Vector3(pos.x, 0.2, center.z), depth)
 		x += width
 
@@ -160,10 +173,16 @@ func _build_park(center: Vector3, size: Vector2) -> void:
 	_make_box(Vector3(size.x - 1.0, 0.1, size.y - 1.0), center + Vector3(0, 0.25, 0), _mat(Color(0.25, 0.5, 0.22)), false)
 	for n in 14:
 		var p := center + Vector3(rng.randf_range(-size.x, size.x) * 0.42, 0, rng.randf_range(-size.y, size.y) * 0.35)
-		var tree: Node3D = TreeScript.new()
-		tree.build(_mat(Color(0.35, 0.25, 0.15)), _mat(Color(0.2, 0.42, 0.18)), rng.randf_range(1.6, 2.6))
-		tree.position = p
-		add_child(tree)
+		_plant_tree(p + Vector3.UP * 0.3, rng.randf_range(1.6, 2.6))
+
+
+func _plant_tree(pos: Vector3, crown_radius: float) -> void:
+	var tree: StaticBody3D = TreeScript.new()
+	tree.collision_layer = LAYER_PROPS
+	tree.collision_mask = 0
+	tree.build(_mat(Color(0.35, 0.25, 0.15)), _mat(Color(0.2, 0.42, 0.18)), crown_radius)
+	tree.position = pos
+	add_child(tree)
 
 
 func _spawn_taxis() -> void:

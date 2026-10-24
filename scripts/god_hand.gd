@@ -38,7 +38,7 @@ var _press_pos := Vector2.ZERO
 var _press_hit := {}
 var _press_target: Node3D = null
 var _surface := Vector3.ZERO
-var _history: Array = []   # [time, position] samples, for throw velocity
+var _history: Array = []   # [time, position, mouse] samples, for throw velocity
 var _tap_timer := 0.0
 
 
@@ -89,8 +89,11 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	var hit := _raycast_mouse()
-	if hit:
-		_surface = hit.position
+	# While holding, ride over streets and buildings only: hopping onto every tree
+	# crown or taxi roof under the cursor would jerk the held thing (and fling it).
+	var surface_hit := _raycast_mouse(LAYER_WORLD) if held else hit
+	if surface_hit:
+		_surface = surface_hit.position
 	_update_press()
 	var target: Node3D = null
 	if not held and _press != Press.DRAG_GROUND:
@@ -151,12 +154,8 @@ func _on_press(event: InputEventMouseButton) -> void:
 	_press_pos = event.position
 	_press_hit = hit
 	_press_target = _pick_target(hit)
-	if _press_target:
-		_press = Press.PENDING_OBJECT
-	elif hit.is_empty():
-		_press = Press.NONE
-	else:
-		_press = Press.PENDING_GROUND
+	# Over empty sky the city can still be grabbed: the grip goes on the street plane.
+	_press = Press.PENDING_OBJECT if _press_target else Press.PENDING_GROUND
 
 
 func _on_release() -> void:
@@ -164,7 +163,7 @@ func _on_release() -> void:
 		Press.PENDING_OBJECT:
 			_tap(_press_target)
 		Press.PENDING_GROUND:
-			if _time() - _press_time <= S.tap_max_time:
+			if _time() - _press_time <= S.tap_max_time and not _press_hit.is_empty():
 				_knock(_press_hit.position)
 		Press.DRAG_GROUND:
 			rig.end_ground_drag()
@@ -187,7 +186,7 @@ func _update_press() -> void:
 		else:
 			_press = Press.NONE
 	elif _press == Press.PENDING_GROUND and moved:
-		rig.begin_ground_drag(_press_hit.position)
+		rig.begin_ground_drag(_press_pos)
 		_press = Press.DRAG_GROUND
 
 
@@ -197,16 +196,30 @@ func _grab(obj: Node3D) -> void:
 	held = obj
 	_press = Press.HOLDING
 	if held is RigidBody3D:
-		held.gravity_scale = 0.0
-		held.angular_damp = 6.0
-		held.sleeping = false
+		_hold_rigid(held)
 	elif held.has_method("on_grabbed"):
 		held.on_grabbed()
-		_notify_witnesses(held.global_position, held)
+		if held.is_in_group("citizens"):
+			_notify_witnesses(held.global_position, held)
+
+
+func _hold_rigid(body: RigidBody3D) -> void:
+	body.gravity_scale = 0.0
+	body.angular_damp = 6.0
+	body.sleeping = false
 
 
 func _pull_held(delta: float) -> void:
 	var anchor := global_position - Vector3.UP * 1.2
+	if held.has_method("hand_pull"):
+		# Rooted things (trees) resist; when they give way they hand back the loose object.
+		var loose: Node3D = held.hand_pull(anchor, hand_velocity, delta)
+		if loose and loose != held:
+			held = loose
+			if held is RigidBody3D:
+				_hold_rigid(held)
+			_notify_witnesses(held.global_position, held)
+		return
 	var to_anchor := anchor - held.global_position
 	if to_anchor.length() > 40.0:
 		held.global_position = anchor  # stuck behind something; don't stretch forever
@@ -224,13 +237,14 @@ func _release() -> void:
 	if not held:
 		return
 	var v := _throw_velocity()
-	if v.length() < S.place_max_speed:
+	# Intent comes from the mouse: a mouse at rest means "put it down", whatever the hand did.
+	if v.length() < S.place_max_speed or _mouse_speed() < S.place_max_mouse_speed:
 		v = Vector3.ZERO
 	if held is RigidBody3D:
 		held.gravity_scale = 1.0
 		held.angular_damp = 0.0
 		held.linear_velocity = v
-	elif held.has_method("on_released"):
+	if held.has_method("on_released"):
 		held.on_released(v)
 	held = null
 
@@ -253,9 +267,23 @@ func _throw_velocity() -> Vector3:
 
 func _record_history() -> void:
 	var now := _time()
-	_history.append([now, global_position])
+	_history.append([now, global_position, get_viewport().get_mouse_position()])
 	while _history.size() > 2 and now - _history[0][0] > 0.5:
 		_history.pop_front()
+
+
+## Mouse speed in pixels per second over the throw window.
+func _mouse_speed() -> float:
+	if _history.size() < 2:
+		return 0.0
+	var newest: Array = _history[-1]
+	var oldest: Array = _history[0]
+	for i in range(_history.size() - 1, -1, -1):
+		oldest = _history[i]
+		if newest[0] - oldest[0] >= S.throw_window:
+			break
+	var dt: float = newest[0] - oldest[0]
+	return newest[2].distance_to(oldest[2]) / dt if dt > 0.0 else 0.0
 
 
 func _tap(obj: Node3D) -> void:
@@ -319,6 +347,7 @@ func _pick_target(hit: Dictionary) -> Node3D:
 			best_d = d
 	if best:
 		var query := PhysicsRayQueryParameters3D.create(camera.global_position, _aim_point(best), LAYER_WORLD)
+		query.exclude = rig.faded_rids()
 		if get_world_3d().direct_space_state.intersect_ray(query):
 			return null  # hidden behind a building
 	return best
@@ -365,6 +394,8 @@ func _update_arc() -> void:
 	var v := _throw_velocity()
 	if v.length() < S.arc_min_speed:
 		return
+	if not (held is RigidBody3D) and held.get("fall_gravity") == null:
+		return  # rooted things don't fly
 	var g: float = RIGID_GRAVITY if held is RigidBody3D else held.fall_gravity
 	var space := get_world_3d().direct_space_state
 	var p: Vector3 = held.global_position
@@ -421,13 +452,16 @@ func _time() -> float:
 	return Time.get_ticks_msec() / 1000.0
 
 
-func _raycast_mouse() -> Dictionary:
+func _raycast_mouse(mask := 0xFFFFFFFF) -> Dictionary:
 	var camera := get_viewport().get_camera_3d()
 	if not camera:
 		return {}
 	var mouse := get_viewport().get_mouse_position()
 	var from := camera.project_ray_origin(mouse)
-	var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(mouse) * RAY_LENGTH)
+	var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(mouse) * RAY_LENGTH, mask)
+	# See-through buildings don't block the hand.
+	var exclude: Array[RID] = rig.faded_rids()
 	if held is CollisionObject3D:
-		query.exclude = [held.get_rid()]
+		exclude.append(held.get_rid())
+	query.exclude = exclude
 	return get_world_3d().direct_space_state.intersect_ray(query)
