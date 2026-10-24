@@ -175,7 +175,7 @@ func _spawn_taxis() -> void:
 		taxi.add_to_group("god_grabbable")
 		taxi.collision_layer = LAYER_PROPS
 		taxi.collision_mask = LAYER_WORLD | LAYER_PROPS
-		taxi.mass = 2.0
+		taxi.mass = 4.0
 		var shape := CollisionShape3D.new()
 		var box := BoxShape3D.new()
 		box.size = Vector3(2.0, 1.5, 4.5)

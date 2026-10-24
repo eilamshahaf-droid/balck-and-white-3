@@ -23,6 +23,6 @@ offset_left = 12.0
 offset_top = 10.0
 offset_right = 900.0
 offset_bottom = 120.0
-text = "WASD / Arrows: move    Q / E or middle-drag: rotate    Wheel: zoom
-Left click: grab a person or a taxi, release to throw
-B: show hidden belief (debug)"
+text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
+Click: tap    Double-click: fly there    Middle-drag: orbit    Wheel: zoom
+Keys: WASD move, Q/E rotate, R/F tilt    B: show hidden belief (debug)"

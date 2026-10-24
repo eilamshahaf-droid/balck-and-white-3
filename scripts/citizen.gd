@@ -11,6 +11,9 @@ const GRAVITY := 20.0
 const HARD_LANDING_SPEED := 14.0
 
 var city: Node3D
+## Used by the god's hand: heavier things lag and swing more when held.
+var mass := 1.0
+var fall_gravity := GRAVITY
 var grid := Vector2i.ZERO
 var state := State.WALKING
 var speed := 3.0
@@ -27,6 +30,7 @@ var _body: MeshInstance3D
 var _own_mat := StandardMaterial3D.new()
 var _debug_mat := StandardMaterial3D.new()
 var _fall_speed := 0.0
+var _pause := 0.0
 
 
 func _ready() -> void:
@@ -62,9 +66,9 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	match state:
 		State.HELD:
-			pass  # The god's hand moves us.
+			move_and_slide()  # The god's hand drives our velocity through a spring.
 		State.FALLING:
-			velocity.y -= GRAVITY * delta
+			velocity.y -= fall_gravity * delta
 			_fall_speed = maxf(_fall_speed, -velocity.y)
 			move_and_slide()
 			if is_on_floor():
@@ -72,6 +76,9 @@ func _physics_process(delta: float) -> void:
 			elif global_position.y < -30.0:
 				_respawn()
 		State.WALKING:
+			if _pause > 0.0:
+				_pause -= delta
+				return
 			var to_target := target - global_position
 			to_target.y = 0
 			if to_target.length() < 0.6:
@@ -108,6 +115,13 @@ func on_grabbed() -> void:
 	state = State.HELD
 	velocity = Vector3.ZERO
 	react_to_miracle(0.3, 0.0)
+
+
+## Tapped by the hand: stop and turn toward where it came from.
+func on_tapped(from: Vector3) -> void:
+	_pause = 1.2
+	var d := from - global_position
+	rotation.y = atan2(d.x, d.z)
 
 
 func on_released(throw_velocity: Vector3) -> void:
