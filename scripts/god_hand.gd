@@ -8,8 +8,13 @@ extends Node3D
 ##
 ## Held things hang from the hand on a damped spring, so heavy things lag and
 ## swing. Throw speed is the hand's motion averaged over the last moments.
+##
+## The hand is only as strong as the believers around it: things heavier than
+## the local strength can't be lifted (see faith.gd). Everything it does in
+## plain sight is reported to the witnesses.
 
 const S = preload("res://data/hand_settings.tres")
+const B = preload("res://data/balance.tres")
 const HandVisual = preload("res://scripts/hand_visual.gd")
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
@@ -19,6 +24,7 @@ const LAYER_PROPS := 4
 enum Press { NONE, PENDING_GROUND, PENDING_OBJECT, DRAG_GROUND, HOLDING }
 
 @onready var rig: Node3D = get_node("../CameraRig")
+@onready var faith: Node = get_node("../Faith")
 
 var held: Node3D = null
 var hovered: Node3D = null
@@ -26,6 +32,8 @@ var hovered: Node3D = null
 var hand_velocity := Vector3.ZERO
 ## The building the hand is pointing at (kept solid by the camera).
 var pointed_building: Node3D = null
+## How much mass the hand can lift where it is now.
+var strength_here := 1.0
 
 var _visual: Node3D
 var _shadow: MeshInstance3D
@@ -42,6 +50,7 @@ var _press_target: Node3D = null
 var _surface := Vector3.ZERO
 var _history: Array = []   # [time, position, mouse] samples, for throw velocity
 var _tap_timer := 0.0
+var _strength_timer := 0.0
 
 
 func _ready() -> void:
@@ -118,8 +127,14 @@ func _physics_process(delta: float) -> void:
 	hand_velocity = _throw_velocity() / S.throw_multiplier if S.throw_multiplier > 0.0 else Vector3.ZERO
 	get_tree().call_group("wind_reactive", "on_hand_wind", self)
 
+	_strength_timer -= delta
+	if _strength_timer <= 0.0:
+		_strength_timer = 0.25
+		strength_here = faith.strength_at(_surface)
+		_visual.set_power((strength_here - B.base_strength) / 5.0)
 	if held:
 		if is_instance_valid(held):
+			_report_held()
 			_pull_held(delta)
 		else:
 			held = null
@@ -168,7 +183,7 @@ func _on_release() -> void:
 			_tap(_press_target)
 		Press.PENDING_GROUND:
 			if _time() - _press_time <= S.tap_max_time and not _press_hit.is_empty():
-				_knock(_press_hit.position)
+				_knock(_press_hit.position, Sfx.surface_of(_press_hit.collider))
 		Press.DRAG_GROUND:
 			rig.end_ground_drag()
 		Press.HOLDING:
@@ -197,14 +212,41 @@ func _update_press() -> void:
 # --- Holding and throwing ---
 
 func _grab(obj: Node3D) -> void:
+	strength_here = faith.strength_at(obj.global_position)
+	# Rooted trees can always be gripped; whether they come out depends on strength.
+	if _mass(obj) > strength_here and not obj.has_method("hand_pull"):
+		_strain(obj)
+		return
 	held = obj
 	_press = Press.HOLDING
+	Sfx.play(get_tree(), obj.global_position, Sfx.surface_of(obj), 0.5)
 	if held is RigidBody3D:
 		_hold_rigid(held)
 	elif held.has_method("on_grabbed"):
 		held.on_grabbed()
-		if held.is_in_group("citizens"):
-			_notify_witnesses(held.global_position, held)
+
+
+## Too heavy for the hand here: it trembles and the thing only shudders.
+func _strain(obj: Node3D) -> void:
+	_press = Press.NONE
+	_visual.strain()
+	Sfx.play(get_tree(), obj.global_position, &"strain", 0.8)
+	if obj is RigidBody3D:
+		obj.apply_central_impulse(Vector3.UP * obj.mass * 0.8)
+
+
+## Tell the witnesses what the hand is doing in plain sight.
+func _report_held() -> void:
+	if held.has_method("hand_pull"):
+		return  # a tree straining in the hand looks like the wind
+	if held.is_in_group("citizens"):
+		faith.report(held, &"see_lift", B.lift_intensity, B.spectacle_situation, 0.5, false)
+	else:
+		faith.report(held, &"see_float", _float_intensity(held), B.spectacle_situation, 0.5, false)
+
+
+func _float_intensity(obj: Node3D) -> float:
+	return B.float_intensity * clampf(_mass(obj) / 2.0, 0.2, 1.5)
 
 
 func _hold_rigid(body: RigidBody3D) -> void:
@@ -217,12 +259,13 @@ func _pull_held(delta: float) -> void:
 	var anchor := global_position - Vector3.UP * 1.2
 	if held.has_method("hand_pull"):
 		# Rooted things (trees) resist; when they give way they hand back the loose object.
-		var loose: Node3D = held.hand_pull(anchor, hand_velocity, delta)
+		var loose: Node3D = held.hand_pull(anchor, hand_velocity, strength_here, delta)
 		if loose and loose != held:
 			held = loose
 			if held is RigidBody3D:
 				_hold_rigid(held)
-			_notify_witnesses(held.global_position, held)
+			Sfx.play(get_tree(), held.global_position, &"earth", 1.0)
+			faith.report(held, &"see_uproot", B.uproot_intensity, B.spectacle_situation, 2.0)
 		return
 	var to_anchor := anchor - held.global_position
 	if to_anchor.length() > 40.0:
@@ -250,6 +293,12 @@ func _release() -> void:
 		held.linear_velocity = v
 	if held.has_method("on_released"):
 		held.on_released(v)
+	if v == Vector3.ZERO:
+		faith.end_report(held)
+	elif held.is_in_group("citizens"):
+		faith.report(held, &"see_throw", B.throw_intensity, B.thrown_situation, B.flight_report_time)
+	elif not held.has_method("hand_pull"):
+		faith.report(held, &"see_float", _float_intensity(held), B.spectacle_situation, B.flight_report_time)
 	held = null
 
 
@@ -294,6 +343,7 @@ func _tap(obj: Node3D) -> void:
 	_tap_timer = 0.25
 	if not is_instance_valid(obj):
 		return
+	Sfx.play(get_tree(), obj.global_position, Sfx.surface_of(obj), 0.6)
 	if obj is RigidBody3D:
 		var away := obj.global_position - global_position
 		away.y = 0
@@ -303,8 +353,9 @@ func _tap(obj: Node3D) -> void:
 
 
 ## A tap on a wall or the street: the nearest door swings open and people nearby look.
-func _knock(where: Vector3) -> void:
+func _knock(where: Vector3, surface: StringName) -> void:
 	_tap_timer = 0.25
+	Sfx.play(get_tree(), where, surface, 0.8)
 	var best: Node3D = null
 	for door in get_tree().get_nodes_in_group("doors"):
 		var d: float = door.global_position.distance_to(where)
@@ -469,12 +520,6 @@ func _update_pose(delta: float) -> void:
 
 
 # --- Helpers ---
-
-func _notify_witnesses(where: Vector3, subject: Node) -> void:
-	for c in get_tree().get_nodes_in_group("citizens"):
-		if c != subject and c.global_position.distance_to(where) < 25.0:
-			c.react_to_miracle(0.1, 0.0)
-
 
 func _is_grabbable(obj: Object) -> bool:
 	return obj != null and obj is Node and obj.is_in_group("god_grabbable")

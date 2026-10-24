@@ -5,6 +5,7 @@ extends RigidBody3D
 
 const S = preload("res://data/hand_settings.tres")
 const LAYER_WORLD := 1
+const MASS := 3.0
 
 var trunk_mat: Material
 var crown_mat: Material
@@ -21,7 +22,8 @@ func build(p_trunk: Material, p_crown: Material, radius: float) -> void:
 	crown_mat = p_crown
 	crown_radius = radius
 	add_to_group("god_grabbable")
-	mass = 3.0
+	mass = MASS
+	set_meta("surface", &"wood")
 	tree_script.add_tree_shapes(self, radius)
 	tree_script.add_tree_visuals(self, p_trunk, p_crown, radius)
 	_roots = MeshInstance3D.new()

@@ -11,6 +11,9 @@ const AVENUE_WIDTH := 14.0
 const STREET_WIDTH := 9.0
 const SIDEWALK := 2.5
 const CITIZEN_COUNT := 60
+## Your first followers: a small congregation living around one corner.
+const CONGREGATION_SIZE := 14
+const CONGREGATION_HOME := Vector2i(1, 3)
 const TAXI_COUNT := 30
 const LITTER_COUNT := 160
 const PIGEON_FLOCKS := 8
@@ -110,7 +113,7 @@ func _build_environment() -> void:
 
 func _build_ground() -> void:
 	var size := Vector3(half_size.x * 2 + 200, 1.0, half_size.y * 2 + 200)
-	_make_box(size, Vector3(0, -0.5, 0), _mat(Color(0.18, 0.18, 0.2)), true)
+	_make_box(size, Vector3(0, -0.5, 0), _mat(Color(0.18, 0.18, 0.2)), true).set_meta("surface", &"asphalt")
 
 
 func _build_blocks() -> void:
@@ -165,12 +168,14 @@ func _build_towers(center: Vector3, size: Vector2, midtown: float) -> void:
 		var color: Color = palette[rng.randi_range(0, palette.size() - 1)]
 		var building := _make_box(Vector3(width - 0.6, height, depth), pos, _mat(color), true)
 		building.add_to_group("buildings")
+		# Tall towers are glass curtain walls; the rest is stone and brick.
+		building.set_meta("surface", &"glass" if height > 60.0 else &"concrete")
 		_add_door(Vector3(pos.x, 0.2, center.z), depth)
 		x += width
 
 
 func _build_park(center: Vector3, size: Vector2) -> void:
-	_make_box(Vector3(size.x - 1.0, 0.1, size.y - 1.0), center + Vector3(0, 0.25, 0), _mat(Color(0.25, 0.5, 0.22)), false)
+	_make_box(Vector3(size.x - 1.0, 0.1, size.y - 1.0), center + Vector3(0, 0.25, 0), _mat(Color(0.25, 0.5, 0.22)), true).set_meta("surface", &"grass")
 	for n in 14:
 		var p := center + Vector3(rng.randf_range(-size.x, size.x) * 0.42, 0, rng.randf_range(-size.y, size.y) * 0.35)
 		_plant_tree(p + Vector3.UP * 0.3, rng.randf_range(1.6, 2.6))
@@ -201,9 +206,16 @@ func _spawn_citizens() -> void:
 		var c: CharacterBody3D = CitizenScript.new()
 		c.city = self
 		c.grid = random_grid()
+		if n < CONGREGATION_SIZE:
+			c.grid = CONGREGATION_HOME + Vector2i(0, rng.randi_range(-2, 2))
 		c.collision_layer = LAYER_CITIZENS
 		c.collision_mask = LAYER_WORLD
 		add_child(c)
+		if n < CONGREGATION_SIZE:
+			c.belief = rng.randf_range(0.6, 0.95)
+			c.skepticism = rng.randf_range(0.0, 0.3)
+		else:
+			c.belief = rng.randf_range(-0.6, 0.2)
 
 
 func _add_door(base: Vector3, depth: float) -> void:

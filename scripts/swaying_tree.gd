@@ -1,7 +1,8 @@
 extends StaticBody3D
 ## A rooted tree. It bends away from the god's hand's wind, and the hand can
 ## grab it and pull: the tree resists, leans and shakes after the hand, and
-## when the pull has gone on long enough it comes out by the roots.
+## when the pull has gone on long enough it comes out by the roots, if the
+## hand is strong enough here to lift it.
 
 const UprootedTree = preload("res://scripts/uprooted_tree.gd")
 const S = preload("res://data/hand_settings.tres")
@@ -29,6 +30,7 @@ func build(p_trunk: Material, p_crown: Material, radius: float) -> void:
 	crown_radius = radius
 	add_to_group("wind_reactive")
 	add_to_group("god_grabbable")
+	set_meta("surface", &"wood")
 	add_tree_shapes(self, radius)
 	add_tree_visuals(self, p_trunk, p_crown, radius)
 
@@ -99,14 +101,17 @@ func on_released(_v: Vector3) -> void:
 
 ## Called by the hand every physics frame while it grips this tree. Returns the
 ## loose tree once the roots give way, otherwise null.
-func hand_pull(anchor: Vector3, hand_velocity: Vector3, delta: float) -> Node3D:
+## `strength` is how much mass the hand can lift here: too weak and the tree
+## only leans and shudders; stronger than needed and it comes out faster.
+func hand_pull(anchor: Vector3, hand_velocity: Vector3, strength: float, delta: float) -> Node3D:
 	var pull := anchor - (global_position + Vector3.UP * 3.0)
 	var stretch := maxf(pull.length() - S.uproot_slack, 0.0)
+	var power := minf(strength / UprootedTree.MASS, 2.0) if strength >= UprootedTree.MASS else 0.0
 	# Pulling far builds tension; wiggling the hand (as in the original) helps more.
-	_tension += (stretch + hand_velocity.length() * S.uproot_speed_bonus) * S.hand_strength * delta
+	_tension += (stretch + hand_velocity.length() * S.uproot_speed_bonus) * S.hand_strength * power * delta
 	var effort: float = S.uproot_effort * crown_radius / 2.0
 	var lean := Vector2(pull.x, pull.z).limit_length(1.0)
-	var strain := clampf(_tension / effort, 0.0, 1.0)
+	var strain := clampf(_tension / effort, 0.0, 1.0) if power > 0.0 else 0.6
 	_push = lean * PULL_TILT * (0.4 + 0.6 * strain)
 	_push += Vector2(randf() - 0.5, randf() - 0.5) * 0.08 * strain   # shudder
 	if _tension >= effort:

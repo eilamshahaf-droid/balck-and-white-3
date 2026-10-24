@@ -19,6 +19,7 @@ var _t := randf() * 10.0
 
 func build(body_mat: Material) -> void:
 	add_to_group("wind_reactive")
+	set_meta("surface", &"feathers")
 	var body := MeshInstance3D.new()
 	var body_mesh := BoxMesh.new()
 	body_mesh.size = Vector3(0.22, 0.2, 0.36)

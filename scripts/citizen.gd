@@ -2,8 +2,9 @@ extends CharacterBody3D
 ## A city resident who walks between intersections.
 ##
 ## Belief is hidden from the player. A miracle can push it toward faith or
-## toward skepticism, depending on what the miracle did to this person and on
-## a personal coefficient (faith_bias) the player never sees.
+## toward skepticism, depending on what the miracle did to this person, on a
+## personal coefficient (skepticism) the player never sees, and on how many
+## times they have seen that kind of miracle before (see balance.gd).
 
 enum State { WALKING, HELD, FALLING, DOWN, GETTING_UP }
 
@@ -12,6 +13,9 @@ const HARD_LANDING_SPEED := 14.0
 const TUMBLE_MIN_SPEED := 3.0
 const GET_UP_TIME := 0.6
 const UPRIGHT := Quaternion.IDENTITY
+const B = preload("res://data/balance.tres")
+## How far (in metres) people wander from their home corner.
+const HOME_RANGE := 90.0
 
 var city: Node3D
 ## Used by the god's hand: heavier things lag and swing more when held.
@@ -25,9 +29,10 @@ var lane_offset := Vector3.ZERO
 
 ## Hidden: -1 = total skeptic, +1 = devoted believer.
 var belief := 0.0
-## Hidden personal coefficient: > 0 reads the supernatural as faith,
-## < 0 looks for a rational explanation.
-var faith_bias := 0.0
+## Hidden personal coefficient k: 0 believes easily, 1 always finds a rational explanation.
+var skepticism := 0.5
+var has_phone := false
+var home := Vector2i.ZERO
 
 var _body: MeshInstance3D
 var _own_mat := StandardMaterial3D.new()
@@ -37,6 +42,11 @@ var _pause := 0.0
 var _spin := Vector3.ZERO      # tumble while flying, radians per second around this axis
 var _down_timer := 0.0
 var _lying := Quaternion.IDENTITY
+var _seen := {}             # miracle kind -> times seen
+var _events_seen := {}     # ids of miracle events already reacted to
+var _phone: MeshInstance3D
+var _phone_timer := 0.0
+var _look_at_target := Vector3.INF   # where a witness stares while stopped
 
 
 func _ready() -> void:
@@ -61,9 +71,23 @@ func _ready() -> void:
 	_body.material_override = _own_mat
 	add_child(_body)
 
+	_phone = MeshInstance3D.new()
+	var phone_mesh := BoxMesh.new()
+	phone_mesh.size = Vector3(0.12, 0.22, 0.03)
+	_phone.mesh = phone_mesh
+	var screen := StandardMaterial3D.new()
+	screen.albedo_color = Color(0.85, 0.95, 1.0)
+	screen.emission_enabled = true
+	screen.emission = Color(0.7, 0.9, 1.0)
+	_phone.material_override = screen
+	_phone.position = Vector3(0, 1.55, 0.35)
+	_phone.visible = false
+	add_child(_phone)
+
 	speed = randf_range(2.0, 4.0)
-	belief = randf_range(-0.6, 0.2)
-	faith_bias = randf_range(-1.0, 1.0)
+	skepticism = randf()
+	has_phone = randf() < B.phone_chance
+	home = grid
 	lane_offset = Vector3(randf_range(-3.0, 3.0), 0, randf_range(-3.0, 3.0))
 	position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
 	_pick_next_target()
@@ -105,6 +129,8 @@ func _physics_process(delta: float) -> void:
 		State.WALKING:
 			if _pause > 0.0:
 				_pause -= delta
+				if _look_at_target != Vector3.INF:
+					_turn_to(_look_at_target)
 				return
 			var to_target := target - global_position
 			to_target.y = 0
@@ -117,7 +143,9 @@ func _physics_process(delta: float) -> void:
 				move_and_slide()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_phone_timer -= delta
+	_phone.visible = _phone_timer > 0.0 and state == State.WALKING
 	if city.show_belief:
 		# Red = skeptic, white = undecided, gold = believer.
 		var c := Color.WHITE
@@ -131,11 +159,43 @@ func _process(_delta: float) -> void:
 		_body.material_override = _own_mat
 
 
-## Shift belief after witnessing or experiencing a miracle.
-## kindness: +1 the miracle helped this person, 0 a neutral spectacle, -1 it hurt them.
-func react_to_miracle(intensity: float, kindness: float) -> void:
-	var reading := faith_bias * 0.5 + kindness * 0.7 + belief * 0.3 + randf_range(-0.3, 0.3)
-	belief = clampf(belief + reading * intensity, -1.0, 1.0)
+## Shift belief after witnessing or experiencing a miracle, by the formula in
+## balance.gd. situation: + it helped this person, - it hurt them.
+func react_to_miracle(kind: StringName, intensity: float, situation: float, friends_belief := 0.0) -> void:
+	var times: int = _seen.get(kind, 0)
+	_seen[kind] = times + 1
+	var novelty := maxf(1.0 - B.novelty_step * times, B.novelty_floor)
+	var change := intensity * situation * (1.0 - skepticism) * novelty
+	# A repeat that reads as a trick turns people away, believers or not.
+	if novelty < 0.0:
+		change = intensity * absf(situation) * novelty
+	belief = clampf(belief + change + B.friends_weight * friends_belief, -1.0, 1.0)
+
+
+func has_seen_event(id: int) -> bool:
+	return _events_seen.has(id)
+
+
+## Saw miracle event `id` happen at `at`. Stops to stare and maybe films it.
+## Returns true if this person filmed it.
+func witness(id: int, kind: StringName, intensity: float, situation: float, at: Vector3, friends_belief: float) -> bool:
+	if _events_seen.size() > 30:
+		_events_seen.clear()
+	_events_seen[id] = true
+	react_to_miracle(kind, intensity, situation, friends_belief)
+	if state != State.WALKING:
+		return false
+	_pause = maxf(_pause, B.look_time * randf_range(0.7, 1.3))
+	_look_at_target = at
+	_turn_to(at)
+	if has_phone:
+		_phone_timer = _pause
+	return has_phone
+
+
+func _turn_to(p: Vector3) -> void:
+	var d := p - global_position
+	rotation.y = atan2(d.x, d.z)
 
 
 func on_grabbed() -> void:
@@ -144,7 +204,8 @@ func on_grabbed() -> void:
 	_spin = Vector3.ZERO
 	_body.quaternion = UPRIGHT
 	_body.position.y = 0.9
-	react_to_miracle(0.3, 0.0)
+	_phone_timer = 0.0
+	react_to_miracle(&"lifted", B.lift_intensity, B.lifted_situation)
 
 
 ## Tapped by the hand.
@@ -157,8 +218,8 @@ func notice(from: Vector3) -> void:
 	if state != State.WALKING:
 		return
 	_pause = randf_range(1.0, 2.0)
-	var d := from - global_position
-	rotation.y = atan2(d.x, d.z)
+	_look_at_target = Vector3.INF
+	_turn_to(from)
 
 
 ## Where the hand should aim to pick this person.
@@ -183,7 +244,7 @@ func on_released(throw_velocity: Vector3) -> void:
 func _land() -> void:
 	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
 	if _fall_speed > HARD_LANDING_SPEED:
-		react_to_miracle(0.5, -1.0)
+		react_to_miracle(&"hard_landing", B.hard_landing_intensity, B.hard_landing_situation)
 	if _spin == Vector3.ZERO and impact < HARD_LANDING_SPEED * 0.6:
 		_body.quaternion = UPRIGHT
 		_stand_up()
@@ -217,5 +278,11 @@ func _respawn() -> void:
 
 
 func _pick_next_target() -> void:
-	grid = city.random_neighbor(grid)
+	# Everyone has a neighbourhood: believers gather where they live.
+	var next: Vector2i = city.random_neighbor(grid)
+	for attempt in 4:
+		if city.intersection(next).distance_to(city.intersection(home)) <= HOME_RANGE:
+			break
+		next = city.random_neighbor(grid)
+	grid = next
 	target = city.intersection(grid) + lane_offset

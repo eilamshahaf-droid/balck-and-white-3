@@ -12,6 +12,7 @@ var _alarm := 0.0
 func build(body_mat: Material) -> void:
 	add_to_group("god_grabbable")
 	mass = 4.0
+	set_meta("surface", &"metal")
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = Vector3(2.0, 1.5, 4.5)

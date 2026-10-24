@@ -7,6 +7,7 @@ const WIND_LIFT := 1.6
 
 func build(mat: Material) -> void:
 	add_to_group("wind_reactive")
+	set_meta("surface", &"paper")
 	mass = 0.05
 	linear_damp = 2.5
 	angular_damp = 1.5

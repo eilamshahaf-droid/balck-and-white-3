@@ -42,7 +42,7 @@ extends Resource
 @export_group("Trees")
 @export var uproot_effort := 20.0             # metres-seconds of pulling to uproot a big tree
 @export var uproot_speed_bonus := 0.5        # how much fast hand motion (wiggling, yanking) adds to the pull
-@export var hand_strength := 1.0             # overall pulling power of the hand (later: depends on influence)
+@export var hand_strength := 1.0             # overall pulling power of the hand; the believers nearby scale it (balance.tres)
 @export var uproot_slack := 1.5              # pulling closer than this does nothing
 @export var roots_hold_time := 20.0          # holding a tree longer than this kills its roots
 
