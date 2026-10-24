@@ -40,8 +40,11 @@ var _tap_timer := 0.0
 
 
 func _ready() -> void:
+	# The hand replaces the mouse cursor; its index fingertip is the hotspot.
+	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	_visual = HandVisual.new()
 	_visual.scale = Vector3.ONE * S.hand_scale
+	_visual.position = HandVisual.FINGERTIP_OFFSET * S.hand_scale
 	add_child(_visual)
 
 	# Soft round shadow under the hand: the main depth cue.
@@ -87,9 +90,14 @@ func _physics_process(delta: float) -> void:
 		_surface = hit.position
 	_update_press()
 
-	var goal := _surface + Vector3.UP * (S.hold_height if held else S.hover_height)
+	# Sit on the mouse ray, a little in front of the surface, so the fingertip
+	# is drawn exactly where the cursor points.
+	var camera := get_viewport().get_camera_3d()
+	var ray_dir := camera.project_ray_normal(get_viewport().get_mouse_position())
+	var lift: float = S.hold_height if held else S.hover_height
+	var goal := _surface - ray_dir * clampf(lift / maxf(-ray_dir.y, 0.15), 0.0, 25.0)
 	global_position = global_position.lerp(goal, 1.0 - exp(-S.follow_rate * delta))
-	_visual.rotation.y = rig.yaw
+	rotation.y = rig.yaw
 	_record_history()
 
 	if held:
@@ -102,6 +110,11 @@ func _physics_process(delta: float) -> void:
 	_update_shadow()
 	_update_arc()
 	_update_pose(delta)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 
 
 func _unhandled_input(event: InputEvent) -> void:

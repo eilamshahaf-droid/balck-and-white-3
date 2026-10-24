@@ -24,7 +24,7 @@ extends Resource
 @export_group("Hand")
 @export var hover_height := 1.5
 @export var hold_height := 5.0
-@export var follow_rate := 25.0
+@export var follow_rate := 40.0
 @export var hand_scale := 1.6
 @export var tap_max_time := 0.2             # a press shorter than this, without moving, is a tap
 @export var drag_threshold_px := 6.0

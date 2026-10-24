@@ -13,6 +13,8 @@ const POSE_CURL := {
 	Pose.TAP: [1.7, 1.7, 1.7, 1.7, 1.3],
 }
 const CURL_SPEED := 14.0
+## Where the hand sits relative to its hotspot, so the index fingertip is at the origin.
+const FINGERTIP_OFFSET := Vector3(-0.36, 0.1, 1.25)
 
 var pose := Pose.OPEN
 var _fingers: Array[Node3D] = []
