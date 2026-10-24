@@ -29,6 +29,17 @@ extends Resource
 @export var tap_max_time := 0.2             # a press shorter than this, without moving, is a tap
 @export var drag_threshold_px := 6.0
 @export var tap_impulse := 3.0
+@export var pick_assist_px := 26.0          # people/taxis this close to the fingertip on screen count as under it
+@export_range(0.0, 1.0) var magnet_strength := 0.3   # how far the hand leans toward an assisted target
+@export var knock_radius := 5.0              # a tap on a wall opens a door this close
+@export var notice_radius := 15.0            # people this close turn toward a knock
+
+@export_group("Wind")
+@export var wind_full_radius := 5.0          # full effect inside this distance, sharper when closer
+@export var wind_fade_radius := 10.0         # fades out smoothly up to this distance
+@export_range(0.0, 1.0) var wind_idle := 0.3 # strength of a still hand compared to a moving one
+@export var wind_speed_full := 15.0          # hand speed (m/s) that gives full wind
+@export var wind_force := 30.0               # push on light things such as newspapers
 
 @export_group("Holding and throwing")
 @export var spring_stiffness := 120.0

@@ -22,6 +22,8 @@ enum Press { NONE, PENDING_GROUND, PENDING_OBJECT, DRAG_GROUND, HOLDING }
 
 var held: Node3D = null
 var hovered: Node3D = null
+## Smoothed hand velocity; drives wind and throws.
+var hand_velocity := Vector3.ZERO
 
 var _visual: Node3D
 var _shadow: MeshInstance3D
@@ -34,6 +36,7 @@ var _press := Press.NONE
 var _press_time := 0.0
 var _press_pos := Vector2.ZERO
 var _press_hit := {}
+var _press_target: Node3D = null
 var _surface := Vector3.ZERO
 var _history: Array = []   # [time, position] samples, for throw velocity
 var _tap_timer := 0.0
@@ -89,6 +92,9 @@ func _physics_process(delta: float) -> void:
 	if hit:
 		_surface = hit.position
 	_update_press()
+	var target: Node3D = null
+	if not held and _press != Press.DRAG_GROUND:
+		target = _pick_target(hit)
 
 	# Sit on the mouse ray, a little in front of the surface, so the fingertip
 	# is drawn exactly where the cursor points.
@@ -96,9 +102,14 @@ func _physics_process(delta: float) -> void:
 	var ray_dir := camera.project_ray_normal(get_viewport().get_mouse_position())
 	var lift: float = S.hold_height if held else S.hover_height
 	var goal := _surface - ray_dir * clampf(lift / maxf(-ray_dir.y, 0.15), 0.0, 25.0)
+	if target and (not hit or hit.collider != target):
+		# Lean gently toward a nearby target without jumping onto it.
+		goal += (_aim_point(target) - _surface) * S.magnet_strength
 	global_position = global_position.lerp(goal, 1.0 - exp(-S.follow_rate * delta))
 	rotation.y = rig.yaw
 	_record_history()
+	hand_velocity = _throw_velocity() / S.throw_multiplier if S.throw_multiplier > 0.0 else Vector3.ZERO
+	get_tree().call_group("wind_reactive", "on_hand_wind", self)
 
 	if held:
 		if is_instance_valid(held):
@@ -106,7 +117,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			held = null
 			_press = Press.NONE
-	_update_hover(hit)
+	_update_hover(target)
 	_update_shadow()
 	_update_arc()
 	_update_pose(delta)
@@ -139,10 +150,11 @@ func _on_press(event: InputEventMouseButton) -> void:
 	_press_time = _time()
 	_press_pos = event.position
 	_press_hit = hit
-	if hit.is_empty():
-		_press = Press.NONE
-	elif _is_grabbable(hit.collider):
+	_press_target = _pick_target(hit)
+	if _press_target:
 		_press = Press.PENDING_OBJECT
+	elif hit.is_empty():
+		_press = Press.NONE
 	else:
 		_press = Press.PENDING_GROUND
 
@@ -150,7 +162,10 @@ func _on_press(event: InputEventMouseButton) -> void:
 func _on_release() -> void:
 	match _press:
 		Press.PENDING_OBJECT:
-			_tap(_press_hit.collider)
+			_tap(_press_target)
+		Press.PENDING_GROUND:
+			if _time() - _press_time <= S.tap_max_time:
+				_knock(_press_hit.position)
 		Press.DRAG_GROUND:
 			rig.end_ground_drag()
 		Press.HOLDING:
@@ -167,8 +182,8 @@ func _update_press() -> void:
 	var moved := get_viewport().get_mouse_position().distance_to(_press_pos) > S.drag_threshold_px
 	var long := _time() - _press_time > S.tap_max_time
 	if _press == Press.PENDING_OBJECT and (moved or long):
-		if is_instance_valid(_press_hit.collider):
-			_grab(_press_hit.collider)
+		if is_instance_valid(_press_target):
+			_grab(_press_target)
 		else:
 			_press = Press.NONE
 	elif _press == Press.PENDING_GROUND and moved:
@@ -251,16 +266,69 @@ func _tap(obj: Node3D) -> void:
 		var away := obj.global_position - global_position
 		away.y = 0
 		obj.apply_central_impulse((away.normalized() * 0.5 + Vector3.UP * 0.6) * S.tap_impulse * obj.mass)
-	elif obj.has_method("on_tapped"):
+	if obj.has_method("on_tapped"):
 		obj.on_tapped(global_position)
+
+
+## A tap on a wall or the street: the nearest door swings open and people nearby look.
+func _knock(where: Vector3) -> void:
+	_tap_timer = 0.25
+	var best: Node3D = null
+	for door in get_tree().get_nodes_in_group("doors"):
+		var d: float = door.global_position.distance_to(where)
+		if d < S.knock_radius and (best == null or d < best.global_position.distance_to(where)):
+			best = door
+	if best:
+		best.knock()
+	for c in get_tree().get_nodes_in_group("citizens"):
+		if c.global_position.distance_to(where) < S.notice_radius:
+			c.notice(where)
+
+
+## How strongly the hand's wind reaches `p`: full and sharpening inside the
+## inner radius, fading smoothly to zero at the outer one; a moving hand blows harder.
+func wind_strength(p: Vector3) -> float:
+	var d := global_position.distance_to(p)
+	var s := 0.0
+	if d < S.wind_full_radius:
+		s = 0.5 + 0.5 * pow(1.0 - d / S.wind_full_radius, 2.0)
+	elif d < S.wind_fade_radius:
+		s = 0.5 * (1.0 - smoothstep(S.wind_full_radius, S.wind_fade_radius, d))
+	var motion := clampf(hand_velocity.length() / S.wind_speed_full, 0.0, 1.0)
+	return s * lerpf(S.wind_idle, 1.0, motion)
 
 
 # --- Feedback: hover outline, shadow, throw arc, pose ---
 
-func _update_hover(hit: Dictionary) -> void:
-	var h: Node3D = null
-	if not held and _press != Press.DRAG_GROUND and hit and _is_grabbable(hit.collider):
-		h = hit.collider
+## What the fingertip is pointing at: the thing under it, or else the closest
+## person or taxi within a small forgiving radius on screen that is in plain view.
+func _pick_target(hit: Dictionary) -> Node3D:
+	if hit and _is_grabbable(hit.collider):
+		return hit.collider
+	var camera := get_viewport().get_camera_3d()
+	var mouse := get_viewport().get_mouse_position()
+	var best: Node3D = null
+	var best_d: float = S.pick_assist_px
+	for obj in get_tree().get_nodes_in_group("god_grabbable"):
+		var p := _aim_point(obj)
+		if camera.is_position_behind(p):
+			continue
+		var d := camera.unproject_position(p).distance_to(mouse)
+		if d < best_d:
+			best = obj
+			best_d = d
+	if best:
+		var query := PhysicsRayQueryParameters3D.create(camera.global_position, _aim_point(best), LAYER_WORLD)
+		if get_world_3d().direct_space_state.intersect_ray(query):
+			return null  # hidden behind a building
+	return best
+
+
+func _aim_point(obj: Node3D) -> Vector3:
+	return obj.aim_point() if obj.has_method("aim_point") else obj.global_position
+
+
+func _update_hover(h: Node3D) -> void:
 	if h == hovered:
 		return
 	if hovered and is_instance_valid(hovered):

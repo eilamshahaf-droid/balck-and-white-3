@@ -12,6 +12,8 @@ const STREET_WIDTH := 9.0
 const SIDEWALK := 2.5
 const CITIZEN_COUNT := 60
 const TAXI_COUNT := 30
+const LITTER_COUNT := 160
+const PIGEON_FLOCKS := 8
 
 # Physics layers: 1 = world, 2 = citizens, 3 = props.
 const LAYER_WORLD := 1
@@ -19,6 +21,11 @@ const LAYER_CITIZENS := 2
 const LAYER_PROPS := 4
 
 const CitizenScript := preload("res://scripts/citizen.gd")
+const TaxiScript := preload("res://scripts/taxi.gd")
+const TreeScript := preload("res://scripts/swaying_tree.gd")
+const DoorScript := preload("res://scripts/door.gd")
+const LitterScript := preload("res://scripts/litter.gd")
+const PigeonScript := preload("res://scripts/pigeon.gd")
 
 ## Debug view: tint residents by their hidden belief.
 var show_belief := false
@@ -36,6 +43,8 @@ func _ready() -> void:
 	_build_blocks()
 	_spawn_taxis()
 	_spawn_citizens()
+	_spawn_litter()
+	_spawn_pigeons()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -143,6 +152,7 @@ func _build_towers(center: Vector3, size: Vector2, midtown: float) -> void:
 		var pos := Vector3(x + width / 2.0, 0.2 + height / 2.0, center.z)
 		var color: Color = palette[rng.randi_range(0, palette.size() - 1)]
 		_make_box(Vector3(width - 0.6, height, depth), pos, _mat(color), true)
+		_add_door(Vector3(pos.x, 0.2, center.z), depth)
 		x += width
 
 
@@ -150,43 +160,18 @@ func _build_park(center: Vector3, size: Vector2) -> void:
 	_make_box(Vector3(size.x - 1.0, 0.1, size.y - 1.0), center + Vector3(0, 0.25, 0), _mat(Color(0.25, 0.5, 0.22)), false)
 	for n in 14:
 		var p := center + Vector3(rng.randf_range(-size.x, size.x) * 0.42, 0, rng.randf_range(-size.y, size.y) * 0.35)
-		var trunk := MeshInstance3D.new()
-		var trunk_mesh := CylinderMesh.new()
-		trunk_mesh.top_radius = 0.25
-		trunk_mesh.bottom_radius = 0.35
-		trunk_mesh.height = 3.0
-		trunk.mesh = trunk_mesh
-		trunk.material_override = _mat(Color(0.35, 0.25, 0.15))
-		trunk.position = p + Vector3(0, 1.5, 0)
-		add_child(trunk)
-		var crown := MeshInstance3D.new()
-		var crown_mesh := SphereMesh.new()
-		crown_mesh.radius = rng.randf_range(1.6, 2.6)
-		crown_mesh.height = crown_mesh.radius * 2.0
-		crown.mesh = crown_mesh
-		crown.material_override = _mat(Color(0.2, 0.42, 0.18))
-		crown.position = p + Vector3(0, 4.0, 0)
-		add_child(crown)
+		var tree: Node3D = TreeScript.new()
+		tree.build(_mat(Color(0.35, 0.25, 0.15)), _mat(Color(0.2, 0.42, 0.18)), rng.randf_range(1.6, 2.6))
+		tree.position = p
+		add_child(tree)
 
 
 func _spawn_taxis() -> void:
 	for n in TAXI_COUNT:
-		var taxi := RigidBody3D.new()
-		taxi.add_to_group("god_grabbable")
+		var taxi: RigidBody3D = TaxiScript.new()
 		taxi.collision_layer = LAYER_PROPS
 		taxi.collision_mask = LAYER_WORLD | LAYER_PROPS
-		taxi.mass = 4.0
-		var shape := CollisionShape3D.new()
-		var box := BoxShape3D.new()
-		box.size = Vector3(2.0, 1.5, 4.5)
-		shape.shape = box
-		taxi.add_child(shape)
-		var mesh := MeshInstance3D.new()
-		var box_mesh := BoxMesh.new()
-		box_mesh.size = box.size
-		mesh.mesh = box_mesh
-		mesh.material_override = _mat(Color(0.95, 0.75, 0.1))
-		taxi.add_child(mesh)
+		taxi.build(_mat(Color(0.95, 0.75, 0.1)))
 		var avenue := intersection(Vector2i(rng.randi_range(0, AVENUES - 1), 0))
 		taxi.position = Vector3(avenue.x + rng.randf_range(-4.0, 4.0), 1.0, rng.randf_range(-half_size.y, half_size.y))
 		add_child(taxi)
@@ -200,6 +185,42 @@ func _spawn_citizens() -> void:
 		c.collision_layer = LAYER_CITIZENS
 		c.collision_mask = LAYER_WORLD
 		add_child(c)
+
+
+func _add_door(base: Vector3, depth: float) -> void:
+	# A door on one of the two street-facing walls of the building.
+	var side := 1.0 if rng.randf() < 0.5 else -1.0
+	var door: Node3D = DoorScript.new()
+	door.build(_mat(Color(0.3, 0.2, 0.14)))
+	door.position = base + Vector3(-0.7 * side, 0, side * (depth / 2.0 + 0.07))
+	door.rotation.y = 0.0 if side > 0 else PI
+	add_child(door)
+
+
+func _spawn_litter() -> void:
+	var paper := _mat(Color(0.85, 0.84, 0.78))
+	for n in LITTER_COUNT:
+		var sheet: RigidBody3D = LitterScript.new()
+		sheet.collision_layer = LAYER_PROPS
+		sheet.collision_mask = LAYER_WORLD | LAYER_PROPS
+		sheet.build(paper)
+		var corner := intersection(random_grid())
+		sheet.position = corner + Vector3(rng.randf_range(-12, 12), 0.4, rng.randf_range(-6, 6))
+		sheet.rotation.y = rng.randf() * TAU
+		add_child(sheet)
+
+
+func _spawn_pigeons() -> void:
+	var grey := _mat(Color(0.5, 0.52, 0.58))
+	for f in PIGEON_FLOCKS:
+		var center := intersection(random_grid())
+		for n in rng.randi_range(4, 7):
+			var bird: Node3D = PigeonScript.new()
+			bird.city = self
+			bird.build(grey)
+			bird.position = center + Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))
+			bird.rotation.y = rng.randf() * TAU
+			add_child(bird)
 
 
 func _make_box(size: Vector3, pos: Vector3, material: Material, collide: bool) -> Node3D:

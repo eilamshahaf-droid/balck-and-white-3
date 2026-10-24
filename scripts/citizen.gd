@@ -5,10 +5,13 @@ extends CharacterBody3D
 ## toward skepticism, depending on what the miracle did to this person and on
 ## a personal coefficient (faith_bias) the player never sees.
 
-enum State { WALKING, HELD, FALLING }
+enum State { WALKING, HELD, FALLING, DOWN, GETTING_UP }
 
 const GRAVITY := 20.0
 const HARD_LANDING_SPEED := 14.0
+const TUMBLE_MIN_SPEED := 3.0
+const GET_UP_TIME := 0.6
+const UPRIGHT := Quaternion.IDENTITY
 
 var city: Node3D
 ## Used by the god's hand: heavier things lag and swing more when held.
@@ -31,6 +34,9 @@ var _own_mat := StandardMaterial3D.new()
 var _debug_mat := StandardMaterial3D.new()
 var _fall_speed := 0.0
 var _pause := 0.0
+var _spin := Vector3.ZERO      # tumble while flying, radians per second around this axis
+var _down_timer := 0.0
+var _lying := Quaternion.IDENTITY
 
 
 func _ready() -> void:
@@ -71,10 +77,31 @@ func _physics_process(delta: float) -> void:
 			velocity.y -= fall_gravity * delta
 			_fall_speed = maxf(_fall_speed, -velocity.y)
 			move_and_slide()
+			if _spin != Vector3.ZERO:
+				_body.quaternion = (Quaternion(_spin.normalized(), _spin.length() * delta) * _body.quaternion).normalized()
 			if is_on_floor():
 				_land()
 			elif global_position.y < -30.0:
 				_respawn()
+		State.DOWN:
+			# Lie where we fell, sliding to a stop, then get up.
+			velocity.x = move_toward(velocity.x, 0.0, 30.0 * delta)
+			velocity.z = move_toward(velocity.z, 0.0, 30.0 * delta)
+			velocity.y -= fall_gravity * delta
+			move_and_slide()
+			_body.quaternion = _body.quaternion.slerp(_lying, 1.0 - exp(-12.0 * delta))
+			_body.position.y = lerpf(_body.position.y, 0.35, 1.0 - exp(-12.0 * delta))
+			_down_timer -= delta
+			if _down_timer <= 0.0:
+				state = State.GETTING_UP
+				_down_timer = GET_UP_TIME
+		State.GETTING_UP:
+			var w := 1.0 - exp(-8.0 * delta)
+			_body.quaternion = _body.quaternion.slerp(UPRIGHT, w)
+			_body.position.y = lerpf(_body.position.y, 0.9, w)
+			_down_timer -= delta
+			if _down_timer <= 0.0:
+				_stand_up()
 		State.WALKING:
 			if _pause > 0.0:
 				_pause -= delta
@@ -114,26 +141,66 @@ func react_to_miracle(intensity: float, kindness: float) -> void:
 func on_grabbed() -> void:
 	state = State.HELD
 	velocity = Vector3.ZERO
+	_spin = Vector3.ZERO
+	_body.quaternion = UPRIGHT
+	_body.position.y = 0.9
 	react_to_miracle(0.3, 0.0)
 
 
-## Tapped by the hand: stop and turn toward where it came from.
+## Tapped by the hand.
 func on_tapped(from: Vector3) -> void:
-	_pause = 1.2
+	notice(from)
+
+
+## Something happened at `from` (a tap, a knock, a car alarm): stop and look.
+func notice(from: Vector3) -> void:
+	if state != State.WALKING:
+		return
+	_pause = randf_range(1.0, 2.0)
 	var d := from - global_position
 	rotation.y = atan2(d.x, d.z)
+
+
+## Where the hand should aim to pick this person.
+func aim_point() -> Vector3:
+	return global_position + Vector3.UP * 0.9
 
 
 func on_released(throw_velocity: Vector3) -> void:
 	state = State.FALLING
 	velocity = throw_velocity
 	_fall_speed = 0.0
+	var speed := throw_velocity.length()
+	if speed > TUMBLE_MIN_SPEED:
+		var axis := throw_velocity.cross(Vector3.UP)
+		if axis.length() < 0.01:
+			axis = Vector3.RIGHT
+		_spin = axis.normalized() * clampf(speed * 0.5, 2.0, 14.0)
+	else:
+		_spin = Vector3.ZERO
 
 
 func _land() -> void:
+	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
 	if _fall_speed > HARD_LANDING_SPEED:
 		react_to_miracle(0.5, -1.0)
+	if _spin == Vector3.ZERO and impact < HARD_LANDING_SPEED * 0.6:
+		_body.quaternion = UPRIGHT
+		_stand_up()
+		return
+	# Knocked down: lie flat, facing the way we were flying, for longer the harder the fall.
+	_spin = Vector3.ZERO
+	state = State.DOWN
+	_down_timer = clampf(1.0 + impact * 0.1, 1.0, 4.0)
+	var heading := atan2(velocity.x, velocity.z) - rotation.y
+	_lying = Quaternion(Vector3.UP, heading) * Quaternion(Vector3.RIGHT, PI / 2.0)
+
+
+func _stand_up() -> void:
+	_body.quaternion = UPRIGHT
+	_body.position.y = 0.9
 	state = State.WALKING
+	velocity = Vector3.ZERO
 	grid = city.nearest_grid(global_position)
 	target = city.intersection(grid) + lane_offset
 
@@ -143,6 +210,9 @@ func _respawn() -> void:
 	grid = city.random_grid()
 	global_position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
 	velocity = Vector3.ZERO
+	_spin = Vector3.ZERO
+	_body.quaternion = UPRIGHT
+	_body.position.y = 0.9
 	_pick_next_target()
 
 

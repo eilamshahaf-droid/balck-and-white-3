@@ -24,5 +24,5 @@ offset_top = 10.0
 offset_right = 900.0
 offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
-Click: tap    Double-click: fly there    Middle-drag: orbit    Wheel: zoom
+Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom
 Keys: WASD move, Q/E rotate, R/F tilt    B: show hidden belief (debug)"
