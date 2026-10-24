@@ -24,6 +24,8 @@ var held: Node3D = null
 var hovered: Node3D = null
 ## Smoothed hand velocity; drives wind and throws.
 var hand_velocity := Vector3.ZERO
+## The building the hand is pointing at (kept solid by the camera).
+var pointed_building: Node3D = null
 
 var _visual: Node3D
 var _shadow: MeshInstance3D
@@ -89,6 +91,8 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	var hit := _raycast_mouse()
+	var first_wall := _raycast_mouse(LAYER_WORLD, false)
+	pointed_building = first_wall.collider if first_wall and first_wall.collider.is_in_group("buildings") else null
 	# While holding, ride over streets and buildings only: hopping onto every tree
 	# crown or taxi roof under the cursor would jerk the held thing (and fling it).
 	var surface_hit := _raycast_mouse(LAYER_WORLD) if held else hit
@@ -328,23 +332,34 @@ func wind_strength(p: Vector3) -> float:
 
 # --- Feedback: hover outline, shadow, throw arc, pose ---
 
-## What the fingertip is pointing at: the thing under it, or else the closest
-## person or taxi within a small forgiving radius on screen that is in plain view.
+## What the hand is reaching for. One rule for everything grabbable, with no
+## per-object code: the whole drawn hand is the grab area, and each object
+## counts by its real size on screen, so a big tree is as easy to catch as it
+## looks and a far-away person still gets a fair margin.
 func _pick_target(hit: Dictionary) -> Node3D:
 	if hit and _is_grabbable(hit.collider):
 		return hit.collider
 	var camera := get_viewport().get_camera_3d()
 	var mouse := get_viewport().get_mouse_position()
+	var reach := maxf(S.pick_assist_px, _screen_radius(camera, global_position, S.hand_scale)) * S.grab_reach
+	var px_per_m := _screen_radius(camera, global_position, 1.0)
 	var best: Node3D = null
-	var best_d: float = S.pick_assist_px
+	var best_score := reach
 	for obj in get_tree().get_nodes_in_group("god_grabbable"):
-		var p := _aim_point(obj)
-		if camera.is_position_behind(p):
+		var bounds := _pick_bounds(obj)
+		var center: Vector3 = obj.global_transform * bounds.position
+		var radius: float = bounds.size.x
+		# Cheap cull: nowhere near the hand in the world.
+		if center.distance_to(global_position) > radius + reach / maxf(px_per_m, 0.01) * 2.0 + 2.0:
 			continue
-		var d := camera.unproject_position(p).distance_to(mouse)
-		if d < best_d:
+		if camera.is_position_behind(center):
+			continue
+		# Size helps only up to the hand's own reach, so a big tree crown can't
+		# swallow the people standing under it.
+		var score := camera.unproject_position(center).distance_to(mouse) - minf(_screen_radius(camera, center, radius), reach)
+		if score < best_score:
 			best = obj
-			best_d = d
+			best_score = score
 	if best:
 		var query := PhysicsRayQueryParameters3D.create(camera.global_position, _aim_point(best), LAYER_WORLD)
 		query.exclude = rig.faded_rids()
@@ -353,8 +368,32 @@ func _pick_target(hit: Dictionary) -> Node3D:
 	return best
 
 
+## An object's grab sphere, measured once from its meshes: position = centre in
+## the object's own space, size.x = radius.
+func _pick_bounds(obj: Node3D) -> AABB:
+	if obj.has_meta("pick_bounds"):
+		return obj.get_meta("pick_bounds")
+	var to_local := obj.global_transform.affine_inverse()
+	var box := AABB()
+	var first := true
+	for mesh in obj.find_children("*", "MeshInstance3D", true, false):
+		var b: AABB = (to_local * mesh.global_transform) * mesh.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	var bounds := AABB(box.get_center(), Vector3.ONE * box.size.length() * 0.3)
+	obj.set_meta("pick_bounds", bounds)
+	return bounds
+
+
+func _screen_radius(camera: Camera3D, at: Vector3, world_radius: float) -> float:
+	if camera.is_position_behind(at):
+		return 0.0
+	var edge := at + camera.global_transform.basis.x * world_radius
+	return camera.unproject_position(edge).distance_to(camera.unproject_position(at))
+
+
 func _aim_point(obj: Node3D) -> Vector3:
-	return obj.aim_point() if obj.has_method("aim_point") else obj.global_position
+	return obj.global_transform * _pick_bounds(obj).position
 
 
 func _update_hover(h: Node3D) -> void:
@@ -452,7 +491,7 @@ func _time() -> float:
 	return Time.get_ticks_msec() / 1000.0
 
 
-func _raycast_mouse(mask := 0xFFFFFFFF) -> Dictionary:
+func _raycast_mouse(mask := 0xFFFFFFFF, through_faded := true) -> Dictionary:
 	var camera := get_viewport().get_camera_3d()
 	if not camera:
 		return {}
@@ -460,7 +499,9 @@ func _raycast_mouse(mask := 0xFFFFFFFF) -> Dictionary:
 	var from := camera.project_ray_origin(mouse)
 	var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(mouse) * RAY_LENGTH, mask)
 	# See-through buildings don't block the hand.
-	var exclude: Array[RID] = rig.faded_rids()
+	var exclude: Array[RID] = []
+	if through_faded:
+		exclude = rig.faded_rids()
 	if held is CollisionObject3D:
 		exclude.append(held.get_rid())
 	query.exclude = exclude

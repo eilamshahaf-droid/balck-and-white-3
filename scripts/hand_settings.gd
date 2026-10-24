@@ -23,6 +23,7 @@ extends Resource
 @export var fade_radius := 3.0              # how wide a tube between camera and hand clears buildings
 @export_range(0.0, 1.0) var fade_amount := 0.85   # how see-through a faded building gets
 @export var fade_speed := 8.0
+@export var fade_near_camera := 6.0         # buildings this close to the camera fade too
 
 @export_group("Hand")
 @export var hover_height := 1.5
@@ -32,13 +33,16 @@ extends Resource
 @export var tap_max_time := 0.2             # a press shorter than this, without moving, is a tap
 @export var drag_threshold_px := 6.0
 @export var tap_impulse := 3.0
-@export var pick_assist_px := 26.0          # people/taxis this close to the fingertip on screen count as under it
+@export var pick_assist_px := 30.0          # least grab reach on screen; the whole drawn hand counts when it is bigger
+@export var grab_reach := 1.0                # one dial for how forgiving grabbing is, for everything
 @export_range(0.0, 1.0) var magnet_strength := 0.3   # how far the hand leans toward an assisted target
 @export var knock_radius := 5.0              # a tap on a wall opens a door this close
 @export var notice_radius := 15.0            # people this close turn toward a knock
 
 @export_group("Trees")
-@export var uproot_effort := 6.0             # metres-seconds of pulling to uproot a big tree
+@export var uproot_effort := 20.0             # metres-seconds of pulling to uproot a big tree
+@export var uproot_speed_bonus := 0.5        # how much fast hand motion (wiggling, yanking) adds to the pull
+@export var hand_strength := 1.0             # overall pulling power of the hand (later: depends on influence)
 @export var uproot_slack := 1.5              # pulling closer than this does nothing
 @export var roots_hold_time := 20.0          # holding a tree longer than this kills its roots
 

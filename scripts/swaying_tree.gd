@@ -103,7 +103,7 @@ func hand_pull(anchor: Vector3, hand_velocity: Vector3, delta: float) -> Node3D:
 	var pull := anchor - (global_position + Vector3.UP * 3.0)
 	var stretch := maxf(pull.length() - S.uproot_slack, 0.0)
 	# Pulling far builds tension; wiggling the hand (as in the original) helps more.
-	_tension += (stretch + hand_velocity.length() * 0.15) * delta
+	_tension += (stretch + hand_velocity.length() * S.uproot_speed_bonus) * S.hand_strength * delta
 	var effort: float = S.uproot_effort * crown_radius / 2.0
 	var lean := Vector2(pull.x, pull.z).limit_length(1.0)
 	var strain := clampf(_tension / effort, 0.0, 1.0)

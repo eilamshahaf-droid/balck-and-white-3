@@ -223,13 +223,18 @@ func _place_camera() -> void:
 
 
 func _update_fade(delta: float) -> void:
+	# Fade what hides the centre of the view, and anything the camera is in or
+	# brushing against. Never fade the building the hand is on: the hand always
+	# sits in front of what it points at, and later it will work with buildings.
 	var wanted := {}
 	var cam := camera.global_position
-	for target in [hand.global_position, pivot]:
-		for body in _bodies_between(cam, target, S.fade_radius):
-			wanted[body] = true
-	for body in _bodies_between(cam, cam + Vector3.UP * 0.1, 1.0):   # the camera is inside it
+	var to_pivot := pivot - cam
+	var end := cam + to_pivot * maxf(0.0, 1.0 - 3.0 / maxf(to_pivot.length(), 0.01))
+	for body in _bodies_between(cam, end, S.fade_radius):
 		wanted[body] = true
+	for body in _bodies_between(cam, cam + Vector3.UP * 0.1, S.fade_near_camera):
+		wanted[body] = true
+	wanted.erase(hand.pointed_building)
 	for body in wanted:
 		if not _fade.has(body):
 			_fade[body] = 0.0
