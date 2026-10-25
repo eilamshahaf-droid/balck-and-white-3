@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-25: Dollhouse look: stronger tilt-shift, crisp sun shadows, livelier colours
+- Tilt-shift is much stronger and starts lower: from above, the top and bottom of the screen blur like a photo of a miniature, with a narrower sharp band.
+- New sun lighting in the toon shader: a lower sun (longer shadows), crisp shadow edges (no blur), cast shadows with their own darkness, a warm key light and a bright toy-like rim on sunlit edges. The art style now sets the sun's angle and shadow quality; the day/night cycle still sets its brightness and colour.
+- Livelier, more playful colours: stronger saturation, a vibrance and contrast grade, a slightly warm picture.
+- The Kenney buildings now get the art style too (their textures go through the toon shader).
+- Every number: `data/art_style.tres` (new groups "Sun and shadows" and "Colour grade"; tilt-shift numbers changed).
+- Try it: press F5, zoom out with the wheel to see the tilt-shift, and press V to compare with the plain look.
+
 ## 2026-10-25: Both wheels open with a long left press; easier uprooting
 - Hold the LEFT button still for half a second on the ground: the miracle wheel opens around the hand. On a building: the sign wheel. The hand stays in the middle, grows so it can be seen from high up, and points where you move the mouse; the slice it points at lights up. Let go to cast the miracle on that spot, or give the sign to that building. Letting go in the middle, or a right click, cancels.
 - The right-button wheel and the "miracle in the hand" mode are gone. Drawing a circle with the right button still casts water.

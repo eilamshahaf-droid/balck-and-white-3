@@ -3,6 +3,8 @@
 // Every number is driven from data/art_style.tres by scripts/art_style.gd.
 
 uniform vec4 albedo : source_color = vec4(1.0);
+// The model's own texture (Kenney kit colour maps); plain white when there is none.
+uniform sampler2D albedo_tex : source_color, filter_linear_mipmap, repeat_enable, hint_default_white;
 uniform float alpha = 1.0;
 
 // Watercolour wash: a seamless noise sampled in world space (triplanar), so
@@ -24,6 +26,13 @@ uniform float softness = 0.06;
 uniform vec3 shadow_tint : source_color = vec3(0.66, 0.6, 0.82);
 // How much of the sky/ambient light reaches the surface (keeps the wash from washing out).
 uniform float ambient_amount = 0.45;
+
+// The god's sun: crisp cast shadows that fall to their own level, a warm key
+// light, and a bright toy-like rim on edges that face the sun.
+uniform float shadow_level = 0.3;
+uniform float shadow_softness = 0.08;
+uniform vec3 key_tint : source_color = vec3(1.0, 0.96, 0.88);
+uniform float rim_strength = 0.25;
 
 varying vec3 v_wpos;
 varying vec3 v_wnorm;
@@ -50,7 +59,7 @@ float bands(float t) {
 
 void fragment() {
 	float w = wash_at();
-	vec3 col = albedo.rgb;
+	vec3 col = albedo.rgb * texture(albedo_tex, UV).rgb;
 	float grey = dot(col, vec3(0.3, 0.59, 0.11));
 	col = clamp(mix(vec3(grey), col, saturation), 0.0, 1.0);
 	col = mix(col, paper_color, pigment_lift);
@@ -69,12 +78,16 @@ void fragment() {
 void light() {
 	float ndl = dot(NORMAL, LIGHT);
 	if (LIGHT_IS_DIRECTIONAL) {
-		// Half-lambert into three soft bands; cast shadows drop to the lowest band
-		// instead of black, and darker bands lean lavender like a transparent wash.
+		// Half-lambert into three soft bands. Cast shadows get a crisp edge and
+		// drop to shadow_level, never black; darker light leans lavender like a
+		// transparent wash, lit faces lean warm.
 		float lv = bands(ndl * 0.5 + 0.5);
-		lv = mix(band_low, lv, clamp(ATTENUATION, 0.0, 1.0));
-		float k = clamp((lv - band_low) / max(band_high - band_low, 0.001), 0.0, 1.0);
-		DIFFUSE_LIGHT += LIGHT_COLOR / PI * lv * mix(shadow_tint, vec3(1.0), k);
+		float sh = smoothstep(0.5 - shadow_softness, 0.5 + shadow_softness, clamp(ATTENUATION, 0.0, 1.0));
+		lv = mix(min(shadow_level, lv), lv, sh);
+		float k = clamp((lv - shadow_level) / max(band_high - shadow_level, 0.001), 0.0, 1.0);
+		vec3 tint = mix(shadow_tint, key_tint, k);
+		float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0) * smoothstep(0.0, 0.4, ndl) * sh;
+		DIFFUSE_LIGHT += LIGHT_COLOR / PI * (lv * tint + rim * rim_strength);
 	} else {
 		// Lamps and fire: soft-edged pools of light.
 		DIFFUSE_LIGHT += LIGHT_COLOR / PI * smoothstep(0.0, 0.35, ndl) * ATTENUATION;

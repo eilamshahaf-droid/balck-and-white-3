@@ -120,6 +120,8 @@ func _on_node_added(node: Node) -> void:
 		_pending.append(node)
 	elif node is WorldEnvironment:
 		_style_environment.call_deferred(node)
+	elif node is DirectionalLight3D:
+		_style_sun.call_deferred(node)
 
 
 func _belongs_to_world(m: Node) -> bool:
@@ -144,8 +146,7 @@ func _convertible(mat: StandardMaterial3D) -> bool:
 	return mat.shading_mode != BaseMaterial3D.SHADING_MODE_UNSHADED \
 		and mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED \
 		and mat.billboard_mode == BaseMaterial3D.BILLBOARD_DISABLED \
-		and not mat.emission_enabled \
-		and mat.albedo_texture == null
+		and not mat.emission_enabled
 
 
 func _toon_for(src: StandardMaterial3D) -> ShaderMaterial:
@@ -156,6 +157,8 @@ func _toon_for(src: StandardMaterial3D) -> ShaderMaterial:
 	t.set_meta("toon_source", src)
 	_push_toon_params(t)
 	t.set_shader_parameter("albedo", src.albedo_color)
+	if src.albedo_texture:
+		t.set_shader_parameter("albedo_tex", src.albedo_texture)
 	_toon[src] = t
 	_colors[src] = src.albedo_color
 	return t
@@ -170,6 +173,10 @@ func _push_toon_params(t: ShaderMaterial) -> void:
 	t.set_shader_parameter("softness", S.softness)
 	t.set_shader_parameter("shadow_tint", S.shadow_tint)
 	t.set_shader_parameter("ambient_amount", S.ambient_amount)
+	t.set_shader_parameter("shadow_level", S.shadow_level)
+	t.set_shader_parameter("shadow_softness", S.shadow_softness)
+	t.set_shader_parameter("key_tint", S.key_tint)
+	t.set_shader_parameter("rim_strength", S.rim_strength)
 	t.set_shader_parameter("paper_color", S.paper_color)
 	t.set_shader_parameter("pigment_lift", S.pigment_lift)
 	t.set_shader_parameter("saturation", S.saturation)
@@ -190,6 +197,9 @@ func _push_paper_params() -> void:
 	_paper_mat.set_shader_parameter("vignette", S.vignette)
 	_paper_mat.set_shader_parameter("tilt_center", S.tilt_center)
 	_paper_mat.set_shader_parameter("tilt_width", S.tilt_width)
+	_paper_mat.set_shader_parameter("vibrance", S.vibrance)
+	_paper_mat.set_shader_parameter("contrast", S.contrast)
+	_paper_mat.set_shader_parameter("warmth", S.warmth)
 
 
 ## The higher the god looks from, the more the city looks like a miniature.
@@ -209,6 +219,18 @@ func _style_environment(world_env: WorldEnvironment) -> void:
 	if S.tonemap_filmic:
 		env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = S.exposure
+
+
+## The god looks down on a sunny toy town: a fixed sun angle and crisp, long
+## shadows. Energy and colour stay with the city's day/night cycle.
+func _style_sun(sun: DirectionalLight3D) -> void:
+	if not S.sun_override or not is_instance_valid(sun):
+		return
+	sun.rotation = Vector3(deg_to_rad(S.sun_pitch), deg_to_rad(S.sun_yaw), 0.0)
+	sun.shadow_enabled = true
+	sun.shadow_blur = 0.0
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_max_distance = S.shadow_distance
 
 
 func _noise_texture(size: int, frequency: float, octaves: int, seed_value: int) -> NoiseTexture2D:
