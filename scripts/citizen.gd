@@ -282,7 +282,6 @@ func on_grabbed() -> void:
 	_body.quaternion = UPRIGHT
 	_body.position.y = 0.9
 	_phone_timer = 0.0
-	react_to_miracle(&"lifted", B.lift_intensity, B.lifted_situation)
 
 
 ## Tapped by the hand.
@@ -320,8 +319,6 @@ func on_released(throw_velocity: Vector3) -> void:
 
 func _land() -> void:
 	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
-	if _fall_speed > HARD_LANDING_SPEED:
-		react_to_miracle(&"hard_landing", B.hard_landing_intensity, B.hard_landing_situation)
 	if _spin == Vector3.ZERO and impact < HARD_LANDING_SPEED * 0.6:
 		_body.quaternion = UPRIGHT
 		_stand_up()

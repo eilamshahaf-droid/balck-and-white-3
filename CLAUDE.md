@@ -37,9 +37,9 @@ The scene is small; most nodes are built in code at startup.
 | --- | --- | --- |
 | `Main` | `city.gd` | Builds the procedural Manhattan grid: ground, blocks, towers, park, trees, doors, taxis, citizens, litter, pigeons. Grid helpers used by citizens. Day/night (`set_daylight`). |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
-| `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. `strength_at()` = hand power from nearby believers. |
+| `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, gestures (circle = water miracle). |
-| `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Space/Tab skips to a sandbox with a ready congregation. |
+| `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Off for now (`enabled = false` in `main.tscn`), so the game starts in free play with a ready congregation. |
 | `HUD` | `hud.gd` | The numbers the player may see. |
 
 World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`
@@ -72,7 +72,7 @@ Tunables: `data/planning.tres`.
 | File | Script (class) | Covers |
 | --- | --- | --- |
 | `data/hand_settings.tres` | `HandSettings` | hand and camera feel |
-| `data/balance.tres` | `Balance` | belief, witnesses, exposure, hand power |
+| `data/balance.tres` | `Balance` | belief, witnesses, exposure |
 | `data/art_style.tres` | `ArtStyleSettings` | shading and watercolour |
 | `data/planning.tres` | `PlanningSettings` | planning model |
 

@@ -8,6 +8,12 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - No game code changed. A code-quality audit with a fix plan is waiting for Eilam's approval.
 - Try it: nothing to run; open `CLAUDE.md` to read it.
 
+## 2026-10-25: The main scene is a hand test bed; lifting is play, not a miracle
+- The opening (the burning building) is switched off for now: the game starts straight in free play in daylight, with a congregation ready. To bring it back, select the `Opening` node in `scenes/main.tscn` and turn on `enabled`.
+- No strength limit: the hand lifts anything anywhere, at full grip, for free. The strength ring under the hand and the strength number at the top are gone. A different limit will come later.
+- Lifting and throwing no longer change anyone's belief and no longer raise exposure. Belief comes only from miracles (for now, the water miracle).
+- Try it: press F5 and pick up a taxi or a tree far from your believers.
+
 ## 2026-10-25: Real building models instead of boxes
 - The towers in the main city are now built from Kenney's free Modular Buildings kit (CC0): a facade module for every floor and bay, a shopfront ground floor, a flat roof, and three colour schemes. Towers over 60 m use large glass windows on every floor.
 - The models are used as they come from the kit for now; the soft cel-shading style does not apply to them yet (that needs a small shader change). Gameplay is unchanged: same city layout, same collision, the opening fire, the camera fade and the hand all work as before.

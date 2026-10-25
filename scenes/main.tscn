@@ -24,6 +24,7 @@ script = ExtResource("3_hand")
 
 [node name="Opening" type="Node" parent="."]
 script = ExtResource("6_opening")
+enabled = false
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
@@ -35,7 +36,7 @@ offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person, taxi or tree: pick up (wiggle to uproot), flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom
 Right-drag a circle: water miracle    Keys: WASD move, Q/E rotate, R/F tilt    B: show hidden belief (debug)
-People who see a miracle stop and stare, and some film it. The hand is strongest near your believers; heavier lifts elsewhere cost belief."
+The hand can lift anything. Only miracles change what people believe."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
