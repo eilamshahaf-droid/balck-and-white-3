@@ -9,7 +9,7 @@ uniform float alpha = 1.0;
 // placeholder boxes and real models both get uneven pigment without UVs.
 uniform sampler2D wash_tex : filter_linear_mipmap, repeat_enable;
 uniform float wash_scale = 0.08;
-uniform float wash_strength = 0.5;
+uniform float wash_strength = 0.18;
 uniform vec3 paper_color : source_color = vec3(0.957, 0.933, 0.886);
 uniform float pigment_lift = 0.05;
 uniform float saturation = 1.15;
