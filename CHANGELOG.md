@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-25: Wheel drawn on its own top layer
+- The miracle and sign wheels now draw on their own screen layer above everything else (the HUD and the art style's watercolour pass), sized to the whole window. Fix attempt for the wheel not showing on one Windows PC while its clicks worked.
+- Try it: press F5 and hold the left button still on a street.
+
 ## 2026-10-25: Dollhouse look: stronger tilt-shift, crisp sun shadows, livelier colours
 - Tilt-shift is much stronger and starts lower: from above, the top and bottom of the screen blur like a photo of a miniature, with a narrower sharp band.
 - New sun lighting in the toon shader: a lower sun (longer shadows), crisp shadow edges (no blur), cast shadows with their own darkness, a warm key light and a bright toy-like rim on sunlit edges. The art style now sets the sun's angle and shadow quality; the day/night cycle still sets its brightness and colour.

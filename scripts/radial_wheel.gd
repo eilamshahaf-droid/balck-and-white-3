@@ -26,6 +26,9 @@ func _ready() -> void:
 func open(at: Vector2, p_items: Array[Dictionary]) -> void:
 	center = at
 	items = p_items
+	# Cover the whole screen, so the drawing is never culled as off-rect.
+	position = Vector2.ZERO
+	size = get_viewport().get_visible_rect().size
 	highlighted = -1
 	visible = true
 	set_process(true)

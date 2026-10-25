@@ -25,6 +25,7 @@ var _outline := StandardMaterial3D.new()
 
 func _ready() -> void:
 	var layer := CanvasLayer.new()
+	layer.layer = 10  # above the HUD and the art style's screen pass
 	add_child(layer)
 	_wheel = RadialWheel.new()
 	layer.add_child(_wheel)
