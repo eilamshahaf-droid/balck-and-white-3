@@ -32,6 +32,13 @@ extends Resource
 @export_range(0.0, 0.01) var wobble := 0.0012       # hand-painted wobble of every line
 @export_range(0.0, 0.2) var vignette := 0.03        # screen borders melting into paper
 
+@export_group("Tilt-shift")
+@export_range(0.0, 12.0) var tilt_blur := 4.0        # blur in pixels at the top and bottom edges (0 = off)
+@export_range(0.0, 1.0) var tilt_center := 0.55      # where the sharp band sits (0 = top, 1 = bottom)
+@export_range(0.0, 1.0) var tilt_width := 0.3        # height of the sharp band
+@export var tilt_height_min := 15.0                  # camera height (m) where the effect starts
+@export var tilt_height_max := 100.0                 # camera height (m) where it is full
+
 @export_group("Tone")
 @export var tonemap_filmic := false        # leave off to keep the city's own tone mapping
 @export var exposure := 1.0
