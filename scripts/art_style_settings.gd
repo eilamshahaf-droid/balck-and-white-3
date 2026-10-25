@@ -21,16 +21,16 @@ extends Resource
 @export_range(0.5, 2.0) var saturation := 1.15                 # watercolour pigments are vivid
 @export_range(0.0, 0.5) var pigment_lift := 0.05    # mixes every colour a little toward the paper
 @export var wash_scale := 0.08                      # size of the uneven wash blotches (smaller = bigger blotches)
-@export_range(0.0, 1.0) var wash_strength := 0.5
+@export_range(0.0, 1.0) var wash_strength := 0.18
 
 @export_group("Paper pass")
-@export_range(0.0, 1.0) var bleed := 0.3            # colours soften into each other
-@export_range(0.0, 1.0) var edge_strength := 0.55   # pigment pooling where colours meet
+@export_range(0.0, 1.0) var bleed := 0.15            # colours soften into each other
+@export_range(0.0, 1.0) var edge_strength := 0.3   # pigment pooling where colours meet
 @export_range(0.01, 0.5) var edge_threshold := 0.12
-@export_range(0.0, 0.5) var grain := 0.06
-@export_range(0.0, 0.3) var paper_strength := 0.05
-@export_range(0.0, 0.01) var wobble := 0.0025       # hand-painted wobble of every line
-@export_range(0.0, 0.2) var vignette := 0.05        # screen borders melting into paper
+@export_range(0.0, 0.5) var grain := 0.025
+@export_range(0.0, 0.3) var paper_strength := 0.025
+@export_range(0.0, 0.01) var wobble := 0.0012       # hand-painted wobble of every line
+@export_range(0.0, 0.2) var vignette := 0.03        # screen borders melting into paper
 
 @export_group("Tone")
 @export var tonemap_filmic := false        # leave off to keep the city's own tone mapping

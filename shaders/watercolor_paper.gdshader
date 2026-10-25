@@ -8,13 +8,13 @@ shader_type canvas_item;
 uniform sampler2D screen_tex : hint_screen_texture, filter_linear_mipmap;
 uniform sampler2D paper_noise : filter_linear_mipmap, repeat_enable;
 uniform vec3 paper_color : source_color = vec3(0.957, 0.933, 0.886);
-uniform float bleed = 0.3;
-uniform float edge_strength = 0.55;
+uniform float bleed = 0.15;
+uniform float edge_strength = 0.3;
 uniform float edge_threshold = 0.12;
-uniform float grain = 0.06;
-uniform float paper_strength = 0.05;
-uniform float wobble = 0.0025;
-uniform float vignette = 0.05;
+uniform float grain = 0.025;
+uniform float paper_strength = 0.025;
+uniform float wobble = 0.0012;
+uniform float vignette = 0.03;
 
 float lum(vec3 c) {
 	return dot(c, vec3(0.3, 0.59, 0.11));
