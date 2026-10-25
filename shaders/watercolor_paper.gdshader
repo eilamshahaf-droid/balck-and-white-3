@@ -22,6 +22,11 @@ uniform float tilt_blur = 0.0;      // blur radius in pixels at the edges
 uniform float tilt_center = 0.55;   // where the sharp band sits (0 = top, 1 = bottom)
 uniform float tilt_width = 0.3;     // height of the sharp band
 
+// Colour grade: a toy-box look, vivid and warm.
+uniform float vibrance = 0.3;
+uniform float contrast = 1.08;
+uniform vec3 warmth = vec3(1.03, 1.0, 0.95);
+
 float lum(vec3 c) {
 	return dot(c, vec3(0.3, 0.59, 0.11));
 }
@@ -62,6 +67,11 @@ void fragment() {
 	float edge = smoothstep(edge_threshold, edge_threshold * 3.0, e) * (1.0 - clamp(tilt / 3.0, 0.0, 1.0));
 	float patchy = texture(paper_noise, base * vec2(aspect, 1.0) * 3.0).r;
 	c = mix(c, c * c * 0.9, edge * edge_strength * (0.6 + 0.8 * patchy));
+
+	// Vibrance lifts dull colours more than vivid ones, then a gentle S-curve.
+	float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b));
+	c = mix(vec3(lum(c)), c, 1.0 + vibrance * (1.0 - (mx - mn)));
+	c = clamp((c - 0.5) * contrast + 0.5, 0.0, 1.0) * warmth;
 
 	// Granulation (fine, settles in the darker washes) and the paper itself.
 	float g = texture(paper_noise, FRAGCOORD.xy / 180.0).r;
