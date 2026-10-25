@@ -9,18 +9,8 @@ extends Resource
 ## I = intensity of the miracle, S = situation (+ helped, - hurt),
 ## k = the person's hidden skepticism, N = novelty (drops each time they see it again).
 
-@export_group("Miracles: intensity I")
-@export var lift_intensity := 0.25           # a person lifted into the air
-@export var float_intensity := 0.15          # a thing floating in the air
-@export var uproot_intensity := 0.4          # a tree torn out by the roots
-@export var throw_intensity := 0.35          # a person flung through the air
-@export var hard_landing_intensity := 0.5    # what the thrown person feels on landing
-
 @export_group("Miracles: situation S")
 @export_range(-1.0, 1.0) var spectacle_situation := 0.5    # watching something harmless and strange
-@export_range(-1.0, 1.0) var lifted_situation := 0.3       # being lifted gently yourself
-@export_range(-1.0, 1.0) var thrown_situation := -0.6      # watching someone get thrown: it hurts them
-@export_range(-1.0, 1.0) var hard_landing_situation := -1.0
 
 @export_group("Explanations")
 ## Before belief changes, each witness explains the miracle: god, chance, fraud or a plot.
@@ -40,7 +30,6 @@ extends Resource
 @export var friends_radius := 10.0
 @export var look_time := 2.5                 # seconds a witness stops and stares
 @export_range(0.0, 1.0) var phone_chance := 0.75     # share of people who film what they see
-@export var flight_report_time := 3.0        # a thrown thing counts as a miracle for this long
 
 @export_group("Water miracle")
 @export var water_cost := 15.0               # belief
@@ -58,15 +47,4 @@ extends Resource
 @export_group("Belief (the resource)")
 @export var belief_start := 30.0             # belief in the pool when the game starts
 @export var prayer_rate := 0.25              # belief per second from each full believer's prayers
-
-@export_group("Influence and hand power")
 @export_range(0.0, 1.0) var believer_threshold := 0.5   # belief above this counts as a believer
-@export var influence_radius := 50.0         # believers this close make the hand stronger here
-@export var base_strength := 1.5             # hand power with no believers around (lifts a person)
-@export var strength_per_believer := 1.2     # added by each full believer standing right here
-@export var max_strength := 12.0
-## Anything can be lifted. Past the local strength it costs, instead of being impossible:
-@export var overload_cost := 2.0             # belief per second for each unit of mass past the local strength
-@export_range(0.05, 1.0) var overload_min_grip := 0.25  # how weakly a far too heavy thing still follows the hand
-@export var overload_wiggle := 0.04          # moving the hand fast helps heave a heavy thing (per m/s)
-@export var overload_exposure := 1.0         # an obviously impossible lift draws this much more attention

@@ -1,8 +1,7 @@
 extends StaticBody3D
 ## A rooted tree. It bends away from the god's hand's wind, and the hand can
 ## grab it and pull: the tree resists, leans and shakes after the hand, and
-## when the pull has gone on long enough it comes out by the roots, if the
-## hand is strong enough here to lift it.
+## when the pull has gone on long enough it comes out by the roots.
 
 const UprootedTree = preload("res://scripts/uprooted_tree.gd")
 const S = preload("res://data/hand_settings.tres")
@@ -15,7 +14,7 @@ const DAMPING := 5.0
 var trunk_mat: Material
 var crown_mat: Material
 var crown_radius := 2.0
-## What the tree weighs once it is out; the hand compares it with its local strength.
+## What the tree weighs once it is out: how much it lags behind the hand.
 var mass := UprootedTree.MASS
 
 var _tilt := Vector2.ZERO       # x = lean toward +X, y = lean toward +Z
@@ -103,14 +102,11 @@ func on_released(_v: Vector3) -> void:
 
 ## Called by the hand every physics frame while it grips this tree. Returns the
 ## loose tree once the roots give way, otherwise null.
-## `strength` is how much mass the hand can lift here: weaker than the tree
-## and it comes out slowly (the hand pays belief meanwhile); stronger and faster.
-func hand_pull(anchor: Vector3, hand_velocity: Vector3, strength: float, delta: float) -> Node3D:
+func hand_pull(anchor: Vector3, hand_velocity: Vector3, delta: float) -> Node3D:
 	var pull := anchor - (global_position + Vector3.UP * 3.0)
 	var stretch := maxf(pull.length() - S.uproot_slack, 0.0)
-	var power := clampf(strength / mass, 0.25, 2.0)
 	# Pulling far builds tension; wiggling the hand (as in the original) helps more.
-	_tension += (stretch + hand_velocity.length() * S.uproot_speed_bonus) * S.hand_strength * power * delta
+	_tension += (stretch + hand_velocity.length() * S.uproot_speed_bonus) * S.hand_strength * delta
 	var effort: float = S.uproot_effort * crown_radius / 2.0
 	var lean := Vector2(pull.x, pull.z).limit_length(1.0)
 	var strain := clampf(_tension / effort, 0.0, 1.0)

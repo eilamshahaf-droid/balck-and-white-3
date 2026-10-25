@@ -1,14 +1,12 @@
 extends Node
 ## Belief, witnesses and exposure for the whole city.
 ##
-## The hand reports what it is doing that people could see (a person lifted,
-## a taxi floating, a tree torn out, someone flung through the air). A few
-## times a second, everyone with a clear view of it reacts once per event,
-## through the belief formula in balance.gd. People with phones film it, and
-## every video raises exposure: how convinced the world is that you exist.
-##
-## The hand's power at a spot comes from the believers around it, as with the
-## influence ring of the original games.
+## Miracles report what people could see (a cloud raining from a clear sky).
+## A few times a second, everyone with a clear view of it reacts once per
+## event, through the belief formula in balance.gd. People with phones film
+## it, and every video raises exposure: how convinced the world is that you
+## exist. Lifting and throwing with the hand are not reported: belief comes
+## only from miracles.
 
 const B = preload("res://data/balance.tres")
 const LAYER_WORLD := 1
@@ -16,7 +14,7 @@ const LAYER_WORLD := 1
 ## 0..1, shown to the player.
 var exposure := 0.0
 var believers := 0
-## The belief pool: believers' prayers fill it, miracles and overloaded lifts spend it.
+## The belief pool: believers' prayers fill it, miracles spend it.
 var belief_pool := B.belief_start
 
 var _events := {}        # subject -> {kind, intensity, situation, time_left, id}
@@ -53,18 +51,6 @@ func spend(amount: float) -> bool:
 		return false
 	belief_pool -= amount
 	return true
-
-
-## How much mass the hand can lift at `p`.
-func strength_at(p: Vector3) -> float:
-	var s: float = B.base_strength
-	for c in get_tree().get_nodes_in_group("citizens"):
-		if c.belief <= B.believer_threshold:
-			continue
-		var d: float = c.global_position.distance_to(p)
-		if d < B.influence_radius:
-			s += B.strength_per_believer * c.belief * (1.0 - d / B.influence_radius)
-	return minf(s, B.max_strength)
 
 
 func _physics_process(delta: float) -> void:
