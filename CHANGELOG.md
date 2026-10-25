@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-25: Both wheels open with a long left press; easier uprooting
+- Hold the LEFT button still for half a second on the ground: the miracle wheel opens around the hand. On a building: the sign wheel. The hand stays in the middle, grows so it can be seen from high up, and points where you move the mouse; the slice it points at lights up. Let go to cast the miracle on that spot, or give the sign to that building. Letting go in the middle, or a right click, cancels.
+- The right-button wheel and the "miracle in the hand" mode are gone. Drawing a circle with the right button still casts water.
+- Fire cast at the foot of a building sets the building alight; water cast near a fire goes onto it.
+- Trees come out much more easily (about seven times less effort).
+- Try it: press F5, hold the left button on a street, point at Fire and let go next to a building. Then do the same with Water and Heal. Grab a tree and pull.
+
 ## 2026-10-25: Miracle wheel, five miracles and divine signs on buildings
 - Hold the RIGHT mouse button still for a moment: the miracle wheel opens around the hand. Point at a miracle and let go. The miracle stays in the hand (a glowing orb in the palm), and every short left click casts it there. Dragging the city, lifting and throwing work as before meanwhile. A short right click puts the miracle away. Drawing a circle with the right button still casts water straight away.
 - Five miracles, each costing belief: Water (rain puts out fires), Fire (the building under the hand catches fire, or a small fire in the street; it burns out after a minute), Lightning (people nearby are knocked off their feet, cars jump and their alarms go off), Shield (a dome for 20 s; no fire or lightning inside it, fires under it go out), Heal (people lying hurt get up, burnt buildings are rebuilt). Every miracle is seen by the people around and changes what they believe.

@@ -1,7 +1,7 @@
 extends Control
-## A pie menu around a point on the screen. The hand points at a slice, and
-## the slice under it when the button comes up is the choice. Releasing near
-## the centre chooses nothing.
+## A ring menu around the hand. The hand sits in the hole in the middle and
+## points at a slice, which lights up; the slice it points at when the button
+## comes up is the choice. Releasing in the middle chooses nothing.
 ##
 ## Items: {"id": StringName, "label": String, "color": Color,
 ## optional "note": String, optional "enabled": bool}.
@@ -63,13 +63,13 @@ func _draw() -> void:
 	var step := TAU / n
 	var outer: float = S.wheel_radius_px
 	var inner: float = S.wheel_dead_zone_px
-	draw_circle(center, outer + 6.0, Color(0.05, 0.05, 0.08, 0.45))
+	draw_arc(center, (outer + inner) * 0.5, 0.0, TAU, 64, Color(0.05, 0.05, 0.08, 0.4), outer - inner + 10.0, true)
 	for i in n:
 		var item: Dictionary = items[i]
 		var enabled: bool = item.get("enabled", true)
 		var mid := -PI / 2.0 + i * step
-		var col: Color = item.color
-		col.a = 0.9 if i == highlighted else 0.45
+		var col: Color = item.color.lightened(0.45) if i == highlighted else item.color.darkened(0.15)
+		col.a = 0.95 if i == highlighted else 0.55
 		if not enabled:
 			col = Color(0.4, 0.4, 0.4, 0.35)
 		var points := PackedVector2Array()

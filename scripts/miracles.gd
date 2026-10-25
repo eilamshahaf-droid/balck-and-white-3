@@ -23,6 +23,8 @@ signal miracle_failed(reason: StringName)
 const RAY_LENGTH := 3000.0
 const LAYER_WORLD := 1
 const HARMFUL: Array[StringName] = [&"fire", &"lightning"]
+const FIRE_SNAP := 15.0       # metres: water cast this close to a fire goes onto it
+const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets it alight
 
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
@@ -90,6 +92,9 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 
 
 func _water(ground: Vector3) -> Node3D:
+	var fire := _burning_near(ground, FIRE_SNAP)
+	if fire:
+		ground = fire.global_position  # rain next to a fire was meant for the fire
 	var rain: Node3D = RainScript.new()
 	city.add_child(rain)
 	rain.start(ground)
@@ -100,6 +105,8 @@ func _water(ground: Vector3) -> Node3D:
 
 
 func _fire(ground: Vector3, building: Node3D) -> Node3D:
+	if building == null:
+		building = _building_near(ground, BUILDING_SNAP)  # fire at a wall's foot takes the building
 	var fire: Node3D = _fire_on(building) if building else null
 	if fire:
 		fire.rekindle()  # a burnt-out building catches again
@@ -155,6 +162,26 @@ func _fire_near(camera: Camera3D, screen_pos: Vector2, radius: float) -> Node3D:
 				best_d = d
 				best = fire
 	return best
+
+
+func _burning_near(p: Vector3, radius: float) -> Node3D:
+	var best: Node3D = null
+	var best_d := radius
+	for fire in get_tree().get_nodes_in_group("fires"):
+		var d := Vector2(fire.global_position.x - p.x, fire.global_position.z - p.z).length()
+		if fire.is_burning() and d < best_d:
+			best_d = d
+			best = fire
+	return best
+
+
+func _building_near(p: Vector3, margin: float) -> Node3D:
+	for b in get_tree().get_nodes_in_group("buildings"):
+		var half := DivineSign.building_size(b) / 2.0 + Vector3.ONE * margin
+		var d: Vector3 = (p - b.global_position).abs()
+		if d.x < half.x and d.z < half.z:
+			return b
+	return null
 
 
 func _fire_on(building: Node3D) -> Node3D:

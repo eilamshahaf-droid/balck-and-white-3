@@ -5,11 +5,10 @@ extends Node3D
 ## Left button on a person or taxi: pick it up (drag, or hold past a tap).
 ## Release while still = put down; release while moving = throw.
 ## Short click without moving = tap. Double-click = fly the camera there.
-## Left button held still on a building = ask for the sign wheel.
-## Right button held still = ask for the miracle wheel; dragged = draw a
-## gesture (a circle = water); a short right click = cancel.
-## The hand only reports these requests; hand_tools.gd opens the wheels and
-## miracles.gd casts, so the movement code here doesn't know about either.
+## Left button held still = ask for a wheel (hand_tools.gd decides which:
+## signs on a building, miracles anywhere else). While a wheel is open the
+## hand stays at its centre and points where the mouse goes.
+## Right button dragged: draw a gesture (a circle = water).
 ##
 ## Held things hang from the hand on a damped spring, so heavy things lag and
 ## swing. Throw speed is the hand's motion averaged over the last moments.
@@ -22,14 +21,8 @@ const Sfx = preload("res://scripts/sfx.gd")
 const HandVisual = preload("res://scripts/hand_visual.gd")
 const Gesture = preload("res://scripts/gesture.gd")
 
-## The right button was held still: open the miracle wheel here.
-signal wheel_requested(screen_pos: Vector2)
-## The left button was held still on a building: open the sign wheel for it.
-signal building_held(building: Node3D, screen_pos: Vector2)
-## A short click while a tool (a charged miracle) is in the hand, instead of a tap.
-signal spot_clicked(screen_pos: Vector2)
-## A short right click without moving.
-signal right_clicked
+## The left button was held still on `hit` (a raycast result: position, collider).
+signal long_pressed(hit: Dictionary, screen_pos: Vector2)
 ## A circle was drawn with the right button (`screen_radius` in pixels).
 signal circle_drawn(screen_pos: Vector2, screen_radius: float)
 ## Something was drawn with the right button that isn't a known gesture.
@@ -49,8 +42,6 @@ var hovered: Node3D = null
 var hand_velocity := Vector3.ZERO
 ## The building the hand is pointing at (kept solid by the camera).
 var pointed_building: Node3D = null
-## True while the hand carries a tool: short clicks go to spot_clicked instead of tapping.
-var spot_tool_active := false
 
 var _visual: Node3D
 var _shadow: MeshInstance3D
@@ -58,6 +49,7 @@ var _shadow_mat := StandardMaterial3D.new()
 var _arc_mesh := ImmediateMesh.new()
 var _arc_mat := StandardMaterial3D.new()
 var _outline_mat := StandardMaterial3D.new()
+var _point_outline_mat := StandardMaterial3D.new()
 
 var _press := Press.NONE
 var _press_time := 0.0
@@ -69,8 +61,9 @@ var _history: Array = []   # [time, position, mouse] samples, for throw velocity
 var _tap_timer := 0.0
 var _drawing := false
 var _gesture := PackedVector2Array()
-var _gesture_time := 0.0
-var _gesture_moved := false
+var _point_anchor := Vector3.INF   # while a wheel is open: where the hand stays
+var _point_from := Vector2.ZERO     # the wheel's centre on screen
+var _point_zoom := 1.0              # how much bigger the hand is drawn while pointing
 var _trail: Line2D
 
 
@@ -128,6 +121,12 @@ func _ready() -> void:
 	_outline_mat.cull_mode = BaseMaterial3D.CULL_FRONT
 	_outline_mat.grow = true
 	_outline_mat.grow_amount = 0.08
+	# A dark rim on the hand while it points at a wheel, so it reads on a white roof.
+	_point_outline_mat.albedo_color = Color(0.15, 0.12, 0.2)
+	_point_outline_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_point_outline_mat.cull_mode = BaseMaterial3D.CULL_FRONT
+	_point_outline_mat.grow = true
+	_point_outline_mat.grow_amount = 0.06
 
 
 func _physics_process(delta: float) -> void:
@@ -140,9 +139,8 @@ func _physics_process(delta: float) -> void:
 	if surface_hit:
 		_surface = surface_hit.position
 	_update_press()
-	_update_right_hold()
 	var target: Node3D = null
-	if not held and _press != Press.DRAG_GROUND:
+	if not held and _press != Press.DRAG_GROUND and _point_anchor == Vector3.INF:
 		target = _pick_target(hit)
 
 	# Sit on the mouse ray, a little in front of the surface, so the fingertip
@@ -154,8 +152,11 @@ func _physics_process(delta: float) -> void:
 	if target and (not hit or hit.collider != target):
 		# Lean gently toward a nearby target without jumping onto it.
 		goal += (_aim_point(target) - _surface) * S.magnet_strength
+	if _point_anchor != Vector3.INF:
+		goal = _point_anchor
 	global_position = global_position.lerp(goal, 1.0 - exp(-S.follow_rate * delta))
-	rotation.y = rig.yaw
+	rotation.y = rig.yaw - _point_angle()
+	_update_point_zoom(delta)
 	_record_history()
 	hand_velocity = _throw_velocity() / S.throw_multiplier if S.throw_multiplier > 0.0 else Vector3.ZERO
 	get_tree().call_group("wind_reactive", "on_hand_wind", self)
@@ -189,32 +190,57 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not held:
 			_drawing = true
 			_gesture = PackedVector2Array([event.position])
-			_gesture_time = _time()
-			_gesture_moved = false
 		elif not event.pressed and _drawing:
 			_drawing = false
-			if _gesture_moved:
-				_finish_gesture()
-			else:
-				_trail.clear_points()
-				right_clicked.emit()
+			_finish_gesture()
 	elif event is InputEventMouseMotion and _drawing:
 		if _gesture[-1].distance_to(event.position) > 4.0:
 			_gesture.append(event.position)
-		if _gesture[0].distance_to(event.position) > S.drag_threshold_px:
-			_gesture_moved = true
 		_trail.points = _gesture
 
 
-# --- Right button: gestures and the miracle wheel ---
+# --- Pointing at a wheel ---
 
-## Held still long enough, the right button asks for the wheel instead of a gesture.
-func _update_right_hold() -> void:
-	if _drawing and not _gesture_moved and _time() - _gesture_time > S.wheel_hold_time:
-		_drawing = false
-		_trail.clear_points()
-		wheel_requested.emit(_gesture[0])
+## Stay where the hand is and point from `screen_pos` toward the mouse.
+func start_pointing(screen_pos: Vector2) -> void:
+	_point_anchor = global_position
+	_point_from = screen_pos
+	# Seen from high up the hand is a speck; grow it to fill the wheel's hole.
+	var px_per_m := _screen_radius(get_viewport().get_camera_3d(), global_position, 1.0)
+	var hand_px := px_per_m * S.hand_scale * HandVisual.LENGTH
+	_point_zoom = maxf(1.0, S.wheel_dead_zone_px * 1.3 / maxf(hand_px, 0.01))
+	for mesh in _visual.find_children("*", "MeshInstance3D", true, false):
+		mesh.material_overlay = _point_outline_mat
 
+
+func stop_pointing() -> void:
+	_point_anchor = Vector3.INF
+	_point_zoom = 1.0
+	for mesh in _visual.find_children("*", "MeshInstance3D", true, false):
+		mesh.material_overlay = null
+
+
+## Grow or shrink the drawn hand. While pointing, its middle (not its
+## fingertip) sits on the wheel's centre, so the finger reaches out to a slice.
+func _update_point_zoom(delta: float) -> void:
+	var w := 1.0 - exp(-12.0 * delta)
+	var size: float = lerpf(_visual.scale.x, S.hand_scale * _point_zoom, w)
+	var offset := HandVisual.FINGERTIP_OFFSET
+	if _point_anchor != Vector3.INF:
+		offset.z -= HandVisual.LENGTH * 0.5
+	_visual.scale = Vector3.ONE * size
+	_visual.position = _visual.position.lerp(offset * size, w)
+
+
+## Clockwise screen angle from straight up to the mouse, while pointing at a wheel.
+func _point_angle() -> float:
+	if _point_anchor == Vector3.INF:
+		return 0.0
+	var d := get_viewport().get_mouse_position() - _point_from
+	return atan2(d.x, -d.y) if d.length() > S.wheel_dead_zone_px else 0.0
+
+
+# --- Right button: gestures ---
 
 func _finish_gesture() -> void:
 	var points := _gesture
@@ -249,16 +275,9 @@ func _on_press(event: InputEventMouseButton) -> void:
 func _on_release() -> void:
 	match _press:
 		Press.PENDING_OBJECT:
-			if spot_tool_active:
-				spot_clicked.emit(_press_pos)
-			else:
-				_tap(_press_target)
+			_tap(_press_target)
 		Press.PENDING_GROUND:
-			if _time() - _press_time > S.tap_max_time or _press_hit.is_empty():
-				pass
-			elif spot_tool_active:
-				spot_clicked.emit(_press_pos)
-			else:
+			if _time() - _press_time <= S.tap_max_time and not _press_hit.is_empty():
 				_knock(_press_hit.position, Sfx.surface_of(_press_hit.collider))
 		Press.DRAG_GROUND:
 			rig.end_ground_drag()
@@ -283,11 +302,10 @@ func _update_press() -> void:
 	elif _press == Press.PENDING_GROUND and moved:
 		rig.begin_ground_drag(_press_pos)
 		_press = Press.DRAG_GROUND
-	elif _press == Press.PENDING_GROUND and _time() - _press_time > S.sign_hold_time \
-			and not _press_hit.is_empty() and _press_hit.collider.is_in_group("buildings"):
-		# Holding still on a building: the hand rests on it to give it a sign.
+	elif _press == Press.PENDING_GROUND and _time() - _press_time > S.wheel_hold_time and not _press_hit.is_empty():
+		# Holding still: the hand rests on the spot and asks what to do there.
 		_press = Press.NONE
-		building_held.emit(_press_hit.collider, _press_pos)
+		long_pressed.emit(_press_hit, _press_pos)
 
 
 # --- Holding and throwing ---
@@ -561,7 +579,7 @@ func _update_pose(delta: float) -> void:
 		_visual.set_pose(HandVisual.Pose.TAP)
 	elif held or _press == Press.DRAG_GROUND:
 		_visual.set_pose(HandVisual.Pose.GRAB)
-	elif hovered:
+	elif hovered or _point_anchor != Vector3.INF:
 		_visual.set_pose(HandVisual.Pose.POINT)
 	else:
 		_visual.set_pose(HandVisual.Pose.OPEN)
