@@ -5,9 +5,9 @@ extends Node
 ## On a building it is the sign wheel; anywhere else, the miracle wheel. The
 ## hand stays in the middle and points where the mouse goes; letting go
 ## gives the sign to the building, or puts the miracle in the hand (a glowing
-## orb in the palm). The next long press, on the ground or a building, casts
-## it there; a right click puts it away. Moving, lifting and throwing work as
-## usual meanwhile. A circle drawn with the right button casts water straight away.
+## orb in the palm). It fills the hand: nothing can be picked up meanwhile.
+## The next short click (or long press), on the ground or a building, casts
+## it there; a right click puts it away. Dragging still moves the city. A circle drawn with the right button casts water straight away.
 
 const M = preload("res://data/miracles.tres")
 const DivineSign = preload("res://scripts/divine_sign.gd")
@@ -65,6 +65,7 @@ func _ready() -> void:
 		_colors[item.id] = item.color
 
 	hand.long_pressed.connect(_open)
+	hand.tool_clicked.connect(_cast_charged)
 	hand.right_clicked.connect(func(): _charge(&""))
 	hand.circle_drawn.connect(func(at: Vector2, radius: float): miracles.cast_at_screen(&"water", at, radius))
 
@@ -85,9 +86,7 @@ func _input(event: InputEvent) -> void:
 
 func _open(hit: Dictionary, at: Vector2) -> void:
 	if charged != &"":
-		var building: Node3D = hit.collider if hit.collider.is_in_group("buildings") else null
-		miracles.cast(charged, hit.position, building)
-		_charge(&"")
+		_cast_charged(hit)
 		return
 	_target = hit
 	hand.start_pointing(at)
@@ -131,8 +130,15 @@ func _close() -> void:
 	hand.stop_pointing()
 
 
+func _cast_charged(hit: Dictionary) -> void:
+	var building: Node3D = hit.collider if hit.collider.is_in_group("buildings") else null
+	miracles.cast(charged, hit.position, building)
+	_charge(&"")
+
+
 func _charge(kind: StringName) -> void:
 	charged = kind
+	hand.carrying_tool = kind != &""
 	_orb.visible = kind != &""
 	if _orb.visible:
 		_orb_mat.albedo_color = _colors[kind]

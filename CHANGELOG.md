@@ -8,6 +8,11 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/art_style.tres`, group "Depth of field" (`dof_blur` 0 turns it off). V still switches the whole style off to compare.
 - Try it: press F5 and tilt the camera toward the horizon (middle-drag) to see the far streets melt.
 
+## 2026-10-25: A short click casts the miracle in the hand
+- With a miracle in the hand, a short click on the ground or a building casts it (a long press still works too). Dragging still moves the city.
+- The miracle fills the hand: until it is cast or dropped (right click), the hand doesn't pick anything up or highlight people, so a click on someone casts the miracle there instead of lifting them.
+- Try it: press F5, hold the left button still on a street, pick Lightning, then click on a group of people.
+
 ## 2026-10-25: Debug panel for testing
 - A small panel on the right (F1 hides it): Believers +5 (the nearest non-believers to the middle of the screen), Believers -5, Believers come here (every believer moves to the corner in the middle of the screen), Belief +100, and Path: good / evil / neutral.
 - Try it: press F5, click "Believers come here", then put a sign on a building next to them.

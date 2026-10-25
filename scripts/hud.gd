@@ -10,4 +10,4 @@ func _process(_delta: float) -> void:
 	text = "Belief: %d    Believers: %d    Exposure: %d%%    Path: %s" % [
 		floori(faith.belief_pool), faith.believers, roundi(faith.exposure * 100.0), faith.path()]
 	if tools.charged != &"":
-		text += "    In the hand: %s (hold still to cast, right-click to drop)" % String(tools.charged).capitalize()
+		text += "    In the hand: %s (click to cast, right-click to drop)" % String(tools.charged).capitalize()

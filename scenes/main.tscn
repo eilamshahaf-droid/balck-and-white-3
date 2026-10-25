@@ -51,7 +51,7 @@ offset_right = 900.0
 offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person, taxi or tree: pick up (wiggle to uproot), flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
-Hold LEFT still on the ground: miracle wheel (pick one, then hold still again to cast it)    On a building: sign wheel    Right-drag a circle: water
+Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: sign wheel    Right-drag a circle: water
 The hand can lift anything. Only miracles change what people believe."
 
 [node name="Stats" type="Label" parent="HUD"]

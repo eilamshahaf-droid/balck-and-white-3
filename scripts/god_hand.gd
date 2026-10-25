@@ -23,6 +23,8 @@ const Gesture = preload("res://scripts/gesture.gd")
 
 ## The left button was held still on `hit` (a raycast result: position, collider).
 signal long_pressed(hit: Dictionary, screen_pos: Vector2)
+## A short click on `hit` while the hand carries a tool.
+signal tool_clicked(hit: Dictionary)
 ## A circle was drawn with the right button (`screen_radius` in pixels).
 signal circle_drawn(screen_pos: Vector2, screen_radius: float)
 ## Something was drawn with the right button that isn't a known gesture.
@@ -44,6 +46,9 @@ var hovered: Node3D = null
 var hand_velocity := Vector3.ZERO
 ## The building the hand is pointing at (kept solid by the camera).
 var pointed_building: Node3D = null
+## The hand carries a tool (a miracle): it can't pick anything up, and a short
+## click uses the tool instead of tapping. Dragging still moves the city.
+var carrying_tool := false
 
 var _visual: Node3D
 var _shadow: MeshInstance3D
@@ -142,7 +147,7 @@ func _physics_process(delta: float) -> void:
 		_surface = surface_hit.position
 	_update_press()
 	var target: Node3D = null
-	if not held and _press != Press.DRAG_GROUND and _point_anchor == Vector3.INF:
+	if not held and not carrying_tool and _press != Press.DRAG_GROUND and _point_anchor == Vector3.INF:
 		target = _pick_target(hit)
 
 	# Sit on the mouse ray, a little in front of the surface, so the fingertip
@@ -271,7 +276,7 @@ func _on_press(event: InputEventMouseButton) -> void:
 	_press_time = _time()
 	_press_pos = event.position
 	_press_hit = hit
-	_press_target = _pick_target(hit)
+	_press_target = null if carrying_tool else _pick_target(hit)
 	# Over empty sky the city can still be grabbed: the grip goes on the street plane.
 	_press = Press.PENDING_OBJECT if _press_target else Press.PENDING_GROUND
 
@@ -282,7 +287,10 @@ func _on_release() -> void:
 			_tap(_press_target)
 		Press.PENDING_GROUND:
 			if _time() - _press_time <= S.tap_max_time and not _press_hit.is_empty():
-				_knock(_press_hit.position, Sfx.surface_of(_press_hit.collider))
+				if carrying_tool:
+					tool_clicked.emit(_press_hit)
+				else:
+					_knock(_press_hit.position, Sfx.surface_of(_press_hit.collider))
 		Press.DRAG_GROUND:
 			rig.end_ground_drag()
 		Press.HOLDING:
