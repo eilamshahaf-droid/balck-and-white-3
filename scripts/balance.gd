@@ -31,20 +31,11 @@ extends Resource
 @export var look_time := 2.5                 # seconds a witness stops and stares
 @export_range(0.0, 1.0) var phone_chance := 0.75     # share of people who film what they see
 
-@export_group("Water miracle")
-@export var water_cost := 15.0               # belief
-@export var water_intensity := 0.8
-@export_range(0.0, 1.0) var water_deniability := 0.35   # rain on a clear night: odd, but people try
-@export var rain_time := 6.0
-@export var rain_radius := 8.0
-@export var rain_seen_from := 90.0           # metres: a cloud from a clear sky is seen from far off
-@export var douse_rate := 0.35               # fire heat put out per second under the rain
-
 @export_group("Exposure")
 @export var exposure_per_video := 0.02       # per filming witness, times the miracle's intensity
 @export var exposure_decay := 0.0005         # per second, as the news moves on
 
 @export_group("Belief (the resource)")
-@export var belief_start := 30.0             # belief in the pool when the game starts
+@export var belief_start := 100.0            # belief in the pool when the game starts
 @export var prayer_rate := 0.25              # belief per second from each full believer's prayers
 @export_range(0.0, 1.0) var believer_threshold := 0.5   # belief above this counts as a believer

@@ -39,6 +39,12 @@ extends Resource
 @export var knock_radius := 5.0              # a tap on a wall opens a door this close
 @export var notice_radius := 15.0            # people this close turn toward a knock
 
+@export_group("Tool wheels")
+@export var wheel_hold_time := 0.25          # right button held still this long opens the miracle wheel
+@export var sign_hold_time := 0.5            # left button held still on a building this long opens the sign wheel
+@export var wheel_radius_px := 130.0
+@export var wheel_dead_zone_px := 28.0       # releasing this close to the centre chooses nothing
+
 @export_group("Trees")
 @export var uproot_effort := 20.0             # metres-seconds of pulling to uproot a big tree
 @export var uproot_speed_bonus := 0.5        # how much fast hand motion (wiggling, yanking) adds to the pull

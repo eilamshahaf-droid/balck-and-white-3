@@ -5,7 +5,11 @@ extends Node3D
 ## Left button on a person or taxi: pick it up (drag, or hold past a tap).
 ## Release while still = put down; release while moving = throw.
 ## Short click without moving = tap. Double-click = fly the camera there.
-## Right button: draw a miracle gesture (a circle = water).
+## Left button held still on a building = ask for the sign wheel.
+## Right button held still = ask for the miracle wheel; dragged = draw a
+## gesture (a circle = water); a short right click = cancel.
+## The hand only reports these requests; hand_tools.gd opens the wheels and
+## miracles.gd casts, so the movement code here doesn't know about either.
 ##
 ## Held things hang from the hand on a damped spring, so heavy things lag and
 ## swing. Throw speed is the hand's motion averaged over the last moments.
@@ -14,16 +18,22 @@ extends Node3D
 ## nobody's belief changes from seeing it. Belief comes only from miracles.
 
 const S = preload("res://data/hand_settings.tres")
-const B = preload("res://data/balance.tres")
 const Sfx = preload("res://scripts/sfx.gd")
 const HandVisual = preload("res://scripts/hand_visual.gd")
 const Gesture = preload("res://scripts/gesture.gd")
-const RainScript = preload("res://scripts/rain.gd")
 
-## A miracle was cast: `kind` (&"water"), and the node that performs it.
-signal miracle_cast(kind: StringName, miracle: Node3D)
-## A gesture was drawn but not recognised, or there wasn't enough belief.
-signal miracle_failed(reason: StringName)
+## The right button was held still: open the miracle wheel here.
+signal wheel_requested(screen_pos: Vector2)
+## The left button was held still on a building: open the sign wheel for it.
+signal building_held(building: Node3D, screen_pos: Vector2)
+## A short click while a tool (a charged miracle) is in the hand, instead of a tap.
+signal spot_clicked(screen_pos: Vector2)
+## A short right click without moving.
+signal right_clicked
+## A circle was drawn with the right button (`screen_radius` in pixels).
+signal circle_drawn(screen_pos: Vector2, screen_radius: float)
+## Something was drawn with the right button that isn't a known gesture.
+signal gesture_unrecognised
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
 const LAYER_WORLD := 1
@@ -32,7 +42,6 @@ const LAYER_PROPS := 4
 enum Press { NONE, PENDING_GROUND, PENDING_OBJECT, DRAG_GROUND, HOLDING }
 
 @onready var rig: Node3D = get_node("../CameraRig")
-@onready var faith: Node = get_node("../Faith")
 
 var held: Node3D = null
 var hovered: Node3D = null
@@ -40,6 +49,8 @@ var hovered: Node3D = null
 var hand_velocity := Vector3.ZERO
 ## The building the hand is pointing at (kept solid by the camera).
 var pointed_building: Node3D = null
+## True while the hand carries a tool: short clicks go to spot_clicked instead of tapping.
+var spot_tool_active := false
 
 var _visual: Node3D
 var _shadow: MeshInstance3D
@@ -58,6 +69,8 @@ var _history: Array = []   # [time, position, mouse] samples, for throw velocity
 var _tap_timer := 0.0
 var _drawing := false
 var _gesture := PackedVector2Array()
+var _gesture_time := 0.0
+var _gesture_moved := false
 var _trail: Line2D
 
 
@@ -127,6 +140,7 @@ func _physics_process(delta: float) -> void:
 	if surface_hit:
 		_surface = surface_hit.position
 	_update_press()
+	_update_right_hold()
 	var target: Node3D = null
 	if not held and _press != Press.DRAG_GROUND:
 		target = _pick_target(hit)
@@ -175,16 +189,32 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not held:
 			_drawing = true
 			_gesture = PackedVector2Array([event.position])
+			_gesture_time = _time()
+			_gesture_moved = false
 		elif not event.pressed and _drawing:
 			_drawing = false
-			_finish_gesture()
+			if _gesture_moved:
+				_finish_gesture()
+			else:
+				_trail.clear_points()
+				right_clicked.emit()
 	elif event is InputEventMouseMotion and _drawing:
 		if _gesture[-1].distance_to(event.position) > 4.0:
 			_gesture.append(event.position)
+		if _gesture[0].distance_to(event.position) > S.drag_threshold_px:
+			_gesture_moved = true
 		_trail.points = _gesture
 
 
-# --- Miracles ---
+# --- Right button: gestures and the miracle wheel ---
+
+## Held still long enough, the right button asks for the wheel instead of a gesture.
+func _update_right_hold() -> void:
+	if _drawing and not _gesture_moved and _time() - _gesture_time > S.wheel_hold_time:
+		_drawing = false
+		_trail.clear_points()
+		wheel_requested.emit(_gesture[0])
+
 
 func _finish_gesture() -> void:
 	var points := _gesture
@@ -192,42 +222,9 @@ func _finish_gesture() -> void:
 	tween.tween_property(_trail, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(func(): _trail.clear_points(); _trail.modulate.a = 1.0)
 	if Gesture.is_circle(points):
-		cast_water(Gesture.centroid(points), Gesture.radius(points))
+		circle_drawn.emit(Gesture.centroid(points), Gesture.radius(points))
 	elif points.size() > 8:
-		miracle_failed.emit(&"unknown_gesture")
-
-
-## Rain on the spot under `screen_pos`. A fire inside the drawn circle
-## (`screen_radius` pixels) is what the god meant, so the rain goes there.
-func cast_water(screen_pos: Vector2, screen_radius := 0.0) -> void:
-	var camera := get_viewport().get_camera_3d()
-	var target := Vector3.INF
-	var best := screen_radius * 1.3
-	for fire in get_tree().get_nodes_in_group("fires"):
-		if fire.is_burning() and not camera.is_position_behind(fire.global_position):
-			var d := camera.unproject_position(fire.global_position).distance_to(screen_pos)
-			if d < best:
-				best = d
-				target = fire.global_position
-	if target == Vector3.INF:
-		var from := camera.project_ray_origin(screen_pos)
-		var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(screen_pos) * RAY_LENGTH, LAYER_WORLD)
-		query.exclude = rig.faded_rids()
-		var hit := get_world_3d().direct_space_state.intersect_ray(query)
-		if not hit:
-			return
-		target = hit.position
-	if not faith.spend(B.water_cost):
-		_visual.strain()
-		miracle_failed.emit(&"no_belief")
-		return
-	var rain: Node3D = RainScript.new()
-	get_parent().add_child(rain)
-	rain.start(target)
-	Sfx.play(get_tree(), rain.global_position, &"chime", 0.6)
-	faith.report(rain, &"see_rain", B.water_intensity, B.spectacle_situation, B.rain_time, true,
-			B.water_deniability, rain.helped(), B.rain_seen_from)
-	miracle_cast.emit(&"water", rain)
+		gesture_unrecognised.emit()
 
 
 # --- Press handling: drag the city, pick up, tap, or fly ---
@@ -252,9 +249,16 @@ func _on_press(event: InputEventMouseButton) -> void:
 func _on_release() -> void:
 	match _press:
 		Press.PENDING_OBJECT:
-			_tap(_press_target)
+			if spot_tool_active:
+				spot_clicked.emit(_press_pos)
+			else:
+				_tap(_press_target)
 		Press.PENDING_GROUND:
-			if _time() - _press_time <= S.tap_max_time and not _press_hit.is_empty():
+			if _time() - _press_time > S.tap_max_time or _press_hit.is_empty():
+				pass
+			elif spot_tool_active:
+				spot_clicked.emit(_press_pos)
+			else:
 				_knock(_press_hit.position, Sfx.surface_of(_press_hit.collider))
 		Press.DRAG_GROUND:
 			rig.end_ground_drag()
@@ -279,6 +283,11 @@ func _update_press() -> void:
 	elif _press == Press.PENDING_GROUND and moved:
 		rig.begin_ground_drag(_press_pos)
 		_press = Press.DRAG_GROUND
+	elif _press == Press.PENDING_GROUND and _time() - _press_time > S.sign_hold_time \
+			and not _press_hit.is_empty() and _press_hit.collider.is_in_group("buildings"):
+		# Holding still on a building: the hand rests on it to give it a sign.
+		_press = Press.NONE
+		building_held.emit(_press_hit.collider, _press_pos)
 
 
 # --- Holding and throwing ---

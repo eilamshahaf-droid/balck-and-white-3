@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-25: Miracle wheel, five miracles and divine signs on buildings
+- Hold the RIGHT mouse button still for a moment: the miracle wheel opens around the hand. Point at a miracle and let go. The miracle stays in the hand (a glowing orb in the palm), and every short left click casts it there. Dragging the city, lifting and throwing work as before meanwhile. A short right click puts the miracle away. Drawing a circle with the right button still casts water straight away.
+- Five miracles, each costing belief: Water (rain puts out fires), Fire (the building under the hand catches fire, or a small fire in the street; it burns out after a minute), Lightning (people nearby are knocked off their feet, cars jump and their alarms go off), Shield (a dome for 20 s; no fire or lightning inside it, fires under it go out), Heal (people lying hurt get up, burnt buildings are rebuilt). Every miracle is seen by the people around and changes what they believe.
+- Hold the LEFT mouse button still on a building for half a second: the building lights up and the sign wheel opens. Blessed (a beam of light), Cursed (a storm cloud), Protected (a ring of light) or Clear. Signs only mark buildings for now; believers will act on them later.
+- The belief pool starts at 100 so there is room to try the miracles.
+- All the numbers: `data/miracles.tres` (water moved there from `data/balance.tres`). Wheel timings: `data/hand_settings.tres`.
+- Try it: press F5, hold the right button, pick Fire, click a building, then pick Water and click it, then Heal.
+
 ## 2026-10-25: The main scene is a hand test bed; lifting is play, not a miracle
 - The opening (the burning building) is switched off for now: the game starts straight in free play in daylight, with a congregation ready. To bring it back, select the `Opening` node in `scenes/main.tscn` and turn on `enabled`.
 - No strength limit: the hand lifts anything anywhere, at full grip, for free. The strength ring under the hand and the strength number at the top are gone. A different limit will come later.

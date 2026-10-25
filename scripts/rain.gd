@@ -2,7 +2,7 @@ extends Node3D
 ## The water miracle: a small cloud gathers out of a clear sky and rains on
 ## one spot for a few seconds, putting out any fire under it.
 
-const B = preload("res://data/balance.tres")
+const M = preload("res://data/miracles.tres")
 const Sfx = preload("res://scripts/sfx.gd")
 
 var _time_left := 0.0
@@ -21,7 +21,7 @@ func start(ground: Vector3) -> void:
 	var under := get_world_3d().direct_space_state.intersect_ray(query)
 	if under and under.collider.is_in_group("buildings"):
 		see_through.append(under.rid)
-	_time_left = B.rain_time
+	_time_left = M.rain_time
 	_cloud = Node3D.new()
 	add_child(_cloud)
 	var grey := StandardMaterial3D.new()
@@ -37,7 +37,7 @@ func start(ground: Vector3) -> void:
 		sphere.height = r * 1.6
 		puff.mesh = sphere
 		puff.material_override = grey
-		puff.position = Vector3(randf_range(-1, 1) * B.rain_radius * 0.7, randf_range(-0.5, 0.8), randf_range(-1, 1) * B.rain_radius * 0.7)
+		puff.position = Vector3(randf_range(-1, 1) * M.rain_radius * 0.7, randf_range(-0.5, 0.8), randf_range(-1, 1) * M.rain_radius * 0.7)
 		_cloud.add_child(puff)
 	_cloud.scale = Vector3.ONE * 0.1
 
@@ -53,7 +53,7 @@ func start(ground: Vector3) -> void:
 	_rain.amount = 500
 	_rain.lifetime = 0.6
 	_rain.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	_rain.emission_box_extents = Vector3(B.rain_radius, 0.2, B.rain_radius)
+	_rain.emission_box_extents = Vector3(M.rain_radius, 0.2, M.rain_radius)
 	_rain.direction = Vector3.DOWN
 	_rain.spread = 2.0
 	_rain.gravity = Vector3.DOWN * 20.0
@@ -79,8 +79,8 @@ func _physics_process(delta: float) -> void:
 	if _time_left > 0.5:
 		for fire in get_tree().get_nodes_in_group("fires"):
 			var d := Vector2(fire.global_position.x - global_position.x, fire.global_position.z - global_position.z).length()
-			if d < B.rain_radius + 6.0:
-				fire.douse(B.douse_rate * delta)
+			if d < M.rain_radius + 6.0:
+				fire.douse(M.douse_rate * delta)
 	if _time_left < -2.0:
 		queue_free()
 
@@ -90,6 +90,6 @@ func helped() -> Array:
 	var out := []
 	for fire in get_tree().get_nodes_in_group("fires"):
 		var d := Vector2(fire.global_position.x - global_position.x, fire.global_position.z - global_position.z).length()
-		if d < B.rain_radius + 6.0:
+		if d < M.rain_radius + 6.0:
 			out.append_array(fire.endangered)
 	return out

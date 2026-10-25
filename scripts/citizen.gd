@@ -317,6 +317,23 @@ func on_released(throw_velocity: Vector3) -> void:
 		_spin = Vector3.ZERO
 
 
+## Blown off our feet (by lightning). Returns false if the hand is holding us.
+func knock_over(push: Vector3) -> bool:
+	if state == State.HELD:
+		return false
+	on_released(push)
+	return true
+
+
+## A healing miracle: whoever is lying down gets straight back up.
+## Returns true if this person needed it.
+func heal() -> bool:
+	if state != State.DOWN and state != State.GETTING_UP:
+		return false
+	_stand_up()
+	return true
+
+
 func _land() -> void:
 	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
 	if _spin == Vector3.ZERO and impact < HARD_LANDING_SPEED * 0.6:
