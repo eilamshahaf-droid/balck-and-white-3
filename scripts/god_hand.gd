@@ -5,6 +5,7 @@ extends Node3D
 ## Left button on a person or taxi: pick it up (drag, or hold past a tap).
 ## Release while still = put down; release while moving = throw.
 ## Short click without moving = tap. Double-click = fly the camera there.
+## Right button: draw a miracle gesture (a circle = water).
 ##
 ## Held things hang from the hand on a damped spring, so heavy things lag and
 ## swing. Throw speed is the hand's motion averaged over the last moments.
@@ -19,6 +20,13 @@ const S = preload("res://data/hand_settings.tres")
 const B = preload("res://data/balance.tres")
 const Sfx = preload("res://scripts/sfx.gd")
 const HandVisual = preload("res://scripts/hand_visual.gd")
+const Gesture = preload("res://scripts/gesture.gd")
+const RainScript = preload("res://scripts/rain.gd")
+
+## A miracle was cast: `kind` (&"water"), and the node that performs it.
+signal miracle_cast(kind: StringName, miracle: Node3D)
+## A gesture was drawn but not recognised, or there wasn't enough belief.
+signal miracle_failed(reason: StringName)
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
 const LAYER_WORLD := 1
@@ -59,6 +67,9 @@ var _surface := Vector3.ZERO
 var _history: Array = []   # [time, position, mouse] samples, for throw velocity
 var _tap_timer := 0.0
 var _strength_timer := 0.0
+var _drawing := false
+var _gesture := PackedVector2Array()
+var _trail: Line2D
 
 
 func _ready() -> void:
@@ -104,6 +115,17 @@ func _ready() -> void:
 	_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_ring.top_level = true
 	add_child(_ring)
+
+	# The gesture being drawn, on screen.
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	_trail = Line2D.new()
+	_trail.width = 6.0
+	_trail.default_color = Color(0.7, 0.85, 1.0, 0.8)
+	_trail.joint_mode = Line2D.LINE_JOINT_ROUND
+	_trail.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	_trail.end_cap_mode = Line2D.LINE_CAP_ROUND
+	layer.add_child(_trail)
 
 	_arc_mat.albedo_color = Color(1, 1, 1, 0.6)
 	_arc_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -177,9 +199,68 @@ func _notification(what: int) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
+			_drawing = false
+			_trail.clear_points()
 			_on_press(event)
 		else:
 			_on_release()
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.pressed and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not held:
+			_drawing = true
+			_gesture = PackedVector2Array([event.position])
+		elif not event.pressed and _drawing:
+			_drawing = false
+			_finish_gesture()
+	elif event is InputEventMouseMotion and _drawing:
+		if _gesture[-1].distance_to(event.position) > 4.0:
+			_gesture.append(event.position)
+		_trail.points = _gesture
+
+
+# --- Miracles ---
+
+func _finish_gesture() -> void:
+	var points := _gesture
+	var tween := create_tween()
+	tween.tween_property(_trail, "modulate:a", 0.0, 0.4)
+	tween.tween_callback(func(): _trail.clear_points(); _trail.modulate.a = 1.0)
+	if Gesture.is_circle(points):
+		cast_water(Gesture.centroid(points), Gesture.radius(points))
+	elif points.size() > 8:
+		miracle_failed.emit(&"unknown_gesture")
+
+
+## Rain on the spot under `screen_pos`. A fire inside the drawn circle
+## (`screen_radius` pixels) is what the god meant, so the rain goes there.
+func cast_water(screen_pos: Vector2, screen_radius := 0.0) -> void:
+	var camera := get_viewport().get_camera_3d()
+	var target := Vector3.INF
+	var best := screen_radius * 1.3
+	for fire in get_tree().get_nodes_in_group("fires"):
+		if fire.is_burning() and not camera.is_position_behind(fire.global_position):
+			var d := camera.unproject_position(fire.global_position).distance_to(screen_pos)
+			if d < best:
+				best = d
+				target = fire.global_position
+	if target == Vector3.INF:
+		var from := camera.project_ray_origin(screen_pos)
+		var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(screen_pos) * RAY_LENGTH, LAYER_WORLD)
+		query.exclude = rig.faded_rids()
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit:
+			return
+		target = hit.position
+	if not faith.spend(B.water_cost):
+		_visual.strain()
+		miracle_failed.emit(&"no_belief")
+		return
+	var rain: Node3D = RainScript.new()
+	get_parent().add_child(rain)
+	rain.start(target)
+	Sfx.play(get_tree(), rain.global_position, &"chime", 0.6)
+	faith.report(rain, &"see_rain", B.water_intensity, B.spectacle_situation, B.rain_time, true,
+			B.water_deniability, rain.helped(), B.rain_seen_from)
+	miracle_cast.emit(&"water", rain)
 
 
 # --- Press handling: drag the city, pick up, tap, or fly ---

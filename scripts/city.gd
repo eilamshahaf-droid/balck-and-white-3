@@ -11,7 +11,7 @@ const AVENUE_WIDTH := 14.0
 const STREET_WIDTH := 9.0
 const SIDEWALK := 2.5
 const CITIZEN_COUNT := 60
-## Your first followers: a small congregation living around one corner.
+## Sandbox mode (skipping the opening): a small congregation living around one corner.
 const CONGREGATION_SIZE := 14
 const CONGREGATION_HOME := Vector2i(1, 3)
 const TAXI_COUNT := 30
@@ -34,6 +34,9 @@ const PigeonScript := preload("res://scripts/pigeon.gd")
 var show_belief := false
 
 var rng := RandomNumberGenerator.new()
+var env: Environment
+var sun: DirectionalLight3D
+var _sky_mat: ProceduralSkyMaterial
 var half_size := Vector2.ZERO
 var _materials := {}
 
@@ -84,12 +87,10 @@ func random_grid() -> Vector2i:
 
 func _build_environment() -> void:
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color(0.35, 0.55, 0.85)
-	sky_mat.sky_horizon_color = Color(0.75, 0.8, 0.88)
-	sky_mat.ground_horizon_color = Color(0.6, 0.6, 0.62)
+	_sky_mat = sky_mat
 	var sky := Sky.new()
 	sky.sky_material = sky_mat
-	var env := Environment.new()
+	env = Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
@@ -97,18 +98,28 @@ func _build_environment() -> void:
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 0.8
 	env.fog_enabled = true
-	env.fog_light_color = Color(0.75, 0.8, 0.88)
 	env.fog_density = 0.0008
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
 
-	var sun := DirectionalLight3D.new()
+	sun = DirectionalLight3D.new()
 	sun.rotation = Vector3(deg_to_rad(-50), deg_to_rad(35), 0)
-	sun.light_energy = 0.9
 	sun.shadow_enabled = true
 	sun.directional_shadow_max_distance = 500.0
 	add_child(sun)
+	set_daylight(1.0)
+
+
+## 0 = night, 1 = full day. The opening starts at night.
+func set_daylight(t: float) -> void:
+	_sky_mat.sky_top_color = Color(0.03, 0.04, 0.1).lerp(Color(0.35, 0.55, 0.85), t)
+	_sky_mat.sky_horizon_color = Color(0.1, 0.1, 0.18).lerp(Color(0.75, 0.8, 0.88), t)
+	_sky_mat.ground_horizon_color = Color(0.06, 0.06, 0.08).lerp(Color(0.6, 0.6, 0.62), t)
+	env.fog_light_color = Color(0.08, 0.08, 0.14).lerp(Color(0.75, 0.8, 0.88), t)
+	env.ambient_light_energy = lerpf(0.4, 0.5, t)
+	sun.light_energy = lerpf(0.3, 0.9, t)
+	sun.light_color = Color(0.6, 0.7, 1.0).lerp(Color.WHITE, t)
 
 
 func _build_ground() -> void:
@@ -206,16 +217,23 @@ func _spawn_citizens() -> void:
 		var c: CharacterBody3D = CitizenScript.new()
 		c.city = self
 		c.grid = random_grid()
-		if n < CONGREGATION_SIZE:
-			c.grid = CONGREGATION_HOME + Vector2i(0, rng.randi_range(-2, 2))
 		c.collision_layer = LAYER_CITIZENS
 		c.collision_mask = LAYER_WORLD
 		add_child(c)
-		if n < CONGREGATION_SIZE:
-			c.belief = rng.randf_range(0.6, 0.95)
-			c.skepticism = rng.randf_range(0.0, 0.3)
-		else:
-			c.belief = rng.randf_range(-0.6, 0.2)
+		c.belief = rng.randf_range(-0.6, 0.2)
+
+
+## Skip the story: start with a congregation of believers in one neighbourhood.
+func found_congregation() -> void:
+	var people := get_tree().get_nodes_in_group("citizens")
+	for n in mini(CONGREGATION_SIZE, people.size()):
+		var c: Node3D = people[n]
+		c.home = CONGREGATION_HOME + Vector2i(0, rng.randi_range(-2, 2))
+		c.grid = c.home
+		c.global_position = intersection(c.grid) + c.lane_offset + Vector3.UP * 0.1
+		c.belief = rng.randf_range(0.6, 0.95)
+		c.skepticism = rng.randf_range(0.0, 0.3)
+		c.target = c.global_position
 
 
 func _add_door(base: Vector3, depth: float) -> void:

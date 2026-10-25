@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
 [ext_resource type="Script" path="res://scripts/god_hand.gd" id="3_hand"]
 [ext_resource type="Script" path="res://scripts/faith.gd" id="4_faith"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5_hud"]
+[ext_resource type="Script" path="res://scripts/opening.gd" id="6_opening"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -21,6 +22,9 @@ script = ExtResource("4_faith")
 [node name="GodHand" type="Node3D" parent="."]
 script = ExtResource("3_hand")
 
+[node name="Opening" type="Node" parent="."]
+script = ExtResource("6_opening")
+
 [node name="HUD" type="CanvasLayer" parent="."]
 
 [node name="Help" type="Label" parent="HUD"]
@@ -30,7 +34,7 @@ offset_right = 900.0
 offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person, taxi or tree: pick up (wiggle to uproot), flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom
-Keys: WASD move, Q/E rotate, R/F tilt    B: show hidden belief (debug)
+Right-drag a circle: water miracle    Keys: WASD move, Q/E rotate, R/F tilt    B: show hidden belief (debug)
 People who see a miracle stop and stare, and some film it. The hand is strongest near your believers; heavier lifts elsewhere cost belief."
 
 [node name="Stats" type="Label" parent="HUD"]

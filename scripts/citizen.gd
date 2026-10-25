@@ -33,6 +33,10 @@ var belief := 0.0
 var skepticism := 0.5
 var has_phone := false
 var home := Vector2i.ZERO
+## Stand still (watching a fire, waiting on a roof) instead of walking the grid.
+var idle := false
+## Story moments can fix how this person explains the next miracle (&"god", &"fraud", ...).
+var scripted_explanation := &""
 
 var _body: MeshInstance3D
 var _own_mat := StandardMaterial3D.new()
@@ -47,6 +51,8 @@ var _events_seen := {}     # ids of miracle events already reacted to
 var _phone: MeshInstance3D
 var _phone_timer := 0.0
 var _look_at_target := Vector3.INF   # where a witness stares while stopped
+var _bubble: Label3D
+var _bubble_timer := 0.0
 
 
 func _ready() -> void:
@@ -83,6 +89,17 @@ func _ready() -> void:
 	_phone.position = Vector3(0, 1.55, 0.35)
 	_phone.visible = false
 	add_child(_phone)
+
+	_bubble = Label3D.new()
+	_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_bubble.position.y = 2.6
+	_bubble.font_size = 40
+	_bubble.fixed_size = true       # readable from a god's height
+	_bubble.pixel_size = 0.0011
+	_bubble.outline_size = 12
+	_bubble.no_depth_test = true
+	_bubble.visible = false
+	add_child(_bubble)
 
 	speed = randf_range(2.0, 4.0)
 	skepticism = randf()
@@ -127,6 +144,12 @@ func _physics_process(delta: float) -> void:
 			if _down_timer <= 0.0:
 				_stand_up()
 		State.WALKING:
+			if idle:
+				velocity = Vector3(0, -1.0, 0)
+				move_and_slide()
+				if _look_at_target != Vector3.INF:
+					_turn_to(_look_at_target)
+				return
 			if _pause > 0.0:
 				_pause -= delta
 				if _look_at_target != Vector3.INF:
@@ -146,6 +169,8 @@ func _physics_process(delta: float) -> void:
 func _process(delta: float) -> void:
 	_phone_timer -= delta
 	_phone.visible = _phone_timer > 0.0 and state == State.WALKING
+	_bubble_timer -= delta
+	_bubble.visible = _bubble_timer > 0.0
 	if city.show_belief:
 		# Red = skeptic, white = undecided, gold = believer.
 		var c := Color.WHITE
@@ -176,21 +201,73 @@ func has_seen_event(id: int) -> bool:
 	return _events_seen.has(id)
 
 
-## Saw miracle event `id` happen at `at`. Stops to stare and maybe films it.
+## Saw miracle event `e` (see faith.gd) happen at `at`. First picks an
+## explanation (god, chance, fraud or a plot), which decides what the miracle
+## does to belief, then stops to stare and maybe films it.
 ## Returns true if this person filmed it.
-func witness(id: int, kind: StringName, intensity: float, situation: float, at: Vector3, friends_belief: float) -> bool:
+func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
 	if _events_seen.size() > 30:
 		_events_seen.clear()
-	_events_seen[id] = true
-	react_to_miracle(kind, intensity, situation, friends_belief)
+	_events_seen[e.id] = true
+	var helped: bool = e.helped.has(self)
+	var situation: float = B.helped_situation if helped else e.situation
+	var explanation := _explain(e.deniability, 1.0 if helped else B.bystander_timing, friends_belief)
+	match explanation:
+		&"god":
+			react_to_miracle(e.kind, e.intensity, situation, friends_belief)
+		&"fraud":
+			belief = clampf(belief - e.intensity * B.fraud_penalty, -1.0, 1.0)
+		&"plot":
+			belief = clampf(belief - e.intensity * B.plot_penalty, -1.0, 1.0)
+	# Big miracles hold people longer, and they keep talking about them.
+	var hold: float = B.look_time * (1.0 + e.intensity * 3.0)
+	_say(explanation, hold * 1.4)
 	if state != State.WALKING:
 		return false
-	_pause = maxf(_pause, B.look_time * randf_range(0.7, 1.3))
+	_pause = maxf(_pause, hold * randf_range(0.7, 1.3))
 	_look_at_target = at
 	_turn_to(at)
 	if has_phone:
 		_phone_timer = _pause
 	return has_phone
+
+
+## Weigh the four explanations of the design doc and pick one.
+## deniability: how easy it is to explain without a god; timing: how exactly it
+## answered this person's need right now.
+func _explain(deniability: float, timing: float, friends_belief: float) -> StringName:
+	if scripted_explanation != &"":
+		var fixed := scripted_explanation
+		scripted_explanation = &""
+		return fixed
+	var weights := {
+		&"god": (1.0 - skepticism) * (0.3 + timing) * (1.0 - deniability * 0.5) + maxf(friends_belief, 0.0) * 0.5,
+		&"chance": deniability * (0.4 + skepticism * 0.6),
+		&"fraud": skepticism * (1.0 - deniability) * B.fraud_weight * (1.5 if has_phone else 1.0),
+		&"plot": skepticism * B.plot_weight,
+	}
+	var total := 0.0
+	for k in weights:
+		total += weights[k]
+	var roll := randf() * total
+	for k in weights:
+		roll -= weights[k]
+		if roll <= 0.0:
+			return k
+	return &"chance"
+
+
+## A short line over the head, so the player can read how a miracle landed.
+func _say(explanation: StringName, seconds: float) -> void:
+	var lines := {
+		&"god": ["It's a miracle!", Color(1.0, 0.85, 0.35)],
+		&"chance": ["Just luck.", Color(0.85, 0.85, 0.85)],
+		&"fraud": ["It's a hoax.", Color(1.0, 0.45, 0.4)],
+		&"plot": ["Someone's behind this...", Color(0.7, 0.6, 1.0)],
+	}
+	_bubble.text = lines[explanation][0]
+	_bubble.modulate = lines[explanation][1]
+	_bubble_timer = seconds
 
 
 func _turn_to(p: Vector3) -> void:
@@ -275,6 +352,14 @@ func _respawn() -> void:
 	_body.quaternion = UPRIGHT
 	_body.position.y = 0.9
 	_pick_next_target()
+
+
+## Back to walking the streets from wherever this person is now.
+func resume_walking() -> void:
+	idle = false
+	_look_at_target = Vector3.INF
+	grid = city.nearest_grid(global_position)
+	target = city.intersection(grid) + lane_offset
 
 
 func _pick_next_target() -> void:

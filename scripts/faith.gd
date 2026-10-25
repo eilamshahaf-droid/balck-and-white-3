@@ -28,11 +28,17 @@ var _prayer := 0.0       # belief per second, from everyone praying right now
 ## Something visible is happening to `subject`. Call it again to keep the
 ## event alive; a new kind starts a new event that everyone may react to again,
 ## unless `replace` is false (then whatever is already going on carries on).
-func report(subject: Node3D, kind: StringName, intensity: float, situation: float, duration := 0.5, replace := true) -> void:
+## deniability: how easy it is to explain without a god (0..1).
+## helped: the people this miracle actually helped (they read it most kindly).
+## radius: how far away it can be seen (a cloud over a roof carries further than a lifted cab).
+func report(subject: Node3D, kind: StringName, intensity: float, situation: float, duration := 0.5,
+		replace := true, deniability := 0.15, helped: Array = [], radius := -1.0) -> void:
 	var e: Dictionary = _events.get(subject, {})
 	if e.is_empty() or (replace and e.kind != kind):
 		_next_id += 1
-		e = {"kind": kind, "intensity": intensity, "situation": situation, "id": _next_id}
+		e = {"kind": kind, "intensity": intensity, "situation": situation, "id": _next_id,
+				"deniability": deniability, "helped": helped,
+				"radius": radius if radius > 0.0 else B.witness_radius}
 		_events[subject] = e
 	e.time_left = maxf(e.get("time_left", 0.0), duration)
 
@@ -90,12 +96,15 @@ func _witness(subject: Node3D, e: Dictionary, people: Array) -> void:
 		if c == subject or c.has_seen_event(e.id):
 			continue
 		var eye: Vector3 = c.global_position + Vector3.UP * 1.6
-		if eye.distance_to(at) > B.witness_radius:
+		if eye.distance_to(at) > e.radius:
 			continue
 		var query := PhysicsRayQueryParameters3D.create(eye, at, LAYER_WORLD)
+		var see_through = subject.get("see_through")
+		if see_through:
+			query.exclude = see_through
 		if space.intersect_ray(query):
 			continue  # a building is in the way
-		var filmed: bool = c.witness(e.id, e.kind, e.intensity, e.situation, at, _friends_belief(c, people))
+		var filmed: bool = c.witness(e, at, _friends_belief(c, people))
 		if filmed:
 			exposure = minf(exposure + B.exposure_per_video * e.intensity, 1.0)
 

@@ -124,13 +124,15 @@ func is_ground_dragging() -> bool:
 	return _ground_drag
 
 
-func fly_to(point: Vector3, close: bool) -> void:
+func fly_to(point: Vector3, close: bool, to_distance := -1.0) -> void:
 	_flying = true
 	_fly_t = 0.0
 	_fly_from_pivot = target_pivot
 	_fly_to_pivot = point
 	_fly_from_distance = target_distance
 	_fly_to_distance = S.fly_distance_object if close else minf(target_distance, S.fly_distance_ground)
+	if to_distance > 0.0:
+		_fly_to_distance = to_distance
 
 
 ## Zoom by ratio while keeping `point` fixed on screen.
