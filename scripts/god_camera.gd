@@ -264,11 +264,8 @@ func _set_ghost(mesh: MeshInstance3D, amount: float) -> void:
 		return
 	if not mesh.has_meta("solid_material"):
 		mesh.set_meta("solid_material", mesh.material_override)
-		var ghost: StandardMaterial3D = mesh.material_override.duplicate()
-		ghost.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		ghost.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_ALWAYS
-		mesh.material_override = ghost
-	mesh.material_override.albedo_color.a = 1.0 - amount
+		mesh.material_override = ArtStyle.make_ghost(mesh.material_override)
+	ArtStyle.set_ghost_alpha(mesh.material_override, 1.0 - amount)
 
 
 func _bodies_between(from: Vector3, to: Vector3, radius: float) -> Array:
