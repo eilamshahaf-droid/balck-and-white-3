@@ -8,6 +8,10 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/art_style.tres`, group "Depth of field" (`dof_blur` 0 turns it off). V still switches the whole style off to compare.
 - Try it: press F5 and tilt the camera toward the horizon (middle-drag) to see the far streets melt.
 
+## 2026-10-25: Debug panel for testing
+- A small panel on the right (F1 hides it): Believers +5 (the nearest non-believers to the middle of the screen), Believers -5, Believers come here (every believer moves to the corner in the middle of the screen), Belief +100, and Path: good / evil / neutral.
+- Try it: press F5, click "Believers come here", then put a sign on a building next to them.
+
 ## 2026-10-25: Believers answer the divine signs
 - A sign on a building now costs 3 belief, and up to six believers nearby walk over and act on it, each by the sign and by the god's path. The path ("Path" at the top of the screen) comes from your miracles so far: water, shield and heal are good deeds, fire and lightning evil ones; one kind has to lead by 3 to set it, otherwise you are neutral.
 - Blessed: they gather to pray, and each one adds belief to the pool.

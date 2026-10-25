@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
 [ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
 [ext_resource type="Script" path="res://scripts/sign_followers.gd" id="9_signs"]
+[ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -33,6 +34,9 @@ script = ExtResource("8_tools")
 
 [node name="SignFollowers" type="Node" parent="."]
 script = ExtResource("9_signs")
+
+[node name="DebugPanel" type="CanvasLayer" parent="."]
+script = ExtResource("10_debug")
 
 [node name="Opening" type="Node" parent="."]
 script = ExtResource("6_opening")
