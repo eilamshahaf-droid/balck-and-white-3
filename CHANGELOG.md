@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-25: Depth of field: what is near stays sharp, the background melts
+- Like a macro photo of a miniature: whatever stands in the middle of the screen is in focus, and everything further away blurs softly. Things nearer than that (the hand, whatever it lifts, the tops of tall towers) stay sharp. It adds to the tilt-shift for a smoother, more natural blend between the city and the background.
+- Numbers: `data/art_style.tres`, group "Depth of field" (`dof_blur` 0 turns it off). V still switches the whole style off to compare.
+- Try it: press F5 and tilt the camera toward the horizon (middle-drag) to see the far streets melt.
+
 ## 2026-10-25: Picking a miracle puts it in the hand
 - Choosing a miracle on the wheel no longer casts it straight away. It goes into the hand (a glowing orb in the palm, and "In the hand: ..." at the top of the screen). The next long press, on the ground or on a building, casts it there. A right click drops it. Moving, lifting and throwing work as usual while it is in the hand.
 - Try it: press F5, hold the left button still on a street, pick Fire and let go. Then hold the left button still on a building.
