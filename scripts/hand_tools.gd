@@ -4,8 +4,10 @@ extends Node
 ## Hold the left button still for a moment: a wheel opens around the hand.
 ## On a building it is the sign wheel; anywhere else, the miracle wheel. The
 ## hand stays in the middle and points where the mouse goes; letting go
-## gives the sign to the building, or casts the miracle on the spot.
-## A circle drawn with the right button still casts water straight away.
+## gives the sign to the building, or puts the miracle in the hand (a glowing
+## orb in the palm). The next long press, on the ground or a building, casts
+## it there; a right click puts it away. Moving, lifting and throwing work as
+## usual meanwhile. A circle drawn with the right button casts water straight away.
 
 const DivineSign = preload("res://scripts/divine_sign.gd")
 const RadialWheel = preload("res://scripts/radial_wheel.gd")
@@ -21,6 +23,12 @@ var _wheel: RadialWheel
 var _mode := Mode.NONE
 var _target := {}          # the raycast hit the wheel was opened on
 var _outline := StandardMaterial3D.new()
+## The miracle in the hand (&"" for none).
+var charged := &""
+var _orb: MeshInstance3D
+var _orb_mat := StandardMaterial3D.new()
+var _glow: OmniLight3D
+var _colors := {}   # miracle id -> colour
 
 
 func _ready() -> void:
@@ -36,7 +44,27 @@ func _ready() -> void:
 	_outline.grow = true
 	_outline.grow_amount = 0.3
 
+	# The charged miracle: a small glowing orb in the palm.
+	_orb_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.6
+	sphere.height = 1.2
+	_orb = MeshInstance3D.new()
+	_orb.mesh = sphere
+	_orb.material_override = _orb_mat
+	_orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_orb.position = Vector3(0, -0.6, 0.6)
+	_orb.visible = false
+	hand.add_child(_orb)
+	_glow = OmniLight3D.new()
+	_glow.omni_range = 8.0
+	_glow.light_energy = 2.0
+	_orb.add_child(_glow)
+	for item in miracles.wheel_items():
+		_colors[item.id] = item.color
+
 	hand.long_pressed.connect(_open)
+	hand.right_clicked.connect(func(): _charge(&""))
 	hand.circle_drawn.connect(func(at: Vector2, radius: float): miracles.cast_at_screen(&"water", at, radius))
 
 
@@ -55,6 +83,11 @@ func _input(event: InputEvent) -> void:
 
 
 func _open(hit: Dictionary, at: Vector2) -> void:
+	if charged != &"":
+		var building: Node3D = hit.collider if hit.collider.is_in_group("buildings") else null
+		miracles.cast(charged, hit.position, building)
+		_charge(&"")
+		return
 	_target = hit
 	hand.start_pointing(at)
 	if hit.collider.is_in_group("buildings"):
@@ -77,7 +110,7 @@ func _choose() -> void:
 	if id != &"":
 		match _mode:
 			Mode.MIRACLES:
-				miracles.cast(id, _target.position, building)
+				_charge(id)
 			Mode.SIGNS:
 				if building:
 					DivineSign.mark(building, id)
@@ -93,6 +126,15 @@ func _close() -> void:
 	_target = {}
 	_mode = Mode.NONE
 	hand.stop_pointing()
+
+
+func _charge(kind: StringName) -> void:
+	charged = kind
+	_orb.visible = kind != &""
+	if _orb.visible:
+		_orb_mat.albedo_color = _colors[kind]
+		_glow.light_color = _colors[kind]
+		Sfx.play(get_tree(), hand.global_position, &"chime", 0.4)
 
 
 func _set_outline(building: Node3D, on: bool) -> void:

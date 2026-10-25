@@ -27,6 +27,8 @@ signal long_pressed(hit: Dictionary, screen_pos: Vector2)
 signal circle_drawn(screen_pos: Vector2, screen_radius: float)
 ## Something was drawn with the right button that isn't a known gesture.
 signal gesture_unrecognised
+## A right click without drawing anything.
+signal right_clicked
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
 const LAYER_WORLD := 1
@@ -251,6 +253,8 @@ func _finish_gesture() -> void:
 		circle_drawn.emit(Gesture.centroid(points), Gesture.radius(points))
 	elif points.size() > 8:
 		gesture_unrecognised.emit()
+	elif points.size() <= 2:
+		right_clicked.emit()
 
 
 # --- Press handling: drag the city, pick up, tap, or fly ---

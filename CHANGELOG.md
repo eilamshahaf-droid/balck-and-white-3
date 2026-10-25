@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-25: Picking a miracle puts it in the hand
+- Choosing a miracle on the wheel no longer casts it straight away. It goes into the hand (a glowing orb in the palm, and "In the hand: ..." at the top of the screen). The next long press, on the ground or on a building, casts it there. A right click drops it. Moving, lifting and throwing work as usual while it is in the hand.
+- Try it: press F5, hold the left button still on a street, pick Fire and let go. Then hold the left button still on a building.
+
 ## 2026-10-25: Wheel drawn on its own top layer
 - The miracle and sign wheels now draw on their own screen layer above everything else (the HUD and the art style's watercolour pass), sized to the whole window. Fix attempt for the wheel not showing on one Windows PC while its clicks worked.
 - Try it: press F5 and hold the left button still on a street.
