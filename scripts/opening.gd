@@ -2,10 +2,12 @@ extends Node
 ## The opening scene from the design doc: "the burning building".
 ##
 ## Night. An old apartment building is burning, the fire trucks are stuck, a
-## tenant is trapped on the roof. The activist advisor teaches the water
-## miracle; the player draws it; witnesses each pick an explanation; the one
-## the miracle saved becomes the first believer. The strategist sets the next
-## task, and the morning paper calls it a sprinkler malfunction.
+## tenant is trapped on the roof. The Keepers of the Hand, the secret
+## community that kept the god's tradition and has just called Him back,
+## teach the water miracle; the player draws it; witnesses each pick an
+## explanation; the one the miracle saved becomes the first believer outside
+## the Keepers. The strategist sets the next task, and the morning paper
+## calls it a localised weather event.
 ##
 ## Tab skips the story and starts the sandbox with a ready congregation.
 ## The first believer and one filming skeptic are scripted; every other
@@ -14,7 +16,7 @@ extends Node
 const FireScript = preload("res://scripts/fire.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
-const ACTIVIST := ["Maya (activist)", Color(0.55, 0.9, 0.6)]
+const KEEPER := ["Old Nadia, Keeper of the Hand", Color(0.55, 0.9, 0.6)]
 const STRATEGIST := ["Victor (strategist)", Color(0.95, 0.7, 0.45)]
 const CROWD_SIZE := 14
 
@@ -83,34 +85,34 @@ func _begin() -> void:
 	await _wait(2.0)
 	if _skipped: return
 
-	await _say(ACTIVIST, "Look down there. The fire trucks are stuck in traffic. Nobody is coming for that building.")
+	await _say(KEEPER, "Meeting 2,847 of the Keepers of the Hand. Last week's prayer: no answer... Wait. Did the dryer just stop? It's Him. Somebody write it in the minutes.")
 	if _skipped: return
-	await _say(ACTIVIST, "There's someone trapped on the roof. You can help, if you're willing.")
+	await _say(KEEPER, "And look out the window: the old building on the corner is on fire. The fire trucks are stuck in traffic. Again. There's someone on the roof.")
 	if _skipped: return
-	await _say(ACTIVIST, "Hold the RIGHT mouse button and draw a circle over the burning building. Water will come.")
+	await _say(KEEPER, "The old stories say You brought rain. Hold the RIGHT mouse button and draw a circle over the burning building.")
 	if _skipped: return
 
 	# Wait for a water miracle that actually lands on the fire.
-	_show(ACTIVIST, "Hold the RIGHT mouse button and draw a circle over the fire.", false)
+	_show(KEEPER, "Hold the RIGHT mouse button and draw a circle over the fire.", false)
 	while fire.is_burning():
 		var outcome = await _next_miracle_attempt()
 		if _skipped: return
 		if outcome == &"missed":
-			_show(ACTIVIST, "Closer. Draw the circle right over the flames.", false)
+			_show(KEEPER, "Closer! Right over the flames. My eyes are old, but even I can see You missed.", false)
 		elif outcome == &"unknown_gesture":
-			_show(ACTIVIST, "Almost. Keep the right button down and draw one round loop.", false)
+			_show(KEEPER, "Almost. Keep the right button down and draw one round loop, like stirring soup.", false)
 		elif outcome == &"no_belief":
 			faith.belief_pool = maxf(faith.belief_pool, 20.0)  # the story never strands you here
-			_show(ACTIVIST, "Try once more. I believe you can.", false)
+			_show(KEEPER, "Try once more. We waited three hundred years; we can wait a minute.", false)
 		elif outcome == &"hit":
-			_show(ACTIVIST, "Yes! Keep it coming...", false)
+			_show(KEEPER, "Yes! Keep it coming...", false)
 			var t := 0.0
 			while fire.is_burning() and t < 8.0 and not _skipped:
 				await get_tree().process_frame
 				t += get_process_delta_time()
 			if _skipped: return
 			if fire.is_burning():
-				_show(ACTIVIST, "It's not out yet. Once more!", false)
+				_show(KEEPER, "It's not out yet. Once more!", false)
 
 	await _wait(1.5)
 	if _skipped: return
@@ -120,7 +122,7 @@ func _begin() -> void:
 	rig.target_pitch = deg_to_rad(25.0)
 	await _wait(4.5)
 	if _skipped: return
-	await _say(ACTIVIST, "Listen to them. Everyone explains it their own way: luck, a hoax, a miracle. And that one is filming.")
+	await _say(KEEPER, "Listen to them. Everyone explains it their own way: luck, a hoax, a miracle. And that one is filming.")
 	if _skipped: return
 
 	# The first believer.
@@ -131,11 +133,11 @@ func _begin() -> void:
 	_show_belief_meter(survivor)
 	Sfx.play(get_tree(), survivor.global_position, &"chime", 0.8)
 	var count: int = faith.believers
-	var line := "Him. You saved him, and he knows it. Look: you now have one believer." if count <= 1 \
-			else "Him. You saved him, and he knows it. You now have %d believers." % count
-	await _say(ACTIVIST, line + "  (This is the only time you'll see his belief. From now on, read people by how they act.)")
+	var line := "Him. You saved him, and he knows it. Your first believer outside our basement." if count <= 1 \
+			else "Him. You saved him, and he knows it. That's %d believers outside our basement." % count
+	await _say(KEEPER, line + "  (This is the only time you'll see his belief. From now on, read people by how they act.)")
 	if _skipped: return
-	await _say(STRATEGIST, "Charming. But one believer fades fast if he has nobody to talk to. And that video is already online.")
+	await _say(STRATEGIST, "Charming. But one believer fades fast if he has nobody to talk to. And that video already has more views than your whole tradition.")
 	if _skipped: return
 
 	# Morning.
@@ -150,7 +152,7 @@ func _begin() -> void:
 	await _wait_advance(8.0)
 	_paper.visible = false
 	if _skipped: return
-	await _say(STRATEGIST, "Your first job: help him tell his family. People believe the people they love, not miracles.")
+	await _say(KEEPER, "Your first job: help him tell his family. People believe the people they love, not miracles.")
 	if _skipped: return
 	await _say(STRATEGIST, "Until then, the city is yours. Every miracle in front of a camera brings the government closer.")
 	_finish()
@@ -361,8 +363,8 @@ func _build_ui() -> void:
 	_paper.add_theme_stylebox_override("panel", style)
 	var paper_box := VBoxContainer.new()
 	_paper.add_child(paper_box)
-	for line in [["THE CITY HERALD", 34], ["Morning edition", 14], ["\"SPRINKLER MALFUNCTION\" SAVES TENANT IN MIDTOWN BLAZE", 22],
-			["Fire department: \"A rare fault in the building's old system.\" Residents describe sudden rain from a clear sky.", 15],
+	for line in [["THE CITY HERALD", 34], ["Morning edition", 14], ["\"LOCALISED WEATHER EVENT\" SAVES TENANT IN BLAZE", 22],
+			["City spokesperson: \"A localised weather event.\" She added that the building's roof garden has no permit. Residents describe rain from a clear sky.", 15],
 			["Space: continue", 12]]:
 		var l := Label.new()
 		l.text = line[0]
