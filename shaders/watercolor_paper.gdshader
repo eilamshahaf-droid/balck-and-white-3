@@ -16,6 +16,12 @@ uniform float paper_strength = 0.025;
 uniform float wobble = 0.0012;
 uniform float vignette = 0.03;
 
+// Tilt-shift: the top and bottom of the screen go soft, so the city reads as a
+// miniature in the god's hand. tilt_blur is set every frame from camera height.
+uniform float tilt_blur = 0.0;      // blur radius in pixels at the edges
+uniform float tilt_center = 0.55;   // where the sharp band sits (0 = top, 1 = bottom)
+uniform float tilt_width = 0.3;     // height of the sharp band
+
 float lum(vec3 c) {
 	return dot(c, vec3(0.3, 0.59, 0.11));
 }
@@ -30,6 +36,17 @@ void fragment() {
 	vec2 uv = base + wob * wobble * 2.0;
 
 	vec3 c = textureLod(screen_tex, uv, 0.0).rgb;
+	float tilt = tilt_blur * smoothstep(tilt_width * 0.5, tilt_width * 0.5 + 0.35, abs(base.y - tilt_center));
+	if (tilt > 0.1) {
+		// Golden-angle disc of 16 taps.
+		vec3 acc = c;
+		for (int k = 1; k < 16; k++) {
+			float fk = float(k);
+			float a = fk * 2.39996;
+			acc += textureLod(screen_tex, uv + vec2(cos(a), sin(a)) * sqrt(fk / 15.0) * tilt * px, 0.0).rgb;
+		}
+		c = acc / 16.0;
+	}
 	vec3 r = textureLod(screen_tex, uv + vec2(px.x, 0.0), 0.0).rgb;
 	vec3 l = textureLod(screen_tex, uv - vec2(px.x, 0.0), 0.0).rgb;
 	vec3 u = textureLod(screen_tex, uv + vec2(0.0, px.y), 0.0).rgb;
@@ -42,7 +59,7 @@ void fragment() {
 
 	// Pigment pools where colours meet: darken towards the colour itself, never black.
 	float e = abs(lum(r) - lum(l)) + abs(lum(u) - lum(d)) + 0.5 * (length(r - l) + length(u - d));
-	float edge = smoothstep(edge_threshold, edge_threshold * 3.0, e);
+	float edge = smoothstep(edge_threshold, edge_threshold * 3.0, e) * (1.0 - clamp(tilt / 3.0, 0.0, 1.0));
 	float patchy = texture(paper_noise, base * vec2(aspect, 1.0) * 3.0).r;
 	c = mix(c, c * c * 0.9, edge * edge_strength * (0.6 + 0.8 * patchy));
 

@@ -87,6 +87,8 @@ func _process(_delta: float) -> void:
 			_colors[src] = c
 			_toon[src].set_shader_parameter("albedo", c)
 
+	_update_tilt_shift()
+
 	if _shot_path != "":
 		_shot_frames -= 1
 		if _shot_frames <= 0:
@@ -186,6 +188,16 @@ func _push_paper_params() -> void:
 	_paper_mat.set_shader_parameter("paper_strength", S.paper_strength)
 	_paper_mat.set_shader_parameter("wobble", S.wobble)
 	_paper_mat.set_shader_parameter("vignette", S.vignette)
+	_paper_mat.set_shader_parameter("tilt_center", S.tilt_center)
+	_paper_mat.set_shader_parameter("tilt_width", S.tilt_width)
+
+
+## The higher the god looks from, the more the city looks like a miniature.
+func _update_tilt_shift() -> void:
+	var cam := get_viewport().get_camera_3d()
+	var h := cam.global_position.y if cam else 0.0
+	var k := smoothstep(S.tilt_height_min, S.tilt_height_max, h)
+	_paper_mat.set_shader_parameter("tilt_blur", S.tilt_blur * k)
 
 
 ## Only the tone mapping: sky, ambient, fog and sun belong to the city's
