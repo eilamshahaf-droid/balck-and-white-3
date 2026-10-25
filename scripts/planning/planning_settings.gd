@@ -24,9 +24,31 @@ extends Resource
 	"temple": 20.0, "square": 24.0, "park": 44.0, "station": 18.0, "tower": 14.0,
 	"factory": 30.0, "monument": 16.0,
 }
+## How deep each landmark is, back from its street.
+@export var landmark_depth := {
+	"temple": 18.0, "square": 20.0, "park": 34.0, "station": 16.0, "tower": 16.0,
+	"factory": 24.0, "monument": 16.0,
+}
 ## Seen from far away, a tall landmark reaches further (Lynch's landmark; BW2's hill bonus).
 @export var tower_height := 90.0
 @export var height_reach_per_metre := 0.8    # extra radius for each metre of height above 30 m
+## BW2's hill bonus: anything built higher up reaches further, per metre above the river.
+@export var hill_reach_per_metre := 1.2
+
+@export_group("Land and roads")
+@export var hill_height := 48.0              # how high the hills get, in metres
+@export var river_width := 36.0
+@export var bridge_height := 2.5             # road deck over water
+@export var road_widths := {"avenue": 14.0, "street": 9.0, "path": 4.5, "pedestrian": 9.0}
+@export var sidewalk := 2.5
+## Roads steeper than this are stepped paths in the starting city, and show red while drawing.
+@export var road_max_grade := 0.12
+## How far a road may bend sideways to go around a slope.
+@export var road_max_bend := 22.0
+@export var grid_avenue_spacing := 90.0
+@export var grid_street_spacing := 40.0
+## Areas between roads smaller than this stay empty.
+@export var min_block_area := 250.0
 
 @export_group("Street details (street level)")
 @export var details := {
@@ -36,7 +58,7 @@ extends Resource
 	"camera": {"fear": [2.5, 30.0], "quality": [-0.6, 30.0]},
 	"billboard": {"influence": [1.8, 35.0], "commerce": [1.5, 30.0], "quality": [-0.5, 20.0]},
 }
-## Closing a street segment to cars and turning it into a plaza (Jacobs' short blocks).
+## Closing a street to cars and turning it into a plaza (Jacobs). Per 40 m of street.
 @export var plaza := {"quality": [4.0, 40.0], "influence": [2.5, 45.0], "commerce": [1.0, 40.0]}
 
 @export_group("Zoning (neighbourhood level)")
@@ -50,6 +72,9 @@ extends Resource
 ## Lots in a block are this wide, at random (NYC lots are 25 ft and merge into bigger buildings).
 @export var lot_width_min := 6.0
 @export var lot_width_max := 14.0
+## Lots go back this far from the sidewalk, or the shorter depth if the block is too small.
+@export var lot_depth := 16.0
+@export var lot_depth_short := 10.0
 @export var residents_per_floor := 8
 @export var build_interval := 0.15          # seconds between buildings rising or being converted
 ## Better places get taller buildings: land value = commerce + quality + influence, full at this.
@@ -78,5 +103,6 @@ extends Resource
 @export var prayer_per_resident := 0.02     # belief per minute at a full belief field
 @export var fear_prayer := 0.5              # frightened people pray too, at this share of fear/belief_field_full
 @export var migrants_per_quality := 0.002   # people per minute who move in, per resident per point of quality
+@export var migrant_quality_baseline := 1.0  # people only move in for life better than this (an ordinary city)
 @export var power_per_fear := 0.01          # compliance and recruits per minute, per resident per point of fear
 @export var money_per_job := 0.05           # money per minute per job, more where commerce is high

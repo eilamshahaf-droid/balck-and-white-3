@@ -31,18 +31,23 @@ var _mats := {}
 ## overlays can tint them.
 func building(lot: Dictionary, parent: Node) -> Node3D:
 	var root := Node3D.new()
-	root.position = lot.pos
+	root.position = Vector3(lot.pos.x, lot.base, lot.pos.z)
+	root.rotation.y = lot.rot
 	parent.add_child(root)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(lot.seed * 1000003.0) + lot.floors
 	var h: float = lot.floors * FLOOR_HEIGHT
-	var w: float = lot.width - rng.randf_range(0.5, 1.6)
-	var d: float = lot.depth * rng.randf_range(0.8, 0.95)
+	var w: float = lot.width - rng.randf_range(0.3, 1.2)
+	var d: float = lot.depth * rng.randf_range(0.85, 0.97)
+	# On a slope the building stands on a stone base down to the lowest corner.
+	var drop: float = lot.base - lot.low + 0.8
+	block(root, Vector3(w + 0.4, drop, d + 0.4), Vector3(0, -drop / 2.0 + 0.05, 0), Color(0.55, 0.52, 0.48))
 	var look: String = lot.character if lot.character != "" else lot.zone
 	var palette: Array = PALETTES[look]
 	var colour: Color = palette[rng.randi() % palette.size()]
 	var bodies: Array = []
-	var front := d / 2.0
+	var front: float = d / 2.0 * lot.front     # the street side, in local z
+	var fs: float = lot.front
 
 	if lot.character == "grey" and lot.floors > 6:
 		# Stepped tower, like the 1916 zoning setbacks.
@@ -59,12 +64,11 @@ func building(lot: Dictionary, parent: Node) -> Node3D:
 				block(root, Vector3(0.9, 0.9, 0.9), Vector3(w * 0.2, h + 0.95, d * 0.1), Color(0.35, 0.58, 0.3))
 			if lot.zone != "industrial":
 				var awning: Color = AWNINGS[rng.randi() % AWNINGS.size()]
-				block(root, Vector3(w * 0.85, 0.3, 1.4), Vector3(0, 3.2, front + 0.7), awning)
-				block(root, Vector3(w * 0.85, 0.3, 1.4), Vector3(0, 3.2, -front - 0.7), awning)
+				block(root, Vector3(w * 0.85, 0.3, 1.4), Vector3(0, 3.2, front + 0.7 * fs), awning)
 		"evil":
 			block(root, Vector3(0.6, 0.6, 0.6), Vector3(w * 0.3, h + 0.3, 0), Color(1.0, 0.15, 0.1), true)
 			if rng.randf() < 0.5:
-				block(root, Vector3(w * 0.6, 0.5, 0.2), Vector3(0, 4.0, front + 0.1), Color(1.0, 0.2, 0.25), true)
+				block(root, Vector3(w * 0.6, 0.5, 0.2), Vector3(0, 4.0, front + 0.1 * fs), Color(1.0, 0.2, 0.25), true)
 			if lot.zone == "industrial":
 				block(root, Vector3(1.6, 12, 1.6), Vector3(-w * 0.3, h + 6, 0), Color(0.25, 0.24, 0.24))
 		"grey":
@@ -78,19 +82,27 @@ func building(lot: Dictionary, parent: Node) -> Node3D:
 			elif lot.zone == "industrial" and rng.randf() < 0.5:
 				block(root, Vector3(1.2, 7, 1.2), Vector3(-w * 0.3, h + 3.5, 0), Color(0.45, 0.4, 0.38))
 			elif lot.zone == "commercial":
-				block(root, Vector3(w * 0.9, 2.6, 0.2), Vector3(0, 1.5, front + 0.1), colour.darkened(0.35))
+				block(root, Vector3(w * 0.9, 2.6, 0.2), Vector3(0, 1.5, front + 0.1 * fs), colour.darkened(0.35))
 	root.set_meta("bodies", bodies)
 	return root
 
 
 # --- Landmarks ---
 
-func landmark(lm: Dictionary, depth: float, height: float, parent: Node) -> Node3D:
+func landmark(lm: Dictionary, terrain, height: float, parent: Node) -> Node3D:
 	var root := Node3D.new()
-	root.position = lm.pos
+	var high := -INF
+	var low := INF
+	for c in lm.corners:
+		high = maxf(high, terrain.height2(c))
+		low = minf(low, terrain.height2(c))
+	root.position = Vector3(lm.pos.x, high, lm.pos.z)
+	root.rotation.y = lm.rot
 	parent.add_child(root)
-	var w: float = lm.width * 0.92
-	var d: float = depth * 0.9
+	var w: float = lm.width * 0.95
+	var d: float = lm.depth * 0.95
+	var drop := high - low + 0.8
+	block(root, Vector3(w, drop, d), Vector3(0, -drop / 2.0 + 0.05, 0), Color(0.55, 0.52, 0.48))
 	var bodies: Array = []
 	match lm.kind:
 		"temple":
@@ -160,19 +172,135 @@ func detail(kind: String, pos: Vector3, parent: Node) -> Node3D:
 	return root
 
 
-## A street segment closed to cars and paved as a plaza.
-func plaza(seg: Dictionary, parent: Node) -> Node3D:
+
+# --- Land and roads ---
+
+## The ground as one mesh, coloured by height with a faint band every 5 m so
+## the slopes can be read from above, like a planner's contour map.
+func terrain_mesh(terrain, parent: Node, lift := 0.0) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var size: Vector2i = terrain.size
+	for z in size.y:
+		for x in size.x:
+			var h: float = terrain.heights[z * size.x + x]
+			var p: Vector2 = Vector2(x, z) * terrain.CELL - terrain.half_size
+			st.set_uv(Vector2(float(x) / (size.x - 1), float(z) / (size.y - 1)))
+			st.set_color(_ground_colour(h, terrain.slope_at(p)))
+			st.add_vertex(Vector3(p.x, h + lift, p.y))
+	for z in size.y - 1:
+		for x in size.x - 1:
+			var i := z * size.x + x
+			st.add_index(i)
+			st.add_index(i + 1)
+			st.add_index(i + size.x)
+			st.add_index(i + 1)
+			st.add_index(i + size.x + 1)
+			st.add_index(i + size.x)
+	st.generate_normals()
+	var m := MeshInstance3D.new()
+	m.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	m.material_override = mat
+	m.add_to_group(&"no_toon")   # the art style would drop the vertex colours
+	parent.add_child(m)
+	return m
+
+
+func _ground_colour(h: float, slope: float) -> Color:
+	var c: Color
+	if h < 0.3:
+		c = Color(0.62, 0.58, 0.45)                       # river bed and banks
+	else:
+		c = Color(0.46, 0.6, 0.36).lerp(Color(0.6, 0.62, 0.4), clampf(h / 35.0, 0.0, 1.0))
+		c = c.lerp(Color(0.55, 0.5, 0.42), clampf((slope - 0.15) * 3.0, 0.0, 0.7))   # steep: bare earth
+		if fposmod(h, 5.0) < 0.35:
+			c = c.darkened(0.12)                            # contour line
+	return c
+
+
+func water(terrain, parent: Node) -> MeshInstance3D:
+	var m := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = terrain.half_size * 2.0
+	m.mesh = plane
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.35, 0.55, 0.75, 0.85)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.material_override = mat
+	m.position.y = -0.2
+	parent.add_child(m)
+	return m
+
+
+## All roads as ribbons laid on the ground (on decks over water), with
+## sidewalks under them and round patches at the crossings.
+func roads(network, parent: Node) -> Node3D:
 	var root := Node3D.new()
-	root.position = seg.pos
 	parent.add_child(root)
-	var size: Vector2 = seg.size
-	block(root, Vector3(size.x, 0.35, size.y), Vector3(0, 0.18, 0), Color(0.78, 0.72, 0.6))
-	block(root, Vector3(size.x * 0.6, 0.4, size.y * 0.35), Vector3(0, 0.2, 0), Color(0.48, 0.7, 0.38))
-	for x in [-0.35, -0.1, 0.15, 0.4]:
-		tree(root, Vector3(size.x * x, 0, 0), 1.6)
-	for x in [-0.22, 0.28]:
-		block(root, Vector3(2.4, 0.5, 0.8), Vector3(size.x * x, 0.45, size.y * 0.3), Color(0.55, 0.4, 0.25))
+	var layers := {
+		"sidewalk": [SurfaceTool.new(), Color(0.68, 0.66, 0.62), 0.25],
+		"asphalt": [SurfaceTool.new(), Color(0.3, 0.3, 0.33), 0.4],
+		"light": [SurfaceTool.new(), Color(0.8, 0.74, 0.6), 0.42],
+	}
+	for key in layers:
+		layers[key][0].begin(Mesh.PRIMITIVE_TRIANGLES)
+	var degree := {}
+	for e in network.edges:
+		var w: float = network.width_of(e.kind)
+		var top := "light" if e.kind in ["path", "pedestrian"] else "asphalt"
+		if e.kind != "path":
+			_ribbon(layers.sidewalk[0], e.points, w + P_SIDEWALK * 2.0, layers.sidewalk[2], network.terrain)
+		_ribbon(layers[top][0], e.points, w, layers[top][2], network.terrain)
+		for n in [e.a, e.b]:
+			degree[n] = maxf(degree.get(n, 0.0), w)
+	for n in degree:
+		var p: Vector2 = network.nodes[n]
+		_disc(layers.sidewalk[0], p, degree[n] / 2.0 + P_SIDEWALK, layers.sidewalk[2] + 0.01, network.terrain)
+		_disc(layers.asphalt[0], p, degree[n] / 2.0, layers.asphalt[2] + 0.01, network.terrain)
+	for key in layers:
+		var st: SurfaceTool = layers[key][0]
+		st.generate_normals()
+		var m := MeshInstance3D.new()
+		m.mesh = st.commit()
+		m.material_override = material(layers[key][1])
+		m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(m)
 	return root
+
+
+const P_SIDEWALK := 2.5
+
+
+func _ribbon(st: SurfaceTool, pts: PackedVector2Array, w: float, lift: float, terrain) -> void:
+	for k in pts.size() - 1:
+		var a := pts[k]
+		var b := pts[k + 1]
+		var ta := (pts[mini(k + 1, pts.size() - 1)] - pts[maxi(k - 1, 0)]).normalized()
+		var tb := (pts[mini(k + 2, pts.size() - 1)] - pts[k]).normalized()
+		var na := Vector2(-ta.y, ta.x) * w / 2.0
+		var nb := Vector2(-tb.y, tb.x) * w / 2.0
+		var ha: float = terrain.road_height(a) + lift
+		var hb: float = terrain.road_height(b) + lift
+		var a1 := Vector3(a.x + na.x, ha, a.y + na.y)
+		var a2 := Vector3(a.x - na.x, ha, a.y - na.y)
+		var b1 := Vector3(b.x + nb.x, hb, b.y + nb.y)
+		var b2 := Vector3(b.x - nb.x, hb, b.y - nb.y)
+		for v in [a1, a2, b1, a2, b2, b1]:   # clockwise seen from above
+			st.add_vertex(v)
+
+
+func _disc(st: SurfaceTool, p: Vector2, r: float, lift: float, terrain) -> void:
+	var h: float = terrain.road_height(p) + lift
+	var c := Vector3(p.x, h, p.y)
+	for k in 12:
+		var a0 := TAU * k / 12.0
+		var a1 := TAU * (k + 1) / 12.0
+		st.add_vertex(c)
+		st.add_vertex(c + Vector3(cos(a0), 0, sin(a0)) * r)
+		st.add_vertex(c + Vector3(cos(a1), 0, sin(a1)) * r)
 
 
 # --- Pieces ---

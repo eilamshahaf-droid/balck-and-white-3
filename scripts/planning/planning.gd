@@ -1,26 +1,31 @@
 extends Node3D
-## The city-planning sandbox: only the model, no god, no people. Zone blocks,
-## place landmarks and street details, close streets into plazas, and watch the
-## city grow and change its look by itself. Colour overlays (keys 1-7) show where
-## the belief, commerce, quality of life, fear and influence are, as soft heat
-## on the ground and as tints on the buildings. Three example plans (good, evil,
-## neutral god) show the planning principles of each path.
-## Every number lives in data/planning.tres.
+## The city-planning sandbox: only the model, no god, no people. The land has
+## hills and a river, and the streets follow it. Draw new roads, avenues and
+## paths as in BW2 (the blocks reshape around them), zone the blocks, place
+## landmarks and street details, and watch the city grow and change its look
+## by itself. Colour overlays (keys 1-7) show where the belief, commerce,
+## quality of life, fear and influence are, as soft heat on the ground and
+## tints on the buildings. Three example plans (good, evil, neutral god) show
+## the planning principles of each path. Every number lives in data/planning.tres.
 
 const CityModel = preload("res://scripts/planning/city_model.gd")
+const Roads = preload("res://scripts/planning/road_network.gd")
 const Visuals = preload("res://scripts/planning/planning_visuals.gd")
 const Examples = preload("res://scripts/planning/planning_examples.gd")
 const P: PlanningSettings = preload("res://data/planning.tres")
 
 ## [tool id, button label]; the section headers are the three levels of the design doc.
 const TOOL_SECTIONS := [
+	["Streets (drag to draw)", [["street", "Street"], ["avenue", "Avenue"], ["path", "Path"],
+			["pedestrian", "Car-free"], ["remove_road", "Remove road"], ["straight", "Straight: off"]]],
 	["Neighbourhood", [["residential", "Homes"], ["commercial", "Shops"], ["industrial", "Industry"],
 			["clear", "Clear zone"], ["denser", "Denser +"], ["sparser", "Sparser -"]]],
 	["Plot (landmarks)", [["temple", "Temple"], ["square", "Square"], ["park", "Park"], ["station", "Station"],
 			["tower", "HQ tower"], ["factory", "Factory"], ["monument", "Monument"]]],
-	["Street", [["tree", "Tree"], ["bench", "Bench"], ["shrine", "Shrine"], ["camera", "Camera"],
-			["billboard", "Billboard"], ["plaza", "Close street"], ["remove", "Remove"]]],
+	["Street details", [["tree", "Tree"], ["bench", "Bench"], ["shrine", "Shrine"], ["camera", "Camera"],
+			["billboard", "Billboard"], ["remove", "Remove"]]],
 ]
+const DRAW_TOOLS := ["street", "avenue", "path"]
 const OVERLAYS := [["none", "None"], ["zoning", "Zoning"], ["belief", "Belief"], ["commerce", "Commerce"],
 		["quality", "Quality of life"], ["fear", "Fear"], ["influence", "Influence"]]
 ## metric -> [value that shows as full colour, colour]; quality is two-sided.
@@ -37,6 +42,7 @@ const ZONE_COLOURS := {
 	"industrial": Color(0.9, 0.65, 0.15), "": Color(0.6, 0.6, 0.6),
 }
 const LANDMARK_HEIGHT := {"temple": 20.0, "square": 1.5, "park": 1.0, "station": 18.0, "factory": 22.0, "monument": 55.0}
+const HEAT_SIZE := Vector2i(168, 128)
 
 var model
 var vis := Visuals.new()
@@ -44,18 +50,19 @@ var tool := "inspect"
 var overlay := "none"
 var paused := false
 var example := ""
+var straight := false              # draw roads exactly as drawn, ignoring the slopes
 
-var _city: Node3D                 # everything built from the model; rebuilt for an example
-var _lot_nodes: Array = []        # lot id -> Node3D or null
-var _landmark_nodes := {}         # landmark dictionary -> Node3D
-var _detail_nodes: Array = []     # same order as model.details
-var _plaza_nodes: Array = []      # same order as model.plazas
+var _city: Node3D                  # everything built from the model; rebuilt when the streets change
+var _lot_nodes: Array = []         # lot id -> Node3D or null
+var _landmark_nodes := {}          # landmark dictionary -> Node3D
+var _detail_nodes: Array = []      # same order as model.details
 var _heat: MeshInstance3D
 var _heat_image: Image
 var _heat_texture: ImageTexture
 var _cell_block := PackedInt32Array()
 var _ring: MeshInstance3D
-var _hover_box: MeshInstance3D
+var _lines: MeshInstance3D         # road being drawn and the outline of the block under the cursor
+var _drawing := PackedVector2Array()
 var _build_timer := 0.0
 var _overlay_dirty := true
 var _overlay_timer := 0.0
@@ -77,7 +84,6 @@ var _overlay_buttons := {}
 
 func _ready() -> void:
 	_build_environment()
-	_build_ground()
 	_build_markers()
 	_build_ui()
 	load_city("")
@@ -89,31 +95,49 @@ func _ready() -> void:
 ## ("good", "evil", "neutral"; "" for the plain starting city).
 func load_city(which: String) -> void:
 	example = which
+	var first: bool = model == null
 	model = CityModel.new()
 	model.seed_existing_city()
 	if which != "":
 		Examples.apply(model, which)
+	if first:
+		var land := Node3D.new()
+		add_child(land)
+		vis.terrain_mesh(model.terrain, land)
+		vis.water(model.terrain, land)
+		_heat = vis.terrain_mesh(model.terrain, land, 0.7)
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
+		_heat.material_override = mat
+		_heat.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_heat.visible = false
+	_story.text = "%s\n%s" % [Examples.TITLES[which], Examples.TEXTS[which]] if which != "" else \
+			"The existing city: its streets follow the hills and cross the river on a few bridges. Draw new streets, avenues and paths, zone the blocks, or load an example plan."
+	_rebuild_city()
+
+
+## Build every visible thing again from the model (after the streets changed).
+func _rebuild_city() -> void:
 	if _city:
 		_city.free()
 	_city = Node3D.new()
 	add_child(_city)
+	vis.roads(model.roads, _city)
 	_lot_nodes.clear()
 	_lot_nodes.resize(model.lots.size())
 	_landmark_nodes.clear()
 	_detail_nodes.clear()
-	_plaza_nodes.clear()
 	for n in model.lots.size():
 		_refresh_lot(n)
 	for lm in model.landmarks:
-		_landmark_nodes[lm] = vis.landmark(lm, model.blocks[lm.block].size.y, _landmark_height(lm.kind), _city)
+		_landmark_nodes[lm] = vis.landmark(lm, model.terrain, _landmark_height(lm.kind), _city)
 	for d in model.details:
 		_detail_nodes.append(vis.detail(d.kind, d.pos, _city))
-	for seg in model.plazas:
-		_plaza_nodes.append(vis.plaza(seg, _city))
-	_story.text = "%s\n%s" % [Examples.TITLES[which], Examples.TEXTS[which]] if which != "" else \
-			"The existing city. Change it with the tools, or load an example plan."
 	_build_cell_blocks()
 	_overlay_dirty = true
+	_overlay_timer = 0.0
 	_apply_overlay_to_buildings()
 
 
@@ -132,6 +156,7 @@ func _process(delta: float) -> void:
 				_overlay_dirty = true
 		_build_timer = maxf(_build_timer, -P.build_interval)
 	_update_hover()
+	_draw_lines()
 	_overlay_timer -= delta
 	if _overlay_dirty and _overlay_timer <= 0.0:
 		_overlay_dirty = false
@@ -140,6 +165,8 @@ func _process(delta: float) -> void:
 		_apply_overlay_to_buildings()
 	# The heat is faint up close and strong from above, so the city stays readable.
 	_heat.material_override.albedo_color.a = lerpf(0.6, 1.0, rig.zoom_t())
+	# The camera rides over the hills.
+	rig.position.y = lerpf(rig.position.y, model.terrain.height_at(rig.position.x, rig.position.z), minf(delta * 4.0, 1.0))
 	_message_time -= delta
 	_update_texts()
 
@@ -147,22 +174,51 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		_last_painted = -1
-		if event.pressed and _hover_valid:
+		if tool in DRAW_TOOLS:
+			if event.pressed and _hover_valid:
+				_drawing = PackedVector2Array([Vector2(_hover_pos.x, _hover_pos.z)])
+			elif not event.pressed and _drawing.size() > 0:
+				_finish_road()
+		elif event.pressed and _hover_valid:
 			_apply_tool(_hover_pos)
 	elif event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT and _hover_valid:
-		# Zones can be painted by dragging over blocks.
-		if tool in ["residential", "commercial", "industrial", "clear"]:
-			_apply_tool(_hover_pos)
+		if tool in DRAW_TOOLS and _drawing.size() > 0:
+			var p := Vector2(_hover_pos.x, _hover_pos.z)
+			if p.distance_to(_drawing[_drawing.size() - 1]) > 4.0:
+				_drawing.append(p)
+		elif tool in ["residential", "commercial", "industrial", "clear"]:
+			_apply_tool(_hover_pos)   # zones can be painted by dragging over blocks
 	elif event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode >= KEY_1 and event.keycode <= KEY_7:
 			_select_overlay(OVERLAYS[event.keycode - KEY_1][0])
 		elif event.keycode == KEY_SPACE:
 			paused = not paused
 		elif event.keycode == KEY_ESCAPE:
+			_drawing = PackedVector2Array()
 			_select_tool("inspect")
 
 
 # --- Tools ---
+
+## A drawn road joins the network: it bends around slopes (unless Straight is
+## on), splits the roads it crosses, and the blocks reshape around it.
+func draw_road(points: PackedVector2Array, kind: String, follow_terrain := true) -> void:
+	var before: int = model.roads.edges.size()
+	var knocked: Array = model.add_road(points, kind, follow_terrain)
+	if model.roads.edges.size() == before:
+		_say("Too short, or the same as a road that is already there")
+		return
+	_rebuild_city()
+	if knocked.size() > 0:
+		_say("The new road ran through %d landmark(s) and knocked them down" % knocked.size())
+
+
+func _finish_road() -> void:
+	var pts := _drawing
+	_drawing = PackedVector2Array()
+	if pts.size() >= 2:
+		draw_road(pts, tool, not straight)
+
 
 func _apply_tool(pos: Vector3) -> void:
 	var b: int = model.block_at(pos)
@@ -180,28 +236,29 @@ func _apply_tool(pos: Vector3) -> void:
 				model.change_density(b, 1 if tool == "denser" else -1)
 				_say("Density %d: buildings will be rebuilt up to about %d floors" % [model.blocks[b].density,
 						P.floors_per_density[model.blocks[b].density - 1]])
-		"plaza":
-			var seg: Dictionary = model.place_plaza(pos)
-			if seg.is_empty():
-				_say("Click a cross street between two avenues to close it into a plaza")
+		"pedestrian":
+			if model.toggle_pedestrian_near(pos):
+				_rebuild_city()
 			else:
-				_plaza_nodes.append(vis.plaza(seg, _city))
-				_overlay_dirty = true
+				_say("Click a street (not an avenue) to close it to cars, or open it again")
+		"remove_road":
+			if model.remove_road_near(pos):
+				_rebuild_city()
 		"remove":
 			_remove_at(pos)
 		_:
 			if P.landmarks.has(tool):
 				var lm: Dictionary = model.place_landmark(tool, pos)
 				if lm.is_empty():
-					_say("Landmarks go on a block, and not on top of another landmark")
+					_say("It doesn't fit here: it needs room along a street, on dry and fairly flat land")
 				else:
 					for lot_id in lm.lots:
 						_refresh_lot(lot_id)
-					_landmark_nodes[lm] = vis.landmark(lm, model.blocks[lm.block].size.y, _landmark_height(lm.kind), _city)
+					_landmark_nodes[lm] = vis.landmark(lm, model.terrain, _landmark_height(lm.kind), _city)
 					_overlay_dirty = true
 			elif P.details.has(tool):
 				model.place_detail(tool, pos)
-				_detail_nodes.append(vis.detail(tool, pos, _city))
+				_detail_nodes.append(vis.detail(tool, model.details[model.details.size() - 1].pos, _city))
 				_overlay_dirty = true
 
 
@@ -211,26 +268,26 @@ func _remove_at(pos: Vector3) -> void:
 		_detail_nodes[n].queue_free()
 		_detail_nodes.remove_at(n)
 	else:
-		n = model.plaza_index_at(pos)
-		if n >= 0:
-			model.remove_plaza(n)
-			_plaza_nodes[n].queue_free()
-			_plaza_nodes.remove_at(n)
-		else:
-			var lm: Dictionary = model.remove_landmark_at(pos)
-			if lm.is_empty():
-				return
-			_landmark_nodes[lm].queue_free()
-			_landmark_nodes.erase(lm)
+		var lm: Dictionary = model.remove_landmark_at(pos)
+		if lm.is_empty():
+			return
+		_landmark_nodes[lm].queue_free()
+		_landmark_nodes.erase(lm)
 	_overlay_dirty = true
 
 
 func _say(text: String) -> void:
 	_message = text
-	_message_time = 3.0
+	_message_time = 3.5
 
 
 func _select_tool(id: String) -> void:
+	if id == "straight":
+		straight = not straight
+		_tool_buttons.straight.text = "Straight: on" if straight else "Straight: off"
+		_tool_buttons.straight.button_pressed = false
+		_tool_buttons[tool].button_pressed = true
+		return
 	tool = id
 	for t in _tool_buttons:
 		_tool_buttons[t].button_pressed = t == id
@@ -250,46 +307,71 @@ func _select_overlay(id: String) -> void:
 func _update_hover() -> void:
 	var mouse := get_viewport().get_mouse_position()
 	_hover_valid = false
+	_ring.visible = false
 	for p in _panels:
 		if p.get_global_rect().has_point(mouse):
-			_ring.visible = false
-			_hover_box.visible = false
 			return
 	var cam: Camera3D = rig.camera
-	var hit = Plane(Vector3.UP, 0.0).intersects_ray(cam.project_ray_origin(mouse), cam.project_ray_normal(mouse))
+	var hit = model.terrain.raycast(cam.project_ray_origin(mouse), cam.project_ray_normal(mouse))
 	if hit == null:
 		return
 	_hover_valid = true
 	_hover_pos = hit
-	var reach: float = model.reach_of(tool)
 	var centre := _placement_centre()
-	_ring.visible = reach > 0.0 and centre != Vector3.INF
+	var reach: float = model.reach_of(tool, centre) if centre != Vector3.INF else 0.0
+	_ring.visible = reach > 0.0
 	if _ring.visible:
-		_ring.position = centre + Vector3.UP * 0.6
+		_ring.position = centre + Vector3.UP * 1.0
 		_ring.scale = Vector3(reach, 1, reach)
-	var hb: int = model.block_at(_hover_pos)
-	_hover_box.visible = hb >= 0
-	if hb >= 0:
-		var block: Dictionary = model.blocks[hb]
-		_hover_box.position = block.center + Vector3.UP * 0.45
-		_hover_box.scale = Vector3(block.size.x + 1.0, 1, block.size.y + 1.0)
 
 
 ## Where the current tool would put its structure.
 func _placement_centre() -> Vector3:
 	if P.landmarks.has(tool):
-		return model.landmark_centre(tool, _hover_pos)
-	if tool == "plaza":
-		var seg: Dictionary = model.street_segment_at(_hover_pos)
-		return Vector3.INF if seg.is_empty() else seg.pos
+		var fp: Dictionary = model.landmark_footprint(tool, _hover_pos)
+		return Vector3.INF if fp.is_empty() else fp.pos
 	return _hover_pos
+
+
+## The road being drawn, coloured by how steep it is, and the block under the cursor.
+func _draw_lines() -> void:
+	var im: ImmediateMesh = _lines.mesh
+	im.clear_surfaces()
+	var t = model.terrain
+	if _drawing.size() >= 2 or (_drawing.size() == 1 and _hover_valid):
+		var pts := _drawing.duplicate()
+		if _hover_valid:
+			pts.append(Vector2(_hover_pos.x, _hover_pos.z))
+		im.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+		for k in pts.size():
+			var grade := 0.0
+			if k > 0 and pts[k].distance_to(pts[k - 1]) > 0.5:
+				grade = absf(t.road_height(pts[k]) - t.road_height(pts[k - 1])) / pts[k].distance_to(pts[k - 1])
+			var c := Color(0.2, 0.9, 0.3)
+			if grade > P.road_max_grade:
+				c = Color(1.0, 0.2, 0.15)
+			elif grade > P.road_max_grade * 0.5:
+				c = Color(1.0, 0.8, 0.2)
+			im.surface_set_color(c)
+			im.surface_add_vertex(Vector3(pts[k].x, t.road_height(pts[k]) + 1.5, pts[k].y))
+		im.surface_end()
+	if _hover_valid and tool not in DRAW_TOOLS:
+		var b: int = model.block_at(_hover_pos)
+		if b >= 0:
+			var poly: PackedVector2Array = model.blocks[b].polygon
+			im.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+			for k in poly.size() + 1:
+				var p := poly[k % poly.size()]
+				im.surface_set_color(Color(1, 1, 1, 0.8))
+				im.surface_add_vertex(Vector3(p.x, t.road_height(p) + 1.2, p.y))
+			im.surface_end()
 
 
 func _update_texts() -> void:
 	var s: Dictionary = model.stats()
-	_stats.text = "Population  %d\nJobs  %d\nQuality of life  %+.1f\nFear  %.1f\n\nPer minute:\n  Prayer  %.1f\n  Migrants (good)  %.1f\n  Power (evil)  %.1f\n  Money (neutral)  %.0f\n\nBuildings looking\n  good %d   evil %d   neutral %d\nBuilt lots  %d / %d%s" % [
+	_stats.text = "Population  %d\nJobs  %d\nQuality of life  %+.1f\nFear  %.1f\n\nPer minute:\n  Prayer  %.1f\n  Migrants (good)  %.1f\n  Power (evil)  %.1f\n  Money (neutral)  %.0f\n\nBuildings looking\n  good %d   evil %d   neutral %d\nStreets %.1f km, %d blocks\nBuilt lots  %d / %d%s" % [
 			s.population, s.jobs, s.quality, s.fear, s.prayer, s.migrants, s.power, s.money,
-			s.looks.good, s.looks.evil, s.looks.grey, s.built, model.lots.size(),
+			s.looks.good, s.looks.evil, s.looks.grey, s.roads_km, s.blocks, s.built, s.lots,
 			"\n\nPAUSED (Space)" if paused else ""]
 	var lines: Array[String] = []
 	if _message_time > 0.0:
@@ -297,10 +379,14 @@ func _update_texts() -> void:
 	if _hover_valid:
 		var lot_id: int = model.lot_at(_hover_pos)
 		var b: int = model.block_at(_hover_pos)
+		var ground := "height %d m, slope %d%%" % [roundi(_hover_pos.y), roundi(model.terrain.slope_at(Vector2(_hover_pos.x, _hover_pos.z)) * 100.0)]
 		if b >= 0:
 			var block: Dictionary = model.blocks[b]
-			var zone: String = block.zone if block.zone != "" else "no zone"
-			lines.append("Block: %s, density %d%s" % [zone, block.density, ", mixed use bonus" if model.mixed_use(b) else ""])
+			var zone: String = block.zone if block.zone != "" else ("water" if block.water else "no zone")
+			lines.append("Block: %s, density %d, %d lots%s   |   %s" % [zone, block.density, block.lots.size(),
+					", mixed use bonus" if model.mixed_use(b) else "", ground])
+		else:
+			lines.append("Ground: " + ground)
 		if lot_id >= 0:
 			var lot: Dictionary = model.lots[lot_id]
 			var parts: Array[String] = []
@@ -311,14 +397,17 @@ func _update_texts() -> void:
 			lines.append("This lot: %s   |   %s" % [what, "   ".join(parts)])
 		# The number before placing: what this would add to the block under the cursor.
 		var centre := _placement_centre()
-		if model.definition(tool).size() > 0 and centre != Vector3.INF:
+		if model.definition(tool).size() > 0 and centre != Vector3.INF and tool != "pedestrian":
 			var pb: int = model.block_at(centre) if b < 0 else b
 			if pb >= 0:
 				var effect: Dictionary = model.preview(tool, centre, pb)
 				var parts: Array[String] = []
 				for m in effect:
 					parts.append("%s %+.1f" % [m.capitalize(), effect[m]])
-				lines.append("Placing %s here: %s   (reach %d m)" % [tool, "   ".join(parts), model.reach_of(tool)])
+				lines.append("Placing %s here: %s   (reach %d m)" % [tool, "   ".join(parts), model.reach_of(tool, centre)])
+	if tool in DRAW_TOOLS:
+		lines.append("Hold the left button and drag to draw. Green is gentle, yellow steep, red too steep. %s" %
+				("Straight is on: the road goes exactly where drawn." if straight else "The road bends around slopes."))
 	_info.text = "\n".join(lines)
 
 
@@ -328,33 +417,33 @@ func _look_name(character: String) -> String:
 
 # --- Overlays ---
 
-## Soft heat on the ground, straight from the model's field grid.
+## Soft heat on the ground, sampled from the model's fields.
 func _update_heat() -> void:
 	if overlay == "none":
 		return
-	var gs: Vector2i = model.grid_size
-	if _heat_image == null or _heat_image.get_size() != gs:
-		_heat_image = Image.create(gs.x, gs.y, false, Image.FORMAT_RGBA8)
-	if overlay == "zoning":
-		for y in gs.y:
-			for x in gs.x:
-				var b := _cell_block[y * gs.x + x]
-				var c: Color = ZONE_COLOURS[model.blocks[b].zone] if b >= 0 else Color(0, 0, 0, 0)
-				c.a = 0.6 if b >= 0 else 0.0
-				_heat_image.set_pixel(x, y, c)
-	else:
-		var field: PackedFloat32Array = model.field_grid(overlay)
-		for y in gs.y:
-			for x in gs.x:
-				_heat_image.set_pixel(x, y, _metric_colour(field[y * gs.x + x]))
-	if _heat_texture == null or _heat_texture.get_size() != Vector2(gs):
+	if _heat_image == null:
+		_heat_image = Image.create(HEAT_SIZE.x, HEAT_SIZE.y, false, Image.FORMAT_RGBA8)
+	var hs: Vector2 = model.terrain.half_size
+	for y in HEAT_SIZE.y:
+		for x in HEAT_SIZE.x:
+			var c: Color
+			if overlay == "zoning":
+				var b := _cell_block[y * HEAT_SIZE.x + x]
+				c = ZONE_COLOURS[model.blocks[b].zone] if b >= 0 else Color(0, 0, 0, 0)
+				c.a = 0.55 if b >= 0 and model.blocks[b].zone != "" else 0.0
+			else:
+				var p := _heat_point(x, y, hs)
+				c = _metric_colour(model.field_at(overlay, Vector3(p.x, 0, p.y)))
+			_heat_image.set_pixel(x, y, c)
+	if _heat_texture == null:
 		_heat_texture = ImageTexture.create_from_image(_heat_image)
 		_heat.material_override.albedo_texture = _heat_texture
 	else:
 		_heat_texture.update(_heat_image)
-	var size: Vector2 = Vector2(gs - Vector2i.ONE) * CityModel.CELL
-	_heat.scale = Vector3(size.x, 1, size.y)
-	_heat.position = Vector3(model.grid_origin.x + size.x / 2.0, 0.34, model.grid_origin.y + size.y / 2.0)
+
+
+func _heat_point(x: int, y: int, hs: Vector2) -> Vector2:
+	return Vector2((x + 0.5) / HEAT_SIZE.x, (y + 0.5) / HEAT_SIZE.y) * hs * 2.0 - hs
 
 
 func _metric_colour(v: float) -> Color:
@@ -392,12 +481,12 @@ func _tint(node: Node3D, pos: Vector3, zone: String) -> void:
 
 
 func _build_cell_blocks() -> void:
-	var gs: Vector2i = model.grid_size
-	_cell_block.resize(gs.x * gs.y)
-	for y in gs.y:
-		for x in gs.x:
-			var p: Vector2 = model.grid_origin + Vector2(x, y) * CityModel.CELL
-			_cell_block[y * gs.x + x] = model.block_at(Vector3(p.x, 0, p.y))
+	var hs: Vector2 = model.terrain.half_size
+	_cell_block.resize(HEAT_SIZE.x * HEAT_SIZE.y)
+	for y in HEAT_SIZE.y:
+		for x in HEAT_SIZE.x:
+			var p := _heat_point(x, y, hs)
+			_cell_block[y * HEAT_SIZE.x + x] = model.block_at(Vector3(p.x, 0, p.y))
 
 
 # --- 3D city ---
@@ -419,16 +508,6 @@ func _landmark_height(kind: String) -> float:
 
 
 func _build_markers() -> void:
-	var plane := PlaneMesh.new()
-	plane.size = Vector2.ONE
-	_heat = MeshInstance3D.new()
-	_heat.mesh = plane
-	var mat := _flat(Color(1, 1, 1, 1))
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
-	_heat.material_override = mat
-	_heat.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_heat.add_to_group(&"no_toon")
-	add_child(_heat)
 	_ring = MeshInstance3D.new()
 	var torus := TorusMesh.new()
 	torus.inner_radius = 0.97
@@ -438,11 +517,14 @@ func _build_markers() -> void:
 	_ring.material_override = _flat(Color(1, 1, 1, 0.7))
 	_ring.add_to_group(&"no_toon")
 	add_child(_ring)
-	_hover_box = MeshInstance3D.new()
-	_hover_box.mesh = plane
-	_hover_box.material_override = _flat(Color(1, 1, 1, 0.18))
-	_hover_box.add_to_group(&"no_toon")
-	add_child(_hover_box)
+	_lines = MeshInstance3D.new()
+	_lines.mesh = ImmediateMesh.new()
+	var mat := _flat(Color.WHITE)
+	mat.vertex_color_use_as_albedo = true
+	mat.no_depth_test = true
+	_lines.material_override = mat
+	_lines.add_to_group(&"no_toon")
+	add_child(_lines)
 
 
 func _build_environment() -> void:
@@ -471,17 +553,6 @@ func _build_environment() -> void:
 	add_child(sun)
 
 
-func _build_ground() -> void:
-	var tmp := CityModel.new()
-	var hs: Vector2 = tmp.half_size
-	var ground := Node3D.new()
-	add_child(ground)
-	vis.block(ground, Vector3(4000, 1, 4000), Vector3(0, -0.6, 0), Color(0.5, 0.58, 0.42))
-	vis.block(ground, Vector3(hs.x * 2 + 120, 1, hs.y * 2 + 120), Vector3(0, -0.5, 0), Color(0.3, 0.3, 0.32))
-	for block in tmp.blocks:
-		vis.block(ground, Vector3(block.size.x + 5, 0.3, block.size.y + 5), block.center + Vector3.UP * 0.15, Color(0.6, 0.58, 0.55))
-
-
 func _flat(c: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -499,7 +570,7 @@ func _build_ui() -> void:
 
 	var left := _panel(ui, Vector2(10, 10))
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 1)
+	col.add_theme_constant_override("separation", 2)
 	left.add_child(col)
 	var tools_group := ButtonGroup.new()
 	_add_tool_button(col, tools_group, "inspect", "Look (Esc)")
@@ -507,11 +578,17 @@ func _build_ui() -> void:
 		var head := Label.new()
 		head.text = section[0]
 		head.add_theme_color_override("font_color", Color(1, 0.85, 0.5))
+		head.add_theme_font_size_override("font_size", 13)
 		col.add_child(head)
+		var grid := GridContainer.new()
+		grid.columns = 2
+		grid.add_theme_constant_override("h_separation", 2)
+		grid.add_theme_constant_override("v_separation", 2)
+		col.add_child(grid)
 		for t in section[1]:
-			_add_tool_button(col, tools_group, t[0], t[1])
+			_add_tool_button(grid, null if t[0] == "straight" else tools_group, t[0], t[1])
 
-	var top := _panel(ui, Vector2(170, 10))
+	var top := _panel(ui, Vector2(250, 10))
 	var row := HBoxContainer.new()
 	top.add_child(row)
 	var title := Label.new()
@@ -525,7 +602,7 @@ func _build_ui() -> void:
 		row.add_child(b)
 		_overlay_buttons[o[0]] = b
 
-	var ex := _panel(ui, Vector2(170, 52))
+	var ex := _panel(ui, Vector2(250, 52))
 	var ex_row := HBoxContainer.new()
 	ex.add_child(ex_row)
 	var ex_title := Label.new()
@@ -541,28 +618,28 @@ func _build_ui() -> void:
 	var right := _panel(ui, Vector2(screen.x - 250, 10))
 	right.custom_minimum_size = Vector2(240, 0)
 	_stats = Label.new()
-	_stats.add_theme_font_size_override("font_size", 14)
+	_stats.add_theme_font_size_override("font_size", 13)
 	right.add_child(_stats)
 
-	var story := _panel(ui, Vector2(screen.x - 250, 380))
+	var story := _panel(ui, Vector2(screen.x - 250, 395))
 	story.custom_minimum_size = Vector2(240, 0)
 	_story = Label.new()
 	_story.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_story.custom_minimum_size = Vector2(230, 0)
-	_story.add_theme_font_size_override("font_size", 13)
+	_story.add_theme_font_size_override("font_size", 12)
 	story.add_child(_story)
 
 	_info = Label.new()
-	_info.position = Vector2(170, screen.y - 100)
+	_info.position = Vector2(250, screen.y - 104)
 	_info.add_theme_color_override("font_outline_color", Color.BLACK)
 	_info.add_theme_constant_override("outline_size", 5)
-	_info.add_theme_font_size_override("font_size", 14)
+	_info.add_theme_font_size_override("font_size", 13)
 	_info.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(_info)
 
 	var help := Label.new()
-	help.text = "WASD / right-drag: move   Wheel: zoom   Q/E: turn   R/F: tilt   Left click: use tool (drag to paint zones)   Space: pause growth   V: art style"
-	help.position = Vector2(170, screen.y - 26)
+	help.text = "WASD / right-drag: move   Wheel: zoom   Q/E: turn   R/F: tilt   Left: use tool   Space: pause growth   V: art style"
+	help.position = Vector2(250, screen.y - 24)
 	help.add_theme_font_size_override("font_size", 12)
 	help.add_theme_color_override("font_outline_color", Color.BLACK)
 	help.add_theme_constant_override("outline_size", 4)
@@ -591,6 +668,7 @@ func _add_tool_button(parent: Node, group: ButtonGroup, id: String, text: String
 	var b := _button(text, group)
 	b.pressed.connect(_select_tool.bind(id))
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.add_theme_font_size_override("font_size", 14)
+	b.custom_minimum_size = Vector2(108, 0)
+	b.add_theme_font_size_override("font_size", 13)
 	parent.add_child(b)
 	_tool_buttons[id] = b
