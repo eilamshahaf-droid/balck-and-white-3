@@ -39,3 +39,5 @@ extends Resource
 @export var belief_start := 100.0            # belief in the pool when the game starts
 @export var prayer_rate := 0.25              # belief per second from each full believer's prayers
 @export_range(0.0, 1.0) var believer_threshold := 0.5   # belief above this counts as a believer
+## Path: good deeds (water, shield, heal) against evil ones (fire, lightning).
+@export var path_lead := 3                   # one kind must lead by this many miracles to set the path

@@ -22,7 +22,7 @@ signal miracle_failed(reason: StringName)
 
 const RAY_LENGTH := 3000.0
 const LAYER_WORLD := 1
-const HARMFUL: Array[StringName] = [&"fire", &"lightning"]
+const HARMFUL: Array[StringName] = [&"fire", &"lightning"]   # also the evil deeds, for the god's path
 const FIRE_SNAP := 15.0       # metres: water cast this close to a fire goes onto it
 const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets it alight
 
@@ -88,6 +88,7 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 		&"lightning": miracle = _lightning(ground)
 		&"shield": miracle = _shield(ground)
 		&"heal": miracle = _heal(ground)
+	faith.add_deed(not kind in HARMFUL)
 	miracle_cast.emit(kind, miracle)
 
 
@@ -107,21 +108,32 @@ func _water(ground: Vector3) -> Node3D:
 func _fire(ground: Vector3, building: Node3D) -> Node3D:
 	if building == null:
 		building = _building_near(ground, BUILDING_SNAP)  # fire at a wall's foot takes the building
-	var fire: Node3D = _fire_on(building) if building else null
-	if fire:
-		fire.rekindle()  # a burnt-out building catches again
+	var fire: Node3D
+	if building:
+		fire = set_alight(building)
 	else:
 		fire = FireScript.new()
 		city.add_child(fire)
-		if building:
-			var size := DivineSign.building_size(building)
-			fire.ignite(building, size)
-			fire.endangered = _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 3.0)
-		else:
-			fire.ignite_spot(ground, M.street_fire_size)
-	fire.burn_time = M.fire_burn_time
+		fire.ignite_spot(ground, M.street_fire_size)
+		fire.burn_time = M.fire_burn_time
 	faith.report(fire, &"see_fire", M.fire_intensity, M.fire_situation, 4.0, true,
 			M.fire_deniability, [], M.fire_seen_from)
+	return fire
+
+
+## Set `building` on fire, or a burnt-out one again. Not a miracle by itself:
+## the fire miracle and believers who vandalise a cursed building both use it.
+func set_alight(building: Node3D) -> Node3D:
+	var fire := fire_on(building)
+	if fire:
+		fire.rekindle()  # the building stays charred
+	else:
+		fire = FireScript.new()
+		city.add_child(fire)
+		var size := DivineSign.building_size(building)
+		fire.ignite(building, size)
+		fire.endangered = _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 3.0)
+	fire.burn_time = M.fire_burn_time
 	return fire
 
 
@@ -184,7 +196,8 @@ func _building_near(p: Vector3, margin: float) -> Node3D:
 	return null
 
 
-func _fire_on(building: Node3D) -> Node3D:
+## The fire on `building`, burning or burnt out (null if it never burned).
+func fire_on(building: Node3D) -> Node3D:
 	for fire in get_tree().get_nodes_in_group("fires"):
 		if fire.building == building:
 			return fire

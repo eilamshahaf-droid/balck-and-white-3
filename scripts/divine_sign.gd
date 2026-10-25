@@ -1,8 +1,7 @@
 extends Node3D
 ## A divine sign on a building, from the design doc: a beam of light means
 ## blessed, a storm cloud means cursed, a ring of light means protected.
-## For now a sign only marks the building; believers will act on it later
-## (by sign, building and path).
+## Believers answer it (sign_followers.gd), each by the sign and the god's path.
 
 const M = preload("res://data/miracles.tres")
 
@@ -54,6 +53,7 @@ static func building_size(building: Node3D) -> Vector3:
 
 
 func _ready() -> void:
+	add_to_group("divine_signs")
 	var roof := _size.y / 2.0
 	match kind:
 		&"blessed": _build_beam(roof)

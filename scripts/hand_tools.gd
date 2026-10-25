@@ -9,6 +9,7 @@ extends Node
 ## it there; a right click puts it away. Moving, lifting and throwing work as
 ## usual meanwhile. A circle drawn with the right button casts water straight away.
 
+const M = preload("res://data/miracles.tres")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 const RadialWheel = preload("res://scripts/radial_wheel.gd")
 const Sfx = preload("res://scripts/sfx.gd")
@@ -112,8 +113,10 @@ func _choose() -> void:
 			Mode.MIRACLES:
 				_charge(id)
 			Mode.SIGNS:
-				if building:
+				if building and (id == &"clear" or faith.spend(M.sign_cost)):
 					DivineSign.mark(building, id)
+					if id != &"clear":
+						faith.exposure = minf(faith.exposure + M.sign_exposure, 1.0)
 					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
 	_close()
 

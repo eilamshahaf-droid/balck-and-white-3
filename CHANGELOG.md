@@ -8,6 +8,16 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/art_style.tres`, group "Depth of field" (`dof_blur` 0 turns it off). V still switches the whole style off to compare.
 - Try it: press F5 and tilt the camera toward the horizon (middle-drag) to see the far streets melt.
 
+## 2026-10-25: Believers answer the divine signs
+- A sign on a building now costs 3 belief, and up to six believers nearby walk over and act on it, each by the sign and by the god's path. The path ("Path" at the top of the screen) comes from your miracles so far: water, shield and heal are good deeds, fire and lightning evil ones; one kind has to lead by 3 to set it, otherwise you are neutral.
+- Blessed: they gather to pray, and each one adds belief to the pool.
+- Cursed: on the evil path they vandalise it until it catches fire (raises exposure); on the good path they picket it from across the street; on the neutral path they ask to speak to the manager.
+- Protected: they stand guard and fight any fire on that building.
+- Unsure believers now and then misread the sky ("Wait... was that a cloud or a halo?") and do something else.
+- Signs still don't change anyone's belief: only miracles do.
+- Numbers: group "Divine signs" in `data/miracles.tres`; how big a lead sets the path: `path_lead` in `data/balance.tres`.
+- Try it: press F5, cast fire and lightning a few times until Path says evil, then hold the left button still on a building near your believers (the start area) and pick Cursed.
+
 ## 2026-10-25: Picking a miracle puts it in the hand
 - Choosing a miracle on the wheel no longer casts it straight away. It goes into the hand (a glowing orb in the palm, and "In the hand: ..." at the top of the screen). The next long press, on the ground or on a building, casts it there. A right click drops it. Moving, lifting and throwing work as usual while it is in the hand.
 - Try it: press F5, hold the left button still on a street, pick Fire and let go. Then hold the left button still on a building.
