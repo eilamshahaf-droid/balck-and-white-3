@@ -15,6 +15,7 @@ const S: ArtStyleSettings = preload("res://data/art_style.tres")
 const TOON := preload("res://shaders/toon.gdshader")
 const GHOST := preload("res://shaders/toon_ghost.gdshader")
 const PAPER := preload("res://shaders/watercolor_paper.gdshader")
+const DOF := preload("res://shaders/depth_of_field.gdshader")
 
 var enabled := true
 
@@ -22,6 +23,7 @@ var _wash: NoiseTexture2D
 var _paper_noise: NoiseTexture2D
 var _paper_mat := ShaderMaterial.new()
 var _layer := CanvasLayer.new()
+var _dof := MeshInstance3D.new()   # screen-covering quad that blurs the far background
 var _toon := {}       # StandardMaterial3D -> its toon ShaderMaterial
 var _colors := {}     # StandardMaterial3D -> albedo last copied into the toon material
 var _meshes := []     # every MeshInstance3D we look after
@@ -46,6 +48,7 @@ func _ready() -> void:
 	_layer.add_child(rect)
 	add_child(_layer)
 	_layer.visible = enabled
+	_build_dof()
 
 	get_tree().node_added.connect(_on_node_added)
 	for arg in OS.get_cmdline_user_args():
@@ -56,12 +59,14 @@ func _ready() -> void:
 		elif arg == "--no-style":
 			enabled = false
 			_layer.visible = false
+	_dof.visible = enabled and S.dof_blur > 0.0
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_V:
 		enabled = not enabled
 		_layer.visible = enabled
+		_dof.visible = enabled and S.dof_blur > 0.0
 
 
 func _process(_delta: float) -> void:
@@ -88,6 +93,7 @@ func _process(_delta: float) -> void:
 			_toon[src].set_shader_parameter("albedo", c)
 
 	_update_tilt_shift()
+	_follow_camera()
 
 	if _shot_path != "":
 		_shot_frames -= 1
@@ -219,6 +225,36 @@ func _style_environment(world_env: WorldEnvironment) -> void:
 	if S.tonemap_filmic:
 		env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = S.exposure
+
+
+func _build_dof() -> void:
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.0, 1.0)
+	var mat := ShaderMaterial.new()
+	mat.shader = DOF
+	mat.render_priority = Material.RENDER_PRIORITY_MAX  # after fire, rain and glows
+	mat.set_shader_parameter("blur", S.dof_blur)
+	mat.set_shader_parameter("start", S.dof_start)
+	mat.set_shader_parameter("end", S.dof_end)
+	mat.set_shader_parameter("focus_y", S.tilt_center)
+	mat.set_shader_parameter("compat", RenderingServer.get_rendering_device() == null)
+	quad.material = mat
+	_dof.mesh = quad
+	_dof.name = &"DepthOfField"
+	_dof.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_dof.extra_cull_margin = 16384.0
+	_dof.add_to_group(&"no_toon")
+
+
+## The depth-of-field quad rides on whichever camera is drawing.
+func _follow_camera() -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or _dof.get_parent() == cam:
+		return
+	if _dof.get_parent():
+		_dof.get_parent().remove_child(_dof)
+	cam.add_child(_dof)
+	_dof.position = Vector3(0.0, 0.0, -1.0)
 
 
 ## The god looks down on a sunny toy town: a fixed sun angle and crisp, long

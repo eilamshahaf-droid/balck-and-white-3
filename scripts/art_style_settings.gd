@@ -49,6 +49,12 @@ extends Resource
 @export var tilt_height_min := 8.0                   # camera height (m) where the effect starts
 @export var tilt_height_max := 60.0                  # camera height (m) where it is full
 
+@export_group("Depth of field")
+@export_range(0.0, 16.0) var dof_blur := 8.0         # blur in pixels far behind the focus (0 = off)
+@export_range(1.0, 3.0) var dof_start := 1.15        # blur starts at this many times the focus distance
+@export_range(1.0, 6.0) var dof_end := 2.2           # and is full at this many times
+## The focus is whatever stands under the tilt-shift's sharp band (tilt_center).
+
 @export_group("Colour grade")
 @export_range(0.0, 1.0) var vibrance := 0.45          # boosts dull colours more than vivid ones
 @export_range(0.5, 1.5) var contrast := 1.15
