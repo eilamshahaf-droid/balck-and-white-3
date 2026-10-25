@@ -29,6 +29,7 @@ const TreeScript := preload("res://scripts/swaying_tree.gd")
 const DoorScript := preload("res://scripts/door.gd")
 const LitterScript := preload("res://scripts/litter.gd")
 const PigeonScript := preload("res://scripts/pigeon.gd")
+const BuildingVisual := preload("res://scripts/building_visual.gd")
 
 ## Debug view: tint residents by their hidden belief.
 var show_belief := false
@@ -179,6 +180,11 @@ func _build_towers(center: Vector3, size: Vector2, midtown: float) -> void:
 		var color: Color = palette[rng.randi_range(0, palette.size() - 1)]
 		var building := _make_box(Vector3(width - 0.6, height, depth), pos, _mat(color), true)
 		building.add_to_group("buildings")
+		# Dress the box in Kenney's modular facades; the collision box stays as it was.
+		for child in building.get_children():
+			if child is MeshInstance3D:
+				child.free()
+		building.add_child(BuildingVisual.build(Vector3(width - 0.6, height, depth), hash(pos), height > 60.0))
 		# Tall towers are glass curtain walls; the rest is stone and brick.
 		building.set_meta("surface", &"glass" if height > 60.0 else &"concrete")
 		_add_door(Vector3(pos.x, 0.2, center.z), depth)

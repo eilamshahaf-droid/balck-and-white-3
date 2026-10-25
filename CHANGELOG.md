@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-25: Real building models instead of boxes
+- The towers in the main city are now built from Kenney's free Modular Buildings kit (CC0): a facade module for every floor and bay, a shopfront ground floor, a flat roof, and three colour schemes. Towers over 60 m use large glass windows on every floor.
+- The models are used as they come from the kit for now; the soft cel-shading style does not apply to them yet (that needs a small shader change). Gameplay is unchanged: same city layout, same collision, the opening fire, the camera fade and the hand all work as before.
+- Kit files and licence: `assets/models/kenney_modular/`.
+- Try it: press F5. The first time you open the project, Godot imports the new models (a few seconds).
+
 ## 2026-10-25: Changelog and in-game language
 - Added this changelog. All in-game text is in English (it already was; this is now the rule).
 
