@@ -15,6 +15,8 @@ const DAMPING := 5.0
 var trunk_mat: Material
 var crown_mat: Material
 var crown_radius := 2.0
+## What the tree weighs once it is out; the hand compares it with its local strength.
+var mass := UprootedTree.MASS
 
 var _tilt := Vector2.ZERO       # x = lean toward +X, y = lean toward +Z
 var _tilt_vel := Vector2.ZERO
@@ -101,17 +103,17 @@ func on_released(_v: Vector3) -> void:
 
 ## Called by the hand every physics frame while it grips this tree. Returns the
 ## loose tree once the roots give way, otherwise null.
-## `strength` is how much mass the hand can lift here: too weak and the tree
-## only leans and shudders; stronger than needed and it comes out faster.
+## `strength` is how much mass the hand can lift here: weaker than the tree
+## and it comes out slowly (the hand pays belief meanwhile); stronger and faster.
 func hand_pull(anchor: Vector3, hand_velocity: Vector3, strength: float, delta: float) -> Node3D:
 	var pull := anchor - (global_position + Vector3.UP * 3.0)
 	var stretch := maxf(pull.length() - S.uproot_slack, 0.0)
-	var power := minf(strength / UprootedTree.MASS, 2.0) if strength >= UprootedTree.MASS else 0.0
+	var power := clampf(strength / mass, 0.25, 2.0)
 	# Pulling far builds tension; wiggling the hand (as in the original) helps more.
 	_tension += (stretch + hand_velocity.length() * S.uproot_speed_bonus) * S.hand_strength * power * delta
 	var effort: float = S.uproot_effort * crown_radius / 2.0
 	var lean := Vector2(pull.x, pull.z).limit_length(1.0)
-	var strain := clampf(_tension / effort, 0.0, 1.0) if power > 0.0 else 0.6
+	var strain := clampf(_tension / effort, 0.0, 1.0)
 	_push = lean * PULL_TILT * (0.4 + 0.6 * strain)
 	_push += Vector2(randf() - 0.5, randf() - 0.5) * 0.08 * strain   # shudder
 	if _tension >= effort:

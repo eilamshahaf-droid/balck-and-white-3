@@ -37,9 +37,18 @@ extends Resource
 @export var exposure_per_video := 0.02       # per filming witness, times the miracle's intensity
 @export var exposure_decay := 0.0005         # per second, as the news moves on
 
+@export_group("Belief (the resource)")
+@export var belief_start := 30.0             # belief in the pool when the game starts
+@export var prayer_rate := 0.25              # belief per second from each full believer's prayers
+
 @export_group("Influence and hand power")
 @export_range(0.0, 1.0) var believer_threshold := 0.5   # belief above this counts as a believer
 @export var influence_radius := 50.0         # believers this close make the hand stronger here
 @export var base_strength := 1.5             # hand power with no believers around (lifts a person)
 @export var strength_per_believer := 1.2     # added by each full believer standing right here
 @export var max_strength := 12.0
+## Anything can be lifted. Past the local strength it costs, instead of being impossible:
+@export var overload_cost := 2.0             # belief per second for each unit of mass past the local strength
+@export_range(0.05, 1.0) var overload_min_grip := 0.25  # how weakly a far too heavy thing still follows the hand
+@export var overload_wiggle := 0.04          # moving the hand fast helps heave a heavy thing (per m/s)
+@export var overload_exposure := 1.0         # an obviously impossible lift draws this much more attention

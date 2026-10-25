@@ -1,4 +1,3 @@
-class_name Sfx
 extends RefCounted
 ## Placeholder sounds, made in code so there are no audio files yet: one short
 ## sound per surface (concrete, glass, metal, wood, cloth...). The original

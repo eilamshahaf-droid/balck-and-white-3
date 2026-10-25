@@ -9,12 +9,15 @@ extends Node3D
 ## Held things hang from the hand on a damped spring, so heavy things lag and
 ## swing. Throw speed is the hand's motion averaged over the last moments.
 ##
-## The hand is only as strong as the believers around it: things heavier than
-## the local strength can't be lifted (see faith.gd). Everything it does in
-## plain sight is reported to the witnesses.
+## The hand is as strong as the believers around it (see faith.gd). Anything
+## can still be lifted, but past the local strength it is an effort: the thing
+## sags and lags unless the hand heaves, it burns belief from the pool, and it
+## draws more attention. Everything the hand does in plain sight is reported
+## to the witnesses.
 
 const S = preload("res://data/hand_settings.tres")
 const B = preload("res://data/balance.tres")
+const Sfx = preload("res://scripts/sfx.gd")
 const HandVisual = preload("res://scripts/hand_visual.gd")
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
@@ -34,6 +37,8 @@ var hand_velocity := Vector3.ZERO
 var pointed_building: Node3D = null
 ## How much mass the hand can lift where it is now.
 var strength_here := 1.0
+## 0..1: how well the held thing follows the hand (1 = within the local strength).
+var grip := 1.0
 
 var _visual: Node3D
 var _shadow: MeshInstance3D
@@ -41,6 +46,9 @@ var _shadow_mat := StandardMaterial3D.new()
 var _arc_mesh := ImmediateMesh.new()
 var _arc_mat := StandardMaterial3D.new()
 var _outline_mat := StandardMaterial3D.new()
+var _ring: MeshInstance3D
+var _ring_mat := StandardMaterial3D.new()
+var _power := 0.0
 
 var _press := Press.NONE
 var _press_time := 0.0
@@ -81,6 +89,21 @@ func _ready() -> void:
 	_shadow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_shadow.top_level = true
 	add_child(_shadow)
+
+	# A ring of light on the ground under the hand, like the influence ring of
+	# the original: wide and warm among believers, small and grey elsewhere.
+	_ring_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_ring_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.9
+	torus.outer_radius = 1.0
+	torus.rings = 48
+	_ring = MeshInstance3D.new()
+	_ring.mesh = torus
+	_ring.material_override = _ring_mat
+	_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_ring.top_level = true
+	add_child(_ring)
 
 	_arc_mat.albedo_color = Color(1, 1, 1, 0.6)
 	_arc_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -131,7 +154,8 @@ func _physics_process(delta: float) -> void:
 	if _strength_timer <= 0.0:
 		_strength_timer = 0.25
 		strength_here = faith.strength_at(_surface)
-		_visual.set_power((strength_here - B.base_strength) / 5.0)
+		_power = clampf((strength_here - B.base_strength) / 5.0, 0.0, 1.0)
+		_visual.set_power(_power)
 	if held:
 		if is_instance_valid(held):
 			_report_held()
@@ -213,20 +237,20 @@ func _update_press() -> void:
 
 func _grab(obj: Node3D) -> void:
 	strength_here = faith.strength_at(obj.global_position)
-	# Rooted trees can always be gripped; whether they come out depends on strength.
-	if _mass(obj) > strength_here and not obj.has_method("hand_pull"):
-		_strain(obj)
+	if _mass(obj) > strength_here and faith.belief_pool <= 0.0:
+		_strain(obj)  # too heavy here, and no belief left to force it
 		return
+	grip = 1.0
 	held = obj
 	_press = Press.HOLDING
 	Sfx.play(get_tree(), obj.global_position, Sfx.surface_of(obj), 0.5)
 	if held is RigidBody3D:
 		_hold_rigid(held)
-	elif held.has_method("on_grabbed"):
+	if held.has_method("on_grabbed"):
 		held.on_grabbed()
 
 
-## Too heavy for the hand here: it trembles and the thing only shudders.
+## Too heavy for the hand here and nothing left to pay with: it trembles and the thing only shudders.
 func _strain(obj: Node3D) -> void:
 	_press = Press.NONE
 	_visual.strain()
@@ -246,7 +270,21 @@ func _report_held() -> void:
 
 
 func _float_intensity(obj: Node3D) -> float:
-	return B.float_intensity * clampf(_mass(obj) / 2.0, 0.2, 1.5)
+	# A cab floating where the god has no believers is far more remarkable.
+	var overload := maxf(_mass(obj) - strength_here, 0.0) / _mass(obj)
+	return B.float_intensity * clampf(_mass(obj) / 2.0, 0.2, 1.5) * (1.0 + B.overload_exposure * overload)
+
+
+## Past the local strength the hand pays belief to keep hold. Returns false
+## when the pool runs dry and the hand has to let go.
+func _pay_for_weight(delta: float) -> bool:
+	var excess := _mass(held) - strength_here
+	if excess <= 0.0:
+		grip = 1.0
+		return true
+	var heave := hand_velocity.length() * B.overload_wiggle
+	grip = clampf(strength_here / _mass(held) + heave, B.overload_min_grip, 1.0)
+	return faith.spend(excess * B.overload_cost * delta)
 
 
 func _hold_rigid(body: RigidBody3D) -> void:
@@ -256,6 +294,12 @@ func _hold_rigid(body: RigidBody3D) -> void:
 
 
 func _pull_held(delta: float) -> void:
+	if not _pay_for_weight(delta):
+		var dropped := held
+		_release()
+		_press = Press.NONE
+		_strain(dropped)
+		return
 	var anchor := global_position - Vector3.UP * 1.2
 	if held.has_method("hand_pull"):
 		# Rooted things (trees) resist; when they give way they hand back the loose object.
@@ -264,6 +308,8 @@ func _pull_held(delta: float) -> void:
 			held = loose
 			if held is RigidBody3D:
 				_hold_rigid(held)
+			if held.has_method("on_grabbed"):
+				held.on_grabbed()
 			Sfx.play(get_tree(), held.global_position, &"earth", 1.0)
 			faith.report(held, &"see_uproot", B.uproot_intensity, B.spectacle_situation, 2.0)
 		return
@@ -271,13 +317,17 @@ func _pull_held(delta: float) -> void:
 	if to_anchor.length() > 40.0:
 		held.global_position = anchor  # stuck behind something; don't stretch forever
 		to_anchor = Vector3.ZERO
+	# Too heavy for this spot: a weaker spring and some of its weight left on,
+	# so it sags below the hand and swings slowly.
 	var m := _mass(held)
-	var k: float = S.spring_stiffness
+	var k: float = S.spring_stiffness * grip
 	var c := 2.0 * S.spring_damping * sqrt(k * m)
 	if held is RigidBody3D:
+		held.gravity_scale = 1.0 - grip
 		held.apply_central_force(k * to_anchor - c * held.linear_velocity)
 	else:
 		held.velocity += (k * to_anchor - c * held.velocity) / m * delta
+		held.velocity.y -= RIGID_GRAVITY * (1.0 - grip) * delta
 
 
 func _release() -> void:
@@ -469,8 +519,17 @@ func _update_shadow() -> void:
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit:
 		_shadow.visible = false
+		_ring.visible = false
 		return
 	_shadow.visible = true
+	_ring.visible = true
+	_ring.global_position = hit.position + Vector3.UP * 0.08
+	_ring.scale = Vector3(1.0, 0.05, 1.0) * lerpf(1.5, 5.0, _power)
+	var weak := Color(0.7, 0.75, 0.85, 0.25)
+	var strong := Color(1.0, 0.8, 0.4, 0.7)
+	_ring_mat.albedo_color = weak.lerp(strong, _power)
+	if held and grip < 1.0:
+		_ring_mat.albedo_color = Color(1.0, 0.35, 0.25, 0.7)  # overloaded: paying belief
 	var height: float = global_position.y - hit.position.y
 	_shadow.global_position = hit.position + Vector3.UP * 0.05
 	_shadow.scale = Vector3.ONE * clampf(0.8 + height * 0.08, 0.8, 3.0)

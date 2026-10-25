@@ -16,10 +16,13 @@ const LAYER_WORLD := 1
 ## 0..1, shown to the player.
 var exposure := 0.0
 var believers := 0
+## The belief pool: believers' prayers fill it, miracles and overloaded lifts spend it.
+var belief_pool := B.belief_start
 
 var _events := {}        # subject -> {kind, intensity, situation, time_left, id}
 var _next_id := 0
 var _timer := 0.0
+var _prayer := 0.0       # belief per second, from everyone praying right now
 
 
 ## Something visible is happening to `subject`. Call it again to keep the
@@ -38,6 +41,14 @@ func end_report(subject: Node3D) -> void:
 	_events.erase(subject)
 
 
+## Take belief from the pool. Returns false (and takes nothing) if there isn't enough.
+func spend(amount: float) -> bool:
+	if amount > belief_pool:
+		return false
+	belief_pool -= amount
+	return true
+
+
 ## How much mass the hand can lift at `p`.
 func strength_at(p: Vector3) -> float:
 	var s: float = B.base_strength
@@ -52,6 +63,7 @@ func strength_at(p: Vector3) -> float:
 
 func _physics_process(delta: float) -> void:
 	exposure = maxf(exposure - B.exposure_decay * delta, 0.0)
+	belief_pool += _prayer * delta
 	for subject in _events.keys():
 		_events[subject].time_left -= delta
 		if not is_instance_valid(subject) or _events[subject].time_left <= 0.0:
@@ -62,9 +74,11 @@ func _physics_process(delta: float) -> void:
 	_timer = B.witness_interval
 	var people := get_tree().get_nodes_in_group("citizens")
 	believers = 0
+	_prayer = 0.0
 	for c in people:
 		if c.belief > B.believer_threshold:
 			believers += 1
+			_prayer += B.prayer_rate * c.belief
 	for subject in _events:
 		_witness(subject, _events[subject], people)
 

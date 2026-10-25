@@ -14,6 +14,7 @@ var roots_intact := true
 
 var _roots: MeshInstance3D
 var _held_time := 0.0
+var _in_hand := false
 
 
 func build(p_trunk: Material, p_crown: Material, radius: float) -> void:
@@ -41,7 +42,12 @@ func aim_point() -> Vector3:
 	return to_global(Vector3.UP * 3.5)
 
 
+func on_grabbed() -> void:
+	_in_hand = true
+
+
 func on_released(v: Vector3) -> void:
+	_in_hand = false
 	if v.length() > S.place_max_speed:
 		_lose_roots()
 	elif roots_intact:
@@ -49,7 +55,7 @@ func on_released(v: Vector3) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if gravity_scale == 0.0:   # in the hand
+	if _in_hand:
 		_held_time += delta
 		if _held_time > S.roots_hold_time:
 			_lose_roots()
