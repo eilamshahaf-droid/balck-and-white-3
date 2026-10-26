@@ -38,8 +38,15 @@ extends Resource
 @export_range(0.0, 1.0) var abandoned_elsewhere := 0.04  # scattered through the rest of the city
 
 @export_group("Look")
-@export var roof_color := Color(1.0, 0.7, 0.0)
-@export var abandoned_color := Color(0.42, 0.4, 0.38)   # roof plate on an abandoned place nobody holds
+## How claims show on the buildings: PLATES fill the roof with gold as the
+## claim grows; BEACONS raise a glass column over the roof that fills up.
+## The debug panel switches between them.
+@export_enum("Plates", "Beacons") var marker_style := 0
+@export var roof_color := Color(1.0, 0.7, 0.0)              # yours, and the claim filling up
+@export var take_color := Color(0.62, 0.6, 0.58, 0.75)      # abandoned: take it over
+@export var convert_color := Color(0.25, 0.8, 0.85, 0.75)   # next to yours: convert it
+@export var beacon_height := 14.0
+@export var beacon_width := 2.2
 @export var border_color := Color(1.0, 1.0, 1.0, 0.85)
 @export var controlled_border_color := Color(1.0, 0.7, 0.0, 1.0)
 @export var border_width := 2.0

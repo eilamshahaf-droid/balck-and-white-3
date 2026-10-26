@@ -1,3 +1,4 @@
+class_name Districts
 extends Node
 ## Splits the city into districts and keeps the claim meter of every building
 ## (design doc: "איך משתלטים על מקום"). A meter fills from 0 to full and the
@@ -13,6 +14,16 @@ extends Node
 signal layout_ready
 signal building_changed(index: int, yours: bool)
 signal district_controlled(district: int)
+## Every claim meter was updated (twice a second).
+signal claims_updated
+
+## How a building stands for the cult: what the player can do with it.
+enum Reach {
+	YOURS,      ## yours
+	TAKE,       ## abandoned: take it over by bringing believers
+	CONVERT,    ## next to yours: convert it with believers who live or stand there
+	LOCKED,     ## out of reach until you hold something next to it
+}
 
 const S = preload("res://data/districts.tres")
 const B = preload("res://data/balance.tres")
@@ -30,6 +41,7 @@ var _yours := PackedByteArray()
 var _claim := PackedFloat32Array()       # 0..claim_full; full = yours
 var _abandoned := PackedByteArray()
 var _neighbors: Array[PackedInt32Array] = []
+var _zone := PackedInt32Array()          # neighbours of yours, per building, counted every tick
 var _totals := PackedInt32Array()        # standing buildings per district
 var _owned := PackedInt32Array()         # buildings of yours per district
 var _controlled := PackedByteArray()
@@ -98,6 +110,16 @@ func claim_of(index: int) -> float:
 
 func is_abandoned(index: int) -> bool:
 	return _abandoned[index] == 1
+
+
+func reach_of(index: int) -> Reach:
+	if _yours[index] == 1:
+		return Reach.YOURS
+	if _abandoned[index] == 1:
+		return Reach.TAKE
+	if _zone[index] > 0:
+		return Reach.CONVERT
+	return Reach.LOCKED
 
 
 ## The standing building nearest `p` on the ground, or -1.
@@ -183,6 +205,7 @@ func _physics_process(delta: float) -> void:
 		var zone := 0
 		for j in _neighbors[i]:
 			zone += _yours[j]
+		_zone[i] = zone
 		var gain := 0.0
 		# The beachhead rule: outside your zone only an abandoned place can be claimed.
 		if _yours[i] == 1 or zone > 0 or _abandoned[i] == 1:
@@ -199,6 +222,7 @@ func _physics_process(delta: float) -> void:
 			_set_side(i, true)
 		elif _yours[i] == 1 and _claim[i] < S.lose_below:
 			_set_side(i, false)
+	claims_updated.emit()
 
 
 func _gather_believers() -> void:
@@ -276,6 +300,8 @@ func _collect() -> void:
 	_abandoned.resize(n)
 	_abandoned.fill(0)
 	_faithful.resize(n)
+	_zone.resize(n)
+	_zone.fill(0)
 	for i in n:
 		var near := PackedInt32Array()
 		for j in n:

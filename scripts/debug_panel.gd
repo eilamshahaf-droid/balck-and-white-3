@@ -1,7 +1,7 @@
 extends CanvasLayer
 ## Testing shortcuts, top right (F1 hides it): convert or lose believers,
 ## move all believers to where the camera looks, fill the belief pool, raise
-## exposure (to call City Hall) and take buildings. Not part of the game; there to make testing quick.
+## exposure (to call City Hall), take buildings and switch the claim markers. Not part of the game; there to make testing quick.
 
 const B = preload("res://data/balance.tres")
 const STEP := 5
@@ -13,6 +13,7 @@ const TAKE_COUNT := 10
 @onready var rig: Node3D = get_node("../CameraRig")
 @onready var population: Node = get_node("../Population")
 @onready var districts: Node = get_node("../Districts")
+@onready var district_view: DistrictView = get_node("../DistrictView")
 
 var _panel: PanelContainer
 
@@ -36,6 +37,7 @@ func _ready() -> void:
 	_button(box, "Belief +%d" % roundi(BELIEF_GIFT), func(): faith.belief_pool += BELIEF_GIFT)
 	_button(box, "Exposure +%d%%" % roundi(EXPOSURE_GIFT * 100.0), func(): faith.exposure = minf(faith.exposure + EXPOSURE_GIFT, 1.0))
 	_button(box, "Take %d buildings here" % TAKE_COUNT, func(): districts.convert_near(rig.target_pivot, TAKE_COUNT))
+	_button(box, "Markers: plates / beacons", func(): district_view.toggle_style())
 
 
 func _unhandled_input(event: InputEvent) -> void:
