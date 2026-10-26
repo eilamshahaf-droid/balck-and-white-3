@@ -1,8 +1,9 @@
 extends Node
-## The game's art style: a dollhouse painted in watercolour.
+## The game's art style: a toy dollhouse town seen by a god.
 ## Runs as the autoload "ArtStyle". It gives every ordinary lit material in the
-## world the soft cel shader (shaders/toon.gdshader) and lays the watercolour
-## paper pass (shaders/watercolor_paper.gdshader) over the screen.
+## world the soft cel shader (shaders/toon.gdshader), blurs the far background
+## (shaders/depth_of_field.gdshader) and lays the tilt-shift and colour grade
+## (shaders/screen_pass.gdshader) over the screen.
 ##
 ## Gameplay code keeps creating plain StandardMaterial3D and changing its colour;
 ## this node swaps in a matching toon material and keeps the colour in sync, so
@@ -14,14 +15,12 @@ extends Node
 const S: ArtStyleSettings = preload("res://data/art_style.tres")
 const TOON := preload("res://shaders/toon.gdshader")
 const GHOST := preload("res://shaders/toon_ghost.gdshader")
-const PAPER := preload("res://shaders/watercolor_paper.gdshader")
+const SCREEN := preload("res://shaders/screen_pass.gdshader")
 const DOF := preload("res://shaders/depth_of_field.gdshader")
 
 var enabled := true
 
-var _wash: NoiseTexture2D
-var _paper_noise: NoiseTexture2D
-var _paper_mat := ShaderMaterial.new()
+var _screen_mat := ShaderMaterial.new()
 var _layer := CanvasLayer.new()
 var _dof := MeshInstance3D.new()   # screen-covering quad that blurs the far background
 var _toon := {}       # StandardMaterial3D -> its toon ShaderMaterial
@@ -35,16 +34,13 @@ var _shot_frames := 120
 func _ready() -> void:
 	process_priority = 1000  # after gameplay scripts have swapped materials this frame
 	enabled = S.enabled
-	_wash = _noise_texture(256, 0.012, 4, 11)
-	_paper_noise = _noise_texture(512, 0.02, 6, 23)
-
-	_paper_mat.shader = PAPER
-	_push_paper_params()
+	_screen_mat.shader = SCREEN
+	_push_screen_params()
 	_layer.layer = 0  # above the 3D world, below the HUD (layer 1)
 	var rect := ColorRect.new()
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.material = _paper_mat
+	rect.material = _screen_mat
 	_layer.add_child(rect)
 	add_child(_layer)
 	_layer.visible = enabled
@@ -183,29 +179,15 @@ func _push_toon_params(t: ShaderMaterial) -> void:
 	t.set_shader_parameter("shadow_softness", S.shadow_softness)
 	t.set_shader_parameter("key_tint", S.key_tint)
 	t.set_shader_parameter("rim_strength", S.rim_strength)
-	t.set_shader_parameter("paper_color", S.paper_color)
-	t.set_shader_parameter("pigment_lift", S.pigment_lift)
 	t.set_shader_parameter("saturation", S.saturation)
-	t.set_shader_parameter("wash_tex", _wash)
-	t.set_shader_parameter("wash_scale", S.wash_scale)
-	t.set_shader_parameter("wash_strength", S.wash_strength)
 
 
-func _push_paper_params() -> void:
-	_paper_mat.set_shader_parameter("paper_noise", _paper_noise)
-	_paper_mat.set_shader_parameter("paper_color", S.paper_color)
-	_paper_mat.set_shader_parameter("bleed", S.bleed)
-	_paper_mat.set_shader_parameter("edge_strength", S.edge_strength)
-	_paper_mat.set_shader_parameter("edge_threshold", S.edge_threshold)
-	_paper_mat.set_shader_parameter("grain", S.grain)
-	_paper_mat.set_shader_parameter("paper_strength", S.paper_strength)
-	_paper_mat.set_shader_parameter("wobble", S.wobble)
-	_paper_mat.set_shader_parameter("vignette", S.vignette)
-	_paper_mat.set_shader_parameter("tilt_center", S.tilt_center)
-	_paper_mat.set_shader_parameter("tilt_width", S.tilt_width)
-	_paper_mat.set_shader_parameter("vibrance", S.vibrance)
-	_paper_mat.set_shader_parameter("contrast", S.contrast)
-	_paper_mat.set_shader_parameter("warmth", S.warmth)
+func _push_screen_params() -> void:
+	_screen_mat.set_shader_parameter("tilt_center", S.tilt_center)
+	_screen_mat.set_shader_parameter("tilt_width", S.tilt_width)
+	_screen_mat.set_shader_parameter("vibrance", S.vibrance)
+	_screen_mat.set_shader_parameter("contrast", S.contrast)
+	_screen_mat.set_shader_parameter("warmth", S.warmth)
 
 
 ## The higher the god looks from, the more the city looks like a miniature.
@@ -213,7 +195,7 @@ func _update_tilt_shift() -> void:
 	var cam := get_viewport().get_camera_3d()
 	var h := cam.global_position.y if cam else 0.0
 	var k := smoothstep(S.tilt_height_min, S.tilt_height_max, h)
-	_paper_mat.set_shader_parameter("tilt_blur", S.tilt_blur * k)
+	_screen_mat.set_shader_parameter("tilt_blur", S.tilt_blur * k)
 
 
 ## Only the tone mapping: sky, ambient, fog and sun belong to the city's
@@ -267,17 +249,3 @@ func _style_sun(sun: DirectionalLight3D) -> void:
 	sun.shadow_blur = 0.0
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.directional_shadow_max_distance = S.shadow_distance
-
-
-func _noise_texture(size: int, frequency: float, octaves: int, seed_value: int) -> NoiseTexture2D:
-	var noise := FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
-	noise.frequency = frequency
-	noise.fractal_octaves = octaves
-	noise.seed = seed_value
-	var tex := NoiseTexture2D.new()
-	tex.width = size
-	tex.height = size
-	tex.seamless = true
-	tex.noise = noise
-	return tex

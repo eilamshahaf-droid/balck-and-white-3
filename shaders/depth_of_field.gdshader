@@ -2,8 +2,9 @@
 // distance of the screen's centre stays sharp, and everything further away
 // melts softly into the background. Things nearer than the focus (the god's
 // hand, a lifted car) stay sharp. Drawn on a screen-covering quad that
-// scripts/art_style.gd keeps in front of the camera; the watercolour paper
-// pass then reads the result, so the tilt-shift blur adds on top.
+// scripts/art_style.gd keeps in front of the camera; the screen
+// pass (shaders/screen_pass.gdshader) then reads the result, so the
+// tilt-shift blur adds on top.
 shader_type spatial;
 render_mode unshaded, depth_test_disabled, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
 
