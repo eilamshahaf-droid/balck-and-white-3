@@ -14,10 +14,11 @@ const TAXI_COUNT := 30
 const LITTER_COUNT := 160
 const PIGEON_FLOCKS := 8
 
-# Physics layers: 1 = world, 2 = citizens, 3 = props.
+# Physics layers: 1 = world, 2 = citizens, 3 = props, 4 = critters (pigeons).
 const LAYER_WORLD := 1
 const LAYER_CITIZENS := 2
 const LAYER_PROPS := 4
+const LAYER_CRITTERS := 8
 
 const TaxiScript := preload("res://scripts/taxi.gd")
 const TreeScript := preload("res://scripts/swaying_tree.gd")
@@ -240,7 +241,9 @@ func _spawn_pigeons() -> void:
 	for f in PIGEON_FLOCKS:
 		var center := intersection(random_grid())
 		for n in rng.randi_range(4, 7):
-			var bird: Node3D = PigeonScript.new()
+			var bird: Area3D = PigeonScript.new()
+			bird.collision_layer = LAYER_CRITTERS
+			bird.collision_mask = 0
 			bird.city = self
 			bird.build(grey)
 			bird.position = center + Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))

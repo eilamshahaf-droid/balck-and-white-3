@@ -166,6 +166,7 @@ func _char() -> void:
 	for mesh in building.find_children("*", "MeshInstance3D", false, false):
 		_original_materials[mesh] = mesh.material_override
 		mesh.material_override = burnt
+		ArtStyle.restyle(mesh)
 
 
 ## Put the fire out and give the building back its old look.
@@ -174,6 +175,7 @@ func restore() -> void:
 	for mesh in _original_materials:
 		if is_instance_valid(mesh):
 			mesh.material_override = _original_materials[mesh]
+			ArtStyle.restyle(mesh)
 	queue_free()
 
 

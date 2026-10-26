@@ -17,9 +17,7 @@ func build(mat: Material) -> void:
 	shape.shape = box
 	add_child(shape)
 	var mesh := MeshInstance3D.new()
-	var box_mesh := BoxMesh.new()
-	box_mesh.size = box.size
-	mesh.mesh = box_mesh
+	mesh.mesh = SharedMeshes.box(box.size)
 	mesh.material_override = mat
 	add_child(mesh)
 

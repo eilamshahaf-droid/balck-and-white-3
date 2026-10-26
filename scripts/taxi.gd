@@ -19,9 +19,7 @@ func build(body_mat: Material) -> void:
 	shape.shape = box
 	add_child(shape)
 	var mesh := MeshInstance3D.new()
-	var box_mesh := BoxMesh.new()
-	box_mesh.size = box.size
-	mesh.mesh = box_mesh
+	mesh.mesh = SharedMeshes.box(box.size)
 	mesh.material_override = body_mat
 	add_child(mesh)
 
@@ -32,9 +30,7 @@ func build(body_mat: Material) -> void:
 	for x in [-0.65, 0.65]:
 		for z in [-2.26, 2.26]:
 			var light := MeshInstance3D.new()
-			var light_mesh := BoxMesh.new()
-			light_mesh.size = Vector3(0.4, 0.25, 0.05)
-			light.mesh = light_mesh
+			light.mesh = SharedMeshes.box(Vector3(0.4, 0.25, 0.05))
 			light.material_override = _lights
 			light.position = Vector3(x, 0.1, z)
 			add_child(light)
