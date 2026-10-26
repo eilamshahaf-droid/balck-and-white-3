@@ -24,8 +24,9 @@ scenes/              main.tscn (the game), city_planning.tscn (planning sandbox)
 scripts/             gameplay scripts for main.tscn
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 data/                every tunable number, as .tres resources (one per system)
-shaders/             toon (cel) shading, ghost fade, watercolour paper pass
+shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
 assets/models/       third-party models (Kenney CC0), with their licence files
+tests/               headless tests that drive the real game (run before pushing)
 docs/                screenshot for the README
 ```
 
@@ -38,26 +39,37 @@ The scene is small; most nodes are built in code at startup.
 | `Main` | `city.gd` | Builds the procedural Manhattan grid: ground, blocks, towers, park, trees, doors, taxis, citizens, litter, pigeons. Grid helpers used by citizens. Day/night (`set_daylight`). |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
-| `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, gestures (circle = water miracle). |
+| `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
+| `Miracles` | `miracles.gd` | Casts the miracles (water, fire, lightning, shield, heal): spends belief and reports to `Faith`. Effects: `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd`. |
+| `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: signs on a building, miracles elsewhere. A chosen miracle sits in the hand until cast. |
+| `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
+| `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |
 | `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Off for now (`enabled = false` in `main.tscn`), so the game starts in free play with a ready congregation. |
 | `HUD` | `hud.gd` | The numbers the player may see. |
 
 World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`
-/ `uprooted_tree.gd`, `door.gd`, `litter.gd`, `pigeon.gd`, `fire.gd`, `rain.gd`.
+/ `uprooted_tree.gd`, `door.gd`, `litter.gd`, `pigeon.gd`.
 `building_visual.gd` merges Kenney facade modules into one mesh per building.
+`shared_meshes.gd` (`SharedMeshes`) hands out low-poly primitive meshes shared by every instance.
 `sfx.gd` makes placeholder sounds in code.
 
 Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`,
 `wind_reactive`, `no_toon`.
 
-Physics layers: 1 = world (ground, buildings), 2 = citizens, 3 (bit value 4) = props.
+Physics layers (bit values in code): 1 = world (ground, buildings), 2 = citizens,
+3 (4) = props (taxis, trees, litter), 4 (8) = critters (pigeons, as Area3D so the hand's wind
+query finds them). The hand finds what to pick and what to blow on with physics shape queries
+around itself, never by scanning a group.
 
 ### Art style (autoload `ArtStyle`, `scripts/art_style.gd`)
 
 Gameplay code creates plain `StandardMaterial3D`s; `ArtStyle` swaps them for the toon shader
-and draws the watercolour paper pass over the screen. Gameplay must not know about the style.
-`V` toggles it. The god's hand and anything in group `no_toon` are left alone.
-Tunables: `data/art_style.tres`.
+once, the frame after a mesh enters the tree, and draws depth of field, tilt-shift and the
+colour grade over the screen. Gameplay must not know about the shader. One rule: code that
+changes a mesh's `material_override` later (a burnt building, the belief debug tint, a planning
+overlay) calls `ArtStyle.restyle(mesh)`. Colour changes on a plain material are synced
+automatically. `V` toggles the style. The god's hand and anything in group `no_toon` are left
+alone. Tunables: `data/art_style.tres`.
 
 ### City-planning sandbox (`scenes/city_planning.tscn`)
 
@@ -73,7 +85,8 @@ Tunables: `data/planning.tres`.
 | --- | --- | --- |
 | `data/hand_settings.tres` | `HandSettings` | hand and camera feel |
 | `data/balance.tres` | `Balance` | belief, witnesses, exposure |
-| `data/art_style.tres` | `ArtStyleSettings` | shading and watercolour |
+| `data/miracles.tres` | `MiracleSettings` | miracle costs, reach and effects |
+| `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
 
 ### Who owns what
@@ -82,9 +95,11 @@ Several threads push to `main`. Message the owning thread before changing its fi
 
 | Area | Files | Owner thread |
 | --- | --- | --- |
-| City, opening, planning | `city.gd`, `opening.gd`, `scripts/planning/`, `scenes/city_planning.tscn` | game-planning |
-| Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, hand model | visual-style |
+| Hand, miracles, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
+| People | `citizen.gd`, `faith.gd`, `sign_followers.gd` | "Build the people in the city" |
+| Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
 | Building models | `building_visual.gd`, `assets/models/` | model-library |
+| Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
 
 ## Coding rules
 
@@ -145,9 +160,12 @@ Target: a steady **60 fps on a mid-range PC**, and the game must also run on the
 1. `git pull` right before you push; message the owning thread before changing its files.
 2. Run the project headless with no errors and no new warnings:
    `godot --headless --path . --quit-after 600` and the same for
-   `res://scenes/city_planning.tscn`.
-3. Test the feature you changed. For visual changes, take a screenshot
+   `res://scenes/city_planning.tscn`. After adding a `class_name`, run
+   `godot --headless --path . --import` once so the class is registered.
+3. Run the hand test: `godot --headless --path . res://tests/hand_test.tscn` must print
+   `HAND TEST: PASS` (exit code 0). Add a check there when you add a hand behaviour.
+4. Test the feature you changed. For visual changes, take a screenshot
    (`godot --path . -- --shot=out.png` saves one after 120 frames) and share it.
-4. Check that both renderers still start (`--rendering-method gl_compatibility`).
-5. Add an entry to `CHANGELOG.md`: date, what changed, how to try it.
-6. Update this file when the structure changes (new system, new scene, new owner).
+5. Check that both renderers still start (`--rendering-method gl_compatibility`).
+6. Add an entry to `CHANGELOG.md`: date, what changed, how to try it.
+7. Update this file when the structure changes (new system, new scene, new owner).

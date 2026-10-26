@@ -14,9 +14,7 @@ func build(mat: Material) -> void:
 	add_to_group("doors")
 	add_child(_hinge)
 	var leaf := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(1.4, 2.4, 0.12)
-	leaf.mesh = box
+	leaf.mesh = SharedMeshes.box(Vector3(1.4, 2.4, 0.12))
 	leaf.material_override = mat
 	leaf.position = Vector3(0.7, 1.2, 0)   # hinge on the left edge
 	_hinge.add_child(leaf)

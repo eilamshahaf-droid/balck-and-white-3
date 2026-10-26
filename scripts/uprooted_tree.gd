@@ -28,10 +28,8 @@ func build(p_trunk: Material, p_crown: Material, radius: float) -> void:
 	tree_script.add_tree_shapes(self, radius)
 	tree_script.add_tree_visuals(self, p_trunk, p_crown, radius)
 	_roots = MeshInstance3D.new()
-	var ball := SphereMesh.new()
-	ball.radius = 0.7
-	ball.height = 1.0
-	_roots.mesh = ball
+	_roots.mesh = SharedMeshes.unit_sphere(12, 6)
+	_roots.scale = Vector3(0.7, 0.5, 0.7)
 	var dirt := StandardMaterial3D.new()
 	dirt.albedo_color = Color(0.3, 0.22, 0.15)
 	_roots.material_override = dirt

@@ -16,7 +16,7 @@ extends Node3D
 ## Lifting and throwing are play, not miracles: anything can be lifted, and
 ## nobody's belief changes from seeing it. Belief comes only from miracles.
 
-const S = preload("res://data/hand_settings.tres")
+const S: HandSettings = preload("res://data/hand_settings.tres")
 const Sfx = preload("res://scripts/sfx.gd")
 const HandVisual = preload("res://scripts/hand_visual.gd")
 const Gesture = preload("res://scripts/gesture.gd")
@@ -34,7 +34,13 @@ signal right_clicked
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
 const LAYER_WORLD := 1
+const LAYER_CITIZENS := 2
 const LAYER_PROPS := 4
+const LAYER_CRITTERS := 8
+## Extra reach of the wind query: a tree feels the wind at its crown, above its base.
+const WIND_QUERY_MARGIN := 4.0
+## Samples kept for throw speed: half a second at up to 120 physics ticks.
+const HISTORY_SIZE := 64
 
 enum Press { NONE, PENDING_GROUND, PENDING_OBJECT, DRAG_GROUND, HOLDING }
 
@@ -64,7 +70,13 @@ var _press_pos := Vector2.ZERO
 var _press_hit := {}
 var _press_target: Node3D = null
 var _surface := Vector3.ZERO
-var _history: Array = []   # [time, position, mouse] samples, for throw velocity
+# Recent hand samples, oldest first, for throw velocity.
+var _history_time := PackedFloat64Array()
+var _history_pos := PackedVector3Array()
+var _history_mouse := PackedVector2Array()
+var _windy := {}           # wind_reactive nodes the wind reached last tick (used as a set)
+var _pick_query := PhysicsShapeQueryParameters3D.new()
+var _wind_query := PhysicsShapeQueryParameters3D.new()
 var _tap_timer := 0.0
 var _drawing := false
 var _gesture := PackedVector2Array()
@@ -135,6 +147,15 @@ func _ready() -> void:
 	_point_outline_mat.grow = true
 	_point_outline_mat.grow_amount = 0.06
 
+	# The pick and the wind only look at what is near the hand; the physics
+	# engine already knows where everything is.
+	_pick_query.shape = SphereShape3D.new()
+	_pick_query.collision_mask = LAYER_CITIZENS | LAYER_PROPS
+	_wind_query.shape = SphereShape3D.new()
+	(_wind_query.shape as SphereShape3D).radius = S.wind_fade_radius + WIND_QUERY_MARGIN
+	_wind_query.collision_mask = LAYER_PROPS | LAYER_CRITTERS
+	_wind_query.collide_with_areas = true
+
 
 func _physics_process(delta: float) -> void:
 	var hit := _raycast_mouse()
@@ -166,7 +187,7 @@ func _physics_process(delta: float) -> void:
 	_update_point_zoom(delta)
 	_record_history()
 	hand_velocity = _throw_velocity() / S.throw_multiplier if S.throw_multiplier > 0.0 else Vector3.ZERO
-	get_tree().call_group("wind_reactive", "on_hand_wind", self)
+	_blow()
 
 	if held:
 		if is_instance_valid(held):
@@ -183,6 +204,8 @@ func _physics_process(delta: float) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
 		Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_let_go()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -298,6 +321,19 @@ func _on_release() -> void:
 	_press = Press.NONE
 
 
+## The window lost focus: the button-up will never arrive, so finish whatever
+## the press was doing. A held thing is put down, not thrown.
+func _let_go() -> void:
+	match _press:
+		Press.DRAG_GROUND:
+			rig.end_ground_drag()
+		Press.HOLDING:
+			_release(false)
+	_press = Press.NONE
+	_drawing = false
+	_trail.clear_points()
+
+
 func _update_press() -> void:
 	if _press != Press.PENDING_GROUND and _press != Press.PENDING_OBJECT:
 		return
@@ -364,10 +400,10 @@ func _pull_held(delta: float) -> void:
 		held.velocity += (k * to_anchor - c * held.velocity) / m * delta
 
 
-func _release() -> void:
+func _release(allow_throw := true) -> void:
 	if not held:
 		return
-	var v := _throw_velocity()
+	var v := _throw_velocity() if allow_throw else Vector3.ZERO
 	# Intent comes from the mouse: a mouse at rest means "put it down", whatever the hand did.
 	if v.length() < S.place_max_speed or _mouse_speed() < S.place_max_mouse_speed:
 		v = Vector3.ZERO
@@ -381,40 +417,51 @@ func _release() -> void:
 
 
 func _throw_velocity() -> Vector3:
-	if _history.size() < 2:
+	var oldest := _throw_window_start()
+	if oldest < 0:
 		return Vector3.ZERO
-	var newest: Array = _history[-1]
-	var oldest: Array = _history[0]
-	for i in range(_history.size() - 1, -1, -1):
-		oldest = _history[i]
-		if newest[0] - oldest[0] >= S.throw_window:
-			break
-	var dt: float = newest[0] - oldest[0]
-	if dt <= 0.0:
-		return Vector3.ZERO
-	var v: Vector3 = (newest[1] - oldest[1]) / dt * S.throw_multiplier
+	var last := _history_time.size() - 1
+	var dt := _history_time[last] - _history_time[oldest]
+	var v := (_history_pos[last] - _history_pos[oldest]) / dt * S.throw_multiplier
 	return v.limit_length(S.throw_max_speed)
 
 
 func _record_history() -> void:
 	var now := _time()
-	_history.append([now, global_position, get_viewport().get_mouse_position()])
-	while _history.size() > 2 and now - _history[0][0] > 0.5:
-		_history.pop_front()
+	if _history_time.size() >= HISTORY_SIZE:
+		_drop_oldest_sample()
+	_history_time.append(now)
+	_history_pos.append(global_position)
+	_history_mouse.append(get_viewport().get_mouse_position())
+	while _history_time.size() > 2 and now - _history_time[0] > 0.5:
+		_drop_oldest_sample()
+
+
+func _drop_oldest_sample() -> void:
+	_history_time.remove_at(0)
+	_history_pos.remove_at(0)
+	_history_mouse.remove_at(0)
+
+
+## Index of the sample one throw window before the newest, or -1 if there is
+## no time span to measure over.
+func _throw_window_start() -> int:
+	var last := _history_time.size() - 1
+	if last < 1:
+		return -1
+	var i := last - 1
+	while i > 0 and _history_time[last] - _history_time[i] < S.throw_window:
+		i -= 1
+	return i if _history_time[last] > _history_time[i] else -1
 
 
 ## Mouse speed in pixels per second over the throw window.
 func _mouse_speed() -> float:
-	if _history.size() < 2:
+	var oldest := _throw_window_start()
+	if oldest < 0:
 		return 0.0
-	var newest: Array = _history[-1]
-	var oldest: Array = _history[0]
-	for i in range(_history.size() - 1, -1, -1):
-		oldest = _history[i]
-		if newest[0] - oldest[0] >= S.throw_window:
-			break
-	var dt: float = newest[0] - oldest[0]
-	return newest[2].distance_to(oldest[2]) / dt if dt > 0.0 else 0.0
+	var last := _history_time.size() - 1
+	return _history_mouse[last].distance_to(_history_mouse[oldest]) / (_history_time[last] - _history_time[oldest])
 
 
 func _tap(obj: Node3D) -> void:
@@ -446,6 +493,23 @@ func _knock(where: Vector3, surface: StringName) -> void:
 			c.notice(where)
 
 
+## Tell everything within the wind's reach about it, plus whatever it reached
+## last tick, so things that just fell out of reach can settle.
+func _blow() -> void:
+	_wind_query.transform = Transform3D(Basis.IDENTITY, global_position)
+	var reached := {}
+	for near in get_world_3d().direct_space_state.intersect_shape(_wind_query, 128):
+		var node: Node = near.collider
+		if node.is_in_group("wind_reactive"):
+			reached[node] = true
+	for node: Node in _windy:
+		if is_instance_valid(node) and not reached.has(node):
+			node.on_hand_wind(self)
+	for node: Node in reached:
+		node.on_hand_wind(self)
+	_windy = reached
+
+
 ## How strongly the hand's wind reaches `p`: full and sharpening inside the
 ## inner radius, fading smoothly to zero at the outer one; a moving hand blows harder.
 func wind_strength(p: Vector3) -> float:
@@ -474,13 +538,18 @@ func _pick_target(hit: Dictionary) -> Node3D:
 	var px_per_m := _screen_radius(camera, global_position, 1.0)
 	var best: Node3D = null
 	var best_score := reach
-	for obj in get_tree().get_nodes_in_group("god_grabbable"):
+	# Only things near the hand in the world can be under it on screen.
+	(_pick_query.shape as SphereShape3D).radius = reach / maxf(px_per_m, 0.01) * 2.0 + 2.0
+	_pick_query.transform = Transform3D(Basis.IDENTITY, global_position)
+	var seen := {}
+	for near in get_world_3d().direct_space_state.intersect_shape(_pick_query, 64):
+		var obj: Node3D = near.collider
+		if seen.has(obj) or not _is_grabbable(obj):
+			continue
+		seen[obj] = true
 		var bounds := _pick_bounds(obj)
 		var center: Vector3 = obj.global_transform * bounds.position
 		var radius: float = bounds.size.x
-		# Cheap cull: nowhere near the hand in the world.
-		if center.distance_to(global_position) > radius + reach / maxf(px_per_m, 0.01) * 2.0 + 2.0:
-			continue
 		if camera.is_position_behind(center):
 			continue
 		# Size helps only up to the hand's own reach, so a big tree crown can't
@@ -562,9 +631,9 @@ func _update_arc() -> void:
 	var v := _throw_velocity()
 	if v.length() < S.arc_min_speed:
 		return
-	if not (held is RigidBody3D) and held.get("fall_gravity") == null:
+	if not (held is RigidBody3D or held is Citizen):
 		return  # rooted things don't fly
-	var g: float = RIGID_GRAVITY if held is RigidBody3D else held.fall_gravity
+	var g: float = RIGID_GRAVITY if held is RigidBody3D else (held as Citizen).fall_gravity
 	var space := get_world_3d().direct_space_state
 	var p: Vector3 = held.global_position
 	var step := 0.05
@@ -605,9 +674,12 @@ func _is_grabbable(obj: Object) -> bool:
 
 func _mass(obj: Node3D) -> float:
 	if obj is RigidBody3D:
-		return obj.mass
-	var m = obj.get("mass")
-	return m if m != null else 1.0
+		return (obj as RigidBody3D).mass
+	if obj is Citizen:
+		return (obj as Citizen).mass
+	if obj is SwayingTree:
+		return (obj as SwayingTree).mass
+	return 1.0
 
 
 func _time() -> float:

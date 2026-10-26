@@ -7,7 +7,9 @@ extends Node
 ##
 ## Gameplay code keeps creating plain StandardMaterial3D and changing its colour;
 ## this node swaps in a matching toon material and keeps the colour in sync, so
-## the look stays separate from the logic. Unshaded, transparent, billboard and
+## the look stays separate from the logic. Each mesh is styled once, when it
+## enters the tree; code that later swaps a mesh's material_override calls
+## restyle() so the new material is converted too. Unshaded, transparent, billboard and
 ## glowing materials (the hand's shadow and ring, fire, rain, phone screens) and
 ## the whole god's hand are left alone: they belong to the god layer.
 ## V toggles the style to compare with the plain look.
@@ -25,14 +27,14 @@ var _layer := CanvasLayer.new()
 var _dof := MeshInstance3D.new()   # screen-covering quad that blurs the far background
 var _toon := {}       # StandardMaterial3D -> its toon ShaderMaterial
 var _colors := {}     # StandardMaterial3D -> albedo last copied into the toon material
-var _meshes := []     # every MeshInstance3D we look after
-var _pending := []    # meshes that entered the tree since the last frame
+var _meshes := {}     # every MeshInstance3D we look after (used as a set)
+var _pending: Array[MeshInstance3D] = []   # meshes that entered the tree since the last frame
 var _shot_path := ""
 var _shot_frames := 120
 
 
 func _ready() -> void:
-	process_priority = 1000  # after gameplay scripts have swapped materials this frame
+	process_priority = 1000  # after gameplay scripts have made their meshes this frame
 	enabled = S.enabled
 	_screen_mat.shader = SCREEN
 	_push_screen_params()
@@ -47,6 +49,7 @@ func _ready() -> void:
 	_build_dof()
 
 	get_tree().node_added.connect(_on_node_added)
+	get_tree().node_removed.connect(_on_node_removed)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shot="):
 			_shot_path = arg.trim_prefix("--shot=")
@@ -63,22 +66,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		enabled = not enabled
 		_layer.visible = enabled
 		_dof.visible = enabled and S.dof_blur > 0.0
+		for m: MeshInstance3D in _meshes:
+			_apply(m)
 
 
 func _process(_delta: float) -> void:
+	# Styled a frame late, once the scripts that built them have set their materials.
 	for m in _pending:
-		if is_instance_valid(m) and _belongs_to_world(m):
-			_meshes.append(m)
-	_pending.clear()
-
-	var i := _meshes.size() - 1
-	while i >= 0:
-		var m = _meshes[i]
-		if not is_instance_valid(m):
-			_meshes.remove_at(i)
-		else:
+		if is_instance_valid(m) and m.is_inside_tree() and _belongs_to_world(m):
+			_meshes[m] = true
 			_apply(m)
-		i -= 1
+	_pending.clear()
 
 	# Gameplay changes colours on the plain material (belief tint, burnt
 	# buildings); copy them over.
@@ -96,6 +94,13 @@ func _process(_delta: float) -> void:
 		if _shot_frames <= 0:
 			get_viewport().get_texture().get_image().save_png(_shot_path)
 			get_tree().quit()
+
+
+## Call after changing `mesh.material_override` at runtime (a burnt building,
+## the belief debug tint), so the new plain material gets the style too.
+func restyle(mesh: MeshInstance3D) -> void:
+	if _meshes.has(mesh):
+		_apply(mesh)
 
 
 ## A see-through copy of a building's material, for the camera's fade.
@@ -119,11 +124,16 @@ func set_ghost_alpha(mat: Material, a: float) -> void:
 
 func _on_node_added(node: Node) -> void:
 	if node is MeshInstance3D:
-		_pending.append(node)
+		_pending.append(node as MeshInstance3D)
 	elif node is WorldEnvironment:
 		_style_environment.call_deferred(node)
 	elif node is DirectionalLight3D:
 		_style_sun.call_deferred(node)
+
+
+func _on_node_removed(node: Node) -> void:
+	if node is MeshInstance3D:
+		_meshes.erase(node)
 
 
 func _belongs_to_world(m: Node) -> bool:

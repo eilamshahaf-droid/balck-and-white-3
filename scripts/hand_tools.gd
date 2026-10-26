@@ -70,6 +70,12 @@ func _ready() -> void:
 	hand.circle_drawn.connect(func(at: Vector2, radius: float): miracles.cast_at_screen(&"water", at, radius))
 
 
+## The window lost focus with a wheel open: its button-up will never come.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _mode != Mode.NONE:
+		_close()
+
+
 ## While a wheel is open it owns the mouse buttons, so the hand never sees the
 ## release that picks a slice.
 func _input(event: InputEvent) -> void:

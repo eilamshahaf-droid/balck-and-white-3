@@ -43,6 +43,8 @@ const ZONE_COLOURS := {
 }
 const LANDMARK_HEIGHT := {"temple": 20.0, "square": 1.5, "park": 1.0, "station": 18.0, "factory": 22.0, "monument": 55.0}
 const HEAT_SIZE := Vector2i(168, 128)
+## Metres the cursor moves before the hover text (height, slope) is rebuilt.
+const INFO_STEP := 2.0
 
 var model
 var vis := Visuals.new()
@@ -65,6 +67,15 @@ var _lines: MeshInstance3D         # road being drawn and the outline of the blo
 var _drawing := PackedVector2Array()
 var _build_timer := 0.0
 var _overlay_dirty := true
+# What the hover text was last built for.
+var _info_dirty := true
+var _info_hover := false
+var _info_cell := Vector2i.ZERO
+var _info_lot := -1
+var _info_block := -1
+var _info_tool := ""
+var _info_straight := false
+var _info_message := false
 var _overlay_timer := 0.0
 var _hover_pos := Vector3.ZERO
 var _hover_valid := false
@@ -163,12 +174,14 @@ func _process(delta: float) -> void:
 		_overlay_timer = 0.3
 		_update_heat()
 		_apply_overlay_to_buildings()
+		_update_stats()
+		_info_dirty = true
 	# The heat is faint up close and strong from above, so the city stays readable.
 	_heat.material_override.albedo_color.a = lerpf(0.6, 1.0, rig.zoom_t())
 	# The camera rides over the hills.
 	rig.position.y = lerpf(rig.position.y, model.terrain.height_at(rig.position.x, rig.position.z), minf(delta * 4.0, 1.0))
 	_message_time -= delta
-	_update_texts()
+	_update_info()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -193,6 +206,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_select_overlay(OVERLAYS[event.keycode - KEY_1][0])
 		elif event.keycode == KEY_SPACE:
 			paused = not paused
+			_update_stats()
 		elif event.keycode == KEY_ESCAPE:
 			_drawing = PackedVector2Array()
 			_select_tool("inspect")
@@ -278,6 +292,7 @@ func _remove_at(pos: Vector3) -> void:
 
 func _say(text: String) -> void:
 	_message = text
+	_info_dirty = true
 	_message_time = 3.5
 
 
@@ -367,18 +382,37 @@ func _draw_lines() -> void:
 			im.surface_end()
 
 
-func _update_texts() -> void:
+## The city totals walk every lot, so they are only recounted when the city changed.
+func _update_stats() -> void:
 	var s: Dictionary = model.stats()
 	_stats.text = "Population  %d\nJobs  %d\nQuality of life  %+.1f\nFear  %.1f\n\nPer minute:\n  Prayer  %.1f\n  Migrants (good)  %.1f\n  Power (evil)  %.1f\n  Money (neutral)  %.0f\n\nBuildings looking\n  good %d   evil %d   neutral %d\nStreets %.1f km, %d blocks\nBuilt lots  %d / %d%s" % [
 			s.population, s.jobs, s.quality, s.fear, s.prayer, s.migrants, s.power, s.money,
 			s.looks.good, s.looks.evil, s.looks.grey, s.roads_km, s.blocks, s.built, s.lots,
 			"\n\nPAUSED (Space)" if paused else ""]
+
+
+## The hover text is rebuilt only when what it describes changes.
+func _update_info() -> void:
+	var lot_id: int = model.lot_at(_hover_pos) if _hover_valid else -1
+	var b: int = model.block_at(_hover_pos) if _hover_valid else -1
+	var cell := Vector2i(roundi(_hover_pos.x / INFO_STEP), roundi(_hover_pos.z / INFO_STEP))
+	var showing_message := _message_time > 0.0
+	if not _info_dirty and _hover_valid == _info_hover and cell == _info_cell \
+			and lot_id == _info_lot and b == _info_block \
+			and tool == _info_tool and straight == _info_straight and showing_message == _info_message:
+		return
+	_info_dirty = false
+	_info_hover = _hover_valid
+	_info_cell = cell
+	_info_lot = lot_id
+	_info_block = b
+	_info_tool = tool
+	_info_straight = straight
+	_info_message = showing_message
 	var lines: Array[String] = []
 	if _message_time > 0.0:
 		lines.append(_message)
 	if _hover_valid:
-		var lot_id: int = model.lot_at(_hover_pos)
-		var b: int = model.block_at(_hover_pos)
 		var ground := "height %d m, slope %d%%" % [roundi(_hover_pos.y), roundi(model.terrain.slope_at(Vector2(_hover_pos.x, _hover_pos.z)) * 100.0)]
 		if b >= 0:
 			var block: Dictionary = model.blocks[b]
@@ -478,6 +512,7 @@ func _tint(node: Node3D, pos: Vector3, zone: String) -> void:
 		if not body.has_meta("own"):
 			body.set_meta("own", body.material_override)
 		body.material_override = body.get_meta("own") if overlay == "none" else vis.material(colour)
+		ArtStyle.restyle(body)
 
 
 func _build_cell_blocks() -> void:

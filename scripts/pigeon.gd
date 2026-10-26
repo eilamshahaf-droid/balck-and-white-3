@@ -1,6 +1,7 @@
-extends Node3D
+extends Area3D
 ## A street pigeon. Pecks around until the god's hand comes close or its wind
 ## blows, then flies off and lands somewhere else a few seconds later.
+## An Area3D only so the hand's wind query can find it; it watches nothing.
 
 enum State { IDLE, FLEE, LAND }
 
@@ -19,19 +20,22 @@ var _t := randf() * 10.0
 
 func build(body_mat: Material) -> void:
 	add_to_group("wind_reactive")
+	monitoring = false
+	var shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 0.3
+	shape.shape = sphere
+	shape.position.y = 0.2
+	add_child(shape)
 	set_meta("surface", &"feathers")
 	var body := MeshInstance3D.new()
-	var body_mesh := BoxMesh.new()
-	body_mesh.size = Vector3(0.22, 0.2, 0.36)
-	body.mesh = body_mesh
+	body.mesh = SharedMeshes.box(Vector3(0.22, 0.2, 0.36))
 	body.material_override = body_mat
 	body.position.y = 0.16
 	add_child(body)
 	var head := MeshInstance3D.new()
-	var head_mesh := SphereMesh.new()
-	head_mesh.radius = 0.08
-	head_mesh.height = 0.16
-	head.mesh = head_mesh
+	head.mesh = SharedMeshes.unit_sphere(8, 4)
+	head.scale = Vector3.ONE * 0.08
 	head.material_override = body_mat
 	head.position = Vector3(0, 0.3, -0.18)
 	add_child(head)
@@ -40,9 +44,7 @@ func build(body_mat: Material) -> void:
 		hinge.position = Vector3(0.11 * side, 0.22, 0)
 		add_child(hinge)
 		var wing := MeshInstance3D.new()
-		var wing_mesh := BoxMesh.new()
-		wing_mesh.size = Vector3(0.3, 0.02, 0.22)
-		wing.mesh = wing_mesh
+		wing.mesh = SharedMeshes.box(Vector3(0.3, 0.02, 0.22))
 		wing.material_override = body_mat
 		wing.position.x = 0.15 * side
 		hinge.add_child(wing)

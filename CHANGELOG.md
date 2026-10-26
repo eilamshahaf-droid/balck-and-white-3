@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Smoother city, faster planning scene, sturdier hand
+- Trees, pigeons and people are drawn with far fewer triangles (round shapes were 4,000 triangles each; now a few hundred), and every tree shares one shape. The city draws about 2.3 million triangles a frame instead of 6.2 million. It looks the same.
+- The art style now styles each object once, when it appears, instead of re-checking every object every frame.
+- The planning scene recounts its city totals only when the city changes, and rebuilds the hover text only when the cursor moves to something new. Its scripts went from about 9 ms to under 1 ms a frame.
+- The hand only looks at things near it when choosing what to grab and what its wind blows on (it used to check every person, tree and taxi in the city). About three times cheaper, and the cost no longer grows with the city.
+- Switching windows (Alt+Tab) while holding something now puts it down, and closes an open wheel, instead of leaving it stuck in the hand.
+- New automatic hand test: `tests/hand_test.tscn` picks up, throws, taps, knocks, blows on a tree, scares pigeons and checks focus loss, with a simulated mouse.
+- Try it: press F5 and play as usual; press Alt+Tab while holding a taxi. The test runs from the command line: `godot --headless --path . res://tests/hand_test.tscn`.
+
 ## 2026-10-26: Watercolour removed; playful toy-town colours
 - The watercolour look is gone: no paper texture, no colour bleeding, no darkened edges, no grain, no wobble, no paper border, no wash blotches on buildings. (To bring it back, see the 2026-10-25 entries and git history.)
 - The tilt-shift and depth of field are unchanged.
