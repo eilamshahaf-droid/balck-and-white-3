@@ -2,9 +2,11 @@ extends Node
 ## The god's two wheels, on top of the hand's movement (god_hand.gd).
 ##
 ## Hold the left button still for a moment: a wheel opens around the hand.
-## On a building it is the sign wheel; anywhere else, the miracle wheel. The
+## On a building it is the building wheel: divine decrees (only on your own
+## buildings) and divine signs. Anywhere else, the miracle wheel. The
 ## hand stays in the middle and points where the mouse goes; letting go
-## gives the sign to the building, or puts the miracle in the hand (a glowing
+## signs the decree or gives the sign to the building (choosing the sign it
+## already has takes it down), or puts the miracle in the hand (a glowing
 ## orb in the palm). It fills the hand: nothing can be picked up meanwhile.
 ## The next short click (or long press), on the ground or a building, casts
 ## it there; a right click puts it away. Dragging still moves the city. A circle drawn with the right button casts water straight away.
@@ -14,11 +16,12 @@ const DivineSign = preload("res://scripts/divine_sign.gd")
 const RadialWheel = preload("res://scripts/radial_wheel.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
-enum Mode { NONE, MIRACLES, SIGNS }
+enum Mode { NONE, MIRACLES, BUILDING }
 
 @onready var hand: Node3D = get_node("../GodHand")
 @onready var miracles: Node = get_node("../Miracles")
 @onready var faith: Node = get_node("../Faith")
+@onready var decrees: Decrees = get_node("../Decrees")
 
 var _wheel: RadialWheel
 var _mode := Mode.NONE
@@ -97,10 +100,10 @@ func _open(hit: Dictionary, at: Vector2) -> void:
 	_target = hit
 	hand.start_pointing(at)
 	if hit.collider.is_in_group("buildings"):
-		_mode = Mode.SIGNS
+		_mode = Mode.BUILDING
 		_set_outline(hit.collider, true)
 		Sfx.play(get_tree(), hit.position, Sfx.surface_of(hit.collider), 0.4)
-		_wheel.open(at, DivineSign.wheel_items())
+		_wheel.open(at, _building_items(hit.collider))
 	else:
 		_mode = Mode.MIRACLES
 		var items: Array[Dictionary] = miracles.wheel_items()
@@ -117,19 +120,18 @@ func _choose() -> void:
 		match _mode:
 			Mode.MIRACLES:
 				_charge(id)
-			Mode.SIGNS:
-				if building and (id == &"clear" or faith.spend(M.sign_cost)):
-					DivineSign.mark(building, id)
-					if id != &"clear":
-						faith.exposure = minf(faith.exposure + M.sign_exposure, 1.0)
-					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+			Mode.BUILDING:
+				if building and id in DivineSign.KINDS:
+					_give_sign(building, id)
+				elif building:
+					decrees.issue(id, building)
 	_close()
 
 
 func _close() -> void:
 	_wheel.visible = false
 	_wheel.set_process(false)
-	if _mode == Mode.SIGNS and is_instance_valid(_target.collider):
+	if _mode == Mode.BUILDING and is_instance_valid(_target.collider):
 		_set_outline(_target.collider, false)
 	_target = {}
 	_mode = Mode.NONE
@@ -150,6 +152,37 @@ func _charge(kind: StringName) -> void:
 		_orb_mat.albedo_color = _colors[kind]
 		_glow.light_color = _colors[kind]
 		Sfx.play(get_tree(), hand.global_position, &"chime", 0.4)
+
+
+## Decrees first, then the signs; the sign the building has reads "Take down".
+func _building_items(building: Node3D) -> Array[Dictionary]:
+	var items := decrees.wheel_items(building)
+	var current := _sign_on(building)
+	for item in DivineSign.wheel_items():
+		if item.id == current:
+			item.note = "take down"
+		else:
+			item.note = "%d belief" % roundi(M.sign_cost)
+			item.enabled = faith.belief_pool >= M.sign_cost
+		items.append(item)
+	return items
+
+
+func _give_sign(building: Node3D, kind: StringName) -> void:
+	if kind == _sign_on(building):
+		DivineSign.mark(building, &"clear")
+	elif faith.spend(M.sign_cost):
+		DivineSign.mark(building, kind)
+		faith.exposure = minf(faith.exposure + M.sign_exposure, 1.0)
+	else:
+		return
+	Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+
+
+func _sign_on(building: Node3D) -> StringName:
+	if building.has_meta(DivineSign.META) and is_instance_valid(building.get_meta(DivineSign.META)):
+		return building.get_meta(DivineSign.META).kind
+	return &""
 
 
 func _set_outline(building: Node3D, on: bool) -> void:

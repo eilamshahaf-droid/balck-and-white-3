@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Divine decrees: edit your buildings from the building wheel
+- Holding the left button still on a building now opens the building wheel: five divine decrees plus the three signs.
+- The decrees: +3 Floors (the building grows out of its roof; up to three times), Luxury (marble lobby, gold canopy, penthouse), Facade (banners and lights in your colours), Change Use (a rooftop sign: Prayer House, then Course Center, then Free Personality Test) and Preserve (a "Form 12-B" plaque; the building joins the `preserved` group, for the demolition code to respect).
+- A decree only works on your own building: one where at least half of the residents believe. Elsewhere its slices are grey and say "not yours". Decrees are paid in belief for now (money and influence come later) and are cheaper among believers, like the miracles. Each one raises exposure a little; new floors raise it the most.
+- Signs: the "Clear" slice is gone. Choosing the sign a building already has takes it down.
+- Numbers: `data/decrees.tres`.
+- Try it: press F5, click "Believers come here" on the debug panel (F1), then hold the left button still on one of the buildings they moved into and pick +3 Floors.
+
 ## 2026-10-26: No more good and evil for the people
 - The new direction has no good or evil, so the god's path is gone: no good/evil deed counting, no "Path" in the HUD, no Path buttons on the debug panel.
 - Believers answering a cursed building now hold a rally in front of the entrance (no more vandalising, boycotts or asking for the manager). A protected building gets a human chain in robes, which still fights fire. Blessed is unchanged: they pray.
