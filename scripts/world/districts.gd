@@ -82,6 +82,12 @@ func is_yours(index: int) -> bool:
 	return _yours[index] == 1
 
 
+## Is `building` the god's? Decrees ask here, so there is one answer.
+func owns(building: Node3D) -> bool:
+	var i: int = _index.get(building, -1)
+	return i >= 0 and _yours[i] == 1
+
+
 func converted_buildings() -> Array[Node3D]:
 	var out: Array[Node3D] = []
 	for i in buildings.size():

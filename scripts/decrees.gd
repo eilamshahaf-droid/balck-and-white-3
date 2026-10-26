@@ -2,7 +2,7 @@ class_name Decrees
 extends Node
 ## Divine decrees: the god signs, and a building of his changes overnight.
 ## Add floors, luxury, facade, change of use, preservation (design doc,
-## "Divine decrees"). Only buildings where most residents believe are his.
+## "Divine decrees"). Only on his own buildings, as Districts counts them.
 ## Paid in belief for now, cheaper among believers like the miracles; money
 ## and influence come later. Every decree draws a little attention.
 
@@ -21,7 +21,7 @@ const PRESERVED := &"preserved"
 
 @export var faith: Node
 @export var miracles: Node
-@export var population: Node
+@export var districts: Node
 
 
 ## The decree slices of the building wheel for `building`, in order.
@@ -46,10 +46,9 @@ func wheel_items(building: Node3D) -> Array[Dictionary]:
 	return items
 
 
-## Is `building` the god's: do most of the people living there believe?
+## Is `building` the god's? Districts is the one place that decides.
 func is_yours(building: Node3D) -> bool:
-	var share: float = population.believer_share(building)
-	return share > 0.0 and share >= D.owner_share
+	return districts.owns(building)
 
 
 ## Has `kind` gone as far as it can on `building`?

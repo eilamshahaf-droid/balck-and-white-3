@@ -17,7 +17,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Try it: press F5, hold the left button still on a building, pick the storm cloud, and watch nearby believers walk over and rally.
 
 ## 2026-10-26: Districts follow the residents; City Hall respects landmarks
-- A building people live in is now yours exactly when decrees say so: while at least half of its residents believe. Its gold roof plate comes and goes with them. Empty buildings (offices, shops) still turn through influence: believers in the street outside and your buildings next door.
+- One answer to "is this building yours?", shared by districts and decrees: a building people live in is yours while at least half of its residents believe; an empty one (offices, shops) turns through influence, from believers in the street outside and your buildings next door. Its gold roof plate comes and goes with it, and you can now decree on an empty building you won through influence.
 - City Hall never targets a preserved building, and a visit with a notice up is called off if the building is preserved in the meantime ("the building was declared a landmark").
 - The gold roof plate rises with +3 Floors, and the bulldozer measures the building when it arrives, not when it was sent.
 - Try it: press F5, open the debug panel (F1), click "Take 10 buildings here" (their residents now start believing), then preserve one of them from the building wheel and raise exposure.
