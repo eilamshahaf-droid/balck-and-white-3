@@ -1,15 +1,18 @@
 extends CanvasLayer
 ## Testing shortcuts, top right (F1 hides it): convert or lose believers,
-## move all believers to where the camera looks, fill the belief pool, and
-## set the god's path. Not part of the game; there to make testing quick.
+## move all believers to where the camera looks, fill the belief pool, set
+## the god's path, raise exposure (to call City Hall) and take buildings. Not part of the game; there to make testing quick.
 
 const B = preload("res://data/balance.tres")
 const STEP := 5
 const BELIEF_GIFT := 100.0
+const EXPOSURE_GIFT := 0.2
+const TAKE_COUNT := 10
 
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
 @onready var population: Node = get_node("../Population")
+@onready var districts: Node = get_node("../Districts")
 
 var _panel: PanelContainer
 
@@ -34,6 +37,8 @@ func _ready() -> void:
 	_button(box, "Path: good", func(): _set_path(&"good"))
 	_button(box, "Path: evil", func(): _set_path(&"evil"))
 	_button(box, "Path: neutral", func(): _set_path(&"neutral"))
+	_button(box, "Exposure +%d%%" % roundi(EXPOSURE_GIFT * 100.0), func(): faith.exposure = minf(faith.exposure + EXPOSURE_GIFT, 1.0))
+	_button(box, "Take %d buildings here" % TAKE_COUNT, func(): districts.convert_near(rig.target_pivot, TAKE_COUNT))
 
 
 func _unhandled_input(event: InputEvent) -> void:

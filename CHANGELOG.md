@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Districts, buildings that change sides, and City Hall's bulldozer
+- The city is split into 9 districts (3 x 3), outlined on the roads. The bottom left of the screen shows the district in the middle of the screen, how much of it is yours, and what City Hall is doing.
+- Buildings change sides on their own: believers on the street outside lean on a building, and every building that is already yours leans on its neighbours across the street. Wide avenues stop the spread. A building of yours gets a glowing gold plate on its roof; a district is yours at 60%, and its outline turns gold.
+- City Hall: once exposure reaches 10%, a building inspector in a white hard hat walks to one of your buildings (one with a blessed or protected sign first) and posts a red demolition notice. 45 seconds later a bulldozer drives up and pushes the building into the ground, leaving rubble.
+- What stops it: a shield over the bulldozer, three believers standing at the building (put a Protected or Blessed sign on it), lightning near the bulldozer, or simply picking the bulldozer up. Picking up the inspector before he arrives also sends him home. After a visit City Hall waits a minute (30 seconds if you stopped it); taking a district brings it right away.
+- Numbers: `data/districts.tres` and `data/government.tres`. Debug panel: "Exposure +20%" and "Take 10 buildings here".
+- Try it: press F5, click "Believers come here", "Take 10 buildings here" and "Exposure +20%", then follow the inspector and get a shield ready for the bulldozer.
 ## 2026-10-26: Every resident is a person: name, home, work, family, friends
 - The 60 residents are no longer anonymous. Each has a name, one of 7 groups (student, office worker, shopkeeper, retiree, artist, police officer, banker), a home in a real building, a workplace (glass towers are offices; retirees don't work), 1 to 3 family members living with them, and 2 to 5 close friends, mostly neighbours and colleagues. Their hidden skepticism comes from their group.
 - New system: `Population` (scripts/people/) holds these records; the walking body (citizen.gd) reads and writes belief on the record. Other systems can ask it who lives where, and what share of a building believes.

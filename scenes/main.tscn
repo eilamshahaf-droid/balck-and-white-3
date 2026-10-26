@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -12,6 +12,10 @@
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
 [ext_resource type="Script" path="res://scripts/people/population.gd" id="11_population"]
 [ext_resource type="Script" path="res://scripts/people/resident_card.gd" id="12_card"]
+[ext_resource type="Script" path="res://scripts/world/districts.gd" id="13_districts"]
+[ext_resource type="Script" path="res://scripts/world/district_view.gd" id="14_district_view"]
+[ext_resource type="Script" path="res://scripts/government/government.gd" id="15_government"]
+[ext_resource type="Script" path="res://scripts/world/district_hud.gd" id="16_district_hud"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -43,6 +47,15 @@ script = ExtResource("9_signs")
 [node name="ResidentCard" type="CanvasLayer" parent="."]
 script = ExtResource("12_card")
 
+[node name="Districts" type="Node" parent="."]
+script = ExtResource("13_districts")
+
+[node name="DistrictView" type="Node3D" parent="."]
+script = ExtResource("14_district_view")
+
+[node name="Government" type="Node" parent="."]
+script = ExtResource("15_government")
+
 [node name="DebugPanel" type="CanvasLayer" parent="."]
 script = ExtResource("10_debug")
 
@@ -68,3 +81,14 @@ offset_top = 116.0
 offset_right = 900.0
 offset_bottom = 146.0
 script = ExtResource("5_hud")
+
+[node name="District" type="Label" parent="HUD"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -64.0
+offset_right = 900.0
+offset_bottom = -12.0
+grow_vertical = 0
+script = ExtResource("16_district_hud")
