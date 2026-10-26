@@ -31,6 +31,7 @@ func _ready() -> void:
 	await _test_tap_taxi()
 	await _test_knock()
 	await _test_wind()
+	await _test_wind_target_freed()
 	await _test_pigeons()
 	await _test_wheel_focus_loss()
 	print("HAND TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
@@ -115,6 +116,26 @@ func _test_wind() -> void:
 	_move(Vector2(5, 5))
 	await _physics(10)
 	_check(tree.get("_push") == Vector2.ZERO, "the tree stops bending once the hand is gone")
+
+
+## A tree in the wind can be freed (uprooted, replaced) between two ticks.
+func _test_wind_target_freed() -> void:
+	var trees := get_tree().get_nodes_in_group("wind_reactive").filter(
+			func(n: Node) -> bool: return n.has_method("hand_pull"))
+	var tree := await _hover_one_of(trees)
+	if tree == null:
+		_check(false, "hover a tree to free")
+		return
+	var centre := get_viewport().get_mouse_position()
+	for i in 6:
+		_move(centre + Vector2(30.0, 0.0).rotated(i * 1.2))
+		await _physics(1)
+	tree.free()
+	_move(Vector2(5, 5))
+	await _physics(5)
+	var windy: Dictionary = _hand.get("_windy")
+	_check(windy.keys().all(func(n: Variant) -> bool: return is_instance_valid(n)),
+			"the wind survives a tree freed while it blows on it")
 
 
 func _test_pigeons() -> void:
