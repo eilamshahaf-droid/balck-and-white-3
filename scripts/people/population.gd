@@ -4,7 +4,9 @@ extends Node
 ## then puts a body for each on the street. Other systems ask Population about
 ## people (who lives where, who believes) instead of scanning the scene tree.
 
-const P: PeopleSettings = preload("res://data/people.tres")
+# Loaded at run time: a parse-time preload would load social_group.gd before
+# its class_name is registered and break the typed groups array.
+var _people: PeopleSettings = load("res://data/people.tres")
 const B: Balance = preload("res://data/balance.tres")
 const CitizenScript := preload("res://scripts/citizen.gd")
 
@@ -76,32 +78,32 @@ func move_home(r: Resident, building: Node3D) -> void:
 ## Skip the story: whole families move into the homes nearest one corner and
 ## become a small congregation of believers.
 func found_congregation() -> void:
-	var corner: Vector3 = city.intersection(P.congregation_corner)
+	var corner: Vector3 = city.intersection(_people.congregation_corner)
 	var near := _homes.duplicate()
 	near.sort_custom(func(a: Node3D, b: Node3D) -> bool:
 		return a.global_position.distance_squared_to(corner) < b.global_position.distance_squared_to(corner))
 	var moved := 0
 	var family_home := 0
 	for r in residents:
-		if moved >= P.congregation_size:
+		if moved >= _people.congregation_size:
 			break
 		# Families are created together, so their ids sit side by side; a new
 		# surname means a new family and the next building.
 		if moved > 0 and r.last_name != residents[r.id - 1].last_name:
 			family_home += 1
 		move_home(r, near[family_home % near.size()])
-		r.belief = _rng.randf_range(P.congregation_belief_min, P.congregation_belief_max)
-		r.skepticism = _rng.randf_range(0.0, P.congregation_skepticism_max)
+		r.belief = _rng.randf_range(_people.congregation_belief_min, _people.congregation_belief_max)
+		r.skepticism = _rng.randf_range(0.0, _people.congregation_skepticism_max)
 		moved += 1
 
 
 func _populate() -> void:
 	for b: Node3D in get_tree().get_nodes_in_group("buildings"):
-		if _height(b) > P.office_height:
+		if _height(b) > _people.office_height:
 			_offices.append(b)
 		else:
 			_homes.append(b)
-	while residents.size() < P.resident_count:
+	while residents.size() < _people.resident_count:
 		_add_family()
 	_add_friends()
 	for r in residents:
@@ -116,17 +118,17 @@ func _populate() -> void:
 
 func _add_family() -> void:
 	var home: Node3D = _homes[_rng.randi() % _homes.size()]
-	var last := P.last_names[_rng.randi() % P.last_names.size()]
-	var size := mini(_rng.randi_range(P.family_size_min, P.family_size_max), P.resident_count - residents.size())
+	var last: String = _people.last_names[_rng.randi() % _people.last_names.size()]
+	var size := mini(_rng.randi_range(_people.family_size_min, _people.family_size_max), _people.resident_count - residents.size())
 	var ids: Array[int] = []
 	for n in size:
 		var r := Resident.new()
 		r.id = residents.size()
-		r.first_name = P.first_names[_rng.randi() % P.first_names.size()]
+		r.first_name = _people.first_names[_rng.randi() % _people.first_names.size()]
 		r.last_name = last
 		r.group = _pick_group()
 		r.work = _pick_work(r.group)
-		r.belief = _rng.randf_range(P.belief_min, P.belief_max)
+		r.belief = _rng.randf_range(_people.belief_min, _people.belief_max)
 		r.skepticism = _rng.randf_range(r.group.skepticism_min, r.group.skepticism_max)
 		r.has_phone = _rng.randf() < B.phone_chance
 		residents.append(r)
@@ -141,7 +143,7 @@ func _add_family() -> void:
 ## Close friends, mostly neighbours and colleagues. A friendship goes both ways.
 func _add_friends() -> void:
 	for r in residents:
-		var wanted := _rng.randi_range(P.friends_min, P.friends_max)
+		var wanted := _rng.randi_range(_people.friends_min, _people.friends_max)
 		var nearby: Array[Resident] = []
 		var distant: Array[Resident] = []
 		for o in residents:
@@ -154,7 +156,7 @@ func _add_friends() -> void:
 		nearby.shuffle()
 		distant.shuffle()
 		while r.friends.size() < wanted and not (nearby.is_empty() and distant.is_empty()):
-			var far := nearby.is_empty() or (not distant.is_empty() and _rng.randf() < P.distant_friend_chance)
+			var far := nearby.is_empty() or (not distant.is_empty() and _rng.randf() < _people.distant_friend_chance)
 			var f: Resident = distant.pop_back() if far else nearby.pop_back()
 			r.friends.append(f.id)
 			f.friends.append(r.id)
@@ -163,19 +165,19 @@ func _add_friends() -> void:
 func _close(a: Resident, b: Resident) -> bool:
 	if a.work != null and a.work == b.work:
 		return true
-	return a.home.global_position.distance_to(b.home.global_position) < P.neighbour_radius
+	return a.home.global_position.distance_to(b.home.global_position) < _people.neighbour_radius
 
 
 func _pick_group() -> SocialGroup:
 	var total := 0.0
-	for g in P.groups:
+	for g in _people.groups:
 		total += g.share
 	var roll := _rng.randf() * total
-	for g in P.groups:
+	for g in _people.groups:
 		roll -= g.share
 		if roll <= 0.0:
 			return g
-	return P.groups[-1]
+	return _people.groups[-1]
 
 
 func _pick_work(g: SocialGroup) -> Node3D:

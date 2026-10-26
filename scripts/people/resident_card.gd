@@ -3,7 +3,9 @@ extends CanvasLayer
 ## their family (gold), friends (blue), home (green) and work (grey).
 ## The player never sees this; in the game people are read by how they act.
 
-const P: PeopleSettings = preload("res://data/people.tres")
+# Loaded at run time: a parse-time preload would load social_group.gd before
+# its class_name is registered and break the typed groups array.
+var _people: PeopleSettings = load("res://data/people.tres")
 const FAMILY_COLOR := Color(1.0, 0.8, 0.2)
 const FRIEND_COLOR := Color(0.4, 0.75, 1.0)
 const HOME_COLOR := Color(0.4, 0.95, 0.45)
@@ -49,7 +51,7 @@ func _input(event: InputEvent) -> void:
 		var ground: Variant = Plane(Vector3.UP, 0.0).intersects_ray(
 				cam.project_ray_origin(motion.position), cam.project_ray_normal(motion.position))
 		if ground != null:
-			_shown = population.resident_near(ground, P.card_pick_radius)
+			_shown = population.resident_near(ground, _people.card_pick_radius)
 	if _shown:
 		_label.text = _describe(_shown)
 		_panel.position = motion.position + Vector2(24, 24)
@@ -64,7 +66,7 @@ func _process(delta: float) -> void:
 	_refresh -= delta
 	if _refresh > 0.0:
 		return
-	_refresh = P.card_refresh
+	_refresh = _people.card_refresh
 	_lines.clear_surfaces()
 	if _shown == null or not is_instance_valid(_shown.body):
 		return

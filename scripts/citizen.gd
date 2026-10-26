@@ -12,12 +12,14 @@ enum State { WALKING, HELD, FALLING, DOWN, GETTING_UP }
 
 const UPRIGHT := Quaternion.IDENTITY
 const B = preload("res://data/balance.tres")
-const P: PeopleSettings = preload("res://data/people.tres")
+# Loaded at run time: a parse-time preload would load social_group.gd before
+# its class_name is registered and break the typed groups array.
+var _people: PeopleSettings = load("res://data/people.tres")
 
 var city: Node3D
 ## Used by the god's hand: heavier things lag and swing more when held.
 var mass := 1.0
-var fall_gravity := P.gravity
+var fall_gravity := _people.gravity
 var grid := Vector2i.ZERO
 var state := State.WALKING
 var speed := 3.0
@@ -124,14 +126,14 @@ func _ready() -> void:
 	_bubble.visible = false
 	add_child(_bubble)
 
-	speed = randf_range(P.walk_speed_min, P.walk_speed_max)
+	speed = randf_range(_people.walk_speed_min, _people.walk_speed_max)
 	if resident.id < 0:
 		skepticism = randf()
 		has_phone = randf() < B.phone_chance
 	if resident.home:
 		grid = city.nearest_grid(resident.home.global_position)
 	home = grid
-	lane_offset = Vector3(randf_range(-P.lane_spread, P.lane_spread), 0, randf_range(-P.lane_spread, P.lane_spread))
+	lane_offset = Vector3(randf_range(-_people.lane_spread, _people.lane_spread), 0, randf_range(-_people.lane_spread, _people.lane_spread))
 	position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
 	_pick_next_target()
 
@@ -161,7 +163,7 @@ func _physics_process(delta: float) -> void:
 			_down_timer -= delta
 			if _down_timer <= 0.0:
 				state = State.GETTING_UP
-				_down_timer = P.get_up_time
+				_down_timer = _people.get_up_time
 		State.GETTING_UP:
 			var w := 1.0 - exp(-8.0 * delta)
 			_body.quaternion = _body.quaternion.slerp(UPRIGHT, w)
@@ -345,7 +347,7 @@ func _walk_errand(delta: float) -> void:
 	_turn_to(_errand_face)
 	_errand_say -= delta
 	if _errand_say <= 0.0:
-		_errand_say = randf_range(P.errand_line_min, P.errand_line_max)
+		_errand_say = randf_range(_people.errand_line_min, _people.errand_line_max)
 		_say_line(_errand_line, _errand_color, 2.5)
 	_errand_time -= delta
 	if _errand_time <= 0.0:
@@ -378,7 +380,7 @@ func on_tapped(from: Vector3) -> void:
 func notice(from: Vector3) -> void:
 	if state != State.WALKING:
 		return
-	_pause = randf_range(P.notice_pause_min, P.notice_pause_max)
+	_pause = randf_range(_people.notice_pause_min, _people.notice_pause_max)
 	_look_at_target = Vector3.INF
 	_turn_to(from)
 
@@ -393,7 +395,7 @@ func on_released(throw_velocity: Vector3) -> void:
 	velocity = throw_velocity
 	_fall_speed = 0.0
 	var speed := throw_velocity.length()
-	if speed > P.tumble_min_speed:
+	if speed > _people.tumble_min_speed:
 		var axis := throw_velocity.cross(Vector3.UP)
 		if axis.length() < 0.01:
 			axis = Vector3.RIGHT
@@ -421,7 +423,7 @@ func heal() -> bool:
 
 func _land() -> void:
 	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
-	if _spin == Vector3.ZERO and impact < P.hard_landing_speed * 0.6:
+	if _spin == Vector3.ZERO and impact < _people.hard_landing_speed * 0.6:
 		_body.quaternion = UPRIGHT
 		_stand_up()
 		return
@@ -474,7 +476,7 @@ func _pick_next_target() -> void:
 	# Everyone has a neighbourhood: believers gather where they live.
 	var next: Vector2i = city.random_neighbor(grid)
 	for attempt in 4:
-		if city.intersection(next).distance_to(city.intersection(home)) <= P.home_range:
+		if city.intersection(next).distance_to(city.intersection(home)) <= _people.home_range:
 			break
 		next = city.random_neighbor(grid)
 	grid = next
