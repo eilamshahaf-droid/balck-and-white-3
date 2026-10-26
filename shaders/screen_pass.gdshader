@@ -1,5 +1,5 @@
 // Full-screen pass over the finished frame: the tilt-shift that makes the
-// city read as a miniature, and a playful colour grade. Reads the finished
+// city read as a miniature, and a soft colour grade. Reads the finished
 // frame, so it works the same on Forward+ and Compatibility.
 shader_type canvas_item;
 
@@ -11,10 +11,12 @@ uniform float tilt_blur = 0.0;      // blur radius in pixels at the edges
 uniform float tilt_center = 0.55;   // where the sharp band sits (0 = top, 1 = bottom)
 uniform float tilt_width = 0.3;     // height of the sharp band
 
-// Colour grade: a toy-box look, vivid and warm.
-uniform float vibrance = 0.3;
-uniform float contrast = 1.08;
-uniform vec3 warmth = vec3(1.03, 1.0, 0.95);
+// Colour grade: gentle vibrance and contrast, then a soft warm wash over
+// everything that ties the colours together, like The Sims.
+uniform float vibrance = 0.1;
+uniform float contrast = 1.04;
+uniform vec3 wash_color : source_color = vec3(1.0, 0.93, 0.82);
+uniform float wash = 0.1;
 
 float lum(vec3 c) {
 	return dot(c, vec3(0.3, 0.59, 0.11));
@@ -39,7 +41,8 @@ void fragment() {
 	// Vibrance lifts dull colours more than vivid ones, then a gentle S-curve.
 	float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b));
 	c = mix(vec3(lum(c)), c, 1.0 + vibrance * (1.0 - (mx - mn)));
-	c = clamp((c - 0.5) * contrast + 0.5, 0.0, 1.0) * warmth;
+	c = clamp((c - 0.5) * contrast + 0.5, 0.0, 1.0);
+	c = mix(c, wash_color, wash);
 
 	COLOR = vec4(c, 1.0);
 }
