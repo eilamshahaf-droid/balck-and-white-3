@@ -37,14 +37,17 @@ The scene is small; most nodes are built in code at startup.
 
 | Node | Script | Role |
 | --- | --- | --- |
-| `Main` | `city.gd` | Builds the procedural Manhattan grid: ground, blocks, towers, park, trees, doors, taxis, citizens, litter, pigeons. Grid helpers used by citizens. Day/night (`set_daylight`). |
+| `Main` | `city.gd` | Builds the procedural Manhattan grid (unevenly spaced avenues and streets): ground, blocks, towers in two height clusters, park, plazas, trees, doors, taxis, citizens, litter, pigeons. Grid helpers (`intersection`, `nearest_grid`, `block_of`, ...) used by citizens and districts. Day/night (`set_daylight`). |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
+| `Surroundings` | `world/surroundings.gd` (+ `world/outskirts.gd`) | Scenery past the grid, built once: land and hills (with a height-map collision floor), the river, promenade and bridges, roads leaving the grid, outer neighbourhoods and woods, clouds, and the depth haze that hides the edge. |
 | `Population` | `people/population.gd` | Gives every person a `Resident` record (name, `SocialGroup`, home, work, family, friends). `resident.gd` is the record, `social_group.gd` the per-group traits. |
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
 | `Miracles` | `miracles.gd` | Casts the miracles (water, fire, lightning, shield, heal): spends belief and reports to `Faith`. Effects: `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd`. |
 | `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: signs on a building, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
+| `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts; buildings change sides from nearby believers and neighbour pressure; a district is yours at 60%. Tunables `data/districts.tres`. |
+| `Government` | `government/government.gd` (+ `bulldozer.gd`, `demolition_notice.gd`) | City Hall: inspector, demolition notice, bulldozer. Tunables `data/government.tres`. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |
 | `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Off for now (`enabled = false` in `main.tscn`), so the game starts in free play with a ready congregation. |
@@ -92,6 +95,7 @@ Tunables: `data/planning.tres`.
 | `data/people.tres` | `PeopleSettings` (+ `SocialGroup`s) | residents, groups, names, walking |
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
+| `data/surroundings.tres` | `SurroundingsSettings` | land, river, outer neighbourhoods, clouds, haze |
 
 ### Who owns what
 
@@ -103,6 +107,7 @@ Several threads push to `main`. Message the owning thread before changing its fi
 | People | `citizen.gd`, `faith.gd`, `sign_followers.gd`, `scripts/people/` | "Build the people in the city" |
 | Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
 | Building models | `building_visual.gd`, `assets/models/` | model-library |
+| World: districts, City Hall, surroundings | `scripts/world/`, `scripts/government/` | "World and stages" |
 | Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
 
 ## Coding rules

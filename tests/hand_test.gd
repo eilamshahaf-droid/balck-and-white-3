@@ -107,11 +107,14 @@ func _test_wind() -> void:
 	if tree == null:
 		return
 	# The wind comes from a moving hand: wave it around the crown.
+	# Next to a wall the hand climbs it and leaves the tree behind, so any bend counts.
 	var centre := get_viewport().get_mouse_position()
+	var bent := false
 	for i in 12:
 		_move(centre + Vector2(30.0, 0.0).rotated(i * 1.2))
 		await _physics(1)
-	_check(tree.get("_push") != Vector2.ZERO, "the hand's wind bends a nearby tree")
+		bent = bent or tree.get("_push") != Vector2.ZERO
+	_check(bent, "the hand's wind bends a nearby tree")
 	_move(Vector2(5, 5))
 	await _physics(10)
 	_check(tree.get("_push") == Vector2.ZERO, "the tree stops bending once the hand is gone")

@@ -45,10 +45,8 @@ func district_count() -> int:
 
 
 func district_at(p: Vector3) -> int:
-	var half: Vector2 = city.half_size
-	var block_x := clampi(floori((p.x + half.x) / city.AVENUE_SPACING), 0, city.AVENUES - 2)
-	var block_z := clampi(floori((p.z + half.y) / city.STREET_SPACING), 0, city.STREETS - 2)
-	return _band(block_z, city.STREETS - 1, S.rows) * S.columns + _band(block_x, city.AVENUES - 1, S.columns)
+	var block: Vector2i = city.block_of(p)
+	return _band(block.y, city.STREETS - 1, S.rows) * S.columns + _band(block.x, city.AVENUES - 1, S.columns)
 
 
 func district_name(d: int) -> String:

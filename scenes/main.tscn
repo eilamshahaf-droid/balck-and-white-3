@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -16,6 +16,7 @@
 [ext_resource type="Script" path="res://scripts/world/district_view.gd" id="14_district_view"]
 [ext_resource type="Script" path="res://scripts/government/government.gd" id="15_government"]
 [ext_resource type="Script" path="res://scripts/world/district_hud.gd" id="16_district_hud"]
+[ext_resource type="Script" path="res://scripts/world/surroundings.gd" id="17_surroundings"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -25,6 +26,9 @@ script = ExtResource("2_cam")
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig"]
 far = 3000.0
+
+[node name="Surroundings" type="Node3D" parent="."]
+script = ExtResource("17_surroundings")
 
 [node name="Population" type="Node" parent="."]
 script = ExtResource("11_population")

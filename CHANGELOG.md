@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: A city that doesn't end in a void
+- The city no longer sits on a grey slab in white emptiness. Around it now: green land that rises into wooded hills, a river along the east side with a promenade on both banks and two bridges, and outer neighbourhoods. The avenues and side streets carry on past the grid and bend and fan out, ring roads circle the city, and houses line the roads and turn with them: blocks near the city, houses with red roofs further out, and a second little skyline across the river. Clouds drift around the horizon, and a haze in the colour of the sky melts the far land into it, so there is no edge.
+- The grid itself is less even: avenues and streets are spaced unevenly, so blocks come in different sizes; towers rise in two clusters (downtown at the south tip and midtown), with low streets between them; four half blocks are open plazas with a lawn and trees. The sky is a brighter blue.
+- All of it is scenery, built once into a few merged meshes. Things thrown out of town land on the hills or in the river.
+- Numbers: `data/surroundings.tres` (land, river, roads, neighbourhoods, clouds, haze, colours).
+- Try it: press F5, zoom all the way out (mouse wheel) and tilt the camera low (R/F), then look toward the river and the hills.
+
 ## 2026-10-26: Districts, buildings that change sides, and City Hall's bulldozer
 - The city is split into 9 districts (3 x 3), outlined on the roads. The bottom left of the screen shows the district in the middle of the screen, how much of it is yours, and what City Hall is doing.
 - Buildings change sides on their own: believers on the street outside lean on a building, and every building that is already yours leans on its neighbours across the street. Wide avenues stop the spread. A building of yours gets a glowing gold plate on its roof; a district is yours at 60%, and its outline turns gold.

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SurroundingsSettings" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/surroundings_settings.gd" id="1_settings"]
+
+[resource]
+script = ExtResource("1_settings")
+ring_offsets = PackedFloat32Array(230, 620)
+crown_colors = PackedColorArray(0.3, 0.5, 0.27, 1, 0.38, 0.56, 0.3, 1)
+building_colors = PackedColorArray(0.8, 0.6, 0.5, 1, 0.86, 0.78, 0.64, 1, 0.64, 0.7, 0.8, 1, 0.74, 0.7, 0.66, 1, 0.86, 0.68, 0.54, 1, 0.6, 0.64, 0.72, 1)
