@@ -111,6 +111,7 @@
 - `scripts/god_hand.gd` – יד האל (לוגיקה).
 - `scripts/hand_tools.gd`, `scripts/radial_wheel.gd` – גלגל הניסים וגלגל האותות.
 - `scripts/miracles.gd` – הטלת חמשת הניסים; `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd` – כל נס בנפרד.
+  עוצמת נס נקבעת לפי המאמינים סביב המקום: לידם הוא גדול יותר, ארוך יותר וזול יותר (`power_at`, קבוצה "Miracle power" ב-`data/miracles.tres`). היד מתחממת מעליהם, וה-HUD מראה "Miracle power here".
 - `scripts/divine_sign.gd` – האותות על הבניינים.
 - `scripts/debug_panel.gd` – לוח הדיבאג לבדיקות.
 - `scripts/sign_followers.gd` – איך המאמינים עונים לאותות. המספרים בקבוצה "Divine signs" ב-`data/miracles.tres`.

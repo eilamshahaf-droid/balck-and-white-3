@@ -12,6 +12,13 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - New automatic hand test: `tests/hand_test.tscn` picks up, throws, taps, knocks, blows on a tree, scares pigeons and checks focus loss, with a simulated mouse.
 - Try it: press F5 and play as usual; press Alt+Tab while holding a taxi. The test runs from the command line: `godot --headless --path . res://tests/hand_test.tscn`.
 
+## 2026-10-26: Miracles grow with the believers nearby
+- A miracle's power now comes from the believers around the spot it is cast on. Among your believers it is bigger (up to 1.6x the radius), lasts longer (up to 1.5x) and costs less (0.6x). Among skeptics it is small (0.6x), short (0.7x) and dear (1.3x). This affects the rain, the street fire, the lightning blast, the shield dome and the healing light.
+- You can see it: the hand turns warm and glows over your believers and pale grey away from them. The HUD shows "Miracle power here", and the miracle wheel shows the cost at that spot.
+- The hand can still lift anything; only the miracles depend on believers.
+- Numbers: `data/miracles.tres`, group "Miracle power" (radius 70 m; the summed belief of 6 devoted believers gives full power).
+- Try it: press F5, click "Believers come here" on the debug panel (F1), then hold the left button still next to them and far from them and compare the costs in the wheel and the size of a shield.
+
 ## 2026-10-26: Softer colours with a warm wash
 - Colours are calmer: less saturation, vibrance and contrast than yesterday's toy-box grade.
 - A soft warm wash lies over the whole picture and ties the colours together, like The Sims. It replaces the old warmth multiply.

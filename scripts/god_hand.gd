@@ -701,3 +701,8 @@ func _raycast_mouse(mask := 0xFFFFFFFF, through_faded := true) -> Dictionary:
 		exclude.append(held.get_rid())
 	query.exclude = exclude
 	return get_world_3d().direct_space_state.intersect_ray(query)
+
+
+## How warm the hand looks: 0 = among skeptics, 1 = among your believers.
+func set_power(t: float) -> void:
+	_visual.set_power(t)
