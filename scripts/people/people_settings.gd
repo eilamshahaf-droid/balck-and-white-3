@@ -58,6 +58,8 @@ extends Resource
 @export var hard_landing_speed := 14.0
 @export var tumble_min_speed := 3.0
 @export var get_up_time := 0.6
+## Impact speed below which a person the hand lets go of without throwing lands on their feet.
+@export var set_down_max_impact := 16.0
 
 @export_group("Names")
 @export var first_names: PackedStringArray = []

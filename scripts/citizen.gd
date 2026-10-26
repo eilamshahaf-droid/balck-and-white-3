@@ -480,7 +480,9 @@ func heal() -> bool:
 
 func _land() -> void:
 	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
-	if _spin == Vector3.ZERO and impact < _people.hard_landing_speed * 0.6:
+	# A gentle drop from the hand lands on its feet, even from the height the hand carries people at.
+	var soft_limit := _people.set_down_max_impact if _from_hand else _people.hard_landing_speed * 0.6
+	if _spin == Vector3.ZERO and impact < soft_limit:
 		_body.quaternion = UPRIGHT
 		_stand_up()
 		return
