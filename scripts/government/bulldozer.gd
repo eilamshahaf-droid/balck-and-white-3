@@ -44,8 +44,6 @@ func build(route: Array[Vector3], building: Node3D, body_mat: Material, dark_mat
 	freeze = true  # driven by script until the hand or lightning sets it loose
 	_route = route
 	_building = building
-	_building_y = building.position.y
-	_building_height = DivineSign.building_size(building).y
 	position = route[0] + Vector3.UP * RIDE_HEIGHT
 
 	var shape := CollisionShape3D.new()
@@ -124,6 +122,9 @@ func _drive(delta: float) -> void:
 		_route.pop_front()
 		if _route.is_empty():
 			_mode = Mode.WORKING
+			# Measured now, not when sent: a +3 Floors decree may have grown it meanwhile.
+			_building_y = _building.position.y
+			_building_height = DivineSign.building_size(_building).y
 			var to_building := _building.global_position - global_position
 			to_building.y = 0.0
 			global_basis = Basis.looking_at(to_building.normalized())  # blade to the wall

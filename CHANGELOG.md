@@ -16,6 +16,12 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Believers answering a cursed building now hold a rally in front of the entrance (no more vandalising, boycotts or asking for the manager). A protected building gets a human chain in robes, which still fights fire. Blessed is unchanged: they pray.
 - Try it: press F5, hold the left button still on a building, pick the storm cloud, and watch nearby believers walk over and rally.
 
+## 2026-10-26: Districts follow the residents; City Hall respects landmarks
+- A building people live in is now yours exactly when decrees say so: while at least half of its residents believe. Its gold roof plate comes and goes with them. Empty buildings (offices, shops) still turn through influence: believers in the street outside and your buildings next door.
+- City Hall never targets a preserved building, and a visit with a notice up is called off if the building is preserved in the meantime ("the building was declared a landmark").
+- The gold roof plate rises with +3 Floors, and the bulldozer measures the building when it arrives, not when it was sent.
+- Try it: press F5, open the debug panel (F1), click "Take 10 buildings here" (their residents now start believing), then preserve one of them from the building wheel and raise exposure.
+
 ## 2026-10-26: A city that doesn't end in a void
 - The city no longer sits on a grey slab in white emptiness. Around it now: green land that rises into wooded hills, a river along the east side with a promenade on both banks and two bridges, and outer neighbourhoods. The avenues and side streets carry on past the grid and bend and fan out, ring roads circle the city, and houses line the roads and turn with them: blocks near the city, houses with red roofs further out, and a second little skyline across the river. Clouds drift around the horizon, and a haze in the colour of the sky melts the far land into it, so there is no edge.
 - The grid itself is less even: avenues and streets are spaced unevenly, so blocks come in different sizes; towers rise in two clusters (downtown at the south tip and midtown), with low streets between them; four half blocks are open plazas with a lawn and trees. The sky is a brighter blue.

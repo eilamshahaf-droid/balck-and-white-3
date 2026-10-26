@@ -67,6 +67,9 @@ func _physics_process(delta: float) -> void:
 	if _step != Step.QUIET and not is_instance_valid(_target):
 		_end_visit("", G.retry_cooldown)
 		return
+	if _step == Step.NOTICE and not _demolishable(_target):
+		_end_visit("the building was declared a landmark", G.retry_cooldown)
+		return
 	match _step:
 		Step.QUIET:
 			_maybe_visit()
@@ -92,16 +95,22 @@ func _maybe_visit() -> void:
 	_send_inspector()
 
 
-## A building with a blessed or protected sign if there is one, else any of yours.
+## A building with a blessed or protected sign if there is one, else any of yours;
+## never a preserved one.
 func _pick_target() -> Node3D:
 	var signed: Array[Node3D] = []
 	for sign in get_tree().get_nodes_in_group("divine_signs"):
-		if sign.kind != &"cursed" and not sign.is_queued_for_deletion():
+		if sign.kind != &"cursed" and not sign.is_queued_for_deletion() and _demolishable(sign.get_parent()):
 			signed.append(sign.get_parent())
 	if not signed.is_empty():
 		return signed.pick_random()
-	var mine: Array[Node3D] = districts.converted_buildings()
+	var mine: Array = districts.converted_buildings().filter(_demolishable)
 	return mine.pick_random() if not mine.is_empty() else null
+
+
+## A Preserve decree makes a building a landmark: City Hall can't touch it.
+func _demolishable(building: Node3D) -> bool:
+	return not building.is_in_group(Decrees.PRESERVED)
 
 
 ## He walks down the avenue to the corner, then to the door.

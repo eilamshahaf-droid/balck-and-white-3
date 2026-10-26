@@ -1,10 +1,12 @@
 extends Node
-## Splits the city into districts and lets buildings change sides on their own
-## (design doc: "השתלטות על רובע"). Believers on the street outside lean on a
-## building, and every building that is already yours leans on its neighbours,
-## like religious pressure in Civilization. Neighbours are buildings across a
-## narrow street; a wide avenue stops the spread, so believers have to carry it
-## over. A district is yours once enough of its buildings are.
+## Splits the city into districts and keeps track of which buildings are yours
+## (design doc: "השתלטות על רובע"). A building people live in is yours while
+## enough of its residents believe (the same rule decrees use). An empty one
+## (offices, shops) turns through influence: believers on the street outside
+## lean on it, and every building already yours leans on its neighbours, like
+## religious pressure in Civilization. Neighbours are buildings across a narrow
+## street; a wide avenue stops the spread, so believers have to carry it over.
+## A district is yours once enough of its buildings are.
 
 signal layout_ready
 signal building_changed(index: int, yours: bool)
@@ -12,6 +14,7 @@ signal district_controlled(district: int)
 
 const S = preload("res://data/districts.tres")
 const B = preload("res://data/balance.tres")
+const D: DecreeSettings = preload("res://data/decrees.tres")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 
 ## Every building, by index. A demolished one stays in the list as null.
@@ -27,9 +30,13 @@ var _totals := PackedInt32Array()        # standing buildings per district
 var _owned := PackedInt32Array()         # buildings of yours per district
 var _controlled := PackedByteArray()
 var _believers := PackedVector3Array()   # reused every tick
+var _index := {}                         # building -> index
+var _residents := PackedInt32Array()     # per building, counted every tick
+var _faithful := PackedInt32Array()      # residents who believe, per building
 var _timer := 0.0
 
 @onready var city: Node3D = get_parent()
+@onready var population: Node = get_node("../Population")
 
 
 func _ready() -> void:
@@ -94,9 +101,11 @@ func remove_building(building: Node3D) -> void:
 	_district_of[i] = -1
 	_faith[i] = 0.0
 	buildings[i] = null
+	_index.erase(building)
 
 
-## Testing shortcut: the `count` buildings nearest `p` become yours at once.
+## Testing shortcut: the `count` buildings nearest `p` become yours at once
+## (their residents start believing, so the next tick agrees).
 func convert_near(p: Vector3, count: int) -> void:
 	var order: Array[int] = []
 	for i in buildings.size():
@@ -104,9 +113,14 @@ func convert_near(p: Vector3, count: int) -> void:
 			order.append(i)
 	order.sort_custom(func(a: int, b: int) -> bool:
 		return buildings[a].global_position.distance_squared_to(p) < buildings[b].global_position.distance_squared_to(p))
+	var chosen := {}
 	for i in order.slice(0, count):
+		chosen[buildings[i]] = true
 		_faith[i] = 1.0
 		_set_side(i, true)
+	for r: Resident in population.residents:
+		if chosen.has(r.home):
+			r.belief = maxf(r.belief, B.believer_threshold + 0.2)
 
 
 func _physics_process(delta: float) -> void:
@@ -115,9 +129,16 @@ func _physics_process(delta: float) -> void:
 		return
 	_timer = S.tick
 	_gather_believers()
+	_count_residents()
 	var r2 := S.believer_radius * S.believer_radius
 	for i in buildings.size():
 		if _district_of[i] < 0:
+			continue
+		if _residents[i] > 0:
+			var mine := float(_faithful[i]) / _residents[i] >= D.owner_share
+			_faith[i] = 1.0 if mine else 0.0
+			if mine != (_yours[i] == 1):
+				_set_side(i, mine)
 			continue
 		var p := buildings[i].global_position
 		var near := 0
@@ -146,6 +167,17 @@ func _gather_believers() -> void:
 	_believers.resize(n)
 
 
+func _count_residents() -> void:
+	_residents.fill(0)
+	_faithful.fill(0)
+	for r: Resident in population.residents:
+		var i: int = _index.get(r.home, -1)
+		if i >= 0:
+			_residents[i] += 1
+			if r.belief > B.believer_threshold:
+				_faithful[i] += 1
+
+
 func _set_side(i: int, mine: bool) -> void:
 	_yours[i] = 1 if mine else 0
 	var d := _district_of[i]
@@ -167,6 +199,7 @@ func _collect() -> void:
 	for node in get_tree().get_nodes_in_group("buildings"):
 		var b := node as Node3D
 		var d := district_at(b.global_position)
+		_index[b] = buildings.size()
 		buildings.append(b)
 		sizes.append(DivineSign.building_size(b))
 		_district_of.append(d)
@@ -176,6 +209,8 @@ func _collect() -> void:
 	_yours.fill(0)
 	_faith.resize(n)
 	_faith.fill(0.0)
+	_residents.resize(n)
+	_faithful.resize(n)
 	for i in n:
 		var near := PackedInt32Array()
 		for j in n:

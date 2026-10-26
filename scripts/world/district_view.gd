@@ -5,6 +5,7 @@ extends Node3D
 ## cost one draw call.
 
 const S = preload("res://data/districts.tres")
+const DivineSign = preload("res://scripts/divine_sign.gd")
 const ROOF_LIFT := 1.4      # above the roof modules (Kenney roofs stand about a metre proud of the box)
 const ROOF_INSET := 0.8     # plate size as a share of the roof
 const BORDER_LIFT := 0.03   # just above the asphalt
@@ -20,6 +21,7 @@ func _ready() -> void:
 	districts.layout_ready.connect(_build)
 	districts.building_changed.connect(_on_building_changed)
 	districts.district_controlled.connect(_on_district_controlled)
+	get_node("../Decrees").decree_issued.connect(_on_decree_issued)
 
 
 func _build() -> void:
@@ -50,9 +52,16 @@ func _on_building_changed(index: int, yours: bool) -> void:
 		_roofs.set_instance_transform(index, _hidden)
 		return
 	var b: Node3D = districts.buildings[index]
-	var size: Vector3 = districts.sizes[index]
+	var size := DivineSign.building_size(b)  # live: decrees add floors
 	var top := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT)
 	_roofs.set_instance_transform(index, Transform3D(Basis.from_scale(Vector3(size.x, 1.0, size.z) * ROOF_INSET), top))
+
+
+## +3 Floors lifts the roof, so the plate follows it.
+func _on_decree_issued(_kind: StringName, building: Node3D) -> void:
+	var i: int = districts.buildings.find(building)
+	if i >= 0 and districts.is_yours(i):
+		_on_building_changed(i, true)
 
 
 func _on_district_controlled(d: int) -> void:
