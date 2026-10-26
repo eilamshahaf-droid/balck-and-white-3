@@ -502,9 +502,11 @@ func _blow() -> void:
 		var node: Node = near.collider
 		if node.is_in_group("wind_reactive"):
 			reached[node] = true
-	for node: Node in _windy:
+	# Untyped: a tree uprooted since last tick is a freed key here, and a typed
+	# loop variable would fail on it before the validity check.
+	for node: Variant in _windy:
 		if is_instance_valid(node) and not reached.has(node):
-			node.on_hand_wind(self)
+			(node as Node).on_hand_wind(self)
 	for node: Node in reached:
 		node.on_hand_wind(self)
 	_windy = reached

@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Fix: crash when a tree in the hand's wind disappears
+- The game stopped with "Trying to assign invalid previously freed instance" in `god_hand.gd` (`_blow`) when a tree the hand's wind had just reached was removed, for example uprooted. The wind now skips anything that no longer exists.
+- The hand test checks this case.
+- Try it: press F5, wave the hand over a tree, then pull it out by its roots.
+
 ## 2026-10-26: Divine decrees: edit your buildings from the building wheel
 - Holding the left button still on a building now opens the building wheel: five divine decrees plus the three signs.
 - The decrees: +3 Floors (the building grows out of its roof; up to three times), Luxury (marble lobby, gold canopy, penthouse), Facade (banners and lights in your colours), Change Use (a rooftop sign: Prayer House, then Course Center, then Free Personality Test) and Preserve (a "Form 12-B" plaque; the building joins the `preserved` group, for the demolition code to respect).
