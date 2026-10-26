@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -6,6 +6,10 @@
 [ext_resource type="Script" path="res://scripts/faith.gd" id="4_faith"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5_hud"]
 [ext_resource type="Script" path="res://scripts/opening.gd" id="6_opening"]
+[ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
+[ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
+[ext_resource type="Script" path="res://scripts/sign_followers.gd" id="9_signs"]
+[ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -22,6 +26,18 @@ script = ExtResource("4_faith")
 [node name="GodHand" type="Node3D" parent="."]
 script = ExtResource("3_hand")
 
+[node name="Miracles" type="Node" parent="."]
+script = ExtResource("7_miracles")
+
+[node name="HandTools" type="Node" parent="."]
+script = ExtResource("8_tools")
+
+[node name="SignFollowers" type="Node" parent="."]
+script = ExtResource("9_signs")
+
+[node name="DebugPanel" type="CanvasLayer" parent="."]
+script = ExtResource("10_debug")
+
 [node name="Opening" type="Node" parent="."]
 script = ExtResource("6_opening")
 enabled = false
@@ -34,8 +50,8 @@ offset_top = 10.0
 offset_right = 900.0
 offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person, taxi or tree: pick up (wiggle to uproot), flick to throw
-Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom
-Right-drag a circle: water miracle    Keys: WASD move, Q/E rotate, R/F tilt    B: show hidden belief (debug)
+Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
+Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: sign wheel    Right-drag a circle: water
 The hand can lift anything. Only miracles change what people believe."
 
 [node name="Stats" type="Label" parent="HUD"]

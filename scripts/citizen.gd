@@ -37,6 +37,10 @@ var home := Vector2i.ZERO
 var idle := false
 ## Story moments can fix how this person explains the next miracle (&"god", &"fraud", ...).
 var scripted_explanation := &""
+## Answering a divine sign: walking to a building, or standing at it.
+var on_errand := false
+## On an errand and already standing at the spot.
+var errand_arrived := false
 
 var _body: MeshInstance3D
 var _own_mat := StandardMaterial3D.new()
@@ -53,6 +57,12 @@ var _phone_timer := 0.0
 var _look_at_target := Vector3.INF   # where a witness stares while stopped
 var _bubble: Label3D
 var _bubble_timer := 0.0
+var _errand_route: Array[Vector3] = []
+var _errand_time := 0.0
+var _errand_line := ""
+var _errand_color := Color.WHITE
+var _errand_face := Vector3.ZERO
+var _errand_say := 0.0
 
 
 func _ready() -> void:
@@ -154,6 +164,9 @@ func _physics_process(delta: float) -> void:
 				_pause -= delta
 				if _look_at_target != Vector3.INF:
 					_turn_to(_look_at_target)
+				return
+			if on_errand:
+				_walk_errand(delta)
 				return
 			var to_target := target - global_position
 			to_target.y = 0
@@ -265,9 +278,7 @@ func _say(explanation: StringName, seconds: float) -> void:
 		&"fraud": ["It's a hoax.", Color(1.0, 0.45, 0.4)],
 		&"plot": ["Someone's behind this...", Color(0.7, 0.6, 1.0)],
 	}
-	_bubble.text = lines[explanation][0]
-	_bubble.modulate = lines[explanation][1]
-	_bubble_timer = seconds
+	_say_line(lines[explanation][0], lines[explanation][1], seconds)
 
 
 func _turn_to(p: Vector3) -> void:
@@ -275,7 +286,65 @@ func _turn_to(p: Vector3) -> void:
 	rotation.y = atan2(d.x, d.z)
 
 
+## Answer a divine sign: walk to `spot` (along the streets), then stand
+## there facing `face` for `stay` seconds, now and then saying `line`.
+func send_on_errand(spot: Vector3, face: Vector3, stay: float, line: String, color: Color) -> void:
+	on_errand = true
+	errand_arrived = false
+	var corner: Vector3 = city.intersection(city.nearest_grid(spot))
+	_errand_route = [corner + lane_offset * 0.3, Vector3(spot.x, corner.y, spot.z)]
+	_errand_time = stay
+	_errand_line = line
+	_errand_color = color
+	_errand_face = face
+	_errand_say = 0.0
+
+
+## Free to answer a sign: walking the streets, not busy with anything else.
+func can_answer() -> bool:
+	return state == State.WALKING and not on_errand and not idle
+
+
+func end_errand() -> void:
+	if not on_errand:
+		return
+	on_errand = false
+	errand_arrived = false
+	resume_walking()
+
+
+func _walk_errand(delta: float) -> void:
+	if not _errand_route.is_empty():
+		var to_point := _errand_route[0] - global_position
+		to_point.y = 0
+		if to_point.length() < 0.8:
+			_errand_route.pop_front()
+			return
+		var dir := to_point.normalized()
+		velocity = Vector3(dir.x * speed, -1.0, dir.z * speed)
+		rotation.y = atan2(dir.x, dir.z)
+		move_and_slide()
+		return
+	errand_arrived = true
+	_turn_to(_errand_face)
+	_errand_say -= delta
+	if _errand_say <= 0.0:
+		_errand_say = randf_range(4.0, 7.0)
+		_say_line(_errand_line, _errand_color, 2.5)
+	_errand_time -= delta
+	if _errand_time <= 0.0:
+		end_errand()
+
+
+func _say_line(text: String, color: Color, seconds: float) -> void:
+	_bubble.text = text
+	_bubble.modulate = color
+	_bubble_timer = seconds
+
+
 func on_grabbed() -> void:
+	on_errand = false
+	errand_arrived = false
 	state = State.HELD
 	velocity = Vector3.ZERO
 	_spin = Vector3.ZERO
@@ -315,6 +384,23 @@ func on_released(throw_velocity: Vector3) -> void:
 		_spin = axis.normalized() * clampf(speed * 0.5, 2.0, 14.0)
 	else:
 		_spin = Vector3.ZERO
+
+
+## Blown off our feet (by lightning). Returns false if the hand is holding us.
+func knock_over(push: Vector3) -> bool:
+	if state == State.HELD:
+		return false
+	on_released(push)
+	return true
+
+
+## A healing miracle: whoever is lying down gets straight back up.
+## Returns true if this person needed it.
+func heal() -> bool:
+	if state != State.DOWN and state != State.GETTING_UP:
+		return false
+	_stand_up()
+	return true
 
 
 func _land() -> void:

@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="MiracleSettings" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/miracle_settings.gd" id="1_miracles"]
+
+[resource]
+script = ExtResource("1_miracles")

@@ -3,6 +3,68 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Watercolour removed; playful toy-town colours
+- The watercolour look is gone: no paper texture, no colour bleeding, no darkened edges, no grain, no wobble, no paper border, no wash blotches on buildings. (To bring it back, see the 2026-10-25 entries and git history.)
+- The tilt-shift and depth of field are unchanged.
+- Colours lean more game-like: a bit more saturation, warm sunlight, cool (not lavender) shadows. No outlines.
+- The screen pass is now `shaders/screen_pass.gdshader` (tilt-shift + colour grade). Settings in `data/art_style.tres`; the "Pigment" and "Paper pass" groups are gone, `saturation` moved to "Colour grade".
+- Try it: press F5; press V to compare with the plain look.
+
+## 2026-10-25: Depth of field: what is near stays sharp, the background melts
+- Like a macro photo of a miniature: whatever stands in the middle of the screen is in focus, and everything further away blurs softly. Things nearer than that (the hand, whatever it lifts, the tops of tall towers) stay sharp. It adds to the tilt-shift for a smoother, more natural blend between the city and the background.
+- Numbers: `data/art_style.tres`, group "Depth of field" (`dof_blur` 0 turns it off). V still switches the whole style off to compare.
+- Try it: press F5 and tilt the camera toward the horizon (middle-drag) to see the far streets melt.
+
+## 2026-10-25: A short click casts the miracle in the hand
+- With a miracle in the hand, a short click on the ground or a building casts it (a long press still works too). Dragging still moves the city.
+- The miracle fills the hand: until it is cast or dropped (right click), the hand doesn't pick anything up or highlight people, so a click on someone casts the miracle there instead of lifting them.
+- Try it: press F5, hold the left button still on a street, pick Lightning, then click on a group of people.
+
+## 2026-10-25: Debug panel for testing
+- A small panel on the right (F1 hides it): Believers +5 (the nearest non-believers to the middle of the screen), Believers -5, Believers come here (every believer moves to the corner in the middle of the screen), Belief +100, and Path: good / evil / neutral.
+- Try it: press F5, click "Believers come here", then put a sign on a building next to them.
+
+## 2026-10-25: Believers answer the divine signs
+- A sign on a building now costs 3 belief, and up to six believers nearby walk over and act on it, each by the sign and by the god's path. The path ("Path" at the top of the screen) comes from your miracles so far: water, shield and heal are good deeds, fire and lightning evil ones; one kind has to lead by 3 to set it, otherwise you are neutral.
+- Blessed: they gather to pray, and each one adds belief to the pool.
+- Cursed: on the evil path they vandalise it until it catches fire (raises exposure); on the good path they picket it from across the street; on the neutral path they ask to speak to the manager.
+- Protected: they stand guard and fight any fire on that building.
+- Unsure believers now and then misread the sky ("Wait... was that a cloud or a halo?") and do something else.
+- Signs still don't change anyone's belief: only miracles do.
+- Numbers: group "Divine signs" in `data/miracles.tres`; how big a lead sets the path: `path_lead` in `data/balance.tres`.
+- Try it: press F5, cast fire and lightning a few times until Path says evil, then hold the left button still on a building near your believers (the start area) and pick Cursed.
+
+## 2026-10-25: Picking a miracle puts it in the hand
+- Choosing a miracle on the wheel no longer casts it straight away. It goes into the hand (a glowing orb in the palm, and "In the hand: ..." at the top of the screen). The next long press, on the ground or on a building, casts it there. A right click drops it. Moving, lifting and throwing work as usual while it is in the hand.
+- Try it: press F5, hold the left button still on a street, pick Fire and let go. Then hold the left button still on a building.
+
+## 2026-10-25: Wheel drawn on its own top layer
+- The miracle and sign wheels now draw on their own screen layer above everything else (the HUD and the art style's watercolour pass), sized to the whole window. Fix attempt for the wheel not showing on one Windows PC while its clicks worked.
+- Try it: press F5 and hold the left button still on a street.
+
+## 2026-10-25: Dollhouse look: stronger tilt-shift, crisp sun shadows, livelier colours
+- Tilt-shift is much stronger and starts lower: from above, the top and bottom of the screen blur like a photo of a miniature, with a narrower sharp band.
+- New sun lighting in the toon shader: a lower sun (longer shadows), crisp shadow edges (no blur), cast shadows with their own darkness, a warm key light and a bright toy-like rim on sunlit edges. The art style now sets the sun's angle and shadow quality; the day/night cycle still sets its brightness and colour.
+- Livelier, more playful colours: stronger saturation, a vibrance and contrast grade, a slightly warm picture.
+- The Kenney buildings now get the art style too (their textures go through the toon shader).
+- Every number: `data/art_style.tres` (new groups "Sun and shadows" and "Colour grade"; tilt-shift numbers changed).
+- Try it: press F5, zoom out with the wheel to see the tilt-shift, and press V to compare with the plain look.
+
+## 2026-10-25: Both wheels open with a long left press; easier uprooting
+- Hold the LEFT button still for half a second on the ground: the miracle wheel opens around the hand. On a building: the sign wheel. The hand stays in the middle, grows so it can be seen from high up, and points where you move the mouse; the slice it points at lights up. Let go to cast the miracle on that spot, or give the sign to that building. Letting go in the middle, or a right click, cancels.
+- The right-button wheel and the "miracle in the hand" mode are gone. Drawing a circle with the right button still casts water.
+- Fire cast at the foot of a building sets the building alight; water cast near a fire goes onto it.
+- Trees come out much more easily (about seven times less effort).
+- Try it: press F5, hold the left button on a street, point at Fire and let go next to a building. Then do the same with Water and Heal. Grab a tree and pull.
+
+## 2026-10-25: Miracle wheel, five miracles and divine signs on buildings
+- Hold the RIGHT mouse button still for a moment: the miracle wheel opens around the hand. Point at a miracle and let go. The miracle stays in the hand (a glowing orb in the palm), and every short left click casts it there. Dragging the city, lifting and throwing work as before meanwhile. A short right click puts the miracle away. Drawing a circle with the right button still casts water straight away.
+- Five miracles, each costing belief: Water (rain puts out fires), Fire (the building under the hand catches fire, or a small fire in the street; it burns out after a minute), Lightning (people nearby are knocked off their feet, cars jump and their alarms go off), Shield (a dome for 20 s; no fire or lightning inside it, fires under it go out), Heal (people lying hurt get up, burnt buildings are rebuilt). Every miracle is seen by the people around and changes what they believe.
+- Hold the LEFT mouse button still on a building for half a second: the building lights up and the sign wheel opens. Blessed (a beam of light), Cursed (a storm cloud), Protected (a ring of light) or Clear. Signs only mark buildings for now; believers will act on them later.
+- The belief pool starts at 100 so there is room to try the miracles.
+- All the numbers: `data/miracles.tres` (water moved there from `data/balance.tres`). Wheel timings: `data/hand_settings.tres`.
+- Try it: press F5, hold the right button, pick Fire, click a building, then pick Water and click it, then Heal.
+
 ## 2026-10-25: CLAUDE.md with the architecture and coding rules
 - Added `CLAUDE.md` at the repo root: a map of the scenes, scripts, data files and who owns what, plus the coding rules every session follows (GDScript style guide, static typing, signals over hard references, tunables in `data/*.tres`, no per-frame allocations or node searches, MultiMesh for repeated objects, 60 fps on a mid-range PC, Compatibility renderer support, checks before pushing).
 - No game code changed. A code-quality audit with a fix plan is waiting for Eilam's approval.

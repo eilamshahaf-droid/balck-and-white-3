@@ -1,8 +1,9 @@
 extends Node
-## The game's art style: a dollhouse painted in watercolour.
+## The game's art style: a toy dollhouse town seen by a god.
 ## Runs as the autoload "ArtStyle". It gives every ordinary lit material in the
-## world the soft cel shader (shaders/toon.gdshader) and lays the watercolour
-## paper pass (shaders/watercolor_paper.gdshader) over the screen.
+## world the soft cel shader (shaders/toon.gdshader), blurs the far background
+## (shaders/depth_of_field.gdshader) and lays the tilt-shift and colour grade
+## (shaders/screen_pass.gdshader) over the screen.
 ##
 ## Gameplay code keeps creating plain StandardMaterial3D and changing its colour;
 ## this node swaps in a matching toon material and keeps the colour in sync, so
@@ -14,14 +15,14 @@ extends Node
 const S: ArtStyleSettings = preload("res://data/art_style.tres")
 const TOON := preload("res://shaders/toon.gdshader")
 const GHOST := preload("res://shaders/toon_ghost.gdshader")
-const PAPER := preload("res://shaders/watercolor_paper.gdshader")
+const SCREEN := preload("res://shaders/screen_pass.gdshader")
+const DOF := preload("res://shaders/depth_of_field.gdshader")
 
 var enabled := true
 
-var _wash: NoiseTexture2D
-var _paper_noise: NoiseTexture2D
-var _paper_mat := ShaderMaterial.new()
+var _screen_mat := ShaderMaterial.new()
 var _layer := CanvasLayer.new()
+var _dof := MeshInstance3D.new()   # screen-covering quad that blurs the far background
 var _toon := {}       # StandardMaterial3D -> its toon ShaderMaterial
 var _colors := {}     # StandardMaterial3D -> albedo last copied into the toon material
 var _meshes := []     # every MeshInstance3D we look after
@@ -33,19 +34,17 @@ var _shot_frames := 120
 func _ready() -> void:
 	process_priority = 1000  # after gameplay scripts have swapped materials this frame
 	enabled = S.enabled
-	_wash = _noise_texture(256, 0.012, 4, 11)
-	_paper_noise = _noise_texture(512, 0.02, 6, 23)
-
-	_paper_mat.shader = PAPER
-	_push_paper_params()
+	_screen_mat.shader = SCREEN
+	_push_screen_params()
 	_layer.layer = 0  # above the 3D world, below the HUD (layer 1)
 	var rect := ColorRect.new()
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.material = _paper_mat
+	rect.material = _screen_mat
 	_layer.add_child(rect)
 	add_child(_layer)
 	_layer.visible = enabled
+	_build_dof()
 
 	get_tree().node_added.connect(_on_node_added)
 	for arg in OS.get_cmdline_user_args():
@@ -56,12 +55,14 @@ func _ready() -> void:
 		elif arg == "--no-style":
 			enabled = false
 			_layer.visible = false
+	_dof.visible = enabled and S.dof_blur > 0.0
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_V:
 		enabled = not enabled
 		_layer.visible = enabled
+		_dof.visible = enabled and S.dof_blur > 0.0
 
 
 func _process(_delta: float) -> void:
@@ -88,6 +89,7 @@ func _process(_delta: float) -> void:
 			_toon[src].set_shader_parameter("albedo", c)
 
 	_update_tilt_shift()
+	_follow_camera()
 
 	if _shot_path != "":
 		_shot_frames -= 1
@@ -120,6 +122,8 @@ func _on_node_added(node: Node) -> void:
 		_pending.append(node)
 	elif node is WorldEnvironment:
 		_style_environment.call_deferred(node)
+	elif node is DirectionalLight3D:
+		_style_sun.call_deferred(node)
 
 
 func _belongs_to_world(m: Node) -> bool:
@@ -144,8 +148,7 @@ func _convertible(mat: StandardMaterial3D) -> bool:
 	return mat.shading_mode != BaseMaterial3D.SHADING_MODE_UNSHADED \
 		and mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED \
 		and mat.billboard_mode == BaseMaterial3D.BILLBOARD_DISABLED \
-		and not mat.emission_enabled \
-		and mat.albedo_texture == null
+		and not mat.emission_enabled
 
 
 func _toon_for(src: StandardMaterial3D) -> ShaderMaterial:
@@ -156,6 +159,8 @@ func _toon_for(src: StandardMaterial3D) -> ShaderMaterial:
 	t.set_meta("toon_source", src)
 	_push_toon_params(t)
 	t.set_shader_parameter("albedo", src.albedo_color)
+	if src.albedo_texture:
+		t.set_shader_parameter("albedo_tex", src.albedo_texture)
 	_toon[src] = t
 	_colors[src] = src.albedo_color
 	return t
@@ -170,26 +175,19 @@ func _push_toon_params(t: ShaderMaterial) -> void:
 	t.set_shader_parameter("softness", S.softness)
 	t.set_shader_parameter("shadow_tint", S.shadow_tint)
 	t.set_shader_parameter("ambient_amount", S.ambient_amount)
-	t.set_shader_parameter("paper_color", S.paper_color)
-	t.set_shader_parameter("pigment_lift", S.pigment_lift)
+	t.set_shader_parameter("shadow_level", S.shadow_level)
+	t.set_shader_parameter("shadow_softness", S.shadow_softness)
+	t.set_shader_parameter("key_tint", S.key_tint)
+	t.set_shader_parameter("rim_strength", S.rim_strength)
 	t.set_shader_parameter("saturation", S.saturation)
-	t.set_shader_parameter("wash_tex", _wash)
-	t.set_shader_parameter("wash_scale", S.wash_scale)
-	t.set_shader_parameter("wash_strength", S.wash_strength)
 
 
-func _push_paper_params() -> void:
-	_paper_mat.set_shader_parameter("paper_noise", _paper_noise)
-	_paper_mat.set_shader_parameter("paper_color", S.paper_color)
-	_paper_mat.set_shader_parameter("bleed", S.bleed)
-	_paper_mat.set_shader_parameter("edge_strength", S.edge_strength)
-	_paper_mat.set_shader_parameter("edge_threshold", S.edge_threshold)
-	_paper_mat.set_shader_parameter("grain", S.grain)
-	_paper_mat.set_shader_parameter("paper_strength", S.paper_strength)
-	_paper_mat.set_shader_parameter("wobble", S.wobble)
-	_paper_mat.set_shader_parameter("vignette", S.vignette)
-	_paper_mat.set_shader_parameter("tilt_center", S.tilt_center)
-	_paper_mat.set_shader_parameter("tilt_width", S.tilt_width)
+func _push_screen_params() -> void:
+	_screen_mat.set_shader_parameter("tilt_center", S.tilt_center)
+	_screen_mat.set_shader_parameter("tilt_width", S.tilt_width)
+	_screen_mat.set_shader_parameter("vibrance", S.vibrance)
+	_screen_mat.set_shader_parameter("contrast", S.contrast)
+	_screen_mat.set_shader_parameter("warmth", S.warmth)
 
 
 ## The higher the god looks from, the more the city looks like a miniature.
@@ -197,7 +195,7 @@ func _update_tilt_shift() -> void:
 	var cam := get_viewport().get_camera_3d()
 	var h := cam.global_position.y if cam else 0.0
 	var k := smoothstep(S.tilt_height_min, S.tilt_height_max, h)
-	_paper_mat.set_shader_parameter("tilt_blur", S.tilt_blur * k)
+	_screen_mat.set_shader_parameter("tilt_blur", S.tilt_blur * k)
 
 
 ## Only the tone mapping: sky, ambient, fog and sun belong to the city's
@@ -211,15 +209,43 @@ func _style_environment(world_env: WorldEnvironment) -> void:
 	env.tonemap_exposure = S.exposure
 
 
-func _noise_texture(size: int, frequency: float, octaves: int, seed_value: int) -> NoiseTexture2D:
-	var noise := FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
-	noise.frequency = frequency
-	noise.fractal_octaves = octaves
-	noise.seed = seed_value
-	var tex := NoiseTexture2D.new()
-	tex.width = size
-	tex.height = size
-	tex.seamless = true
-	tex.noise = noise
-	return tex
+func _build_dof() -> void:
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.0, 1.0)
+	var mat := ShaderMaterial.new()
+	mat.shader = DOF
+	mat.render_priority = Material.RENDER_PRIORITY_MAX  # after fire, rain and glows
+	mat.set_shader_parameter("blur", S.dof_blur)
+	mat.set_shader_parameter("start", S.dof_start)
+	mat.set_shader_parameter("end", S.dof_end)
+	mat.set_shader_parameter("focus_y", S.tilt_center)
+	mat.set_shader_parameter("compat", RenderingServer.get_rendering_device() == null)
+	quad.material = mat
+	_dof.mesh = quad
+	_dof.name = &"DepthOfField"
+	_dof.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_dof.extra_cull_margin = 16384.0
+	_dof.add_to_group(&"no_toon")
+
+
+## The depth-of-field quad rides on whichever camera is drawing.
+func _follow_camera() -> void:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or _dof.get_parent() == cam:
+		return
+	if _dof.get_parent():
+		_dof.get_parent().remove_child(_dof)
+	cam.add_child(_dof)
+	_dof.position = Vector3(0.0, 0.0, -1.0)
+
+
+## The god looks down on a sunny toy town: a fixed sun angle and crisp, long
+## shadows. Energy and colour stay with the city's day/night cycle.
+func _style_sun(sun: DirectionalLight3D) -> void:
+	if not S.sun_override or not is_instance_valid(sun):
+		return
+	sun.rotation = Vector3(deg_to_rad(S.sun_pitch), deg_to_rad(S.sun_yaw), 0.0)
+	sun.shadow_enabled = true
+	sun.shadow_blur = 0.0
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_max_distance = S.shadow_distance

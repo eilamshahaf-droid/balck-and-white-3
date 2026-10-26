@@ -15,6 +15,8 @@ const POSE_CURL := {
 const CURL_SPEED := 14.0
 ## Where the hand sits relative to its hotspot, so the index fingertip is at the origin.
 const FINGERTIP_OFFSET := Vector3(-0.36, 0.1, 1.25)
+## Wrist to fingertip, in the hand's own units.
+const LENGTH := 1.8
 const WEAK_SKIN := Color(0.62, 0.6, 0.62)      # far from your believers: pale and grey
 const STRONG_SKIN := Color(0.95, 0.68, 0.4)    # among them: warm, with a glow
 

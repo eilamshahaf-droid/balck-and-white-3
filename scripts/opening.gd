@@ -26,6 +26,7 @@ const CROWD_SIZE := 14
 @onready var rig: Node3D = get_node("../CameraRig")
 @onready var hand: Node3D = get_node("../GodHand")
 @onready var faith: Node = get_node("../Faith")
+@onready var miracles: Node = get_node("../Miracles")
 
 var running := false
 var fire: Node3D
@@ -236,12 +237,15 @@ func _next_miracle_attempt() -> StringName:
 		var d := Vector2(miracle.global_position.x - fire.global_position.x, miracle.global_position.z - fire.global_position.z).length()
 		result[0] = &"hit" if kind == &"water" and d < 14.0 else &"missed"
 	var on_fail := func(reason: StringName): result[0] = reason
-	hand.miracle_cast.connect(on_cast)
-	hand.miracle_failed.connect(on_fail)
+	var on_scribble := func(): result[0] = &"unknown_gesture"
+	miracles.miracle_cast.connect(on_cast)
+	miracles.miracle_failed.connect(on_fail)
+	hand.gesture_unrecognised.connect(on_scribble)
 	while result[0] == &"" and not _skipped:
 		await get_tree().process_frame
-	hand.miracle_cast.disconnect(on_cast)
-	hand.miracle_failed.disconnect(on_fail)
+	miracles.miracle_cast.disconnect(on_cast)
+	miracles.miracle_failed.disconnect(on_fail)
+	hand.gesture_unrecognised.disconnect(on_scribble)
 	return result[0]
 
 

@@ -5,7 +5,10 @@ extends Node3D
 ## Left button on a person or taxi: pick it up (drag, or hold past a tap).
 ## Release while still = put down; release while moving = throw.
 ## Short click without moving = tap. Double-click = fly the camera there.
-## Right button: draw a miracle gesture (a circle = water).
+## Left button held still = ask for a wheel (hand_tools.gd decides which:
+## signs on a building, miracles anywhere else). While a wheel is open the
+## hand stays at its centre and points where the mouse goes.
+## Right button dragged: draw a gesture (a circle = water).
 ##
 ## Held things hang from the hand on a damped spring, so heavy things lag and
 ## swing. Throw speed is the hand's motion averaged over the last moments.
@@ -14,16 +17,20 @@ extends Node3D
 ## nobody's belief changes from seeing it. Belief comes only from miracles.
 
 const S = preload("res://data/hand_settings.tres")
-const B = preload("res://data/balance.tres")
 const Sfx = preload("res://scripts/sfx.gd")
 const HandVisual = preload("res://scripts/hand_visual.gd")
 const Gesture = preload("res://scripts/gesture.gd")
-const RainScript = preload("res://scripts/rain.gd")
 
-## A miracle was cast: `kind` (&"water"), and the node that performs it.
-signal miracle_cast(kind: StringName, miracle: Node3D)
-## A gesture was drawn but not recognised, or there wasn't enough belief.
-signal miracle_failed(reason: StringName)
+## The left button was held still on `hit` (a raycast result: position, collider).
+signal long_pressed(hit: Dictionary, screen_pos: Vector2)
+## A short click on `hit` while the hand carries a tool.
+signal tool_clicked(hit: Dictionary)
+## A circle was drawn with the right button (`screen_radius` in pixels).
+signal circle_drawn(screen_pos: Vector2, screen_radius: float)
+## Something was drawn with the right button that isn't a known gesture.
+signal gesture_unrecognised
+## A right click without drawing anything.
+signal right_clicked
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
 const LAYER_WORLD := 1
@@ -32,7 +39,6 @@ const LAYER_PROPS := 4
 enum Press { NONE, PENDING_GROUND, PENDING_OBJECT, DRAG_GROUND, HOLDING }
 
 @onready var rig: Node3D = get_node("../CameraRig")
-@onready var faith: Node = get_node("../Faith")
 
 var held: Node3D = null
 var hovered: Node3D = null
@@ -40,6 +46,9 @@ var hovered: Node3D = null
 var hand_velocity := Vector3.ZERO
 ## The building the hand is pointing at (kept solid by the camera).
 var pointed_building: Node3D = null
+## The hand carries a tool (a miracle): it can't pick anything up, and a short
+## click uses the tool instead of tapping. Dragging still moves the city.
+var carrying_tool := false
 
 var _visual: Node3D
 var _shadow: MeshInstance3D
@@ -47,6 +56,7 @@ var _shadow_mat := StandardMaterial3D.new()
 var _arc_mesh := ImmediateMesh.new()
 var _arc_mat := StandardMaterial3D.new()
 var _outline_mat := StandardMaterial3D.new()
+var _point_outline_mat := StandardMaterial3D.new()
 
 var _press := Press.NONE
 var _press_time := 0.0
@@ -58,6 +68,9 @@ var _history: Array = []   # [time, position, mouse] samples, for throw velocity
 var _tap_timer := 0.0
 var _drawing := false
 var _gesture := PackedVector2Array()
+var _point_anchor := Vector3.INF   # while a wheel is open: where the hand stays
+var _point_from := Vector2.ZERO     # the wheel's centre on screen
+var _point_zoom := 1.0              # how much bigger the hand is drawn while pointing
 var _trail: Line2D
 
 
@@ -115,6 +128,12 @@ func _ready() -> void:
 	_outline_mat.cull_mode = BaseMaterial3D.CULL_FRONT
 	_outline_mat.grow = true
 	_outline_mat.grow_amount = 0.08
+	# A dark rim on the hand while it points at a wheel, so it reads on a white roof.
+	_point_outline_mat.albedo_color = Color(0.15, 0.12, 0.2)
+	_point_outline_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_point_outline_mat.cull_mode = BaseMaterial3D.CULL_FRONT
+	_point_outline_mat.grow = true
+	_point_outline_mat.grow_amount = 0.06
 
 
 func _physics_process(delta: float) -> void:
@@ -128,7 +147,7 @@ func _physics_process(delta: float) -> void:
 		_surface = surface_hit.position
 	_update_press()
 	var target: Node3D = null
-	if not held and _press != Press.DRAG_GROUND:
+	if not held and not carrying_tool and _press != Press.DRAG_GROUND and _point_anchor == Vector3.INF:
 		target = _pick_target(hit)
 
 	# Sit on the mouse ray, a little in front of the surface, so the fingertip
@@ -140,8 +159,11 @@ func _physics_process(delta: float) -> void:
 	if target and (not hit or hit.collider != target):
 		# Lean gently toward a nearby target without jumping onto it.
 		goal += (_aim_point(target) - _surface) * S.magnet_strength
+	if _point_anchor != Vector3.INF:
+		goal = _point_anchor
 	global_position = global_position.lerp(goal, 1.0 - exp(-S.follow_rate * delta))
-	rotation.y = rig.yaw
+	rotation.y = rig.yaw - _point_angle()
+	_update_point_zoom(delta)
 	_record_history()
 	hand_velocity = _throw_velocity() / S.throw_multiplier if S.throw_multiplier > 0.0 else Vector3.ZERO
 	get_tree().call_group("wind_reactive", "on_hand_wind", self)
@@ -184,7 +206,48 @@ func _unhandled_input(event: InputEvent) -> void:
 		_trail.points = _gesture
 
 
-# --- Miracles ---
+# --- Pointing at a wheel ---
+
+## Stay where the hand is and point from `screen_pos` toward the mouse.
+func start_pointing(screen_pos: Vector2) -> void:
+	_point_anchor = global_position
+	_point_from = screen_pos
+	# Seen from high up the hand is a speck; grow it to fill the wheel's hole.
+	var px_per_m := _screen_radius(get_viewport().get_camera_3d(), global_position, 1.0)
+	var hand_px := px_per_m * S.hand_scale * HandVisual.LENGTH
+	_point_zoom = maxf(1.0, S.wheel_dead_zone_px * 1.3 / maxf(hand_px, 0.01))
+	for mesh in _visual.find_children("*", "MeshInstance3D", true, false):
+		mesh.material_overlay = _point_outline_mat
+
+
+func stop_pointing() -> void:
+	_point_anchor = Vector3.INF
+	_point_zoom = 1.0
+	for mesh in _visual.find_children("*", "MeshInstance3D", true, false):
+		mesh.material_overlay = null
+
+
+## Grow or shrink the drawn hand. While pointing, its middle (not its
+## fingertip) sits on the wheel's centre, so the finger reaches out to a slice.
+func _update_point_zoom(delta: float) -> void:
+	var w := 1.0 - exp(-12.0 * delta)
+	var size: float = lerpf(_visual.scale.x, S.hand_scale * _point_zoom, w)
+	var offset := HandVisual.FINGERTIP_OFFSET
+	if _point_anchor != Vector3.INF:
+		offset.z -= HandVisual.LENGTH * 0.5
+	_visual.scale = Vector3.ONE * size
+	_visual.position = _visual.position.lerp(offset * size, w)
+
+
+## Clockwise screen angle from straight up to the mouse, while pointing at a wheel.
+func _point_angle() -> float:
+	if _point_anchor == Vector3.INF:
+		return 0.0
+	var d := get_viewport().get_mouse_position() - _point_from
+	return atan2(d.x, -d.y) if d.length() > S.wheel_dead_zone_px else 0.0
+
+
+# --- Right button: gestures ---
 
 func _finish_gesture() -> void:
 	var points := _gesture
@@ -192,42 +255,11 @@ func _finish_gesture() -> void:
 	tween.tween_property(_trail, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(func(): _trail.clear_points(); _trail.modulate.a = 1.0)
 	if Gesture.is_circle(points):
-		cast_water(Gesture.centroid(points), Gesture.radius(points))
+		circle_drawn.emit(Gesture.centroid(points), Gesture.radius(points))
 	elif points.size() > 8:
-		miracle_failed.emit(&"unknown_gesture")
-
-
-## Rain on the spot under `screen_pos`. A fire inside the drawn circle
-## (`screen_radius` pixels) is what the god meant, so the rain goes there.
-func cast_water(screen_pos: Vector2, screen_radius := 0.0) -> void:
-	var camera := get_viewport().get_camera_3d()
-	var target := Vector3.INF
-	var best := screen_radius * 1.3
-	for fire in get_tree().get_nodes_in_group("fires"):
-		if fire.is_burning() and not camera.is_position_behind(fire.global_position):
-			var d := camera.unproject_position(fire.global_position).distance_to(screen_pos)
-			if d < best:
-				best = d
-				target = fire.global_position
-	if target == Vector3.INF:
-		var from := camera.project_ray_origin(screen_pos)
-		var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(screen_pos) * RAY_LENGTH, LAYER_WORLD)
-		query.exclude = rig.faded_rids()
-		var hit := get_world_3d().direct_space_state.intersect_ray(query)
-		if not hit:
-			return
-		target = hit.position
-	if not faith.spend(B.water_cost):
-		_visual.strain()
-		miracle_failed.emit(&"no_belief")
-		return
-	var rain: Node3D = RainScript.new()
-	get_parent().add_child(rain)
-	rain.start(target)
-	Sfx.play(get_tree(), rain.global_position, &"chime", 0.6)
-	faith.report(rain, &"see_rain", B.water_intensity, B.spectacle_situation, B.rain_time, true,
-			B.water_deniability, rain.helped(), B.rain_seen_from)
-	miracle_cast.emit(&"water", rain)
+		gesture_unrecognised.emit()
+	elif points.size() <= 2:
+		right_clicked.emit()
 
 
 # --- Press handling: drag the city, pick up, tap, or fly ---
@@ -244,7 +276,7 @@ func _on_press(event: InputEventMouseButton) -> void:
 	_press_time = _time()
 	_press_pos = event.position
 	_press_hit = hit
-	_press_target = _pick_target(hit)
+	_press_target = null if carrying_tool else _pick_target(hit)
 	# Over empty sky the city can still be grabbed: the grip goes on the street plane.
 	_press = Press.PENDING_OBJECT if _press_target else Press.PENDING_GROUND
 
@@ -255,7 +287,10 @@ func _on_release() -> void:
 			_tap(_press_target)
 		Press.PENDING_GROUND:
 			if _time() - _press_time <= S.tap_max_time and not _press_hit.is_empty():
-				_knock(_press_hit.position, Sfx.surface_of(_press_hit.collider))
+				if carrying_tool:
+					tool_clicked.emit(_press_hit)
+				else:
+					_knock(_press_hit.position, Sfx.surface_of(_press_hit.collider))
 		Press.DRAG_GROUND:
 			rig.end_ground_drag()
 		Press.HOLDING:
@@ -279,6 +314,10 @@ func _update_press() -> void:
 	elif _press == Press.PENDING_GROUND and moved:
 		rig.begin_ground_drag(_press_pos)
 		_press = Press.DRAG_GROUND
+	elif _press == Press.PENDING_GROUND and _time() - _press_time > S.wheel_hold_time and not _press_hit.is_empty():
+		# Holding still: the hand rests on the spot and asks what to do there.
+		_press = Press.NONE
+		long_pressed.emit(_press_hit, _press_pos)
 
 
 # --- Holding and throwing ---
@@ -552,7 +591,7 @@ func _update_pose(delta: float) -> void:
 		_visual.set_pose(HandVisual.Pose.TAP)
 	elif held or _press == Press.DRAG_GROUND:
 		_visual.set_pose(HandVisual.Pose.GRAB)
-	elif hovered:
+	elif hovered or _point_anchor != Vector3.INF:
 		_visual.set_pose(HandVisual.Pose.POINT)
 	else:
 		_visual.set_pose(HandVisual.Pose.OPEN)
