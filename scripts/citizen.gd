@@ -1,3 +1,4 @@
+class_name Citizen
 extends CharacterBody3D
 ## The body of a city resident: walks between intersections near home,
 ## falls, gets up, stares at miracles. Who the person is (name, home, family,
@@ -58,8 +59,11 @@ var on_errand := false
 var errand_arrived := false
 
 var _body: MeshInstance3D
+static var _phone_screen: StandardMaterial3D
+
 var _own_mat := StandardMaterial3D.new()
 var _debug_mat := StandardMaterial3D.new()
+var _showing_belief := false
 var _fall_speed := 0.0
 var _pause := 0.0
 var _spin := Vector3.ZERO      # tumble while flying, radians per second around this axis
@@ -93,24 +97,20 @@ func _ready() -> void:
 	add_child(shape)
 
 	_body = MeshInstance3D.new()
-	var mesh := CapsuleMesh.new()
-	mesh.radius = 0.35
-	mesh.height = 1.8
-	_body.mesh = mesh
+	_body.mesh = SharedMeshes.capsule(0.35, 1.8)
 	_body.position.y = 0.9
 	_own_mat.albedo_color = Color.from_hsv(randf(), 0.45, 0.85)
 	_body.material_override = _own_mat
 	add_child(_body)
 
 	_phone = MeshInstance3D.new()
-	var phone_mesh := BoxMesh.new()
-	phone_mesh.size = Vector3(0.12, 0.22, 0.03)
-	_phone.mesh = phone_mesh
-	var screen := StandardMaterial3D.new()
-	screen.albedo_color = Color(0.85, 0.95, 1.0)
-	screen.emission_enabled = true
-	screen.emission = Color(0.7, 0.9, 1.0)
-	_phone.material_override = screen
+	_phone.mesh = SharedMeshes.box(Vector3(0.12, 0.22, 0.03))
+	if _phone_screen == null:
+		_phone_screen = StandardMaterial3D.new()
+		_phone_screen.albedo_color = Color(0.85, 0.95, 1.0)
+		_phone_screen.emission_enabled = true
+		_phone_screen.emission = Color(0.7, 0.9, 1.0)
+	_phone.material_override = _phone_screen
 	_phone.position = Vector3(0, 1.55, 0.35)
 	_phone.visible = false
 	add_child(_phone)
@@ -210,9 +210,10 @@ func _process(delta: float) -> void:
 		else:
 			c = Color.WHITE.lerp(Color(1.0, 0.8, 0.1), belief)
 		_debug_mat.albedo_color = c
-		_body.material_override = _debug_mat
-	else:
-		_body.material_override = _own_mat
+	if city.show_belief != _showing_belief:
+		_showing_belief = city.show_belief
+		_body.material_override = _debug_mat if _showing_belief else _own_mat
+		ArtStyle.restyle(_body)
 
 
 ## Shift belief after witnessing or experiencing a miracle, by the formula in

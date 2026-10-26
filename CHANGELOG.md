@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Smoother city, faster planning scene, sturdier hand
+- Trees, pigeons and people are drawn with far fewer triangles (round shapes were 4,000 triangles each; now a few hundred), and every tree shares one shape. The city draws about 2.3 million triangles a frame instead of 6.2 million. It looks the same.
+- The art style now styles each object once, when it appears, instead of re-checking every object every frame.
+- The planning scene recounts its city totals only when the city changes, and rebuilds the hover text only when the cursor moves to something new. Its scripts went from about 9 ms to under 1 ms a frame.
+- The hand only looks at things near it when choosing what to grab and what its wind blows on (it used to check every person, tree and taxi in the city). About three times cheaper, and the cost no longer grows with the city.
+- Switching windows (Alt+Tab) while holding something now puts it down, and closes an open wheel, instead of leaving it stuck in the hand.
+- New automatic hand test: `tests/hand_test.tscn` picks up, throws, taps, knocks, blows on a tree, scares pigeons and checks focus loss, with a simulated mouse.
+- Try it: press F5 and play as usual; press Alt+Tab while holding a taxi. The test runs from the command line: `godot --headless --path . res://tests/hand_test.tscn`.
+
 ## 2026-10-26: Every resident is a person: name, home, work, family, friends
 - The 60 residents are no longer anonymous. Each has a name, one of 7 groups (student, office worker, shopkeeper, retiree, artist, police officer, banker), a home in a real building, a workplace (glass towers are offices; retirees don't work), 1 to 3 family members living with them, and 2 to 5 close friends, mostly neighbours and colleagues. Their hidden skepticism comes from their group.
 - New system: `Population` (scripts/people/) holds these records; the walking body (citizen.gd) reads and writes belief on the record. Other systems can ask it who lives where, and what share of a building believes.
@@ -84,6 +93,11 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - The belief pool starts at 100 so there is room to try the miracles.
 - All the numbers: `data/miracles.tres` (water moved there from `data/balance.tres`). Wheel timings: `data/hand_settings.tres`.
 - Try it: press F5, hold the right button, pick Fire, click a building, then pick Water and click it, then Heal.
+
+## 2026-10-25: CLAUDE.md with the architecture and coding rules
+- Added `CLAUDE.md` at the repo root: a map of the scenes, scripts, data files and who owns what, plus the coding rules every session follows (GDScript style guide, static typing, signals over hard references, tunables in `data/*.tres`, no per-frame allocations or node searches, MultiMesh for repeated objects, 60 fps on a mid-range PC, Compatibility renderer support, checks before pushing).
+- No game code changed. A code-quality audit with a fix plan is waiting for Eilam's approval.
+- Try it: nothing to run; open `CLAUDE.md` to read it.
 
 ## 2026-10-25: The main scene is a hand test bed; lifting is play, not a miracle
 - The opening (the burning building) is switched off for now: the game starts straight in free play in daylight, with a congregation ready. To bring it back, select the `Opening` node in `scenes/main.tscn` and turn on `enabled`.

@@ -1,3 +1,4 @@
+class_name SwayingTree
 extends StaticBody3D
 ## A rooted tree. It bends away from the god's hand's wind, and the hand can
 ## grab it and pull: the tree resists, leans and shakes after the hand, and
@@ -39,19 +40,13 @@ func build(p_trunk: Material, p_crown: Material, radius: float) -> void:
 ## Shared with the uprooted tree so both look and collide the same.
 static func add_tree_visuals(parent: Node3D, p_trunk: Material, p_crown: Material, radius: float) -> void:
 	var trunk := MeshInstance3D.new()
-	var trunk_mesh := CylinderMesh.new()
-	trunk_mesh.top_radius = 0.25
-	trunk_mesh.bottom_radius = 0.35
-	trunk_mesh.height = 3.0
-	trunk.mesh = trunk_mesh
+	trunk.mesh = SharedMeshes.cylinder(0.25, 0.35, 3.0)
 	trunk.material_override = p_trunk
 	trunk.position.y = 1.5
 	parent.add_child(trunk)
 	var crown := MeshInstance3D.new()
-	var crown_mesh := SphereMesh.new()
-	crown_mesh.radius = radius
-	crown_mesh.height = radius * 2.0
-	crown.mesh = crown_mesh
+	crown.mesh = SharedMeshes.unit_sphere()
+	crown.scale = Vector3.ONE * radius
 	crown.material_override = p_crown
 	crown.position.y = 4.0
 	parent.add_child(crown)
@@ -128,11 +123,7 @@ func _uproot() -> Node3D:
 
 	# Leave a hole of turned-up earth behind.
 	var hole := MeshInstance3D.new()
-	var disk := CylinderMesh.new()
-	disk.top_radius = 0.9
-	disk.bottom_radius = 0.9
-	disk.height = 0.04
-	hole.mesh = disk
+	hole.mesh = SharedMeshes.cylinder(0.9, 0.9, 0.04)
 	var dirt := StandardMaterial3D.new()
 	dirt.albedo_color = Color(0.28, 0.2, 0.13)
 	hole.material_override = dirt
