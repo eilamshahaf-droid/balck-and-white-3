@@ -8,6 +8,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - The beachhead rule: outside your influence zone (the buildings next to yours) only an abandoned place can be claimed. The cult starts from its headquarters, the building where most believers live; its district is the neglected start district, where about a third of the buildings are abandoned. A few more are scattered through the city.
 - Abandoned places nobody holds have a grey roof plate; yours stay gold. The bottom-left panel shows the claim on the building in the middle of the screen ("Building: 40% claimed, abandoned").
 - City Hall's inspection now cuts the claim on the building it inspects (35 points), on top of the demolition notice.
+- Decrees follow the claim meter: a building is yours for decrees once its claim is full, no longer when half of its residents believe (`owner_share` is gone from `data/decrees.tres`).
 - Numbers: `data/districts.tres` (Claim meter, Start district) and `inspection_claim_cut` in `data/government.tres`.
 - Try it: press F5. Move the view to a grey roof near the start, then drag a couple of believers next to it with the hand and watch the "Building" line climb.
 

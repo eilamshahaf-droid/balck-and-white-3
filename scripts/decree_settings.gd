@@ -7,9 +7,6 @@ extends Resource
 ## miracles, a decree is cheaper among believers (see "Miracle power" in
 ## data/miracles.tres).
 
-@export_group("Whose building")
-@export_range(0.0, 1.0) var owner_share := 0.5   # share of a building's residents who must believe for it to be yours
-
 @export_group("Add floors: the building grows overnight")
 @export var floors_cost := 30.0
 @export var floors_exposure := 0.04          # three new floors by morning: people notice
