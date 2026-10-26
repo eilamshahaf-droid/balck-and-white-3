@@ -45,6 +45,14 @@ extends Resource
 @export_range(0.0, 1.0) var errand_line_chance := 0.35
 @export var errand_line_time := 2.5
 
+@export_group("Occupying")
+## A believer the hand sets down on a building, or this close to its walls, sits in there to claim it.
+@export var occupy_reach := 3.0
+## Seconds an occupant stays before going home; 0 = until the hand picks them up.
+@export var occupy_time := 0.0
+## Seconds between refreshes of each building's cached believing presence.
+@export var presence_refresh := 0.5
+
 @export_group("Falling")
 @export var gravity := 20.0
 @export var hard_landing_speed := 14.0

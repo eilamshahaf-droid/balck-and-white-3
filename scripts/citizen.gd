@@ -9,9 +9,18 @@ extends CharacterBody3D
 ## personal coefficient (skepticism) the player never sees, and on how many
 ## times they have seen that kind of miracle before (see balance.gd).
 
+## Back on our feet after the hand dropped or threw us.
+signal set_down
+## Picked up or done sitting in: no longer holds the place we were occupying.
+signal stopped_occupying
+
 enum State { WALKING, HELD, FALLING, DOWN, GETTING_UP }
 
 const UPRIGHT := Quaternion.IDENTITY
+const OCCUPY_LINES: Array[String] = [
+	"We're not leaving.", "This floor is holy now.", "Form 7-C, signed.", "Sit-in for the Hand!",
+]
+const OCCUPY_COLOR := Color(1.0, 0.85, 0.35)
 const B = preload("res://data/balance.tres")
 # Loaded at run time: a parse-time preload would load social_group.gd before
 # its class_name is registered and break the typed groups array.
@@ -57,6 +66,8 @@ var scripted_explanation := &""
 var on_errand := false
 ## On an errand and already standing at the spot.
 var errand_arrived := false
+## Sitting in on a building (a roof, a lobby) to claim it for the cult.
+var occupying := false
 
 var _body: MeshInstance3D
 static var _phone_screen: StandardMaterial3D
@@ -82,6 +93,8 @@ var _errand_line := ""
 var _errand_color := Color.WHITE
 var _errand_face := Vector3.ZERO
 var _errand_say := 0.0
+var _occupy_time := 0.0
+var _from_hand := false       # the fall in progress started in the hand
 
 
 func _ready() -> void:
@@ -177,6 +190,8 @@ func _physics_process(delta: float) -> void:
 				move_and_slide()
 				if _look_at_target != Vector3.INF:
 					_turn_to(_look_at_target)
+				if occupying:
+					_sit_in(delta)
 				return
 			if _pause > 0.0:
 				_pause -= delta
@@ -358,6 +373,41 @@ func _walk_errand(delta: float) -> void:
 		end_errand()
 
 
+## Stay at this spot, facing `face`, claiming the place for the cult. Stays
+## until picked up, or for the people settings' occupy_time when that is set.
+func occupy(face: Vector3) -> void:
+	occupying = true
+	idle = true
+	_look_at_target = face
+	_occupy_time = _people.occupy_time
+	_errand_say = randf_range(0.0, _people.errand_line_max)
+
+
+func _sit_in(delta: float) -> void:
+	_errand_say -= delta
+	if _errand_say <= 0.0:
+		_errand_say = randf_range(_people.errand_line_min, _people.errand_line_max)
+		if randf() < _people.errand_line_chance:
+			_say_line(OCCUPY_LINES[randi() % OCCUPY_LINES.size()], OCCUPY_COLOR, _people.errand_line_time)
+	if _people.occupy_time <= 0.0:
+		return
+	_occupy_time -= delta
+	if _occupy_time <= 0.0:
+		_stop_occupying()
+		# Down the stairs from a roof, back to the street.
+		if global_position.y > 1.0:
+			global_position = city.intersection(city.nearest_grid(global_position)) + lane_offset + Vector3.UP * 0.1
+		resume_walking()
+
+
+func _stop_occupying() -> void:
+	if not occupying:
+		return
+	occupying = false
+	idle = false
+	stopped_occupying.emit()
+
+
 func _say_line(text: String, color: Color, seconds: float) -> void:
 	_bubble.text = text
 	_bubble.modulate = color
@@ -365,6 +415,8 @@ func _say_line(text: String, color: Color, seconds: float) -> void:
 
 
 func on_grabbed() -> void:
+	_stop_occupying()
+	_from_hand = true
 	on_errand = false
 	errand_arrived = false
 	state = State.HELD
@@ -412,6 +464,7 @@ func on_released(throw_velocity: Vector3) -> void:
 func knock_over(push: Vector3) -> bool:
 	if state == State.HELD:
 		return false
+	_from_hand = false
 	on_released(push)
 	return true
 
@@ -446,6 +499,9 @@ func _stand_up() -> void:
 	velocity = Vector3.ZERO
 	grid = city.nearest_grid(global_position)
 	target = city.intersection(grid) + lane_offset
+	if _from_hand:
+		_from_hand = false
+		set_down.emit()
 
 
 ## Fell off the world: back home.

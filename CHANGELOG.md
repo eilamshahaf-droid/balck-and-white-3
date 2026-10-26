@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Believers sit in to claim a building
+- Pick up a believer and set them down on a roof, or on the pavement right at a building's walls: they stay there and sit in ("We're not leaving.", "Form 7-C, signed."), facing the building, until the hand picks them up again.
+- This is the power route of the claim meter: each building's believing presence (the summed belief of believers who live there or sit in on it) is now available to the districts system, cached every 0.5 s.
+- Numbers: `data/people.tres`, group "Occupying" (reach 3 m from the walls; stay time 0 = until picked up).
+- Try it: press F5, press B to see who believes (gold), drop a gold person on a roof, then hover them: the card says "Sitting in near ...".
+
 ## 2026-10-26: Fix: crash when a tree in the hand's wind disappears
 - The game stopped with "Trying to assign invalid previously freed instance" in `god_hand.gd` (`_blow`) when a tree the hand's wind had just reached was removed, for example uprooted. The wind now skips anything that no longer exists.
 - The hand test checks this case.
