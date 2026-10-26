@@ -12,6 +12,8 @@ var group: SocialGroup
 ## Buildings from the city's "buildings" group. work is null for those who don't work.
 var home: Node3D
 var work: Node3D
+## The building this person is sitting in on to claim it, or null.
+var occupying: Node3D
 ## Ids (indexes into Population.residents) rather than references, so the
 ## ties don't form reference cycles that would never be freed.
 var family: Array[int] = []
@@ -21,7 +23,7 @@ var belief := 0.0
 ## Hidden personal coefficient k: 0 believes easily, 1 always finds a rational explanation.
 var skepticism := 0.5
 var has_phone := false
-var body: Node3D
+var body: Citizen
 
 
 func full_name() -> String:

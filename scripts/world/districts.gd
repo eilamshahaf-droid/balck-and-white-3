@@ -3,8 +3,8 @@ extends Node
 ## Splits the city into districts and keeps the claim meter of every building
 ## (design doc: "איך משתלטים על מקום"). A meter fills from 0 to full and the
 ## building is yours; it slips back below a threshold. Only the power route
-## fills it so far: believers who live there, believers in the street outside,
-## and your buildings next door. Outside your influence zone (next to one of
+## fills it so far: believers who live there or sit in on it (the people's
+## power_presence) and your buildings next door. Outside your influence zone (next to one of
 ## your buildings) only an abandoned place takes a claim. The cult starts from
 ## its headquarters, where most believers live, in a neglected district full of
 ## abandoned places. Neighbours are buildings across a narrow street; a wide
@@ -45,9 +45,8 @@ var _zone := PackedInt32Array()          # neighbours of yours, per building, co
 var _totals := PackedInt32Array()        # standing buildings per district
 var _owned := PackedInt32Array()         # buildings of yours per district
 var _controlled := PackedByteArray()
-var _believers := PackedVector3Array()   # reused every tick
 var _index := {}                         # building -> index
-var _faithful := PackedInt32Array()      # residents who believe, per building, counted every tick
+var _presence := PackedFloat32Array()    # believing presence per building, read every tick
 var _timer := 0.0
 
 @onready var city: Node3D = get_parent()
@@ -194,11 +193,9 @@ func _physics_process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = S.tick
-	_gather_believers()
-	_count_faithful()
+	_read_presence()
 	if headquarters < 0:
 		_found_headquarters()
-	var r2 := S.believer_radius * S.believer_radius
 	for i in buildings.size():
 		if _district_of[i] < 0:
 			continue
@@ -209,12 +206,7 @@ func _physics_process(delta: float) -> void:
 		var gain := 0.0
 		# The beachhead rule: outside your zone only an abandoned place can be claimed.
 		if _yours[i] == 1 or zone > 0 or _abandoned[i] == 1:
-			var p := buildings[i].global_position
-			var street := 0
-			for q in _believers:
-				if Vector2(q.x - p.x, q.z - p.z).length_squared() < r2:
-					street += 1
-			gain = S.resident_rate * _faithful[i] + S.street_rate * street + S.zone_rate * zone
+			gain = S.presence_rate * _presence[i] + S.zone_rate * zone
 		if gain == 0.0:
 			gain = -S.decay
 		_claim[i] = clampf(_claim[i] + gain * S.tick, 0.0, S.claim_full)
@@ -225,31 +217,17 @@ func _physics_process(delta: float) -> void:
 	claims_updated.emit()
 
 
-func _gather_believers() -> void:
-	var people := get_tree().get_nodes_in_group("citizens")
-	_believers.resize(people.size())
-	var n := 0
-	for c in people:
-		if c.belief > B.believer_threshold:
-			_believers[n] = c.global_position
-			n += 1
-	_believers.resize(n)
+func _read_presence() -> void:
+	for i in buildings.size():
+		_presence[i] = population.power_presence(buildings[i]) if buildings[i] else 0.0
 
 
-func _count_faithful() -> void:
-	_faithful.fill(0)
-	for r: Resident in population.residents:
-		var i: int = _index.get(r.home, -1)
-		if i >= 0 and r.belief > B.believer_threshold:
-			_faithful[i] += 1
-
-
-## The building where most believers live becomes the cult's first; its
+## The building where believers are strongest becomes the cult's first; its
 ## district is the neglected start district, full of abandoned places.
 func _found_headquarters() -> void:
 	var best := -1
 	for i in buildings.size():
-		if _faithful[i] > 0 and (best < 0 or _faithful[i] > _faithful[best]):
+		if _presence[i] > 0.0 and (best < 0 or _presence[i] > _presence[best]):
 			best = i
 	if best < 0:
 		return
@@ -299,7 +277,7 @@ func _collect() -> void:
 	_claim.fill(0.0)
 	_abandoned.resize(n)
 	_abandoned.fill(0)
-	_faithful.resize(n)
+	_presence.resize(n)
 	_zone.resize(n)
 	_zone.fill(0)
 	for i in n:

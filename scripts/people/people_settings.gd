@@ -24,7 +24,7 @@ extends Resource
 @export_group("Sandbox congregation")
 ## Skipping the opening starts you with one congregation living around one corner.
 @export var congregation_size := 14
-@export var congregation_corner := Vector2i(1, 3)
+@export var congregation_corner := Vector2i(6, 3)
 @export var congregation_belief_min := 0.6
 @export var congregation_belief_max := 0.95
 @export var congregation_skepticism_max := 0.3
@@ -45,11 +45,21 @@ extends Resource
 @export_range(0.0, 1.0) var errand_line_chance := 0.35
 @export var errand_line_time := 2.5
 
+@export_group("Occupying")
+## A believer the hand sets down on a building, or this close to its walls, sits in there to claim it.
+@export var occupy_reach := 3.0
+## Seconds an occupant stays before going home; 0 = until the hand picks them up.
+@export var occupy_time := 0.0
+## Seconds between refreshes of each building's cached believing presence.
+@export var presence_refresh := 0.5
+
 @export_group("Falling")
 @export var gravity := 20.0
 @export var hard_landing_speed := 14.0
 @export var tumble_min_speed := 3.0
 @export var get_up_time := 0.6
+## Impact speed below which a person the hand lets go of without throwing lands on their feet.
+@export var set_down_max_impact := 16.0
 
 @export_group("Names")
 @export var first_names: PackedStringArray = []

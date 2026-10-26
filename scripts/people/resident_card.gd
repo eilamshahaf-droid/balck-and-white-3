@@ -93,7 +93,8 @@ func _describe(r: Resident) -> String:
 	return "%s, %s\nLives near %s, %s\nFamily: %s\nFriends: %s\nBelief %+d%%   Skepticism %d%%" % [
 		r.full_name(), r.group.title.to_lower(), _corner(r.home), work,
 		_names(r.family, true), _names(r.friends, false),
-		roundi(r.belief * 100.0), roundi(r.skepticism * 100.0)]
+		roundi(r.belief * 100.0), roundi(r.skepticism * 100.0)] \
+		+ ("\nSitting in near %s" % _corner(r.occupying) if r.occupying else "")
 
 
 func _corner(building: Node3D) -> String:

@@ -2,7 +2,7 @@ class_name DistrictView
 extends Node3D
 ## Shows who holds what, so the takeover reads at a glance. Every building
 ## shows what the player can do with it (Districts.Reach): a gold roof plate
-## when it is yours, grey when it is abandoned and can be taken over, teal when
+## when it is yours, red when it is abandoned and can be taken over, green when
 ## it is next to yours and can be converted, nothing while it is out of reach.
 ## The claim filling up shows either as gold spreading over the roof (plates)
 ## or as a glass column over it that fills with gold (beacons). An outline on

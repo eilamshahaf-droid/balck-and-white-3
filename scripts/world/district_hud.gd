@@ -29,9 +29,9 @@ func _process(delta: float) -> void:
 		Districts.Reach.YOURS:
 			place = "yours"
 		Districts.Reach.TAKE:
-			place = "abandoned, take it over: %d%% (bring believers here)" % claim
+			place = "abandoned, take it over: %d%% (set believers down on it)" % claim
 		Districts.Reach.CONVERT:
-			place = "next to yours, convert it: %d%% (believers living or standing here)" % claim
+			place = "next to yours, convert it: %d%% (believers who live there or sit in)" % claim
 		Districts.Reach.LOCKED:
 			place = "out of reach (take an abandoned place or a building next to yours first)"
-	text = "Roofs: gold yours, grey abandoned (take it), teal next to yours (convert it)\nDistrict: %s, %s\nBuilding: %s\nCity Hall: %s" % [districts.district_name(d), hold, place, government.status_text()]
+	text = "Roofs: gold = yours, red = abandoned (take it over), green = next to yours (convert it); gold fills as you claim\nDistrict: %s, %s\nBuilding: %s\nCity Hall: %s" % [districts.district_name(d), hold, place, government.status_text()]

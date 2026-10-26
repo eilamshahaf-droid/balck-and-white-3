@@ -3,18 +3,30 @@ extends Node
 ## group, a home in a real building, a workplace, family and close friends,
 ## then puts a body for each on the street. Other systems ask Population about
 ## people (who lives where, who believes) instead of scanning the scene tree.
+##
+## It also tracks believers the hand sets down on or at a building, who sit in
+## there to claim it (the power route of the claim meter, design doc: "how a
+## place is taken"), and keeps each building's believing presence cached.
+
+## A believer started sitting in on `building`.
+signal occupant_added(building: Node3D, resident: Resident)
+## An occupant left `building` (picked up, or went home).
+signal occupant_left(building: Node3D, resident: Resident)
 
 # Loaded at run time: a parse-time preload would load social_group.gd before
 # its class_name is registered and break the typed groups array.
 var _people: PeopleSettings = load("res://data/people.tres")
 const B: Balance = preload("res://data/balance.tres")
-const CitizenScript := preload("res://scripts/citizen.gd")
 
 var residents: Array[Resident] = []
 
 var _homes: Array[Node3D] = []
 var _offices: Array[Node3D] = []
 var _by_home: Dictionary = {}   # building -> Array[Resident]
+var _occupants: Dictionary = {}   # building -> Array[Resident]
+var _presence: Dictionary = {}    # building -> summed belief of its believers, refreshed on a timer
+var _footprints: Dictionary = {}  # building -> Rect2 on the ground (x, z)
+var _presence_timer := 0.0
 var _used_names: Dictionary = {}   # full name -> true, so nobody shares a name
 var _rng := RandomNumberGenerator.new()
 
@@ -25,6 +37,24 @@ func _ready() -> void:
 	_rng.seed = 7
 	# The city builds its blocks in its own _ready, which runs after ours.
 	city.ready.connect(_populate, CONNECT_ONE_SHOT)
+
+
+func _physics_process(delta: float) -> void:
+	_presence_timer -= delta
+	if _presence_timer > 0.0:
+		return
+	_presence_timer = _people.presence_refresh
+	_refresh_presence()
+
+
+## How strongly believers hold `building`: the summed belief of the believers
+## who live there or sit in on it. Cached, so it is cheap to ask every tick.
+func power_presence(building: Node3D) -> float:
+	return _presence.get(building, 0.0)
+
+
+func occupants(building: Node3D) -> Array:
+	return _occupants.get(building, [])
 
 
 ## Share of the people living in `building` who believe (0 if nobody lives there).
@@ -108,13 +138,78 @@ func _populate() -> void:
 		_add_family()
 	_add_friends()
 	for r in residents:
-		var c: CharacterBody3D = CitizenScript.new()
+		var c := Citizen.new()
 		c.city = city
 		c.resident = r
 		c.collision_layer = city.LAYER_CITIZENS
 		c.collision_mask = city.LAYER_WORLD
 		r.body = c
 		city.add_child(c)
+		c.set_down.connect(_on_set_down.bind(r))
+		c.stopped_occupying.connect(_on_stopped_occupying.bind(r))
+	for b in _homes + _offices:
+		_footprints[b] = _footprint(b)
+		_presence[b] = 0.0
+	_refresh_presence()
+
+
+## A believer set down on a building, or right at its walls, sits in there.
+func _on_set_down(r: Resident) -> void:
+	if r.belief <= B.believer_threshold or r.occupying:
+		return
+	var p := r.body.global_position
+	var building := _place_at(p)
+	if building == null:
+		return
+	r.occupying = building
+	if not _occupants.has(building):
+		_occupants[building] = []
+	(_occupants[building] as Array).append(r)
+	r.body.occupy(building.global_position)
+	occupant_added.emit(building, r)
+
+
+func _on_stopped_occupying(r: Resident) -> void:
+	var building := r.occupying
+	if building == null:
+		return
+	r.occupying = null
+	(_occupants[building] as Array).erase(r)
+	occupant_left.emit(building, r)
+
+
+## The building `p` stands on, or the nearest one within occupy_reach of its walls (null if none).
+func _place_at(p: Vector3) -> Node3D:
+	var at := Vector2(p.x, p.z)
+	var best: Node3D = null
+	var best_d := _people.occupy_reach
+	for b: Node3D in _footprints:
+		var rect: Rect2 = _footprints[b]
+		var d := at.distance_to(at.clamp(rect.position, rect.end))
+		if d <= best_d:
+			best_d = d
+			best = b
+	return best
+
+
+func _footprint(building: Node3D) -> Rect2:
+	for child in building.get_children():
+		if child is CollisionShape3D and child.shape is BoxShape3D:
+			var size := (child.shape as BoxShape3D).size
+			var c := building.global_position
+			return Rect2(c.x - size.x / 2.0, c.z - size.z / 2.0, size.x, size.z)
+	return Rect2()
+
+
+func _refresh_presence() -> void:
+	for b: Node3D in _presence:
+		_presence[b] = 0.0
+	for r in residents:
+		if r.belief <= B.believer_threshold:
+			continue
+		_presence[r.home] += r.belief
+		if r.occupying and r.occupying != r.home:
+			_presence[r.occupying] += r.belief
 
 
 func _add_family() -> void:

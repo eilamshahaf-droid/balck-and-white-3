@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Taking over buildings, made clear
+- Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.
+- A second marker style to compare: beacons, a glass column over the roof (red or green) that fills with gold. The debug panel (F1) has a "Markers: plates / beacons" button; the default is in `data/districts.tres` (`marker_style`).
+- The bottom-left panel has a key to the colours and says what to do with the building in the middle of the screen ("abandoned, take it over: 40% (set believers down on it)").
+- The claim meter now uses the people's believing presence: believers who live in a building or sit in on it (set them down on its roof or at its walls). Believers just walking past no longer count.
+- The start district by the river is now called Spin Cycle Flats (where the congregation lives).
+- Try it: press F5, find a red roof near the gold one, pick up a believer (B shows them in gold), set them down on that roof and watch the gold spread. Press F1 and click "Markers: plates / beacons" to compare.
+
 ## 2026-10-26: Taking over a place: the claim meter
 - Every building now has a claim meter from 0 to 100%. At 100% it is yours; it slips back below 50%. For now only the power route fills it: believers who live there, believers in the street outside, and your buildings next door. With nothing holding it, the claim slowly fades.
 - The beachhead rule: outside your influence zone (the buildings next to yours) only an abandoned place can be claimed. The cult starts from its headquarters, the building where most believers live; its district is the neglected start district, where about a third of the buildings are abandoned. A few more are scattered through the city.
@@ -11,6 +19,13 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Decrees follow the claim meter: a building is yours for decrees once its claim is full, no longer when half of its residents believe (`owner_share` is gone from `data/decrees.tres`).
 - Numbers: `data/districts.tres` (Claim meter, Start district) and `inspection_claim_cut` in `data/government.tres`.
 - Try it: press F5. Move the view to a grey roof near the start, then drag a couple of believers next to it with the hand and watch the "Building" line climb.
+
+## 2026-10-26: Believers sit in to claim a building
+- Pick up a believer and set them down on a roof, or on the pavement right at a building's walls: they stay there and sit in ("We're not leaving.", "Form 7-C, signed."), facing the building, until the hand picks them up again.
+- This is the power route of the claim meter: each building's believing presence (the summed belief of believers who live there or sit in on it) is now available to the districts system, cached every 0.5 s.
+- Numbers: `data/people.tres`, group "Occupying" (reach 3 m from the walls; stay time 0 = until picked up).
+- The starting congregation now lives at the east edge of the city (avenue 7, street 4), where the neglected district by the river will be.
+- Try it: press F5, press B to see who believes (gold), drop a gold person on a roof, then hover them: the card says "Sitting in near ...".
 
 ## 2026-10-26: Fix: crash when a tree in the hand's wind disappears
 - The game stopped with "Trying to assign invalid previously freed instance" in `god_hand.gd` (`_blow`) when a tree the hand's wind had just reached was removed, for example uprooted. The wind now skips anything that no longer exists.
