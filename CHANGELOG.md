@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Alpha (refreshed)
+- The combined build with everything every thread has so far: people (sit-ins, landing on their feet), hand, miracles and decrees, the city, the claim meter and the clearer takeover marking (gold = yours, red = abandoned, green = next to yours; debug button switches plates / beacons).
+- Branch `alpha` = PR #11's branch, which already holds all of main. Headless run, planning scene and hand test pass with no errors.
+- Try it: press F5. F1 shows the debug panel.
+
 ## 2026-10-26: Taking over buildings, made clear
 - Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.
 - A second marker style to compare: beacons, a glass column over the roof (red or green) that fills with gold. The debug panel (F1) has a "Markers: plates / beacons" button; the default is in `data/districts.tres` (`marker_style`).
