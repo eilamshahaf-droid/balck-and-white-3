@@ -15,6 +15,7 @@ var residents: Array[Resident] = []
 var _homes: Array[Node3D] = []
 var _offices: Array[Node3D] = []
 var _by_home: Dictionary = {}   # building -> Array[Resident]
+var _used_names: Dictionary = {}   # full name -> true, so nobody shares a name
 var _rng := RandomNumberGenerator.new()
 
 @onready var city: Node3D = get_parent()
@@ -124,8 +125,8 @@ func _add_family() -> void:
 	for n in size:
 		var r := Resident.new()
 		r.id = residents.size()
-		r.first_name = _people.first_names[_rng.randi() % _people.first_names.size()]
 		r.last_name = last
+		r.first_name = _unused_first_name(last)
 		r.group = _pick_group()
 		r.work = _pick_work(r.group)
 		r.belief = _rng.randf_range(_people.belief_min, _people.belief_max)
@@ -138,6 +139,16 @@ func _add_family() -> void:
 		var others := ids.duplicate()
 		others.erase(id)
 		residents[id].family = others
+
+
+func _unused_first_name(last: String) -> String:
+	var first := ""
+	for _attempt in 20:
+		first = _people.first_names[_rng.randi() % _people.first_names.size()]
+		if not _used_names.has(first + " " + last):
+			break
+	_used_names[first + " " + last] = true
+	return first
 
 
 ## Close friends, mostly neighbours and colleagues. A friendship goes both ways.
