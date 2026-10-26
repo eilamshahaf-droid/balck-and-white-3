@@ -22,6 +22,7 @@ the 4.3 feature level; do not use APIs newer than that without updating `project
 project.godot        main scene, autoloads, window settings
 scenes/              main.tscn (the game), city_planning.tscn (planning sandbox)
 scripts/             gameplay scripts for main.tscn
+scripts/people/      residents: Population, Resident records, social groups, debug card
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
@@ -38,11 +39,13 @@ The scene is small; most nodes are built in code at startup.
 | --- | --- | --- |
 | `Main` | `city.gd` | Builds the procedural Manhattan grid: ground, blocks, towers, park, trees, doors, taxis, citizens, litter, pigeons. Grid helpers used by citizens. Day/night (`set_daylight`). |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
+| `Population` | `people/population.gd` | Gives every person a `Resident` record (name, `SocialGroup`, home, work, family, friends). `resident.gd` is the record, `social_group.gd` the per-group traits. |
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
 | `Miracles` | `miracles.gd` | Casts the miracles (water, fire, lightning, shield, heal): spends belief and reports to `Faith`. Effects: `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd`. |
 | `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: signs on a building, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
+| `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |
 | `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Off for now (`enabled = false` in `main.tscn`), so the game starts in free play with a ready congregation. |
 | `HUD` | `hud.gd` | The numbers the player may see. |
@@ -86,6 +89,7 @@ Tunables: `data/planning.tres`.
 | `data/hand_settings.tres` | `HandSettings` | hand and camera feel |
 | `data/balance.tres` | `Balance` | belief, witnesses, exposure |
 | `data/miracles.tres` | `MiracleSettings` | miracle costs, reach and effects |
+| `data/people.tres` | `PeopleSettings` (+ `SocialGroup`s) | residents, groups, names, walking |
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
 
@@ -96,7 +100,7 @@ Several threads push to `main`. Message the owning thread before changing its fi
 | Area | Files | Owner thread |
 | --- | --- | --- |
 | Hand, miracles, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
-| People | `citizen.gd`, `faith.gd`, `sign_followers.gd` | "Build the people in the city" |
+| People | `citizen.gd`, `faith.gd`, `sign_followers.gd`, `scripts/people/` | "Build the people in the city" |
 | Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
 | Building models | `building_visual.gd`, `assets/models/` | model-library |
 | Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
@@ -119,6 +123,9 @@ These are binding for every change.
 - Give every script that other scripts talk to a `class_name`, and type references with it
   (`var city: City`, not `var city: Node3D` plus duck typing). Avoid `get()`, `has_method()`
   and untyped `Dictionary` records where a typed class would do.
+- Load a `.tres` whose typed arrays hold a custom `Resource` class with `load()` at run time,
+  not a `const` `preload()`: the parse-time preload loads the element script before its
+  `class_name` is registered and breaks the typed array.
 - Comments explain why, not what. No dead code, no commented-out code, no unused files.
 
 ### Structure
