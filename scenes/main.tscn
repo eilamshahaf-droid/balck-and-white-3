@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -10,6 +10,8 @@
 [ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
 [ext_resource type="Script" path="res://scripts/sign_followers.gd" id="9_signs"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
+[ext_resource type="Script" path="res://scripts/people/population.gd" id="11_population"]
+[ext_resource type="Script" path="res://scripts/people/resident_card.gd" id="12_card"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -19,6 +21,9 @@ script = ExtResource("2_cam")
 
 [node name="Camera3D" type="Camera3D" parent="CameraRig"]
 far = 3000.0
+
+[node name="Population" type="Node" parent="."]
+script = ExtResource("11_population")
 
 [node name="Faith" type="Node" parent="."]
 script = ExtResource("4_faith")
@@ -34,6 +39,9 @@ script = ExtResource("8_tools")
 
 [node name="SignFollowers" type="Node" parent="."]
 script = ExtResource("9_signs")
+
+[node name="ResidentCard" type="CanvasLayer" parent="."]
+script = ExtResource("12_card")
 
 [node name="DebugPanel" type="CanvasLayer" parent="."]
 script = ExtResource("10_debug")
