@@ -27,6 +27,7 @@ const CROWD_SIZE := 14
 @onready var hand: Node3D = get_node("../GodHand")
 @onready var faith: Node = get_node("../Faith")
 @onready var miracles: Node = get_node("../Miracles")
+@onready var population: Node = get_node("../Population")
 
 var running := false
 var fire: Node3D
@@ -49,7 +50,7 @@ func _ready() -> void:
 	if enabled:
 		_begin.call_deferred()
 	else:
-		city.found_congregation.call_deferred()
+		population.found_congregation.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -275,7 +276,7 @@ func _skip() -> void:
 	city.set_daylight(1.0)
 	_bring_people_down()
 	_paper.visible = false
-	city.found_congregation()
+	population.found_congregation()
 	_finish()
 
 

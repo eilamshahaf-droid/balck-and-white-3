@@ -7,9 +7,9 @@ const B = preload("res://data/balance.tres")
 const STEP := 5
 const BELIEF_GIFT := 100.0
 
-@onready var city: Node3D = get_parent()
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
+@onready var population: Node = get_node("../Population")
 
 var _panel: PanelContainer
 
@@ -65,16 +65,12 @@ func _unconvert(count: int) -> void:
 		c.belief = randf_range(-0.2, 0.2)
 
 
-## Every believer moves house to the corner nearest the camera's centre.
+## Every believer moves into the home nearest the camera's centre.
 func _gather_here() -> void:
-	var corner: Vector2i = city.nearest_grid(rig.target_pivot)
+	var home: Node3D = population.home_near(rig.target_pivot)
 	for c in _people_by_distance(true):
-		if not c.can_answer():
-			continue
-		c.home = corner
-		c.grid = corner
-		c.global_position = city.intersection(corner) + c.lane_offset + Vector3.UP * 0.1
-		c.resume_walking()
+		if c.can_answer() and c.resident.id >= 0:
+			population.move_home(c.resident, home)
 
 
 func _set_path(path: StringName) -> void:

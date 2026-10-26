@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Every resident is a person: name, home, work, family, friends
+- The 60 residents are no longer anonymous. Each has a name, one of 7 groups (student, office worker, shopkeeper, retiree, artist, police officer, banker), a home in a real building, a workplace (glass towers are offices; retirees don't work), 1 to 3 family members living with them, and 2 to 5 close friends, mostly neighbours and colleagues. Their hidden skepticism comes from their group.
+- New system: `Population` (scripts/people/) holds these records; the walking body (citizen.gd) reads and writes belief on the record. Other systems can ask it who lives where, and what share of a building believes.
+- Skipping the opening, the congregation is now whole families moving into the homes nearest one corner. "Believers come here" on the debug panel moves believers into the nearest home.
+- Numbers, groups and names: `data/people.tres`. Falling, walking and wandering numbers moved there from citizen.gd.
+- Try it: press F5, press B, and hover over a person. A card shows who they are, with lines to their family (gold), friends (blue), home (green) and work (grey).
+
 ## 2026-10-26: Miracles grow with the believers nearby
 - A miracle's power now comes from the believers around the spot it is cast on. Among your believers it is bigger (up to 1.6x the radius), lasts longer (up to 1.5x) and costs less (0.6x). Among skeptics it is small (0.6x), short (0.7x) and dear (1.3x). This affects the rain, the street fire, the lightning blast, the shield dome and the healing light.
 - You can see it: the hand turns warm and glows over your believers and pale grey away from them. The HUD shows "Miracle power here", and the miracle wheel shows the cost at that spot.

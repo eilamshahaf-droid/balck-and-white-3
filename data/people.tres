@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="PeopleSettings" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/people/people_settings.gd" id="1_people"]
+[ext_resource type="Script" path="res://scripts/people/social_group.gd" id="2_group"]
+
+[sub_resource type="Resource" id="group_0"]
+script = ExtResource("2_group")
+title = "Student"
+share = 0.15
+skepticism_min = 0.2
+skepticism_max = 0.7
+workplace = 2
+
+[sub_resource type="Resource" id="group_1"]
+script = ExtResource("2_group")
+title = "Office worker"
+share = 0.25
+skepticism_min = 0.4
+skepticism_max = 0.8
+workplace = 1
+
+[sub_resource type="Resource" id="group_2"]
+script = ExtResource("2_group")
+title = "Shopkeeper"
+share = 0.15
+skepticism_min = 0.3
+skepticism_max = 0.7
+workplace = 2
+
+[sub_resource type="Resource" id="group_3"]
+script = ExtResource("2_group")
+title = "Retiree"
+share = 0.15
+skepticism_min = 0.0
+skepticism_max = 0.5
+workplace = 0
+
+[sub_resource type="Resource" id="group_4"]
+script = ExtResource("2_group")
+title = "Artist"
+share = 0.1
+skepticism_min = 0.1
+skepticism_max = 0.6
+workplace = 2
+
+[sub_resource type="Resource" id="group_5"]
+script = ExtResource("2_group")
+title = "Police officer"
+share = 0.08
+skepticism_min = 0.5
+skepticism_max = 0.9
+workplace = 2
+
+[sub_resource type="Resource" id="group_6"]
+script = ExtResource("2_group")
+title = "Banker"
+share = 0.12
+skepticism_min = 0.6
+skepticism_max = 1.0
+workplace = 1
+
+[resource]
+script = ExtResource("1_people")
+groups = Array[ExtResource("2_group")]([SubResource("group_0"), SubResource("group_1"), SubResource("group_2"), SubResource("group_3"), SubResource("group_4"), SubResource("group_5"), SubResource("group_6")])
+first_names = PackedStringArray("Maya", "Sam", "Lea", "Omar", "Priya", "Diego", "Hana", "Kofi", "Ines", "Wei", "Noa", "Ivan", "Amara", "Luca", "Zoe", "Rafael", "Mei", "Tariq", "Sofia", "Jonah", "Aisha", "Mateo", "Yuki", "Ezra", "Leon", "Fatima", "Theo", "Rosa", "Ari", "Grace", "Malik", "Elena", "Kai", "Olu", "Dana", "Marcus", "Lina", "Pedro", "Sara", "Hiro", "Chloe", "Femi", "Anya", "Jamal", "Iris", "Tomas", "Nia", "Felix", "Rina", "Oscar")
+last_names = PackedStringArray("Okafor", "Rossi", "Cohen", "Nguyen", "Garcia", "Kim", "Patel", "Haddad", "Novak", "O'Brien", "Silva", "Tanaka", "Mensah", "Levi", "Kowalski", "Chen", "Ramirez", "Adeyemi", "Larsen", "Moreau", "Singh", "Petrov", "Shapiro", "Alvarez", "Yilmaz", "Murphy", "Dubois", "Park", "Mendes", "Jensen")
