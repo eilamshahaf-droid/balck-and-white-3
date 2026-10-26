@@ -26,7 +26,7 @@ signal miracle_failed(reason: StringName)
 
 const RAY_LENGTH := 3000.0
 const LAYER_WORLD := 1
-const HARMFUL: Array[StringName] = [&"fire", &"lightning"]   # also the evil deeds, for the god's path
+const HARMFUL: Array[StringName] = [&"fire", &"lightning"]
 const FIRE_SNAP := 15.0       # metres: water cast this close to a fire goes onto it
 const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets it alight
 
@@ -122,7 +122,6 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 		&"lightning": miracle = _lightning(ground, size)
 		&"shield": miracle = _shield(ground, size, length)
 		&"heal": miracle = _heal(ground, size, length)
-	faith.add_deed(not kind in HARMFUL)
 	miracle_cast.emit(kind, miracle)
 
 
@@ -155,8 +154,7 @@ func _fire(ground: Vector3, building: Node3D, size: float, length: float) -> Nod
 	return fire
 
 
-## Set `building` on fire, or a burnt-out one again. Not a miracle by itself:
-## the fire miracle and believers who vandalise a cursed building both use it.
+## Set `building` on fire, or a burnt-out one again (the fire miracle's effect).
 ## `length` scales how long it burns.
 func set_alight(building: Node3D, length := 1.0) -> Node3D:
 	var fire := fire_on(building)

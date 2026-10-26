@@ -17,11 +17,6 @@ var believers := 0
 ## The belief pool: believers' prayers fill it, miracles spend it.
 var belief_pool := B.belief_start
 
-## What the god has done so far. Believers read the god's path from it
-## when they answer a divine sign.
-var good_deeds := 0
-var evil_deeds := 0
-
 var _events := {}        # subject -> {kind, intensity, situation, time_left, id}
 var _next_id := 0
 var _timer := 0.0
@@ -48,22 +43,6 @@ func report(subject: Node3D, kind: StringName, intensity: float, situation: floa
 
 func end_report(subject: Node3D) -> void:
 	_events.erase(subject)
-
-
-func add_deed(good: bool) -> void:
-	if good:
-		good_deeds += 1
-	else:
-		evil_deeds += 1
-
-
-## &"good", &"evil" or &"neutral": whichever kind of deed leads by enough.
-func path() -> StringName:
-	if good_deeds - evil_deeds >= B.path_lead:
-		return &"good"
-	if evil_deeds - good_deeds >= B.path_lead:
-		return &"evil"
-	return &"neutral"
 
 
 ## Take belief from the pool. Returns false (and takes nothing) if there isn't enough.

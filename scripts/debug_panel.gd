@@ -1,7 +1,7 @@
 extends CanvasLayer
 ## Testing shortcuts, top right (F1 hides it): convert or lose believers,
-## move all believers to where the camera looks, fill the belief pool, and
-## set the god's path. Not part of the game; there to make testing quick.
+## move all believers to where the camera looks and fill the belief pool.
+## Not part of the game; there to make testing quick.
 
 const B = preload("res://data/balance.tres")
 const STEP := 5
@@ -31,9 +31,6 @@ func _ready() -> void:
 	_button(box, "Believers -%d" % STEP, func(): _unconvert(STEP))
 	_button(box, "Believers come here", _gather_here)
 	_button(box, "Belief +%d" % roundi(BELIEF_GIFT), func(): faith.belief_pool += BELIEF_GIFT)
-	_button(box, "Path: good", func(): _set_path(&"good"))
-	_button(box, "Path: evil", func(): _set_path(&"evil"))
-	_button(box, "Path: neutral", func(): _set_path(&"neutral"))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -71,15 +68,6 @@ func _gather_here() -> void:
 	for c in _people_by_distance(true):
 		if c.can_answer() and c.resident.id >= 0:
 			population.move_home(c.resident, home)
-
-
-func _set_path(path: StringName) -> void:
-	faith.good_deeds = 0
-	faith.evil_deeds = 0
-	if path == &"good":
-		faith.good_deeds = B.path_lead
-	elif path == &"evil":
-		faith.evil_deeds = B.path_lead
 
 
 func _people_by_distance(believers: bool) -> Array:
