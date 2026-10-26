@@ -47,7 +47,7 @@ The scene is small; most nodes are built in code at startup.
 | `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (most residents believe): add floors, luxury, facade, change use, preserve. Preserved buildings are in group `preserved`. |
 | `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees and signs on a building, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
-| `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts; buildings change sides from nearby believers and neighbour pressure; a district is yours at 60%. Tunables `data/districts.tres`. |
+| `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts and keeps a claim meter per building (believers inside and outside, your neighbours); outside your zone only abandoned places can be claimed; the cult starts from its headquarters; a district is yours at 60%. Tunables `data/districts.tres`. |
 | `Government` | `government/government.gd` (+ `bulldozer.gd`, `demolition_notice.gd`) | City Hall: inspector, demolition notice, bulldozer. Tunables `data/government.tres`. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |

@@ -154,6 +154,7 @@ func _inspect() -> void:
 	_notice.global_position = Vector3(_target.global_position.x, roof + NOTICE_LIFT, _target.global_position.z)
 	_notice_left = G.notice_time
 	_notice.show_seconds(_notice_left)
+	districts.lower_claim(_target, G.inspection_claim_cut)
 	_step = Step.NOTICE
 
 

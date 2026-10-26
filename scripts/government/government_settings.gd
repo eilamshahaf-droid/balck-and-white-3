@@ -13,6 +13,7 @@ extends Resource
 @export_group("Inspector")
 @export var inspector_walk_blocks := 1      # corners up the avenue he starts walking from
 @export var inspection_time := 5.0          # seconds he stands at the door
+@export var inspection_claim_cut := 35.0    # claim points a completed inspection takes away
 
 @export_group("Demolition")
 @export var notice_time := 45.0             # seconds on the notice before the bulldozer comes

@@ -27,12 +27,13 @@ func _ready() -> void:
 func _build() -> void:
 	var plate := BoxMesh.new()
 	plate.size = Vector3(1.0, 0.25, 1.0)
-	plate.material = _unshaded(S.roof_color, false)
+	plate.material = _unshaded(Color.WHITE, true)
 	_roofs.transform_format = MultiMesh.TRANSFORM_3D
+	_roofs.use_colors = true
 	_roofs.mesh = plate
 	_roofs.instance_count = districts.buildings.size()
 	for i in _roofs.instance_count:
-		_roofs.set_instance_transform(i, _hidden)
+		_on_building_changed(i, false)
 	_add_instance(_roofs)
 
 	var strip := BoxMesh.new()
@@ -47,11 +48,13 @@ func _build() -> void:
 	_add_instance(_borders)
 
 
+## Gold on yours, grey on an abandoned place nobody holds (where a claim can start).
 func _on_building_changed(index: int, yours: bool) -> void:
-	if not yours:
+	var b: Node3D = districts.buildings[index]
+	if b == null or not (yours or districts.is_abandoned(index)):
 		_roofs.set_instance_transform(index, _hidden)
 		return
-	var b: Node3D = districts.buildings[index]
+	_roofs.set_instance_color(index, S.roof_color if yours else S.abandoned_color)
 	var size := DivineSign.building_size(b)  # live: decrees add floors
 	var top := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT)
 	_roofs.set_instance_transform(index, Transform3D(Basis.from_scale(Vector3(size.x, 1.0, size.z) * ROOF_INSET), top))
@@ -60,8 +63,8 @@ func _on_building_changed(index: int, yours: bool) -> void:
 ## +3 Floors lifts the roof, so the plate follows it.
 func _on_decree_issued(_kind: StringName, building: Node3D) -> void:
 	var i: int = districts.buildings.find(building)
-	if i >= 0 and districts.is_yours(i):
-		_on_building_changed(i, true)
+	if i >= 0:
+		_on_building_changed(i, districts.is_yours(i))
 
 
 func _on_district_controlled(d: int) -> void:

@@ -1,6 +1,6 @@
 extends Label
 ## Bottom left: the district in the middle of the screen, how much of it is
-## yours, and what City Hall is up to.
+## yours, the claim on the building nearest the middle, and what City Hall is up to.
 
 const S = preload("res://data/districts.tres")
 const REFRESH := 0.25   # seconds; the text doesn't need to change every frame
@@ -21,4 +21,8 @@ func _process(delta: float) -> void:
 	var hold := "yours"
 	if not districts.is_controlled(d):
 		hold = "%d%% yours (%d%% takes it)" % [roundi(districts.share(d) * 100.0), roundi(S.control_share * 100.0)]
-	text = "District: %s, %s\nCity Hall: %s" % [districts.district_name(d), hold, government.status_text()]
+	var i: int = districts.building_near(rig.target_pivot)
+	var place := "yours" if districts.is_yours(i) else "%d%% claimed" % roundi(districts.claim_of(i) * 100.0)
+	if districts.is_abandoned(i) and not districts.is_yours(i):
+		place += ", abandoned"
+	text = "District: %s, %s\nBuilding: %s\nCity Hall: %s" % [districts.district_name(d), hold, place, government.status_text()]
