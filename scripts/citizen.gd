@@ -316,7 +316,8 @@ func send_on_errand(spot: Vector3, face: Vector3, stay: float, line: String, col
 	_errand_line = line
 	_errand_color = color
 	_errand_face = face
-	_errand_say = 0.0
+	# Start at different moments, so a group doesn't chant in unison.
+	_errand_say = randf_range(0.0, _people.errand_line_max)
 
 
 ## Free to answer a sign: walking the streets, not busy with anything else.
@@ -349,7 +350,9 @@ func _walk_errand(delta: float) -> void:
 	_errand_say -= delta
 	if _errand_say <= 0.0:
 		_errand_say = randf_range(_people.errand_line_min, _people.errand_line_max)
-		_say_line(_errand_line, _errand_color, 2.5)
+		# Only some speak each time, so a crowd's lines stay readable.
+		if randf() < _people.errand_line_chance:
+			_say_line(_errand_line, _errand_color, _people.errand_line_time)
 	_errand_time -= delta
 	if _errand_time <= 0.0:
 		end_errand()
