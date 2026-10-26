@@ -8,6 +8,17 @@ extends Resource
 ## explain without a god). People a miracle actually helps always read it
 ## with balance.tres's helped_situation.
 
+@export_group("Miracle power: believers near the spot")
+@export var power_radius := 70.0             # metres: believers this close lend the miracle their faith
+@export var full_power_belief := 6.0         # summed belief of those believers for full power
+@export var weak_size := 0.6                 # radius of a miracle cast with no believers near...
+@export var strong_size := 1.6               # ...and at full power
+@export var weak_time := 0.7                 # how long it lasts, the same way
+@export var strong_time := 1.5
+@export var weak_cost := 1.3                 # cost multiplier: dearer among skeptics...
+@export var strong_cost := 0.6               # ...cheaper among your own
+@export var power_update := 0.25             # seconds between updates of the power under the hand
+
 @export_group("Water: a cloud rains on one spot")
 @export var water_cost := 15.0               # belief
 @export var water_intensity := 0.8

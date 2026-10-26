@@ -14,11 +14,13 @@ var _flash: OmniLight3D
 var _bolt: Node3D
 var _t := 0.0
 var _frames := 0
+var radius := M.lightning_radius
 
 
-## Strike the spot `ground`.
-func strike(ground: Vector3) -> void:
+## Strike the spot `ground`; `size` scales how far the blast reaches.
+func strike(ground: Vector3, size := 1.0) -> void:
 	position = ground
+	radius = M.lightning_radius * size
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = Color(0.55, 0.6, 1.0)
@@ -45,7 +47,7 @@ func strike(ground: Vector3) -> void:
 		prev = next
 	_flash = OmniLight3D.new()
 	_flash.light_color = Color(0.8, 0.85, 1.0)
-	_flash.omni_range = 70.0
+	_flash.omni_range = 70.0 * size
 	_flash.light_energy = 16.0
 	_flash.position = Vector3.UP * 6.0
 	add_child(_flash)
@@ -58,11 +60,11 @@ func _blast(ground: Vector3) -> void:
 	for c in get_tree().get_nodes_in_group("citizens"):
 		var away: Vector3 = c.global_position - ground
 		away.y = 0.0
-		if away.length() < M.lightning_radius:
-			var push := (away.normalized() + Vector3.UP * 0.8) * M.lightning_push * (1.0 - away.length() / M.lightning_radius * 0.5)
+		if away.length() < radius:
+			var push := (away.normalized() + Vector3.UP * 0.8) * M.lightning_push * (1.0 - away.length() / radius * 0.5)
 			c.knock_over(push)
 	for obj in get_tree().get_nodes_in_group("god_grabbable"):
-		if obj is RigidBody3D and obj.global_position.distance_to(ground) < M.lightning_radius * 1.5:
+		if obj is RigidBody3D and obj.global_position.distance_to(ground) < radius * 1.5:
 			obj.apply_central_impulse(Vector3.UP * obj.mass * 4.0)
 			if obj.has_method("on_tapped"):
 				obj.on_tapped(ground)
