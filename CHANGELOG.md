@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: Watercolour removed; playful toy-town colours
+- The watercolour look is gone: no paper texture, no colour bleeding, no darkened edges, no grain, no wobble, no paper border, no wash blotches on buildings. (To bring it back, see the 2026-10-25 entries and git history.)
+- The tilt-shift and depth of field are unchanged.
+- Colours lean more game-like: a bit more saturation, warm sunlight, cool (not lavender) shadows. No outlines.
+- The screen pass is now `shaders/screen_pass.gdshader` (tilt-shift + colour grade). Settings in `data/art_style.tres`; the "Pigment" and "Paper pass" groups are gone, `saturation` moved to "Colour grade".
+- Try it: press F5; press V to compare with the plain look.
+
 ## 2026-10-25: Depth of field: what is near stays sharp, the background melts
 - Like a macro photo of a miniature: whatever stands in the middle of the screen is in focus, and everything further away blurs softly. Things nearer than that (the hand, whatever it lifts, the tops of tall towers) stay sharp. It adds to the tilt-shift for a smoother, more natural blend between the city and the background.
 - Numbers: `data/art_style.tres`, group "Depth of field" (`dof_blur` 0 turns it off). V still switches the whole style off to compare.
