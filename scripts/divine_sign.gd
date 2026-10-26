@@ -17,13 +17,12 @@ var _flash: OmniLight3D
 var _next_flash := 0.0
 
 
-## The sign wheel's slices, in order.
+## The signs' slices of the building wheel, in order.
 static func wheel_items() -> Array[Dictionary]:
 	return [
 		{"id": &"blessed", "label": "Blessed", "note": "beam of light", "color": Color(1.0, 0.88, 0.45)},
 		{"id": &"cursed", "label": "Cursed", "note": "storm cloud", "color": Color(0.55, 0.5, 0.7)},
 		{"id": &"protected", "label": "Protected", "note": "ring of light", "color": Color(0.55, 0.95, 1.0)},
-		{"id": &"clear", "label": "Clear", "note": "no sign", "color": Color(0.8, 0.8, 0.8)},
 	]
 
 

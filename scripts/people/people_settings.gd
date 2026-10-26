@@ -41,6 +41,9 @@ extends Resource
 ## Seconds between the lines a believer repeats while answering a sign.
 @export var errand_line_min := 4.0
 @export var errand_line_max := 7.0
+## Chance to actually speak each time; with several followers at one building most stay quiet.
+@export_range(0.0, 1.0) var errand_line_chance := 0.35
+@export var errand_line_time := 2.5
 
 @export_group("Falling")
 @export var gravity := 20.0

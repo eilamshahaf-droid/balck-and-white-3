@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -17,6 +17,7 @@
 [ext_resource type="Script" path="res://scripts/government/government.gd" id="15_government"]
 [ext_resource type="Script" path="res://scripts/world/district_hud.gd" id="16_district_hud"]
 [ext_resource type="Script" path="res://scripts/world/surroundings.gd" id="17_surroundings"]
+[ext_resource type="Script" path="res://scripts/decrees.gd" id="13_decrees"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -41,6 +42,12 @@ script = ExtResource("3_hand")
 
 [node name="Miracles" type="Node" parent="."]
 script = ExtResource("7_miracles")
+
+[node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "population")]
+script = ExtResource("13_decrees")
+faith = NodePath("../Faith")
+miracles = NodePath("../Miracles")
+population = NodePath("../Population")
 
 [node name="HandTools" type="Node" parent="."]
 script = ExtResource("8_tools")
@@ -76,7 +83,7 @@ offset_right = 900.0
 offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person, taxi or tree: pick up (wiggle to uproot), flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
-Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: sign wheel    Right-drag a circle: water
+Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and signs    Right-drag a circle: water
 The hand can lift anything. Only miracles change what people believe."
 
 [node name="Stats" type="Label" parent="HUD"]

@@ -44,7 +44,8 @@ The scene is small; most nodes are built in code at startup.
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
 | `Miracles` | `miracles.gd` | Casts the miracles (water, fire, lightning, shield, heal): spends belief and reports to `Faith`. Effects: `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd`. |
-| `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: signs on a building, miracles elsewhere. A chosen miracle sits in the hand until cast. |
+| `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (most residents believe): add floors, luxury, facade, change use, preserve. Preserved buildings are in group `preserved`. |
+| `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees and signs on a building, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
 | `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts; buildings change sides from nearby believers and neighbour pressure; a district is yours at 60%. Tunables `data/districts.tres`. |
 | `Government` | `government/government.gd` (+ `bulldozer.gd`, `demolition_notice.gd`) | City Hall: inspector, demolition notice, bulldozer. Tunables `data/government.tres`. |
@@ -60,7 +61,7 @@ World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `
 `sfx.gd` makes placeholder sounds in code.
 
 Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`,
-`wind_reactive`, `no_toon`.
+`wind_reactive`, `no_toon`, `preserved`.
 
 Physics layers (bit values in code): 1 = world (ground, buildings), 2 = citizens,
 3 (4) = props (taxis, trees, litter), 4 (8) = critters (pigeons, as Area3D so the hand's wind
@@ -92,6 +93,7 @@ Tunables: `data/planning.tres`.
 | `data/hand_settings.tres` | `HandSettings` | hand and camera feel |
 | `data/balance.tres` | `Balance` | belief, witnesses, exposure |
 | `data/miracles.tres` | `MiracleSettings` | miracle costs, reach and effects |
+| `data/decrees.tres` | `DecreeSettings` | divine decree costs, exposure and limits |
 | `data/people.tres` | `PeopleSettings` (+ `SocialGroup`s) | residents, groups, names, walking |
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
@@ -103,7 +105,7 @@ Several threads push to `main`. Message the owning thread before changing its fi
 
 | Area | Files | Owner thread |
 | --- | --- | --- |
-| Hand, miracles, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
+| Hand, miracles, decrees, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `decrees.gd`, `decree_looks.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
 | People | `citizen.gd`, `faith.gd`, `sign_followers.gd`, `scripts/people/` | "Build the people in the city" |
 | Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
 | Building models | `building_visual.gd`, `assets/models/` | model-library |
