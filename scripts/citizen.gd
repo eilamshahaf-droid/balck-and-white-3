@@ -1,6 +1,8 @@
 class_name Citizen
 extends CharacterBody3D
-## A city resident who walks between intersections.
+## The body of a city resident: walks between intersections near home,
+## falls, gets up, stares at miracles. Who the person is (name, home, family,
+## belief) lives on the Resident record, so it outlasts this body.
 ##
 ## Belief is hidden from the player. A miracle can push it toward faith or
 ## toward skepticism, depending on what the miracle did to this person, on a
@@ -9,30 +11,43 @@ extends CharacterBody3D
 
 enum State { WALKING, HELD, FALLING, DOWN, GETTING_UP }
 
-const GRAVITY := 20.0
-const HARD_LANDING_SPEED := 14.0
-const TUMBLE_MIN_SPEED := 3.0
-const GET_UP_TIME := 0.6
 const UPRIGHT := Quaternion.IDENTITY
 const B = preload("res://data/balance.tres")
-## How far (in metres) people wander from their home corner.
-const HOME_RANGE := 90.0
+# Loaded at run time: a parse-time preload would load social_group.gd before
+# its class_name is registered and break the typed groups array.
+var _people: PeopleSettings = load("res://data/people.tres")
 
 var city: Node3D
 ## Used by the god's hand: heavier things lag and swing more when held.
 var mass := 1.0
-var fall_gravity := GRAVITY
+var fall_gravity := _people.gravity
 var grid := Vector2i.ZERO
 var state := State.WALKING
 var speed := 3.0
 var target := Vector3.ZERO
 var lane_offset := Vector3.ZERO
 
+## Population hands every resident's body its record before adding it. A body
+## spawned without one (a passer-by, an inspector) keeps this anonymous record.
+var resident := Resident.new()
 ## Hidden: -1 = total skeptic, +1 = devoted believer.
-var belief := 0.0
+var belief: float:
+	get:
+		return resident.belief
+	set(value):
+		resident.belief = value
 ## Hidden personal coefficient k: 0 believes easily, 1 always finds a rational explanation.
-var skepticism := 0.5
-var has_phone := false
+var skepticism: float:
+	get:
+		return resident.skepticism
+	set(value):
+		resident.skepticism = value
+var has_phone: bool:
+	get:
+		return resident.has_phone
+	set(value):
+		resident.has_phone = value
+## The corner nearest home: people wander around it.
 var home := Vector2i.ZERO
 ## Stand still (watching a fire, waiting on a roof) instead of walking the grid.
 var idle := false
@@ -111,11 +126,14 @@ func _ready() -> void:
 	_bubble.visible = false
 	add_child(_bubble)
 
-	speed = randf_range(2.0, 4.0)
-	skepticism = randf()
-	has_phone = randf() < B.phone_chance
+	speed = randf_range(_people.walk_speed_min, _people.walk_speed_max)
+	if resident.id < 0:
+		skepticism = randf()
+		has_phone = randf() < B.phone_chance
+	if resident.home:
+		grid = city.nearest_grid(resident.home.global_position)
 	home = grid
-	lane_offset = Vector3(randf_range(-3.0, 3.0), 0, randf_range(-3.0, 3.0))
+	lane_offset = Vector3(randf_range(-_people.lane_spread, _people.lane_spread), 0, randf_range(-_people.lane_spread, _people.lane_spread))
 	position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
 	_pick_next_target()
 
@@ -145,7 +163,7 @@ func _physics_process(delta: float) -> void:
 			_down_timer -= delta
 			if _down_timer <= 0.0:
 				state = State.GETTING_UP
-				_down_timer = GET_UP_TIME
+				_down_timer = _people.get_up_time
 		State.GETTING_UP:
 			var w := 1.0 - exp(-8.0 * delta)
 			_body.quaternion = _body.quaternion.slerp(UPRIGHT, w)
@@ -330,7 +348,7 @@ func _walk_errand(delta: float) -> void:
 	_turn_to(_errand_face)
 	_errand_say -= delta
 	if _errand_say <= 0.0:
-		_errand_say = randf_range(4.0, 7.0)
+		_errand_say = randf_range(_people.errand_line_min, _people.errand_line_max)
 		_say_line(_errand_line, _errand_color, 2.5)
 	_errand_time -= delta
 	if _errand_time <= 0.0:
@@ -363,7 +381,7 @@ func on_tapped(from: Vector3) -> void:
 func notice(from: Vector3) -> void:
 	if state != State.WALKING:
 		return
-	_pause = randf_range(1.0, 2.0)
+	_pause = randf_range(_people.notice_pause_min, _people.notice_pause_max)
 	_look_at_target = Vector3.INF
 	_turn_to(from)
 
@@ -378,7 +396,7 @@ func on_released(throw_velocity: Vector3) -> void:
 	velocity = throw_velocity
 	_fall_speed = 0.0
 	var speed := throw_velocity.length()
-	if speed > TUMBLE_MIN_SPEED:
+	if speed > _people.tumble_min_speed:
 		var axis := throw_velocity.cross(Vector3.UP)
 		if axis.length() < 0.01:
 			axis = Vector3.RIGHT
@@ -406,7 +424,7 @@ func heal() -> bool:
 
 func _land() -> void:
 	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
-	if _spin == Vector3.ZERO and impact < HARD_LANDING_SPEED * 0.6:
+	if _spin == Vector3.ZERO and impact < _people.hard_landing_speed * 0.6:
 		_body.quaternion = UPRIGHT
 		_stand_up()
 		return
@@ -427,9 +445,10 @@ func _stand_up() -> void:
 	target = city.intersection(grid) + lane_offset
 
 
+## Fell off the world: back home.
 func _respawn() -> void:
 	state = State.WALKING
-	grid = city.random_grid()
+	grid = home
 	global_position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
 	velocity = Vector3.ZERO
 	_spin = Vector3.ZERO
@@ -446,11 +465,19 @@ func resume_walking() -> void:
 	target = city.intersection(grid) + lane_offset
 
 
+## Moved house: start again from the corner nearest the new home.
+func settle_at_home() -> void:
+	home = city.nearest_grid(resident.home.global_position)
+	grid = home
+	global_position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
+	resume_walking()
+
+
 func _pick_next_target() -> void:
 	# Everyone has a neighbourhood: believers gather where they live.
 	var next: Vector2i = city.random_neighbor(grid)
 	for attempt in 4:
-		if city.intersection(next).distance_to(city.intersection(home)) <= HOME_RANGE:
+		if city.intersection(next).distance_to(city.intersection(home)) <= _people.home_range:
 			break
 		next = city.random_neighbor(grid)
 	grid = next

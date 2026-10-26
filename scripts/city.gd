@@ -1,7 +1,7 @@
 extends Node3D
 ## Builds a simple procedural Manhattan-style city: a grid of avenues and
 ## streets, blocks of towers that grow taller toward midtown, a park,
-## taxis to throw around, and residents who walk the grid.
+## taxis to throw around, and the grid that residents walk (see people/population.gd).
 
 const AVENUES := 7            # north-south roads
 const STREETS := 14           # east-west roads
@@ -10,10 +10,6 @@ const STREET_SPACING := 28.0
 const AVENUE_WIDTH := 14.0
 const STREET_WIDTH := 9.0
 const SIDEWALK := 2.5
-const CITIZEN_COUNT := 60
-## Sandbox mode (skipping the opening): a small congregation living around one corner.
-const CONGREGATION_SIZE := 14
-const CONGREGATION_HOME := Vector2i(1, 3)
 const TAXI_COUNT := 30
 const LITTER_COUNT := 160
 const PIGEON_FLOCKS := 8
@@ -24,7 +20,6 @@ const LAYER_CITIZENS := 2
 const LAYER_PROPS := 4
 const LAYER_CRITTERS := 8
 
-const CitizenScript := preload("res://scripts/citizen.gd")
 const TaxiScript := preload("res://scripts/taxi.gd")
 const TreeScript := preload("res://scripts/swaying_tree.gd")
 const DoorScript := preload("res://scripts/door.gd")
@@ -50,7 +45,6 @@ func _ready() -> void:
 	_build_ground()
 	_build_blocks()
 	_spawn_taxis()
-	_spawn_citizens()
 	_spawn_litter()
 	_spawn_pigeons()
 
@@ -217,30 +211,6 @@ func _spawn_taxis() -> void:
 		var avenue := intersection(Vector2i(rng.randi_range(0, AVENUES - 1), 0))
 		taxi.position = Vector3(avenue.x + rng.randf_range(-4.0, 4.0), 1.0, rng.randf_range(-half_size.y, half_size.y))
 		add_child(taxi)
-
-
-func _spawn_citizens() -> void:
-	for n in CITIZEN_COUNT:
-		var c: CharacterBody3D = CitizenScript.new()
-		c.city = self
-		c.grid = random_grid()
-		c.collision_layer = LAYER_CITIZENS
-		c.collision_mask = LAYER_WORLD
-		add_child(c)
-		c.belief = rng.randf_range(-0.6, 0.2)
-
-
-## Skip the story: start with a congregation of believers in one neighbourhood.
-func found_congregation() -> void:
-	var people := get_tree().get_nodes_in_group("citizens")
-	for n in mini(CONGREGATION_SIZE, people.size()):
-		var c: Node3D = people[n]
-		c.home = CONGREGATION_HOME + Vector2i(0, rng.randi_range(-2, 2))
-		c.grid = c.home
-		c.global_position = intersection(c.grid) + c.lane_offset + Vector3.UP * 0.1
-		c.belief = rng.randf_range(0.6, 0.95)
-		c.skepticism = rng.randf_range(0.0, 0.3)
-		c.target = c.global_position
 
 
 func _add_door(base: Vector3, depth: float) -> void:
