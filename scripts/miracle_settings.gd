@@ -74,8 +74,6 @@ extends Resource
 @export_range(0.0, 1.0) var unsure_belief := 0.7    # believers below this belief sometimes misread a sign
 @export_range(0.0, 1.0) var misread_chance := 0.15
 @export var worship_belief := 0.4            # belief per second from each believer praying at a blessed building
-@export var vandal_time := 12.0              # seconds two or more vandals need to set a cursed building alight (evil path)
-@export var vandal_exposure := 0.05          # a building torched by your believers draws attention
 @export var guard_douse := 0.06              # fire heat each guard of a protected building puts out per second
 @export var beam_height := 160.0             # metres of the beam of light above the roof
 @export var cloud_flash_interval := 3.0      # seconds between flashes in the storm cloud (on average)

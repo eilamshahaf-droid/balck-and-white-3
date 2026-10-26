@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-26: No more good and evil for the people
+- The new direction has no good or evil, so the god's path is gone: no good/evil deed counting, no "Path" in the HUD, no Path buttons on the debug panel.
+- Believers answering a cursed building now hold a rally in front of the entrance (no more vandalising, boycotts or asking for the manager). A protected building gets a human chain in robes, which still fights fire. Blessed is unchanged: they pray.
+- Try it: press F5, hold the left button still on a building, pick the storm cloud, and watch nearby believers walk over and rally.
+
 ## 2026-10-26: Smoother city, faster planning scene, sturdier hand
 - Trees, pigeons and people are drawn with far fewer triangles (round shapes were 4,000 triangles each; now a few hundred), and every tree shares one shape. The city draws about 2.3 million triangles a frame instead of 6.2 million. It looks the same.
 - The art style now styles each object once, when it appears, instead of re-checking every object every frame.
