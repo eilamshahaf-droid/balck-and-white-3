@@ -27,7 +27,7 @@ extends Resource
 @export_range(0.0, 1.0) var control_share := 0.6   # share of a district's buildings that makes it yours
 
 @export_group("Look")
-@export var roof_color := Color(1.0, 0.55, 0.1)
-@export var border_color := Color(1.0, 1.0, 1.0, 0.6)
-@export var controlled_border_color := Color(1.0, 0.6, 0.1, 1.0)
-@export var border_width := 1.5
+@export var roof_color := Color(1.0, 0.7, 0.0)
+@export var border_color := Color(1.0, 1.0, 1.0, 0.85)
+@export var controlled_border_color := Color(1.0, 0.7, 0.0, 1.0)
+@export var border_width := 2.0

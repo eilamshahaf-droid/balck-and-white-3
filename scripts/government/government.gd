@@ -15,7 +15,7 @@ const NoticeScript = preload("res://scripts/government/demolition_notice.gd")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 
 const OFF_KERB := 3.5          # where people stand in front of a building: sidewalk + a step (as in sign_followers.gd)
-const NOTICE_HEIGHT := 3.0     # above the pavement
+const NOTICE_LIFT := 6.0       # above the roof, so other towers don't hide it from the sky
 const INSPECTOR_LINE := "Department of Buildings. Routine inspection."
 const INSPECTOR_COLOR := Color(0.85, 0.9, 1.0)
 
@@ -141,7 +141,8 @@ func _inspect() -> void:
 		return
 	_notice = NoticeScript.new()
 	_target.add_child(_notice)
-	_notice.global_position = _front + Vector3.UP * NOTICE_HEIGHT
+	var roof := _target.global_position.y + DivineSign.building_size(_target).y / 2.0
+	_notice.global_position = Vector3(_target.global_position.x, roof + NOTICE_LIFT, _target.global_position.z)
 	_notice_left = G.notice_time
 	_notice.show_seconds(_notice_left)
 	_step = Step.NOTICE

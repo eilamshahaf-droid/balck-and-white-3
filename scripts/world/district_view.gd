@@ -5,7 +5,7 @@ extends Node3D
 ## cost one draw call.
 
 const S = preload("res://data/districts.tres")
-const ROOF_LIFT := 0.15     # plate height above the roof, so it doesn't flicker into it
+const ROOF_LIFT := 1.4      # above the roof modules (Kenney roofs stand about a metre proud of the box)
 const ROOF_INSET := 0.8     # plate size as a share of the roof
 const BORDER_LIFT := 0.03   # just above the asphalt
 
