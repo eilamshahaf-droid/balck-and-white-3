@@ -197,7 +197,8 @@ func _push_screen_params() -> void:
 	_screen_mat.set_shader_parameter("tilt_width", S.tilt_width)
 	_screen_mat.set_shader_parameter("vibrance", S.vibrance)
 	_screen_mat.set_shader_parameter("contrast", S.contrast)
-	_screen_mat.set_shader_parameter("warmth", S.warmth)
+	_screen_mat.set_shader_parameter("wash_color", S.wash_color)
+	_screen_mat.set_shader_parameter("wash", S.wash)
 
 
 ## The higher the god looks from, the more the city looks like a miniature.

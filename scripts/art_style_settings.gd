@@ -40,10 +40,11 @@ extends Resource
 ## The focus is whatever stands under the tilt-shift's sharp band (tilt_center).
 
 @export_group("Colour grade")
-@export_range(0.5, 2.0) var saturation := 1.45        # toy-box colours: vivid, less realistic
-@export_range(0.0, 1.0) var vibrance := 0.35          # boosts dull colours more than vivid ones
-@export_range(0.5, 1.5) var contrast := 1.1
-@export var warmth := Color(1.04, 1.0, 0.94)         # multiplies the whole picture
+@export_range(0.5, 2.0) var saturation := 1.15        # toy colours, a little brighter than life
+@export_range(0.0, 1.0) var vibrance := 0.1           # boosts dull colours more than vivid ones
+@export_range(0.5, 1.5) var contrast := 1.04
+@export var wash_color := Color(1.0, 0.93, 0.82)     # a soft wash over the whole picture, like The Sims
+@export_range(0.0, 0.5) var wash := 0.1
 
 @export_group("Tone")
 @export var tonemap_filmic := false        # leave off to keep the city's own tone mapping

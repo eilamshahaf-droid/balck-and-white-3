@@ -12,6 +12,12 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - New automatic hand test: `tests/hand_test.tscn` picks up, throws, taps, knocks, blows on a tree, scares pigeons and checks focus loss, with a simulated mouse.
 - Try it: press F5 and play as usual; press Alt+Tab while holding a taxi. The test runs from the command line: `godot --headless --path . res://tests/hand_test.tscn`.
 
+## 2026-10-26: Softer colours with a warm wash
+- Colours are calmer: less saturation, vibrance and contrast than yesterday's toy-box grade.
+- A soft warm wash lies over the whole picture and ties the colours together, like The Sims. It replaces the old warmth multiply.
+- Settings: `data/art_style.tres`, group "Colour grade" (`wash_color`, `wash`; `warmth` is gone).
+- Try it: press F5; press V to compare with the plain look.
+
 ## 2026-10-26: Watercolour removed; playful toy-town colours
 - The watercolour look is gone: no paper texture, no colour bleeding, no darkened edges, no grain, no wobble, no paper border, no wash blotches on buildings. (To bring it back, see the 2026-10-25 entries and git history.)
 - The tilt-shift and depth of field are unchanged.
