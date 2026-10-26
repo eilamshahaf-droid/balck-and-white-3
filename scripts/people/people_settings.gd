@@ -24,7 +24,7 @@ extends Resource
 @export_group("Sandbox congregation")
 ## Skipping the opening starts you with one congregation living around one corner.
 @export var congregation_size := 14
-@export var congregation_corner := Vector2i(1, 3)
+@export var congregation_corner := Vector2i(6, 3)
 @export var congregation_belief_min := 0.6
 @export var congregation_belief_max := 0.95
 @export var congregation_skepticism_max := 0.3
