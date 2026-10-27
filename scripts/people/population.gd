@@ -80,6 +80,8 @@ var _street := Street.new()
 var _stages: Dictionary = {}       # resident -> the stage last announced
 var _priest_timer := 0.0
 var _bought: Dictionary = {}          # building -> Array[Upgrade] bought for it
+var _housing: Dictionary = {}         # building -> how many residents it holds comfortably
+var _headquarters: Node3D            # the first prayer house, where the congregation lives
 var _purchases: Dictionary = {}      # building -> upgrades and floors bought so far
 var _staff: Dictionary = {}          # building -> Array[Resident] with a post there
 var _home_comfort: Dictionary = {}   # building -> the comfort its residents drift toward

@@ -104,6 +104,13 @@ extends Resource
 ## Each purchase also adds this many places to the building.
 @export var slots_per_purchase := 2
 
+@export_group("Housing")
+## A home holds its starting residents times this; past that it is crowded.
+@export var housing_slack := 1.3
+## Comfort lost at twice the capacity (scaled by how crowded the home is). Shops
+## and prayer houses have no residents, so converting one crowds the homes around.
+@export_range(0.0, 1.0) var crowding_penalty := 0.5
+
 @export_group("Fire")
 ## A building burns down with its people inside: each one indoors dies with this chance.
 @export_range(0.0, 1.0) var fire_death_chance := 0.5
