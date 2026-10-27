@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=36 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -27,11 +27,14 @@
 [ext_resource type="Script" path="res://scripts/world/campaign_marks.gd" id="20_marks"]
 [ext_resource type="Script" path="res://scripts/government/police.gd" id="21_police"]
 [ext_resource type="Script" path="res://scripts/world/building_tooltip.gd" id="22_tooltip"]
+[ext_resource type="Script" path="res://scripts/government/police_arrests.gd" id="23_arrests"]
+[ext_resource type="Script" path="res://scripts/government/arrest_alert.gd" id="24_alert"]
 [ext_resource type="Script" path="res://scripts/accidents.gd" id="39_accidents"]
 [ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
 [ext_resource type="Script" path="res://scripts/priest_marker.gd" id="41_priest"]
 [ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
 [ext_resource type="Script" path="res://scripts/building_menus.gd" id="50_menus"]
+[ext_resource type="Script" path="res://scripts/sermon_alerts.gd" id="51_alerts"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -86,12 +89,13 @@ population = NodePath("../Population")
 script = ExtResource("3_hand")
 districts = NodePath("../Districts")
 
-[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury", "districts", "police")]
+[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury", "districts", "police", "arrests")]
 script = ExtResource("7_miracles")
 population = NodePath("../Population")
 treasury = NodePath("../Treasury")
 districts = NodePath("../Districts")
 police = NodePath("../Police")
+arrests = NodePath("../Arrests")
 
 [node name="Accidents" type="Node" parent="." node_paths=PackedStringArray("miracles", "districts", "decrees", "population", "heat")]
 script = ExtResource("39_accidents")
@@ -104,6 +108,11 @@ heat = NodePath("../Heat")
 [node name="PriestMarker" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("41_priest")
 population = NodePath("../Population")
+
+[node name="SermonAlerts" type="Node" parent="." node_paths=PackedStringArray("population", "camera")]
+script = ExtResource("51_alerts")
+population = NodePath("../Population")
+camera = NodePath("../CameraRig")
 
 [node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("40_notes")
@@ -137,11 +146,12 @@ script = ExtResource("13_districts")
 [node name="DistrictView" type="Node3D" parent="."]
 script = ExtResource("14_district_view")
 
-[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "decrees")]
+[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "decrees", "police")]
 script = ExtResource("18_treasury")
 faith = NodePath("../Faith")
 districts = NodePath("../Districts")
 decrees = NodePath("../Decrees")
+police = NodePath("../Police")
 
 [node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "treasury", "decrees")]
 script = ExtResource("19_campaigns")
@@ -162,6 +172,10 @@ campaigns = NodePath("../Campaigns")
 districts = NodePath("../Districts")
 faith = NodePath("../Faith")
 heat = NodePath("../Heat")
+
+[node name="Arrests" type="Node3D" parent="." node_paths=PackedStringArray("population")]
+script = ExtResource("23_arrests")
+population = NodePath("../Population")
 
 [node name="Government" type="Node" parent="."]
 script = ExtResource("15_government")
@@ -202,6 +216,19 @@ offset_right = 900.0
 offset_bottom = -12.0
 grow_vertical = 0
 script = ExtResource("16_district_hud")
+
+[node name="ArrestAlert" type="Label" parent="HUD" node_paths=PackedStringArray("arrests")]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -380.0
+offset_top = 220.0
+offset_right = 380.0
+offset_bottom = 280.0
+grow_horizontal = 2
+horizontal_alignment = 1
+script = ExtResource("24_alert")
+arrests = NodePath("../../Arrests")
 
 [node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "treasury", "decrees", "population", "camera")]
 script = ExtResource("22_tooltip")

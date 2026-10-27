@@ -56,6 +56,7 @@ The scene is small; most nodes are built in code at startup.
 | `Accidents` | `accidents.gd` | Now and then believers set one of your buildings on fire (likelier with zealots near, in a Prayer House or Course Center). Tunables in `data/miracles.tres`. |
 | `ConversionNotes` | `conversion_notes.gd` (+ `floating_note.gd`) | Floats "+ Believer" / "Zealot!" / "Lost a believer" over people from `Population.stage_changed`; `FloatingNote.pop` is the shared pop-up text |
 | `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (`Districts.owns()`): add floors, luxury, facade, change use, preserve; paid in belief and `Treasury` money. Preserved buildings are in group `preserved`. |
+| `SermonAlerts` | `sermon_alerts.gd` | A ring on the ground and a click-to-fly button for each sermon and police raid (`Population.sermons` signals). |
 | `BuildingMenus` | `building_menus.gd` | The second wheels of a building of yours: housing upgrades (paid from `Treasury`, applied with `Population.upgrade`) and posts for free believers in prayer houses and shops. |
 | `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees on your building, the three `Campaigns` takeover marks on anyone else's, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
@@ -64,6 +65,7 @@ The scene is small; most nodes are built in code at startup.
 | `Campaigns` | `world/campaigns.gd` (+ `campaign_marks.gd`) | The three takeover marks on a building (force, buy, missionaries), carried out by believers until most residents believe. Tunables `data/campaigns.tres`. |
 | `Government` | `government/government.gd` (+ `bulldozer.gd`, `demolition_notice.gd`) | City Hall: a hidden building code (floors past the limit, luxury, Combat Training) feeds `Heat` and slowly raises suspicion; at the limit an inspector visits, then a demolition notice and the bulldozer. Tunables `data/government.tres`. |
 | `Police` | `government/police.gd` | Crews at marked buildings raise `Heat`; when `Heat.police_called` fires the street is closed with a roadblock and the campaign waits (`Campaigns.block`). Controlled districts are exempt; hardness follows district wealth. Tunables `data/police.tres`. |
+| `Arrests` | `government/police_arrests.gd` (+ `police_officer.gd`, `arrest_alert.gd`) | A squad of grabbable officers surrounds the preaching priest and holds him still; the hand or a miracle (`scatter_near`) clears them to free him, or he is taken when the time runs out. `arrest_started` / `arrest_ended` signals; a banner shows the countdown. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |
 | `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Off for now (`enabled = false` in `main.tscn`), so the game starts in free play with a ready congregation. |
