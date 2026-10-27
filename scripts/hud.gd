@@ -1,7 +1,7 @@
 extends Label
 ## The meters the player may see, as a row of cards along the top: belief (what
 ## miracles and missionaries spend), money (what buying and decrees spend, and
-## what comes in), believers, buildings of yours and exposure. Under them, the
+## what comes in), believers, priests, buildings of yours and exposure. Under them, the
 ## miracle power under the hand and what the hand holds. Belief itself stays
 ## hidden (B shows it, for debugging).
 
@@ -15,6 +15,7 @@ var _values: Array[Label] = []
 @onready var miracles: Node = get_node("../../Miracles")
 @onready var treasury: Treasury = get_node("../../Treasury")
 @onready var districts: Districts = get_node("../../Districts")
+@onready var population: Population = get_node("../../Population")
 
 
 func _ready() -> void:
@@ -22,7 +23,7 @@ func _ready() -> void:
 	row.add_theme_constant_override(&"separation", 8)
 	row.position = Vector2(0.0, -52.0)
 	add_child(row)
-	for title in ["BELIEF", "MONEY", "BELIEVERS", "BUILDINGS", "EXPOSURE"]:
+	for title in ["BELIEF", "MONEY", "BELIEVERS", "PRIESTS", "BUILDINGS", "EXPOSURE"]:
 		var card := PanelContainer.new()
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override(&"separation", -4)
@@ -47,8 +48,9 @@ func _process(delta: float) -> void:
 	_show(0, "%d" % floori(faith.belief_pool))
 	_show(1, "$%d  %+.1f/s" % [floori(treasury.money), treasury.income])
 	_show(2, "%d" % faith.believers)
-	_show(3, "%d" % districts.converted_buildings().size())
-	_show(4, "%d%%" % roundi(faith.exposure * 100.0))
+	_show(3, "%d" % population.priest_count)
+	_show(4, "%d" % districts.converted_buildings().size())
+	_show(5, "%d%%" % roundi(faith.exposure * 100.0))
 	var line := "Miracle power here: %d%%" % roundi(miracles.power_here * 100.0)
 	if tools.charged != &"":
 		line += "    In the hand: %s (click to cast, right-click to drop)" % String(tools.charged).capitalize()

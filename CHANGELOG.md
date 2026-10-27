@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: The head priest stands out
+- A golden ring on the ground around the head priest and a label with his name ("Head Priest, Name") over him, with "preaching..." for a few seconds whenever he talks to the street. The people thread made his body bigger.
+- A PRIESTS card on the HUD.
+- A building changed to the Shop use joins the group `shops` (like Prayer Houses join `prayer_houses`), so free believers can be assigned to work there.
+- Numbers: `data/miracles.tres`, group "Head priest marker".
+- Try it: press F5 and look for the white priest with the gold ring.
+
 ## 2026-10-27: Give believers jobs, colours and fear bonuses
 - Believers are gold on the map, zealots orange, priests white and larger. Free believers can be given a post with `Population.assign`: pray or train as a priest in a prayer house, or work in a shop (building group `shops`). Each building takes only so many; a building with no staff has zero output (`staffed`).
 - Comfortable staff pray and earn more. Frightened believers are better at forcing a takeover (`force_power_of`) and make the police wait for more heat (`defense_of`).

@@ -141,10 +141,8 @@ func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 			DecreeLooks.grow(building, D.floors_per_decree)
 		&"use":
 			building.set_meta(&"decree_use", use_name)
-			if use_name == D.prayer_use:
-				building.add_to_group(PRAYER_HOUSES)
-			elif building.is_in_group(PRAYER_HOUSES):
-				building.remove_from_group(PRAYER_HOUSES)
+			_set_group(building, PRAYER_HOUSES, use_name == D.prayer_use)
+			_set_group(building, Population.SHOPS, use_name == D.shop_use)
 		_:
 			building.set_meta(&"decree_" + kind, true)
 	if kind == &"luxury":
@@ -156,6 +154,13 @@ func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 	faith.exposure = minf(faith.exposure + _exposure(kind), 1.0)
 	Sfx.play(get_tree(), building.global_position, &"chime", 0.7)
 	decree_issued.emit(kind, building)
+
+
+func _set_group(building: Node3D, group: StringName, member: bool) -> void:
+	if member:
+		building.add_to_group(group)
+	elif building.is_in_group(group):
+		building.remove_from_group(group)
 
 
 func _price(kind: StringName, building: Node3D) -> String:

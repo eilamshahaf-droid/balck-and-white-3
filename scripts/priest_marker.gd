@@ -41,10 +41,11 @@ func _ready() -> void:
 	_label.modulate = M.priest_ring_color
 	_label.position = Vector3.UP * M.priest_label_height
 	add_child(_label)
+	population.priest_preached.connect(_on_preached)
 
 
-## The priest is preaching to the street: say so for a few seconds.
-func show_preaching() -> void:
+## The priest preached to the street: say so for a few seconds.
+func _on_preached(_priest: Resident, _reached: int) -> void:
 	_preach_left = M.priest_preach_mark_time
 
 
