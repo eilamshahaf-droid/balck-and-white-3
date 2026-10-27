@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Fix: error after City Hall demolishes a building; residents can flee
+- The red error "_refresh_presence: Trying to assign invalid previously freed instance" came from a building City Hall's bulldozer removed while the residents still lived, worked or sat in there. Its people now move to the nearest other home and find other work.
+- New for the takeover routes and the roach miracle: `Population.evacuate(building)` (everyone moves out for good and those nearby run into the street shouting "ROACHES!"), `evict(resident)` (one person moves elsewhere) and `preach_to(resident, strength)` (belief rises, less for skeptics).
+- Numbers: `data/people.tres`, group "Fleeing".
+- Two editor warnings in `citizen.gd` and `sign_followers.gd` are gone.
+- Try it: play until City Hall demolishes a building; the error no longer appears.
+
 ## 2026-10-27: The hand no longer lifts trees; editor warnings fixed
 - Trees stay rooted: the hand can't grab or uproot them any more (they still bend in its wind). The uprooted tree and its settings (`uproot_effort`, `hand_strength`, ...) are gone.
 - Fixed editor warnings in the hand's files: names that shadowed built-ins (`sign`, `size`, `to_local`).

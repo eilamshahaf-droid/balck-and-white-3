@@ -96,14 +96,48 @@ func home_near(p: Vector3) -> Node3D:
 
 
 func move_home(r: Resident, building: Node3D) -> void:
-	if r.home:
-		(_by_home[r.home] as Array).erase(r)
-	r.home = building
-	if not _by_home.has(building):
-		_by_home[building] = []
-	(_by_home[building] as Array).append(r)
+	_set_home(r, building)
 	if is_instance_valid(r.body):
 		r.body.settle_at_home()
+
+
+## `r` moves out of their home to the nearest other one (bought out, scared off).
+func evict(r: Resident) -> void:
+	var old := r.home
+	_homes.erase(old)
+	var new_home := home_near(old.global_position)
+	_homes.append(old)
+	if new_home == null:
+		return
+	_set_home(r, new_home)
+	if is_instance_valid(r.body):
+		r.body.move_out()
+
+
+## Someone preaches to `r` (missionaries at the door): belief rises by
+## `strength`, less the more skeptical the person is.
+func preach_to(r: Resident, strength: float) -> void:
+	r.belief = minf(1.0, r.belief + strength * (1.0 - r.skepticism))
+
+
+## Everyone leaves `building` for good (roaches, fire): the people who live
+## there move to the nearest other homes and those close by run out into the
+## street. Nobody moves in again, so it stays empty.
+func evacuate(building: Node3D) -> void:
+	_homes.erase(building)
+	_release_occupants(building)
+	var new_home := home_near(building.global_position)
+	if new_home == null:
+		return  # the whole city is going away (quitting the game)
+	var leaving: Array = _by_home.get(building, []).duplicate()
+	for r: Resident in leaving:
+		_set_home(r, new_home)
+		if not is_instance_valid(r.body):
+			continue
+		r.body.move_out()
+		if r.body.global_position.distance_to(building.global_position) < _people.flee_reach:
+			r.body.flee(building.global_position)
+	_by_home.erase(building)
 
 
 ## Skip the story: whole families move into the homes nearest one corner and
@@ -150,6 +184,7 @@ func _populate() -> void:
 	for b in _homes + _offices:
 		_footprints[b] = _footprint(b)
 		_presence[b] = 0.0
+		b.tree_exiting.connect(_forget_building.bind(b), CONNECT_ONE_SHOT)
 	_refresh_presence()
 
 
@@ -176,6 +211,38 @@ func _on_stopped_occupying(r: Resident) -> void:
 	r.occupying = null
 	(_occupants[building] as Array).erase(r)
 	occupant_left.emit(building, r)
+
+
+## A building left the city (City Hall's bulldozer): everyone who lived,
+## worked or sat in there carries on without it.
+func _forget_building(building: Node3D) -> void:
+	evacuate(building)
+	_offices.erase(building)
+	_footprints.erase(building)
+	_presence.erase(building)
+	_occupants.erase(building)
+	if _homes.is_empty():
+		return
+	for r in residents:
+		if r.work == building:
+			r.work = _pick_work(r.group)
+
+
+func _release_occupants(building: Node3D) -> void:
+	for r: Resident in occupants(building).duplicate():
+		if is_instance_valid(r.body):
+			r.body.leave_occupied()
+		else:
+			_on_stopped_occupying(r)
+
+
+func _set_home(r: Resident, building: Node3D) -> void:
+	if r.home:
+		(_by_home[r.home] as Array).erase(r)
+	r.home = building
+	if not _by_home.has(building):
+		_by_home[building] = []
+	(_by_home[building] as Array).append(r)
 
 
 ## The building `p` stands on, or the nearest one within occupy_reach of its walls (null if none).

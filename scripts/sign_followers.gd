@@ -38,28 +38,28 @@ func _physics_process(delta: float) -> void:
 		return
 	_timer = M.recruit_interval
 	_forget_gone()
-	for sign in get_tree().get_nodes_in_group("divine_signs"):
-		var team: Array = _followers.get(sign, [])
-		_followers[sign] = team
-		_recruit(sign, team)
-		_act(sign.get_parent(), team, M.recruit_interval)
+	for divine in get_tree().get_nodes_in_group("divine_signs"):
+		var team: Array = _followers.get(divine, [])
+		_followers[divine] = team
+		_recruit(divine, team)
+		_act(divine.get_parent(), team, M.recruit_interval)
 
 
 ## Drop followers who left (grabbed, thrown, done) and signs that were cleared.
 func _forget_gone() -> void:
-	for sign in _followers.keys():
-		var team: Array = _followers[sign]
-		if not is_instance_valid(sign) or sign.is_queued_for_deletion():
+	for divine in _followers.keys():
+		var team: Array = _followers[divine]
+		if not is_instance_valid(divine) or divine.is_queued_for_deletion():
 			for f in team:
 				if is_instance_valid(f[0]):
 					f[0].end_errand()
-			_followers.erase(sign)
+			_followers.erase(divine)
 			continue
-		_followers[sign] = team.filter(func(f): return is_instance_valid(f[0]) and f[0].on_errand)
+		_followers[divine] = team.filter(func(f): return is_instance_valid(f[0]) and f[0].on_errand)
 
 
-func _recruit(sign: Node3D, team: Array) -> void:
-	var building: Node3D = sign.get_parent()
+func _recruit(divine: Node3D, team: Array) -> void:
+	var building: Node3D = divine.get_parent()
 	var needed: int = M.followers_per_sign - team.size()
 	if needed <= 0:
 		return
@@ -67,7 +67,7 @@ func _recruit(sign: Node3D, team: Array) -> void:
 	for c in _free_believers_near(building.global_position):
 		if needed == 0:
 			break
-		var kind: StringName = sign.kind
+		var kind: StringName = divine.kind
 		var misread: bool = c.belief < M.unsure_belief and randf() < M.misread_chance
 		if misread:
 			kind = KINDS[(KINDS.find(kind) + randi_range(1, 2)) % KINDS.size()]
