@@ -10,6 +10,17 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/decrees.tres` (the `..._money` values).
 - Try it: press F5, hold the left button still on a building that isn't yours and pick a mark; then on one of yours, pick a decree and watch the money card drop.
 
+## 2026-10-27: Buildings earn or cost money; a poor start district
+- Every building of yours now earns or costs money each second, and the bottom-left panel shows it ("yours, earns $0.4/s").
+  - **No use:** it brings rent in.
+  - **A use** (Prayer House, Course Center, Free Personality Test, Combat Training): it costs upkeep instead. A shop earns (the hand thread adds the Shop use).
+  - **Luxury:** the building does its job 1.6 times faster (rent, shop takings, training fighters), but its upkeep goes up.
+  - **Floors:** each floor level makes the building yield more, by less every time (+36%, then +20%, +11%, ...), while each level adds upkeep. Pumping floors stops paying off.
+- Shops no longer come from Facade.
+- **District wealth:** each district has a wealth that scales rent, shop takings and the price of buying people out. The start district by the river is poor (0.4), downtown is rich (2.0), and the panel says "(poor)" or "(rich)".
+- Numbers: `data/treasury.tres` (Rent, Uses, Luxury, Floors) and `wealth` in `data/districts.tres`.
+- Try it: press F5, click "Take 10 buildings here" on the debug panel (F1), and look at the "Building" line as you give one of them decrees.
+
 ## 2026-10-27: Take buildings by force, money or missionaries; a money meter
 - The claim meter and its roof colours are gone. Eilam's rule instead: a building is yours once most of the people who live there believe. An empty one is yours while a believer lives in it or sits in on it.
 - Three takeover marks float over a marked building, with "3 / 7 believe" underneath:
