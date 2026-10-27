@@ -62,7 +62,8 @@ func set_hardness(building: Node3D, hardness: float) -> void:
 
 
 func threshold(building: Node3D) -> float:
-	return S.police_threshold * (1.0 + S.hardness_scale * _hardness.get(building, 0.0))
+	var base: float = S.police_threshold * (1.0 + S.hardness_scale * _hardness.get(building, 0.0))
+	return base * population.defense_of(building)
 
 
 func _amount(reason: Reason) -> float:
