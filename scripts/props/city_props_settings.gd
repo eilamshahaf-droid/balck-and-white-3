@@ -65,6 +65,10 @@ extends Resource
 ## What a building's Change Use shows (TypeMarkers).
 @export var use_markers: Array[UseMarker] = []
 
+@export_group("Housing upgrades")
+## What each housing upgrade shows on the building (UpgradeMarkers).
+@export var upgrade_markers: Array[UpgradeMarker] = []
+
 @export_group("Core buildings")
 ## Each district's core building (CoreMarkers): a portico in front and a
 ## signboard on the roof with the district's name.

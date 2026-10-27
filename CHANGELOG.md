@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Housing upgrades show on the building
+- A housing upgrade you buy now appears on the building: an elevator shaft up its side, a garden with deck chairs on its roof, security cameras by the door and an iron gate at the street. They come with the buy button in the building's wheel and stay for good.
+- Numbers: `data/city_props.tres` ("Housing upgrades": where on the building each one goes).
+- Try it: press F5, take a building, hold on it, open its upgrade wheel and buy one.
+
 ## 2026-10-27: Each district's core building gets a portico and a name sign
 - The core building of every district (the one nearest its middle, set by the world thread) now has a columned portico in front and a big gold-framed signboard on its roof with the district's name on it. When the core is demolished, both move to the next building that takes over.
 - Numbers: `data/city_props.tres` ("Core buildings": text size, colour, how far it shows).
