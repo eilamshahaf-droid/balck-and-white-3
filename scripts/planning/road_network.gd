@@ -314,11 +314,11 @@ func _split(e: Dictionary, m: int, q: Vector2) -> int:
 
 
 func _duplicate(n0: int, n1: int, piece: PackedVector2Array) -> bool:
-	var mid := piece[piece.size() / 2]
+	var mid := piece[piece.size() >> 1]
 	for e in edges:
 		if (e.a == n0 and e.b == n1) or (e.a == n1 and e.b == n0):
 			var ep: PackedVector2Array = e.points
-			if ep[ep.size() / 2].distance_to(mid) < 6.0:
+			if ep[ep.size() >> 1].distance_to(mid) < 6.0:
 				return true
 	return false
 

@@ -226,7 +226,7 @@ func relayout() -> Array:
 		var poly: PackedVector2Array = f.polygon
 		var c := _centroid(poly)
 		var water := 0
-		for k in range(0, poly.size(), maxi(poly.size() / 8, 1)):
+		for k in range(0, poly.size(), maxi(poly.size() >> 3, 1)):
 			water += int(terrain.is_water(poly[k].lerp(c, 0.5)))
 		var block := {"polygon": poly, "sides": f.sides, "edges": f.edges, "area": absf(f.area),
 				"area_signed": f.area, "bbox": _bbox(poly), "center": _ground(c), "zone": "", "density": 1,
