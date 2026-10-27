@@ -26,7 +26,7 @@ scripts/people/      residents: Population, Resident records, social groups, deb
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
-assets/models/       third-party models (Kenney CC0), with their licence files
+assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT), with their licence files
 tests/               headless tests that drive the real game (run before pushing)
 docs/                screenshot for the README
 ```
