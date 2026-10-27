@@ -8,6 +8,9 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - The textures are smaller too: 512 px instead of 1024, and the metal and roughness maps (the game ignores them) are cut to a few pixels. The Meshy folder went from 42 MB to 9.6 MB. At street scale it looks the same.
 - Numbers: `PropKind.model_path` in `data/city_props.tres` replaces the model scene.
 - Try it: press F5 and watch the time to the first frame.
+## 2026-10-27: Gyms and real estate offices in the takeover marks
+- The skull (force) crew grows by the holy warriors the Combat Training building's gyms train (`Population.fighters_of`), up to `max_fighters` (`data/campaigns.tres`).
+- The dollar (buy) price is cut by the target building's real estate offices (`Population.buy_price_factor`).
 
 ## 2026-10-27: Upgrades show on the building
 - An upgrade you buy now appears on the building and stays for good. Homes: an elevator shaft up the side, a garden with deck chairs on the roof, security cameras by the door, an iron gate at the street. Prayer houses: loudspeakers on the roof, the cult banner on the front, a lecture podium with chairs at the street. Shops: a striped awning, a gym corner, a for-sale sign, a bell tower on the roof (seminary), café tables.
