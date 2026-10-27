@@ -269,12 +269,9 @@ func staffed(building: Node3D) -> float:
 	return total
 
 
-## What the next upgrade or added floor for `building` costs: it rises with each
-## purchase and falls with the believers working there.
+## What the next upgrade or added floor for `building` costs; it rises with each purchase.
 func upgrade_cost(building: Node3D) -> float:
-	var discount := minf(_people.staff_discount * staff_count(building), _people.max_staff_discount)
-	return _people.upgrade_base_cost * pow(_people.upgrade_cost_growth, _purchases.get(building, 0)) \
-			* (1.0 - discount)
+	return _people.upgrade_base_cost * pow(_people.upgrade_cost_growth, _purchases.get(building, 0))
 
 
 ## Buy `kind` for `building` (the caller has taken the money): well-being for
@@ -452,6 +449,15 @@ func _on_set_down(c: Citizen) -> void:
 	var building := _place_at(p)
 	if building == null:
 		return
+	# Set down in a prayer house or shop: the believer starts working there.
+	if r.job == Resident.Job.FREE:
+		var job := Resident.Job.FREE
+		if building.is_in_group(SHOPS):
+			job = Resident.Job.SHOP
+		elif building.is_in_group(PRAYER_HOUSES):
+			job = Resident.Job.PRAY
+		if assign(r, job, building):
+			return
 	r.occupying = building
 	if not _occupants.has(building):
 		_occupants[building] = []
