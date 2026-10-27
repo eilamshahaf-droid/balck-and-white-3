@@ -641,7 +641,7 @@ func _reach_bonus(kind: String, pos: Vector3) -> float:
 	return bonus
 
 
-## Add (sign 1) or take away (sign -1) a structure's fields around `pos`.
+## Add (direction 1) or take away (direction -1) a structure's fields around `pos`.
 func _stamp(def: Dictionary, pos: Vector3, sign: float, reach_bonus := 0.0) -> void:
 	var c := (Vector2(pos.x, pos.z) - grid_origin) / CELL
 	for metric in def:

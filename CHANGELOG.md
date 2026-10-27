@@ -10,6 +10,12 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Two editor warnings in `citizen.gd` and `sign_followers.gd` are gone.
 - Try it: play until City Hall demolishes a building; the error no longer appears.
 
+## 2026-10-27: The hand no longer lifts trees; editor warnings fixed
+- Trees stay rooted: the hand can't grab or uproot them any more (they still bend in its wind). The uprooted tree and its settings (`uproot_effort`, `hand_strength`, ...) are gone.
+- Fixed editor warnings in the hand's files: names that shadowed built-ins (`sign`, `size`, `to_local`).
+- The hand test checks that trees can't be picked up.
+- Try it: press F5 and try to drag a tree: the city moves instead.
+
 ## 2026-10-26: Believers sit in to claim a building
 - Pick up a believer and set them down on a roof, or on the pavement right at a building's walls: they stay there and sit in ("We're not leaving.", "Form 7-C, signed."), facing the building, until the hand picks them up again.
 - This is the power route of the claim meter: each building's believing presence (the summed belief of believers who live there or sit in on it) is now available to the districts system, cached every 0.5 s.
