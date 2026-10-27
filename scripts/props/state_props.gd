@@ -179,8 +179,8 @@ func _ground(building: Node3D, size: Vector3) -> Vector3:
 
 # --- Drawing ---
 
-func _add(building: Node3D, kind: PropKind, transform: Transform3D, touched: Dictionary) -> void:
-	var o := transform.origin
+func _add(building: Node3D, kind: PropKind, place: Transform3D, touched: Dictionary) -> void:
+	var o := place.origin
 	var key := [kind, Vector2i(floori(o.x / _s.chunk_size), floori(o.z / _s.chunk_size))]
 	var pool: Pool = _pools.get(key)
 	if pool == null:
@@ -191,7 +191,7 @@ func _add(building: Node3D, kind: PropKind, transform: Transform3D, touched: Dic
 		if not _dressed.has(building):
 			_dressed[building] = []
 		(_dressed[building] as Array).append(pool)
-	(pool.by_building[building] as Array).append(transform)
+	(pool.by_building[building] as Array).append(place)
 	touched[pool] = true
 
 
