@@ -27,7 +27,7 @@ scripts/props/       Meshy props: facade and roof dressing, sidewalk props, thei
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
-assets/models/       third-party models (Kenney CC0) and our Meshy props (meshy/), with licence notes
+assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT) and our Meshy props (meshy/), with licence notes
 tests/               headless tests that drive the real game (run before pushing)
 docs/                screenshot for the README
 ```
