@@ -10,6 +10,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Each social group answers the four routes differently: students and artists fall for miracles, retirees for a visit from missionaries, shopkeepers and bankers for money, police for force.
 - Numbers: `data/balance.tres` ("Stages of belief", "Drift": `persuasion_scale` is the one knob for how fast the cult grows) and `data/people.tres` (groups' responses, `min_residents_per_home`, `street_people`).
 - Try it: press F5, press B and hover a person: the card shows their stage.
+- People can be sent to dance (for the block party): they bob and turn on the spot (`data/people.tres`, "Dancing").
 
 ## 2026-10-27: Last editor warning fixed
 - `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.

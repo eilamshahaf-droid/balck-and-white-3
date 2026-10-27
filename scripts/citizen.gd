@@ -97,6 +97,8 @@ var _errand_face := Vector3.ZERO
 var _errand_say := 0.0
 var _occupy_time := 0.0
 var _flee_time := 0.0
+var _dancing := false
+var _dance_time := 0.0
 var _from_hand := false       # the fall in progress started in the hand
 
 
@@ -321,7 +323,9 @@ func _turn_to(p: Vector3) -> void:
 
 ## Answer a divine sign: walk to `spot` (along the streets), then stand
 ## there facing `face` for `stay` seconds, now and then saying `line`.
-func send_on_errand(spot: Vector3, face: Vector3, stay: float, line: String, color: Color) -> void:
+func send_on_errand(spot: Vector3, face: Vector3, stay: float, line: String, color: Color,
+		dance := false) -> void:
+	_dancing = dance
 	on_errand = true
 	errand_arrived = false
 	var corner: Vector3 = city.intersection(city.nearest_grid(spot))
@@ -342,6 +346,9 @@ func can_answer() -> bool:
 func end_errand() -> void:
 	if not on_errand:
 		return
+	if _dancing:
+		_dancing = false
+		_body.position.y = 0.9
 	on_errand = false
 	errand_arrived = false
 	resume_walking()
@@ -357,7 +364,10 @@ func _walk_errand(delta: float) -> void:
 		_step_toward(_errand_route[0], speed, delta)
 		return
 	errand_arrived = true
-	_turn_to(_errand_face)
+	if _dancing:
+		_dance(delta)
+	else:
+		_turn_to(_errand_face)
 	_errand_say -= delta
 	if _errand_say <= 0.0:
 		_errand_say = randf_range(_people.errand_line_min, _people.errand_line_max)
@@ -367,6 +377,13 @@ func _walk_errand(delta: float) -> void:
 	_errand_time -= delta
 	if _errand_time <= 0.0:
 		end_errand()
+
+
+## Bob up and down and turn on the spot (a block party).
+func _dance(delta: float) -> void:
+	_dance_time += delta
+	_body.position.y = 0.9 + absf(sin(_dance_time * _people.dance_bob_rate)) * _people.dance_bob_height
+	rotation.y += _people.dance_spin * delta
 
 
 ## Stay at this spot, facing `face`, claiming the place for the cult. Stays
