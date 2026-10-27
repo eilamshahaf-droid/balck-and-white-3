@@ -5,6 +5,11 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 
 
 
+## 2026-10-27: The building you look at stays solid
+- The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
+- Number: `data/hand_settings.tres`, `fade_keep_radius`.
+- Try it: press F5, double-click a building to fly to it, and orbit around it: it stays solid while the ones in front of it fade.
+
 ## 2026-10-27: Risky believers, Block Party, Rain of Frogs
 - Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
   - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.
