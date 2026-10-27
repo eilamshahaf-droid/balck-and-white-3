@@ -201,6 +201,7 @@ func _fire(ground: Vector3, building: Node3D, size: float, length: float) -> Nod
 	var fire: Node3D
 	if building:
 		fire = set_alight(building, length)
+		population.scare(building, M.fire_scare)
 	else:
 		fire = FireScript.new()
 		city.add_child(fire)
@@ -233,6 +234,7 @@ func _roaches(building: Node3D, size: float, length: float) -> Node3D:
 	var swarm: Node3D = RoachScript.new()
 	city.add_child(swarm)
 	swarm.infest(building, size, length)
+	population.scare(building, M.roach_scare)
 	faith.report(swarm, &"see_roaches", M.roach_intensity, M.roach_situation, M.roach_time * length, true,
 			M.roach_deniability, [], M.roach_seen_from)
 	_abandon(building)

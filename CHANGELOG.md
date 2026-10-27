@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Miracles and decrees touch the people's mood
+- Fire and Roaches frighten the residents of the building (`Population.scare`), Luxury makes them more satisfied (`Population.add_comfort`), and an accidental fire raises police heat (`Heat.raise`, reason ACCIDENT).
+- Numbers: `data/miracles.tres` (`roach_scare`, `fire_scare`), `data/decrees.tres` (`luxury_comfort`).
+
 ## 2026-10-27: The head priest, comfort and fear, and the police's hidden criteria
 - Miracles no longer convert anyone. Witnesses still stare, explain what they saw and film it, but belief now comes from the cult's people: the head priest (dressed in white) walks the streets and preaches to everyone around him every few seconds, and prays a little belief into the pool on his own. The congregation's home is the first prayer house (the headquarters).
 - Every resident has hidden wealth, comfort and fear. Preaching only reaches people who are comfortable and not afraid; force works on the frightened; money works on the poor. A miracle that hurts people scares them, and someone too afraid moves to another home. Two ways to play: keep people comfortable, or keep them afraid.

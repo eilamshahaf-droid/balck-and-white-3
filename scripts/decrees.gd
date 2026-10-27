@@ -27,6 +27,7 @@ const PRAYER_HOUSES := &"prayer_houses"
 @export var miracles: Node
 @export var districts: Node
 @export var treasury: Treasury
+@export var population: Population
 
 
 ## The decree slices of the building wheel for `building`, in order.
@@ -146,6 +147,8 @@ func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 				building.remove_from_group(PRAYER_HOUSES)
 		_:
 			building.set_meta(&"decree_" + kind, true)
+	if kind == &"luxury":
+		population.add_comfort(building, D.luxury_comfort)
 	if kind == &"preserve":
 		building.add_to_group(PRESERVED)
 	if kind != &"floors":

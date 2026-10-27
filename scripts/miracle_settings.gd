@@ -53,6 +53,7 @@ extends Resource
 @export var street_fire_size := 3.0          # metres across, for a fire on the street
 @export var fire_seen_from := 80.0
 @export var fire_proof := 0.2
+@export var fire_scare := 0.6                # fear the residents of a burning building feel
 @export var fire_cooldown := 20.0
 
 @export_group("Roaches: a building's residents flee")
@@ -64,6 +65,7 @@ extends Resource
 @export var roach_count := 300
 @export var roach_seen_from := 40.0
 @export var roach_proof := 0.0               # nobody thanks a god for roaches
+@export var roach_scare := 1.0               # fear the residents of the building feel
 @export var roach_cooldown := 30.0
 
 @export_group("Money from the sky: banknotes rain on one spot")

@@ -20,6 +20,7 @@ extends Resource
 @export var luxury_cost := 40.0
 @export var luxury_money := 150.0
 @export var luxury_exposure := 0.02
+@export var luxury_comfort := 0.5            # residents' satisfaction rises by this
 
 @export_group("Facade: banners and lights in your colours")
 @export var facade_cost := 10.0
