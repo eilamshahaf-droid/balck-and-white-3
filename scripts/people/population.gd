@@ -65,6 +65,8 @@ var priest: Resident
 ## second their prayers add to the pool.
 var believer_count := 0
 var prayer := 0.0
+## How many believers the homes of the city hold; there can be no more believers than this.
+var housing_capacity := 0
 ## How many priests the cult has (the head priest, and whoever is ordained).
 var priest_count := 0
 
@@ -276,6 +278,8 @@ func persuade(r: Resident, route: SocialGroup.Route, strength: float) -> void:
 			strength *= lerpf(_people.force_without_fear, 1.0, r.fear)
 		SocialGroup.Route.MONEY:
 			strength *= lerpf(1.0, _people.money_on_rich, r.wealth)
+	if r.belief <= B.believer_threshold and believer_count >= housing_capacity:
+		return  # no home left for another believer
 	r.persuade(route, strength * (1.0 - r.skepticism))
 
 
@@ -459,6 +463,7 @@ func found_congregation() -> void:
 	near.sort_custom(func(a: Node3D, b: Node3D) -> bool:
 		return a.global_position.distance_squared_to(corner) < b.global_position.distance_squared_to(corner))
 	near[0].add_to_group(PRAYER_HOUSES)
+	_headquarters = near[0]
 	var converted := 0
 	for home: Node3D in near:
 		if converted >= _people.congregation_size:
@@ -541,6 +546,8 @@ func _populate() -> void:
 		for r: Resident in _by_home[home]:
 			total += r.wealth
 		_home_comfort[home] = total / maxi((_by_home[home] as Array).size(), 1)
+	for home: Node3D in _by_home:
+		_housing[home] = ceili((_by_home[home] as Array).size() * _people.housing_slack)
 	for r in residents:
 		_stages[r] = r.stage()
 	_street.police = police
@@ -677,7 +684,41 @@ func _footprint(building: Node3D) -> Rect2:
 	return Rect2()
 
 
+## Shops and prayer houses have no residents: whoever lives in a building
+## that became one moves to the nearest home, which crowds it.
+func _vacate_work_buildings() -> void:
+	for b: Node3D in _by_home.keys():
+		if b == _headquarters or (_by_home[b] as Array).is_empty():
+			continue
+		if not (b.is_in_group(SHOPS) or b.is_in_group(PRAYER_HOUSES)):
+			continue
+		_homes.erase(b)
+		var new_home := home_near(b.global_position)
+		if new_home == null:
+			return
+		for r: Resident in (_by_home[b] as Array).duplicate():
+			_set_home(r, new_home)
+			if _has_body(r):
+				r.body.move_out()
+
+
+## 0 for a home with room, up to 1 at twice its capacity.
+func _crowding(building: Node3D) -> float:
+	var cap := _capacity_of_home(building)
+	if cap <= 0:
+		return 0.0
+	return clampf(float(residents_in(building)) / cap - 1.0, 0.0, 1.0)
+
+
+func _capacity_of_home(building: Node3D) -> int:
+	return _housing.get(building, 0) + _extra_places(building)
+
+
 func _refresh_presence() -> void:
+	_vacate_work_buildings()
+	housing_capacity = 0
+	for home: Node3D in _homes:
+		housing_capacity += _capacity_of_home(home)
 	for b: Node3D in _presence:
 		_presence[b] = 0.0
 	believer_count = 0
@@ -716,7 +757,9 @@ func _refresh_presence() -> void:
 
 ## Comfort follows the home; fear fades, and too much of it moves people out.
 func _feel(r: Resident, dt: float) -> void:
-	r.comfort = move_toward(r.comfort, _home_comfort.get(r.home, r.wealth), _people.comfort_rate * dt)
+	var target: float = _home_comfort.get(r.home, r.wealth) \
+			- _people.crowding_penalty * _crowding(r.home)
+	r.comfort = move_toward(r.comfort, maxf(target, 0.0), _people.comfort_rate * dt)
 	r.fear = maxf(r.fear - _people.fear_decay * dt, 0.0)
 	if r.fear > _people.flee_fear and r != priest:
 		r.fear *= 0.5
