@@ -25,9 +25,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Try it: press F5, press B and hover a person: the card shows their stage.
 - People can be sent to dance (for the block party): they bob and turn on the spot (`data/people.tres`, "Dancing").
 
-## 2026-10-27: Last editor warning fixed
-- `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.
-
 ## 2026-10-27: Catch editor warnings before pushing
 - `CLAUDE.md` now runs the headless checks with `--debug`, which prints the same GDScript warnings the editor shows (they were silent before, so warnings reached Eilam's editor unnoticed).
 - Try it: `godot --headless --path . --debug --quit-after 600` prints nothing but the banner.

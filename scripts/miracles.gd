@@ -221,7 +221,7 @@ func _party(ground: Vector3, size: float, length: float) -> Node3D:
 	for i in dancers.size():
 		var spot: Vector3 = party.dance_spot(i, dancers.size())
 		dancers[i].send_on_errand(spot, ground, M.party_time * length,
-				M.party_lines[randi() % M.party_lines.size()], Color(1.0, 0.6, 0.9))
+				M.party_lines[randi() % M.party_lines.size()], Color(1.0, 0.6, 0.9), true)
 	faith.report(party, &"see_party", M.party_intensity, M.party_situation, M.party_time * length,
 			true, M.party_deniability, dancers, M.party_seen_from)
 	return party
