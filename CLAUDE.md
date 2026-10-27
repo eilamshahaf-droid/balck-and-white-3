@@ -23,10 +23,12 @@ project.godot        main scene, autoloads, window settings
 scenes/              main.tscn (the game), city_planning.tscn (planning sandbox)
 scripts/             gameplay scripts for main.tscn
 scripts/people/      residents: Population, Resident records, social groups, debug card
+scripts/props/       Meshy props: facade and roof dressing, sidewalk props, building-state props, their models
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
 assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT), with their licence files
+assets/models/       third-party models (Kenney CC0) and our Meshy props (meshy/), with licence notes
 tests/               headless tests that drive the real game (run before pushing)
 docs/                screenshot for the README
 ```
@@ -38,6 +40,9 @@ The scene is small; most nodes are built in code at startup.
 | Node | Script | Role |
 | --- | --- | --- |
 | `Main` | `city.gd` | Builds the procedural Manhattan grid (unevenly spaced avenues and streets): ground, blocks, towers in two height clusters, park, plazas, trees, doors, taxis, citizens, litter, pigeons. Grid helpers (`intersection`, `nearest_grid`, `block_of`, ...) used by citizens and districts. Day/night (`set_daylight`). |
+| `CityProps` | `props/city_props.gd` (+ `street_prop.gd`, `prop_model.gd`, `prop_kind.gd`) | Dresses the built city with the Meshy models: air conditioners under windows and water tanks / cooling units on roofs (MultiMesh per kind and chunk of town; roof props follow new floors and hide under a penthouse), and sidewalk props the hand can pick up (`StreetProp`; trash bags squash under weight and on landing; dumpsters and bags in poor districts). Tunables `data/city_props.tres`. |
+| `StateProps` | `props/state_props.gd` | Shows who holds a building with Meshy props on top of it, redressed on `Districts.building_changed` / `building_abandoned` and on the floors and luxury decrees: banner and roof flag (yours), boarded windows and rubble (abandoned), flower boxes and planters (luxury), laundry (poor districts). |
+| `TypeMarkers` | `props/type_markers.gd` (+ `use_marker.gd`) | Shows a building's Change Use with a Meshy prop on its roof or by its front. Kept apart from `StateProps` so the source of a building's type can change. |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
 | `Surroundings` | `world/surroundings.gd` (+ `world/outskirts.gd`) | Scenery past the grid, built once: land and hills (with a height-map collision floor), the river, promenade and bridges, roads leaving the grid, outer neighbourhoods and woods, clouds, and the depth haze that hides the edge. |
 | `Population` | `people/population.gd` | Every person is a `Resident` record (name, `SocialGroup`, home, work, family, friends, belief stage); `census.gd` (`Census`) builds them, at least 5 per home. About one in `residents_per_body` (at least one per lived-in home) has a `Citizen` body at a time; the rest are indoors and swap with housemates out of view. The belief pool's prayer comes only from believers living or sitting in buildings of group `prayer_houses`. Belief drifts back to a baseline unless friends or a believing home hold it; `stage_changed` announces stages; `persuade(r, route, strength)` (PREACH, MONEY, FORCE) and `persuade_near` are the ways to win people; miracles don't convert. Residents have hidden wealth, comfort and fear (`scare`, `add_comfort`); preaching needs comfort, force works on fear, too much fear moves people out. `street.gd` (`Street`) keeps the bodies on the street. Free believers get a post (`assign`, `unassign`, `free_believers_near`): PRAY or PRIEST in a prayer house, SHOP in a building of group `shops`, with slot limits; `upgrade` / `upgrade_cost` / `note_floor` (rising prices, `Upgrade` enum), `staffed(building)` is the staff output (0 with nobody), comfort raises it, and `force_power_of` / `defense_of` give the fear bonuses (`Heat.threshold` uses the latter). Priests (the head priest `priest` and any ordained, `priest_count`) are drawn larger, preach around them (`priest_preached`) and pray; believers are gold, zealots orange. `resident.gd` is the record, `social_group.gd` the per-group traits and per-route responses, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
@@ -107,6 +112,7 @@ Tunables: `data/planning.tres`.
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
 | `data/surroundings.tres` | `SurroundingsSettings` | land, river, outer neighbourhoods, clouds, haze |
+| `data/city_props.tres` | `CityPropsSettings` (+ `PropKind`s) | which Meshy props go where, how many, how bags squash, building-state and poor-district props, the taxi model |
 | `data/districts.tres` | `DistrictSettings` | districts, wealth, who holds a building, start district |
 | `data/treasury.tres` | `TreasurySettings` | money: tithes, rent, use upkeep, shops, luxury, floors |
 | `data/campaigns.tres` | `CampaignSettings` | takeover marks: crews, prices, sermons |
@@ -121,7 +127,8 @@ Several threads push to `main`. Message the owning thread before changing its fi
 | Hand, miracles, decrees, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `decrees.gd`, `decree_looks.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
 | People | `citizen.gd`, `faith.gd`, `heat.gd`, `scripts/people/` | "Build the people in the city" |
 | Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
-| Building models | `building_visual.gd`, `assets/models/` | model-library |
+| Building models | `building_visual.gd`, `assets/models/kenney_modular/` | model-library |
+| Meshy props | `scripts/props/`, `assets/models/meshy/`, `data/city_props.tres` | "Test the Meshy connection" |
 | World: districts, City Hall, surroundings | `scripts/world/`, `scripts/government/` | "World and stages" |
 | Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
 
