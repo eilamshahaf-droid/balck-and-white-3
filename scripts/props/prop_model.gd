@@ -26,7 +26,7 @@ static func of(kind: PropKind) -> PropModel:
 
 
 func _init(kind: PropKind) -> void:
-	var root: Node3D = kind.model.instantiate()
+	var root: Node3D = (load(kind.model_path) as PackedScene).instantiate()
 	var found := _find_mesh(root)
 	var to_root := found.transform
 	var parent := found.get_parent()

@@ -1,59 +1,13 @@
-[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=114 format=3]
+[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=68 format=3]
 
 [ext_resource type="Script" path="res://scripts/props/city_props_settings.gd" id="1_settings"]
 [ext_resource type="Script" path="res://scripts/props/prop_kind.gd" id="2_kind"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_window.glb" id="3_ac_window"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_vintage.glb" id="4_ac_vintage"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_modern.glb" id="5_ac_modern"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_split.glb" id="6_ac_split"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/water_tank.glb" id="7_water_tank"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_rooftop.glb" id="8_ac_rooftop"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/trash_can.glb" id="9_trash_can"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/trash_bag.glb" id="10_trash_bag"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/hydrant.glb" id="11_hydrant"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/bench.glb" id="12_bench"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/newspaper_box.glb" id="13_newspaper_box"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/mailbox.glb" id="14_mailbox"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/hot_dog_cart.glb" id="15_hot_dog_cart"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/taxi.glb" id="16_taxi"]
 [ext_resource type="Script" path="res://scripts/props/use_marker.gd" id="40_marker"]
 [ext_resource type="Script" path="res://scripts/props/upgrade_marker.gd" id="70_umarker"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/loudspeaker_horns.glb" id="81_loudspeaker_horns"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/lecture_podium.glb" id="82_lecture_podium"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/real_estate_sign.glb" id="83_real_estate_sign"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/gym_weights.glb" id="84_gym_weights"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/elevator_shaft.glb" id="71_elevator_shaft"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/security_cameras.glb" id="72_security_cameras"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/security_gate.glb" id="73_security_gate"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/core_sign.glb" id="60_core_sign"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/hand_statue.glb" id="41_hand_statue"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/prayer_entrance.glb" id="42_prayer_entrance"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/shop_awning.glb" id="43_shop_awning"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/laundromat_front.glb" id="44_laundromat_front"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/course_easel.glb" id="45_course_easel"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/test_booth.glb" id="46_test_booth"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/boxing_ring.glb" id="47_boxing_ring"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/bell_tower.glb" id="48_bell_tower"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/fire_escape.glb" id="49_fire_escape"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/roof_garden.glb" id="410_roof_garden"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/antenna_cluster.glb" id="411_antenna_cluster"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/revolving_door.glb" id="412_revolving_door"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/loading_dock.glb" id="413_loading_dock"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/cafe_tables.glb" id="414_cafe_tables"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/portico.glb" id="415_portico"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/bank_entrance.glb" id="416_bank_entrance"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/boarded_window.glb" id="17_boarded"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/rubble.glb" id="18_rubble"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/dumpster.glb" id="19_dumpster"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/laundry_line.glb" id="20_laundry"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/flower_box.glb" id="21_flower"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/topiary_planter.glb" id="22_planter"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/cult_banner.glb" id="23_banner"]
-[ext_resource type="PackedScene" path="res://assets/models/meshy/roof_flag.glb" id="24_flag"]
 
 [sub_resource type="Resource" id="Kind_ac_window"]
 script = ExtResource("2_kind")
-model = ExtResource("3_ac_window")
+model_path = "res://assets/models/meshy/ac_window.glb"
 scale = Vector3(1.6, 1.6, 1.6)
 weight = 3.0
 mass = 1.0
@@ -61,7 +15,7 @@ surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_ac_vintage"]
 script = ExtResource("2_kind")
-model = ExtResource("4_ac_vintage")
+model_path = "res://assets/models/meshy/ac_vintage.glb"
 scale = Vector3(1.6, 1.6, 1.6)
 weight = 2.0
 mass = 1.0
@@ -69,7 +23,7 @@ surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_ac_modern"]
 script = ExtResource("2_kind")
-model = ExtResource("5_ac_modern")
+model_path = "res://assets/models/meshy/ac_modern.glb"
 scale = Vector3(1.6, 1.6, 1.6)
 weight = 2.0
 mass = 1.0
@@ -77,7 +31,7 @@ surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_ac_split"]
 script = ExtResource("2_kind")
-model = ExtResource("6_ac_split")
+model_path = "res://assets/models/meshy/ac_split.glb"
 scale = Vector3(1.6, 1.6, 1.6)
 weight = 1.0
 mass = 1.0
@@ -85,28 +39,28 @@ surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_water_tank"]
 script = ExtResource("2_kind")
-model = ExtResource("7_water_tank")
+model_path = "res://assets/models/meshy/water_tank.glb"
 weight = 3.0
 mass = 1.0
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_ac_rooftop"]
 script = ExtResource("2_kind")
-model = ExtResource("8_ac_rooftop")
+model_path = "res://assets/models/meshy/ac_rooftop.glb"
 weight = 2.0
 mass = 1.0
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_trash_can"]
 script = ExtResource("2_kind")
-model = ExtResource("9_trash_can")
+model_path = "res://assets/models/meshy/trash_can.glb"
 weight = 4.0
 mass = 1.2
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_trash_bag"]
 script = ExtResource("2_kind")
-model = ExtResource("10_trash_bag")
+model_path = "res://assets/models/meshy/trash_bag.glb"
 weight = 4.0
 mass = 0.4
 surface = &"cloth"
@@ -114,21 +68,21 @@ cluster = Vector2i(2, 3)
 
 [sub_resource type="Resource" id="Kind_hydrant"]
 script = ExtResource("2_kind")
-model = ExtResource("11_hydrant")
+model_path = "res://assets/models/meshy/hydrant.glb"
 weight = 2.0
 mass = 2.0
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_bench"]
 script = ExtResource("2_kind")
-model = ExtResource("12_bench")
+model_path = "res://assets/models/meshy/bench.glb"
 weight = 1.5
 mass = 2.5
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_newspaper_box"]
 script = ExtResource("2_kind")
-model = ExtResource("13_newspaper_box")
+model_path = "res://assets/models/meshy/newspaper_box.glb"
 weight = 1.5
 mass = 1.5
 surface = &"metal"
@@ -136,21 +90,21 @@ cluster = Vector2i(1, 2)
 
 [sub_resource type="Resource" id="Kind_mailbox"]
 script = ExtResource("2_kind")
-model = ExtResource("14_mailbox")
+model_path = "res://assets/models/meshy/mailbox.glb"
 weight = 1.0
 mass = 2.0
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_hot_dog_cart"]
 script = ExtResource("2_kind")
-model = ExtResource("15_hot_dog_cart")
+model_path = "res://assets/models/meshy/hot_dog_cart.glb"
 weight = 0.4
 mass = 3.0
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_taxi"]
 script = ExtResource("2_kind")
-model = ExtResource("16_taxi")
+model_path = "res://assets/models/meshy/taxi.glb"
 yaw_degrees = 90.0
 scale = Vector3(0.85, 0.75, 1.0)
 weight = 1.0
@@ -159,18 +113,18 @@ surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_boarded_window"]
 script = ExtResource("2_kind")
-model = ExtResource("17_boarded")
+model_path = "res://assets/models/meshy/boarded_window.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_rubble"]
 script = ExtResource("2_kind")
-model = ExtResource("18_rubble")
+model_path = "res://assets/models/meshy/rubble.glb"
 scale = Vector3(1.4, 1.4, 1.4)
 surface = &"concrete"
 
 [sub_resource type="Resource" id="Kind_dumpster"]
 script = ExtResource("2_kind")
-model = ExtResource("19_dumpster")
+model_path = "res://assets/models/meshy/dumpster.glb"
 scale = Vector3(1.1, 0.8, 1.0)
 weight = 1.5
 mass = 6.0
@@ -178,107 +132,107 @@ surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_laundry_line"]
 script = ExtResource("2_kind")
-model = ExtResource("20_laundry")
+model_path = "res://assets/models/meshy/laundry_line.glb"
 surface = &"cloth"
 
 [sub_resource type="Resource" id="Kind_flower_box"]
 script = ExtResource("2_kind")
-model = ExtResource("21_flower")
+model_path = "res://assets/models/meshy/flower_box.glb"
 scale = Vector3(1.5, 1.5, 1.5)
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_planter"]
 script = ExtResource("2_kind")
-model = ExtResource("22_planter")
+model_path = "res://assets/models/meshy/topiary_planter.glb"
 scale = Vector3(1.6, 1.6, 1.6)
 
 [sub_resource type="Resource" id="Kind_banner"]
 script = ExtResource("2_kind")
-model = ExtResource("23_banner")
+model_path = "res://assets/models/meshy/cult_banner.glb"
 surface = &"cloth"
 
 [sub_resource type="Resource" id="Kind_flag"]
 script = ExtResource("2_kind")
-model = ExtResource("24_flag")
+model_path = "res://assets/models/meshy/roof_flag.glb"
 
 [sub_resource type="Resource" id="Kind_hand_statue"]
 script = ExtResource("2_kind")
-model = ExtResource("41_hand_statue")
+model_path = "res://assets/models/meshy/hand_statue.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_prayer_entrance"]
 script = ExtResource("2_kind")
-model = ExtResource("42_prayer_entrance")
+model_path = "res://assets/models/meshy/prayer_entrance.glb"
 surface = &"concrete"
 
 [sub_resource type="Resource" id="Kind_shop_awning"]
 script = ExtResource("2_kind")
-model = ExtResource("43_shop_awning")
+model_path = "res://assets/models/meshy/shop_awning.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_laundromat_front"]
 script = ExtResource("2_kind")
-model = ExtResource("44_laundromat_front")
+model_path = "res://assets/models/meshy/laundromat_front.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_course_easel"]
 script = ExtResource("2_kind")
-model = ExtResource("45_course_easel")
+model_path = "res://assets/models/meshy/course_easel.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_test_booth"]
 script = ExtResource("2_kind")
-model = ExtResource("46_test_booth")
+model_path = "res://assets/models/meshy/test_booth.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_boxing_ring"]
 script = ExtResource("2_kind")
-model = ExtResource("47_boxing_ring")
+model_path = "res://assets/models/meshy/boxing_ring.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_bell_tower"]
 script = ExtResource("2_kind")
-model = ExtResource("48_bell_tower")
+model_path = "res://assets/models/meshy/bell_tower.glb"
 surface = &"concrete"
 
 [sub_resource type="Resource" id="Kind_fire_escape"]
 script = ExtResource("2_kind")
-model = ExtResource("49_fire_escape")
+model_path = "res://assets/models/meshy/fire_escape.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_roof_garden"]
 script = ExtResource("2_kind")
-model = ExtResource("410_roof_garden")
+model_path = "res://assets/models/meshy/roof_garden.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_antenna_cluster"]
 script = ExtResource("2_kind")
-model = ExtResource("411_antenna_cluster")
+model_path = "res://assets/models/meshy/antenna_cluster.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_revolving_door"]
 script = ExtResource("2_kind")
-model = ExtResource("412_revolving_door")
+model_path = "res://assets/models/meshy/revolving_door.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_loading_dock"]
 script = ExtResource("2_kind")
-model = ExtResource("413_loading_dock")
+model_path = "res://assets/models/meshy/loading_dock.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_cafe_tables"]
 script = ExtResource("2_kind")
-model = ExtResource("414_cafe_tables")
+model_path = "res://assets/models/meshy/cafe_tables.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Kind_portico"]
 script = ExtResource("2_kind")
-model = ExtResource("415_portico")
+model_path = "res://assets/models/meshy/portico.glb"
 surface = &"concrete"
 
 [sub_resource type="Resource" id="Kind_bank_entrance"]
 script = ExtResource("2_kind")
-model = ExtResource("416_bank_entrance")
+model_path = "res://assets/models/meshy/bank_entrance.glb"
 surface = &"wood"
 
 [sub_resource type="Resource" id="Mark_0"]
@@ -313,22 +267,22 @@ on_roof = true
 
 [sub_resource type="Resource" id="Kind_core_sign"]
 script = ExtResource("2_kind")
-model = ExtResource("60_core_sign")
+model_path = "res://assets/models/meshy/core_sign.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_elevator_shaft"]
 script = ExtResource("2_kind")
-model = ExtResource("71_elevator_shaft")
+model_path = "res://assets/models/meshy/elevator_shaft.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_security_cameras"]
 script = ExtResource("2_kind")
-model = ExtResource("72_security_cameras")
+model_path = "res://assets/models/meshy/security_cameras.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_security_gate"]
 script = ExtResource("2_kind")
-model = ExtResource("73_security_gate")
+model_path = "res://assets/models/meshy/security_gate.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Upgrade_0"]
@@ -365,22 +319,22 @@ height = 0.0
 
 [sub_resource type="Resource" id="Kind_loudspeaker_horns"]
 script = ExtResource("2_kind")
-model = ExtResource("81_loudspeaker_horns")
+model_path = "res://assets/models/meshy/loudspeaker_horns.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_lecture_podium"]
 script = ExtResource("2_kind")
-model = ExtResource("82_lecture_podium")
+model_path = "res://assets/models/meshy/lecture_podium.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_real_estate_sign"]
 script = ExtResource("2_kind")
-model = ExtResource("83_real_estate_sign")
+model_path = "res://assets/models/meshy/real_estate_sign.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Kind_gym_weights"]
 script = ExtResource("2_kind")
-model = ExtResource("84_gym_weights")
+model_path = "res://assets/models/meshy/gym_weights.glb"
 surface = &"metal"
 
 [sub_resource type="Resource" id="Upgrade_4"]
