@@ -6,6 +6,11 @@
 
 ![צילום מסך](docs/screenshot.png)
 
+## הורדת האלפה העדכנית
+
+הקישור הזה תמיד מוריד את הגרסה האחרונה של האלפה:
+https://github.com/eilamshahaf-droid/balck-and-white-3/archive/refs/heads/alpha.zip
+
 ## איך מריצים
 
 1. פותחים את Godot 4 (גרסה 4.3 ומעלה).

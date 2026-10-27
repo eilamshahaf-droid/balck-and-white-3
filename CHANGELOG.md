@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: One fixed link for the newest Alpha
+- https://github.com/eilamshahaf-droid/balck-and-white-3/archive/refs/heads/alpha.zip always downloads the newest Alpha (the `alpha` branch). `README.md` shows it and `CLAUDE.md` tells every thread that refreshes the Alpha to push it to that branch.
+- Try it: open the link; the ZIP holds the folder `balck-and-white-3-alpha`, import its `project.godot` in Godot and press F5.
+
 ## 2026-10-27: Last editor warning fixed
 - `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.
 - Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.

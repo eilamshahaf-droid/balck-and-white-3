@@ -107,6 +107,15 @@ Several threads push to `main`. Message the owning thread before changing its fi
 | Building models | `building_visual.gd`, `assets/models/` | model-library |
 | Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
 
+### The Alpha build
+
+The Alpha is the build Eilam plays. It is the branch `alpha`, and Eilam downloads it from one
+fixed link that always gives the branch's newest commit:
+https://github.com/eilamshahaf-droid/balck-and-white-3/archive/refs/heads/alpha.zip
+A thread that refreshes the Alpha pushes the new build to the `alpha` branch (that is what
+updates the link) and also keeps `/mnt/project-files/builds/alpha.zip` in step with it.
+Do not rename or delete the branch, or the link breaks.
+
 ## Coding rules
 
 These are binding for every change.
