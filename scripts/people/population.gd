@@ -1,8 +1,17 @@
+class_name Population
 extends Node
 ## The city's residents. Once the city is built, gives every person a name, a
-## group, a home in a real building, a workplace, family and close friends,
-## then puts a body for each on the street. Other systems ask Population about
-## people (who lives where, who believes) instead of scanning the scene tree.
+## group, a home in a real building (at least a few in each), a workplace,
+## family and close friends. Other systems ask Population about people (who
+## lives where, who believes) instead of scanning the scene tree.
+##
+## Most residents are indoors at any moment: only street_people of them have a
+## body walking the city. Out of the god's view, a body now and then goes in
+## and someone else comes out, so everyone gets their turn on the street.
+##
+## Belief drifts slowly: back toward what a person believed before the cult,
+## unless friends who believe or a building of believers hold it up. A change
+## of stage is announced with stage_changed.
 ##
 ## It also tracks believers the hand sets down on or at a building, who sit in
 ## there to claim it (the power route of the claim meter, design doc: "how a
@@ -12,6 +21,8 @@ extends Node
 signal occupant_added(building: Node3D, resident: Resident)
 ## An occupant left `building` (picked up, or went home).
 signal occupant_left(building: Node3D, resident: Resident)
+## `resident` moved from stage `old` to stage `new` (Resident.Stage).
+signal stage_changed(resident: Resident, old: int, new: int)
 
 # Loaded at run time: a parse-time preload would load social_group.gd before
 # its class_name is registered and break the typed groups array.
@@ -19,6 +30,10 @@ var _people: PeopleSettings = load("res://data/people.tres")
 const B: Balance = preload("res://data/balance.tres")
 
 var residents: Array[Resident] = []
+## Refreshed with the presence: how many residents believe, and the belief per
+## second their prayers add to the pool.
+var believer_count := 0
+var prayer := 0.0
 
 var _homes: Array[Node3D] = []
 var _offices: Array[Node3D] = []
@@ -27,7 +42,11 @@ var _occupants: Dictionary = {}   # building -> Array[Resident]
 var _presence: Dictionary = {}    # building -> summed belief of its believers, refreshed on a timer
 var _footprints: Dictionary = {}  # building -> Rect2 on the ground (x, z)
 var _presence_timer := 0.0
-var _used_names: Dictionary = {}   # full name -> true, so nobody shares a name
+var _census: Census
+var _stages: Dictionary = {}       # resident -> the stage last announced
+var _bodies: Array[Citizen] = []
+var _indoors: Array[Resident] = []
+var _swap_timer := 0.0
 var _rng := RandomNumberGenerator.new()
 
 @onready var city: Node3D = get_parent()
@@ -41,6 +60,10 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_swap_timer -= delta
+	if _swap_timer <= 0.0:
+		_swap_timer = _people.swap_interval
+		_swap_someone()
 	_presence_timer -= delta
 	if _presence_timer > 0.0:
 		return
@@ -118,7 +141,34 @@ func evict(r: Resident) -> void:
 ## Someone preaches to `r` (missionaries at the door): belief rises by
 ## `strength`, less the more skeptical the person is.
 func preach_to(r: Resident, strength: float) -> void:
-	r.belief = minf(1.0, r.belief + strength * (1.0 - r.skepticism))
+	persuade(r, SocialGroup.Route.PREACH, strength)
+
+
+## Push `r` toward belief by `route` (a miracle, preaching, money, force):
+## less for skeptics, weighted by how their group answers that route, and at
+## most one stage at a time.
+func persuade(r: Resident, route: SocialGroup.Route, strength: float) -> void:
+	r.persuade(route, strength * (1.0 - r.skepticism))
+
+
+## The god saved `building` (a fire put out): everyone who lives there, indoors
+## or out, takes it as a miracle.
+func awe(building: Node3D, strength: float) -> void:
+	for r: Resident in _by_home.get(building, []):
+		persuade(r, SocialGroup.Route.MIRACLE, strength)
+
+
+func stage(r: Resident) -> Resident.Stage:
+	return r.stage()
+
+
+## Zealots on the street within `radius` of `p`: the ones who might overdo it.
+func zealots_near(p: Vector3, radius: float) -> Array[Citizen]:
+	var out: Array[Citizen] = []
+	for c in _bodies:
+		if c.resident.stage() == Resident.Stage.ZEALOT and c.global_position.distance_to(p) < radius:
+			out.append(c)
+	return out
 
 
 ## Everyone leaves `building` for good (roaches, fire): the people who live
@@ -141,47 +191,44 @@ func evacuate(building: Node3D) -> void:
 	_by_home.erase(building)
 
 
-## Skip the story: whole families move into the homes nearest one corner and
-## become a small congregation of believers.
+## Skip the story: the families in the homes nearest one corner become a
+## small congregation of believers.
 func found_congregation() -> void:
 	var corner: Vector3 = city.intersection(_people.congregation_corner)
 	var near := _homes.duplicate()
 	near.sort_custom(func(a: Node3D, b: Node3D) -> bool:
 		return a.global_position.distance_squared_to(corner) < b.global_position.distance_squared_to(corner))
-	var moved := 0
-	var family_home := 0
-	for r in residents:
-		if moved >= _people.congregation_size:
-			break
-		# Families are created together, so their ids sit side by side; a new
-		# surname means a new family and the next building.
-		if moved > 0 and r.last_name != residents[r.id - 1].last_name:
-			family_home += 1
-		move_home(r, near[family_home % near.size()])
-		r.belief = _rng.randf_range(_people.congregation_belief_min, _people.congregation_belief_max)
-		r.skepticism = _rng.randf_range(0.0, _people.congregation_skepticism_max)
-		moved += 1
+	var converted := 0
+	for home: Node3D in near:
+		for r: Resident in _by_home.get(home, []):
+			if converted >= _people.congregation_size:
+				return
+			r.belief = _rng.randf_range(_people.congregation_belief_min, _people.congregation_belief_max)
+			r.baseline = r.belief
+			r.skepticism = _rng.randf_range(0.0, _people.congregation_skepticism_max)
+			_stages[r] = r.stage()
+			if r.body == null:
+				_bring_out(r)
+			converted += 1
 
 
 func _populate() -> void:
-	for b: Node3D in get_tree().get_nodes_in_group("buildings"):
-		if _height(b) > _people.office_height:
-			_offices.append(b)
-		else:
-			_homes.append(b)
-	while residents.size() < _people.resident_count:
-		_add_family()
-	_add_friends()
+	_census = Census.new(_people, _rng)
+	_census.take(get_tree().get_nodes_in_group("buildings"))
+	residents = _census.residents
+	_by_home = _census.by_home
+	_homes = _census.homes
+	_offices = _census.offices
 	for r in residents:
-		var c := Citizen.new()
-		c.city = city
-		c.resident = r
-		c.collision_layer = city.LAYER_CITIZENS
-		c.collision_mask = city.LAYER_WORLD
-		r.body = c
-		city.add_child(c)
-		c.set_down.connect(_on_set_down.bind(r))
-		c.stopped_occupying.connect(_on_stopped_occupying.bind(r))
+		_stages[r] = r.stage()
+	# A random sample walks the streets, so they aren't all from one corner.
+	var order := residents.duplicate()
+	order.shuffle()
+	for r: Resident in order:
+		if _bodies.size() < _people.street_people:
+			_spawn_body(r)
+		else:
+			_indoors.append(r)
 	for b in _homes + _offices:
 		_footprints[b] = _footprint(b)
 		_presence[b] = 0.0
@@ -189,8 +236,62 @@ func _populate() -> void:
 	_refresh_presence()
 
 
+func _spawn_body(r: Resident) -> void:
+	var c := Citizen.new()
+	c.city = city
+	c.resident = r
+	c.collision_layer = city.LAYER_CITIZENS
+	c.collision_mask = city.LAYER_WORLD
+	r.body = c
+	_bodies.append(c)
+	city.add_child(c)
+	c.set_down.connect(_on_set_down.bind(c))
+	c.stopped_occupying.connect(_on_stopped_occupying.bind(c))
+	c.tree_exiting.connect(func() -> void: _bodies.erase(c), CONNECT_ONE_SHOT)
+
+
+## Out of the god's view, a skeptic walking the street goes indoors and an
+## indoor resident comes out in their body. Believers stay out.
+func _swap_someone() -> void:
+	if _indoors.is_empty() or _bodies.is_empty():
+		return
+	var camera := get_viewport().get_camera_3d()
+	for _attempt in 8:
+		var c := _bodies[_rng.randi() % _bodies.size()]
+		if not c.can_answer() or c.belief > B.believer_threshold or _seen_by(camera, c.global_position):
+			continue
+		var i := _rng.randi() % _indoors.size()
+		var r := _indoors[i]
+		if _seen_by(camera, city.intersection(city.nearest_grid(r.home.global_position))):
+			continue
+		_indoors[i] = c.resident
+		_give_body(r, c)
+		return
+
+
+## Bring `r` out onto the street now, in a skeptic's body.
+func _bring_out(r: Resident) -> void:
+	for _attempt in 32:
+		var c := _bodies[_rng.randi() % _bodies.size()]
+		if c.can_answer() and c.belief <= B.believer_threshold:
+			_indoors[_indoors.find(r)] = c.resident
+			_give_body(r, c)
+			return
+
+
+func _give_body(r: Resident, c: Citizen) -> void:
+	c.resident.body = null
+	r.body = c
+	c.become(r)
+
+
+func _seen_by(camera: Camera3D, p: Vector3) -> bool:
+	return camera != null and camera.is_position_in_frustum(p)
+
+
 ## A believer set down on a building, or right at its walls, sits in there.
-func _on_set_down(r: Resident) -> void:
+func _on_set_down(c: Citizen) -> void:
+	var r := c.resident
 	if r.belief <= B.believer_threshold or r.occupying:
 		return
 	var p := r.body.global_position
@@ -205,7 +306,11 @@ func _on_set_down(r: Resident) -> void:
 	occupant_added.emit(building, r)
 
 
-func _on_stopped_occupying(r: Resident) -> void:
+func _on_stopped_occupying(c: Citizen) -> void:
+	_end_occupation(c.resident)
+
+
+func _end_occupation(r: Resident) -> void:
 	var building := r.occupying
 	if building == null:
 		return
@@ -226,7 +331,7 @@ func _forget_building(building: Node3D) -> void:
 		return
 	for r in residents:
 		if r.work == building:
-			r.work = _pick_work(r.group)
+			r.work = _census.pick_work(r.group)
 
 
 func _release_occupants(building: Node3D) -> void:
@@ -234,7 +339,7 @@ func _release_occupants(building: Node3D) -> void:
 		if _has_body(r):
 			r.body.leave_occupied()
 		else:
-			_on_stopped_occupying(r)
+			_end_occupation(r)
 
 
 ## A body walking the city; bodies leave the tree before the buildings when the game quits.
@@ -277,106 +382,39 @@ func _footprint(building: Node3D) -> Rect2:
 func _refresh_presence() -> void:
 	for b: Node3D in _presence:
 		_presence[b] = 0.0
+	believer_count = 0
+	prayer = 0.0
 	for r in residents:
 		if r.belief <= B.believer_threshold:
 			continue
+		believer_count += 1
+		prayer += B.prayer_rate * r.belief
 		_presence[r.home] += r.belief
 		if r.occupying and r.occupying != r.home:
 			_presence[r.occupying] += r.belief
+	var dt := _people.presence_refresh
 	for r in residents:
 		var total := 0.0
 		for id in r.friends:
 			total += residents[id].belief
 		r.friends_belief = total / r.friends.size() if not r.friends.is_empty() else 0.0
+		_drift(r, dt)
+		var now := r.stage()
+		var before: int = _stages[r]
+		if now != before:
+			_stages[r] = now
+			stage_changed.emit(r, before, now)
 
 
-func _add_family() -> void:
-	var home: Node3D = _homes[_rng.randi() % _homes.size()]
-	var last: String = _people.last_names[_rng.randi() % _people.last_names.size()]
-	var size := mini(_rng.randi_range(_people.family_size_min, _people.family_size_max), _people.resident_count - residents.size())
-	var ids: Array[int] = []
-	for n in size:
-		var r := Resident.new()
-		r.id = residents.size()
-		r.last_name = last
-		r.first_name = _unused_first_name(last)
-		r.group = _pick_group()
-		r.work = _pick_work(r.group)
-		r.belief = _rng.randf_range(_people.belief_min, _people.belief_max)
-		r.skepticism = _rng.randf_range(r.group.skepticism_min, r.group.skepticism_max)
-		r.has_phone = _rng.randf() < B.phone_chance
-		residents.append(r)
-		move_home(r, home)
-		ids.append(r.id)
-	for id in ids:
-		var others := ids.duplicate()
-		others.erase(id)
-		residents[id].family = others
-
-
-func _unused_first_name(last: String) -> String:
-	var first := ""
-	for _attempt in 20:
-		first = _people.first_names[_rng.randi() % _people.first_names.size()]
-		if not _used_names.has(first + " " + last):
-			break
-	_used_names[first + " " + last] = true
-	return first
-
-
-## Close friends, mostly neighbours and colleagues. A friendship goes both ways.
-func _add_friends() -> void:
-	for r in residents:
-		var wanted := _rng.randi_range(_people.friends_min, _people.friends_max)
-		var nearby: Array[Resident] = []
-		var distant: Array[Resident] = []
-		for o in residents:
-			if o == r or r.family.has(o.id) or r.friends.has(o.id):
-				continue
-			if _close(r, o):
-				nearby.append(o)
-			else:
-				distant.append(o)
-		nearby.shuffle()
-		distant.shuffle()
-		while r.friends.size() < wanted and not (nearby.is_empty() and distant.is_empty()):
-			var far := nearby.is_empty() or (not distant.is_empty() and _rng.randf() < _people.distant_friend_chance)
-			var f: Resident = distant.pop_back() if far else nearby.pop_back()
-			r.friends.append(f.id)
-			f.friends.append(r.id)
-
-
-func _close(a: Resident, b: Resident) -> bool:
-	if a.work != null and a.work == b.work:
-		return true
-	return a.home.global_position.distance_to(b.home.global_position) < _people.neighbour_radius
-
-
-func _pick_group() -> SocialGroup:
-	var total := 0.0
-	for g in _people.groups:
-		total += g.share
-	var roll := _rng.randf() * total
-	for g in _people.groups:
-		roll -= g.share
-		if roll <= 0.0:
-			return g
-	return _people.groups[-1]
-
-
-func _pick_work(g: SocialGroup) -> Node3D:
-	match g.workplace:
-		SocialGroup.Workplace.OFFICE:
-			if not _offices.is_empty():
-				return _offices[_rng.randi() % _offices.size()]
-			return _homes[_rng.randi() % _homes.size()]
-		SocialGroup.Workplace.STREET:
-			return _homes[_rng.randi() % _homes.size()]
-	return null
-
-
-func _height(building: Node3D) -> float:
-	for child in building.get_children():
-		if child is CollisionShape3D and child.shape is BoxShape3D:
-			return (child.shape as BoxShape3D).size.y
-	return 0.0
+## Belief slides back toward what a person believed before the cult, unless
+## something holds it up: sitting in for the cult, a home most of whose
+## residents believe, or friends who believe as much. Friends who believe
+## more slowly pull it up.
+func _drift(r: Resident, dt: float) -> void:
+	if r.belief < r.friends_belief:
+		r.belief = minf(r.belief + B.contagion_rate * dt, r.friends_belief)
+		return
+	var hold := maxf(r.baseline, r.friends_belief)
+	if r.belief <= hold or r.occupying or believer_share(r.home) > 0.5:
+		return
+	r.belief = maxf(r.belief - B.belief_decay * dt, hold)
