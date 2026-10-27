@@ -6,7 +6,7 @@ config_version=5
 [application]
 
 config/name="Spin Cycle"
-config/version="0.6.1"
+config/version="0.6.2"
 config/release_stage="Pre-Alpha"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
