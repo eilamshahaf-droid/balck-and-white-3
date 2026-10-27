@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Last editor warning fixed
+- `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.
+- Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.
+
 ## 2026-10-27: Alpha (refreshed)
 - The combined build with everything every thread has so far: main (the cloth glove, 500 people in one crowd, the error fixes), the world branch (takeover by force / buy / missionaries, money and the new meters, PR #11), the Meshy props (PR #17) and the hand round (roaches, money from the sky, dearer miracles, decrees that cost money, the takeover marks in the building wheel, no tree lifting).
 - Headless run, planning scene and hand test pass with no errors; the Compatibility renderer starts.

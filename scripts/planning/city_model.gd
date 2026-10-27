@@ -642,10 +642,10 @@ func _reach_bonus(kind: String, pos: Vector3) -> float:
 
 
 ## Add (direction 1) or take away (direction -1) a structure's fields around `pos`.
-func _stamp(def: Dictionary, pos: Vector3, sign: float, reach_bonus := 0.0) -> void:
+func _stamp(def: Dictionary, pos: Vector3, direction: float, reach_bonus := 0.0) -> void:
 	var c := (Vector2(pos.x, pos.z) - grid_origin) / CELL
 	for metric in def:
-		var v: float = def[metric][0] * sign
+		var v: float = def[metric][0] * direction
 		var r: float = def[metric][1] + reach_bonus
 		var rc := r / CELL
 		var arr: PackedFloat32Array = _field[metric]
