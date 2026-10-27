@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=98 format=3]
+[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=114 format=3]
 
 [ext_resource type="Script" path="res://scripts/props/city_props_settings.gd" id="1_settings"]
 [ext_resource type="Script" path="res://scripts/props/prop_kind.gd" id="2_kind"]
@@ -18,6 +18,10 @@
 [ext_resource type="PackedScene" path="res://assets/models/meshy/taxi.glb" id="16_taxi"]
 [ext_resource type="Script" path="res://scripts/props/use_marker.gd" id="40_marker"]
 [ext_resource type="Script" path="res://scripts/props/upgrade_marker.gd" id="70_umarker"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/loudspeaker_horns.glb" id="81_loudspeaker_horns"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/lecture_podium.glb" id="82_lecture_podium"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/real_estate_sign.glb" id="83_real_estate_sign"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/gym_weights.glb" id="84_gym_weights"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/elevator_shaft.glb" id="71_elevator_shaft"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/security_cameras.glb" id="72_security_cameras"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/security_gate.glb" id="73_security_gate"]
@@ -359,6 +363,90 @@ place = 2
 across = 0.5
 height = 0.0
 
+[sub_resource type="Resource" id="Kind_loudspeaker_horns"]
+script = ExtResource("2_kind")
+model = ExtResource("81_loudspeaker_horns")
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_lecture_podium"]
+script = ExtResource("2_kind")
+model = ExtResource("82_lecture_podium")
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_real_estate_sign"]
+script = ExtResource("2_kind")
+model = ExtResource("83_real_estate_sign")
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_gym_weights"]
+script = ExtResource("2_kind")
+model = ExtResource("84_gym_weights")
+surface = &"metal"
+
+[sub_resource type="Resource" id="Upgrade_4"]
+script = ExtResource("70_umarker")
+upgrade = 4
+kind = SubResource("Kind_loudspeaker_horns")
+place = 0
+across = 0.15
+height = 0.0
+
+[sub_resource type="Resource" id="Upgrade_5"]
+script = ExtResource("70_umarker")
+upgrade = 5
+kind = SubResource("Kind_banner")
+place = 1
+across = 0.5
+height = 2.5
+
+[sub_resource type="Resource" id="Upgrade_6"]
+script = ExtResource("70_umarker")
+upgrade = 6
+kind = SubResource("Kind_lecture_podium")
+place = 2
+across = 0.2
+height = 0.0
+
+[sub_resource type="Resource" id="Upgrade_7"]
+script = ExtResource("70_umarker")
+upgrade = 7
+kind = SubResource("Kind_shop_awning")
+place = 1
+across = 0.5
+height = 0.0
+
+[sub_resource type="Resource" id="Upgrade_8"]
+script = ExtResource("70_umarker")
+upgrade = 8
+kind = SubResource("Kind_gym_weights")
+place = 2
+across = 0.8
+height = 0.0
+
+[sub_resource type="Resource" id="Upgrade_9"]
+script = ExtResource("70_umarker")
+upgrade = 9
+kind = SubResource("Kind_real_estate_sign")
+place = 2
+across = 0.05
+height = 0.0
+
+[sub_resource type="Resource" id="Upgrade_10"]
+script = ExtResource("70_umarker")
+upgrade = 10
+kind = SubResource("Kind_bell_tower")
+place = 0
+across = 0.8
+height = 0.0
+
+[sub_resource type="Resource" id="Upgrade_11"]
+script = ExtResource("70_umarker")
+upgrade = 11
+kind = SubResource("Kind_cafe_tables")
+place = 2
+across = 0.5
+height = 0.0
+
 [resource]
 script = ExtResource("1_settings")
 facade_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_ac_window"), SubResource("Kind_ac_vintage"), SubResource("Kind_ac_modern"), SubResource("Kind_ac_split")])
@@ -375,5 +463,5 @@ flag = SubResource("Kind_flag")
 use_markers = Array[ExtResource("40_marker")]([SubResource("Mark_0"), SubResource("Mark_1"), SubResource("Mark_2"), SubResource("Mark_3"), SubResource("Mark_4")])
 core_portico = SubResource("Kind_portico")
 core_sign = SubResource("Kind_core_sign")
-upgrade_markers = Array[ExtResource("70_umarker")]([SubResource("Upgrade_0"), SubResource("Upgrade_1"), SubResource("Upgrade_2"), SubResource("Upgrade_3")])
+upgrade_markers = Array[ExtResource("70_umarker")]([SubResource("Upgrade_0"), SubResource("Upgrade_1"), SubResource("Upgrade_2"), SubResource("Upgrade_3"), SubResource("Upgrade_4"), SubResource("Upgrade_5"), SubResource("Upgrade_6"), SubResource("Upgrade_7"), SubResource("Upgrade_8"), SubResource("Upgrade_9"), SubResource("Upgrade_10"), SubResource("Upgrade_11")])
 taxi = SubResource("Kind_taxi")

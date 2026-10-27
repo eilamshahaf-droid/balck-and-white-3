@@ -1,8 +1,7 @@
 class_name UpgradeMarker
 extends Resource
-## One prop that shows a housing upgrade a building has bought (an elevator
-## shaft on its side, cameras by its door). Stable names: see
-## `Population.Upgrade`.
+## One prop that shows an upgrade a building has bought (an elevator shaft on
+## its side, cameras by its door, a gym corner). One per `Population.Upgrade`.
 
 ## Where on the building the prop goes.
 enum Place { ROOF, WALL, STREET }
