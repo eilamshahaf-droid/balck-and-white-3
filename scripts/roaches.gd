@@ -29,7 +29,7 @@ func infest(building: Node3D, size := 1.0, length := 1.0) -> void:
 	# Up and down the facades...
 	_walls = _swarm(count, Vector3(box.x / 2.0 + 0.2, box.y / 2.0, box.z / 2.0 + 0.2), Vector3.UP, 0.0)
 	# ...and out across the pavement around the foot of the building.
-	_street = _swarm(count / 2, Vector3(box.x / 2.0 + 3.0, 0.1, box.z / 2.0 + 3.0), Vector3.ZERO, -box.y / 2.0 + 0.3)
+	_street = _swarm(count >> 1, Vector3(box.x / 2.0 + 3.0, 0.1, box.z / 2.0 + 3.0), Vector3.ZERO, -box.y / 2.0 + 0.3)
 	_street.spread = 180.0
 	Sfx.play(get_tree(), global_position, &"paper", 1.0)
 
