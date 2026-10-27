@@ -11,6 +11,8 @@ extends Node
 const B = preload("res://data/balance.tres")
 const LAYER_WORLD := 1
 
+@export var population: Population
+
 ## 0..1, shown to the player.
 var exposure := 0.0
 var believers := 0
@@ -65,12 +67,9 @@ func _physics_process(delta: float) -> void:
 		return
 	_timer = B.witness_interval
 	var people := get_tree().get_nodes_in_group("citizens")
-	believers = 0
-	_prayer = 0.0
-	for c in people:
-		if c.belief > B.believer_threshold:
-			believers += 1
-			_prayer += B.prayer_rate * c.belief
+	# Everyone counts and prays, indoors too; only those outside see miracles.
+	believers = population.believer_count
+	_prayer = population.prayer
 	for subject in _events:
 		_witness(subject, _events[subject], people)
 
@@ -90,6 +89,6 @@ func _witness(subject: Node3D, e: Dictionary, people: Array) -> void:
 			query.exclude = see_through
 		if space.intersect_ray(query):
 			continue  # a building is in the way
-		var filmed: bool = c.witness(e, at, c.resident.friends_belief)
+		var filmed: bool = c.witness(e, at)
 		if filmed:
 			exposure = minf(exposure + B.exposure_per_video * e.intensity, 1.0)

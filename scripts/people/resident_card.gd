@@ -11,6 +11,7 @@ const FRIEND_COLOR := Color(0.4, 0.75, 1.0)
 const HOME_COLOR := Color(0.4, 0.95, 0.45)
 const WORK_COLOR := Color(0.75, 0.75, 0.75)
 const CHEST := Vector3(0, 1.2, 0)
+const STAGE_NAMES: Array[String] = ["Skeptic", "Curious", "Sympathizer", "Believer", "Zealot"]
 
 var _shown: Resident
 var _panel: PanelContainer
@@ -20,7 +21,7 @@ var _lines_node := MeshInstance3D.new()
 var _refresh := 0.0
 
 @onready var city: Node3D = get_parent()
-@onready var population: Node = get_node("../Population")
+@onready var population: Population = get_node("../Population")
 
 
 func _ready() -> void:
@@ -73,13 +74,21 @@ func _process(delta: float) -> void:
 	var from := _shown.body.global_position + CHEST
 	_lines.surface_begin(Mesh.PRIMITIVE_LINES)
 	for id in _shown.family:
-		_line(from, population.residents[id].body.global_position + CHEST, FAMILY_COLOR)
+		_line_to(from, population.residents[id], FAMILY_COLOR)
 	for id in _shown.friends:
-		_line(from, population.residents[id].body.global_position + CHEST, FRIEND_COLOR)
+		_line_to(from, population.residents[id], FRIEND_COLOR)
 	_line(from, _shown.home.global_position, HOME_COLOR)
 	if _shown.work:
 		_line(from, _shown.work.global_position, WORK_COLOR)
 	_lines.surface_end()
+
+
+## A line to `other`'s body, or to their home while they are indoors.
+func _line_to(from: Vector3, other: Resident, color: Color) -> void:
+	if is_instance_valid(other.body):
+		_line(from, other.body.global_position + CHEST, color)
+	else:
+		_line(from, other.home.global_position, color)
 
 
 func _line(a: Vector3, b: Vector3, color: Color) -> void:
@@ -94,6 +103,8 @@ func _describe(r: Resident) -> String:
 		r.full_name(), r.group.title.to_lower(), _corner(r.home), work,
 		_names(r.family, true), _names(r.friends, false),
 		roundi(r.belief * 100.0), roundi(r.skepticism * 100.0)] \
+		+ "\n%s   Wealth %d%%   Comfort %d%%   Fear %d%%" % [STAGE_NAMES[r.stage()],
+				roundi(r.wealth * 100.0), roundi(r.comfort * 100.0), roundi(r.fear * 100.0)] \
 		+ ("\nSitting in near %s" % _corner(r.occupying) if r.occupying else "")
 
 

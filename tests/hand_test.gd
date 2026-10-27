@@ -35,6 +35,7 @@ func _ready() -> void:
 	await _test_trees_stay_rooted()
 	await _test_pigeons()
 	await _test_wheel_focus_loss()
+	await _test_bag_squash()
 	print("HAND TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -107,11 +108,14 @@ func _test_wind() -> void:
 	if tree == null:
 		return
 	# The wind comes from a moving hand: wave it around the crown.
+	# Next to a wall the hand climbs it and leaves the tree behind, so any bend counts.
 	var centre := get_viewport().get_mouse_position()
+	var bent := false
 	for i in 12:
 		_move(centre + Vector2(30.0, 0.0).rotated(i * 1.2))
 		await _physics(1)
-	_check(tree.get("_push") != Vector2.ZERO, "the hand's wind bends a nearby tree")
+		bent = bent or tree.get("_push") != Vector2.ZERO
+	_check(bent, "the hand's wind bends a nearby tree")
 	_move(Vector2(5, 5))
 	await _physics(10)
 	_check(tree.get("_push") == Vector2.ZERO, "the tree stops bending once the hand is gone")
@@ -151,13 +155,19 @@ func _test_pigeons() -> void:
 
 
 func _test_wheel_focus_loss() -> void:
-	_move(get_viewport().get_visible_rect().size * 0.5)
-	await _physics(3)
-	if _hand.hovered != null:
-		_move(get_viewport().get_visible_rect().size * Vector2(0.5, 0.95))
+	# A busy street: a taxi or a person can pass under the hand as it presses,
+	# so try spots until the press lands on bare ground or a wall.
+	for spot: Vector2 in [Vector2(0.5, 0.5), Vector2(0.5, 0.95), Vector2(0.3, 0.8),
+			Vector2(0.7, 0.8), Vector2(0.2, 0.5), Vector2(0.8, 0.5)]:
+		_move(get_viewport().get_visible_rect().size * spot)
 		await _physics(3)
-	await _press()
-	await get_tree().create_timer(S.wheel_hold_time + 0.3).timeout
+		if _hand.hovered != null:
+			continue
+		await _press()
+		await get_tree().create_timer(S.wheel_hold_time + 0.3).timeout
+		if _hand.held == null:
+			break
+		await _release()
 	_check(_hand.get("_point_anchor") != Vector3.INF, "holding still opens a wheel")
 	get_tree().root.propagate_notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	await _frames(2)
@@ -263,3 +273,24 @@ func _check(ok: bool, what: String) -> void:
 	print("  %s  %s" % ["ok  " if ok else "FAIL", what])
 	if not ok:
 		_failures += 1
+
+
+## A trash bag dropped on another squashes it, and both still sit in the street.
+func _test_bag_squash() -> void:
+	var bags: Array[StreetProp] = []
+	for node in _main.get_node("CityProps").get_children():
+		if node is StreetProp and (node as StreetProp).is_squashy():
+			bags.append(node)
+		if bags.size() == 2:
+			break
+	_check(bags.size() == 2, "the sidewalks have trash bags")
+	if bags.size() < 2:
+		return
+	var below := bags[0]
+	var above := bags[1]
+	above.global_position = below.global_position + Vector3.UP * 1.5
+	above.linear_velocity = Vector3.DOWN * 4.0
+	above.sleeping = false
+	below.sleeping = false
+	await _frames(60)
+	_check(below.squash_amount() > 0.1, "a bag dropped on a bag squashes it")

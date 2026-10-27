@@ -29,6 +29,7 @@ const B = preload("res://data/balance.tres")
 var _people: PeopleSettings = load("res://data/people.tres")
 
 var city: Node3D
+var police: Police
 ## Used by the god's hand: heavier things lag and swing more when held.
 var mass := 1.0
 var fall_gravity := _people.gravity
@@ -62,8 +63,6 @@ var has_phone: bool:
 var home := Vector2i.ZERO
 ## Stand still (watching a fire, waiting on a roof) instead of walking the grid.
 var idle := false
-## Story moments can fix how this person explains the next miracle (&"god", &"fraud", ...).
-var scripted_explanation := &""
 ## Answering a divine sign: walking to a building, or standing at it.
 var on_errand := false
 ## On an errand and already standing at the spot.
@@ -77,14 +76,12 @@ var occupying := false
 var _body: MeshInstance3D
 static var _phone_screen: StandardMaterial3D
 
-var _color := Color.WHITE
 var _own_mat: StandardMaterial3D
 var _fall_speed := 0.0
 var _pause := 0.0
 var _spin := Vector3.ZERO      # tumble while flying, radians per second around this axis
 var _down_timer := 0.0
 var _lying := Quaternion.IDENTITY
-var _seen := {}             # miracle kind -> times seen
 var _events_seen := {}     # ids of miracle events already reacted to
 var _phone: MeshInstance3D
 var _phone_timer := 0.0
@@ -99,6 +96,8 @@ var _errand_face := Vector3.ZERO
 var _errand_say := 0.0
 var _occupy_time := 0.0
 var _flee_time := 0.0
+var _dancing := false
+var _dance_time := 0.0
 var _from_hand := false       # the fall in progress started in the hand
 
 
@@ -119,7 +118,6 @@ func _ready() -> void:
 	_body.position.y = 0.9
 	_body.visible = false
 	add_child(_body)
-	_color = Color.from_hsv(randf(), 0.45, 0.85)
 	Crowd.join(self)
 	# The phone and the speech bubble are made the first time they are needed:
 	# most of the crowd never films or speaks.
@@ -129,6 +127,7 @@ func _ready() -> void:
 	if resident.id < 0:
 		skepticism = randf()
 		has_phone = randf() < B.phone_chance
+		resident.color = Color.from_hsv(randf(), 0.45, 0.85)
 	if resident.home:
 		grid = city.nearest_grid(resident.home.global_position)
 	home = grid
@@ -219,57 +218,49 @@ func _exit_tree() -> void:
 func body_transform() -> Transform3D:
 	if _body.visible:
 		return Transform3D(Basis.from_scale(Vector3.ZERO), global_position)
-	return global_transform * _body.transform
+	var t := global_transform * _body.transform
+	if resident.job != Resident.Job.PRIEST:
+		return t
+	# Grow about the feet, so a priest doesn't sink into the street.
+	var s := _people.priest_scale
+	return Transform3D(t.basis.scaled(Vector3.ONE * s), global_position + (t.origin - global_position) * s)
 
 
-## The body's colour; with the belief view on (B), red = skeptic, white =
-## undecided, gold = believer.
+## The body's colour: priests white, believers gold, zealots orange. With the
+## belief view on (B): red = skeptic, white = undecided, gold = believer.
 func body_color() -> Color:
 	if not city.show_belief:
-		return _color
+		if resident.job == Resident.Job.PRIEST:
+			return _people.priest_color
+		match resident.stage():
+			Resident.Stage.ZEALOT:
+				return _people.zealot_color
+			Resident.Stage.BELIEVER:
+				return _people.believer_color
+		return resident.color
 	if belief < 0:
 		return Color.WHITE.lerp(Color(0.9, 0.15, 0.1), -belief)
 	return Color.WHITE.lerp(Color(1.0, 0.8, 0.1), belief)
-
-
-## Shift belief after witnessing or experiencing a miracle, by the formula in
-## balance.gd. situation: + it helped this person, - it hurt them.
-func react_to_miracle(kind: StringName, intensity: float, situation: float, friends_belief := 0.0) -> void:
-	var times: int = _seen.get(kind, 0)
-	_seen[kind] = times + 1
-	var novelty := maxf(1.0 - B.novelty_step * times, B.novelty_floor)
-	var change := intensity * situation * (1.0 - skepticism) * novelty
-	# A repeat that reads as a trick turns people away, believers or not.
-	if novelty < 0.0:
-		change = intensity * absf(situation) * novelty
-	belief = clampf(belief + change + B.friends_weight * friends_belief, -1.0, 1.0)
 
 
 func has_seen_event(id: int) -> bool:
 	return _events_seen.has(id)
 
 
-## Saw miracle event `e` (see faith.gd) happen at `at`. First picks an
-## explanation (god, chance, fraud or a plot), which decides what the miracle
-## does to belief, then stops to stare and maybe films it.
+## Saw miracle event `e` (see faith.gd) happen at `at`: stops to stare and
+## maybe films it. A miracle doesn't change belief by itself (it gives a priest proof to
+## preach with), but one that hurt this person scares them.
 ## Returns true if this person filmed it.
-func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
+func witness(e: Dictionary, at: Vector3) -> bool:
 	if _events_seen.size() > 30:
 		_events_seen.clear()
 	_events_seen[e.id] = true
 	var helped: bool = e.helped.has(self)
 	var situation: float = B.helped_situation if helped else e.situation
-	var explanation := _explain(e.deniability, 1.0 if helped else B.bystander_timing, friends_belief)
-	match explanation:
-		&"god":
-			react_to_miracle(e.kind, e.intensity, situation, friends_belief)
-		&"fraud":
-			belief = clampf(belief - e.intensity * B.fraud_penalty, -1.0, 1.0)
-		&"plot":
-			belief = clampf(belief - e.intensity * B.plot_penalty, -1.0, 1.0)
-	# Big miracles hold people longer, and they keep talking about them.
+	if situation < 0.0:
+		resident.fear = minf(resident.fear - situation * e.intensity * _people.fear_per_harm, 1.0)
+	# Big miracles hold people longer.
 	var hold: float = B.look_time * (1.0 + e.intensity * 3.0)
-	_say(explanation, hold * 1.4)
 	if state != State.WALKING:
 		return false
 	_pause = maxf(_pause, hold * randf_range(0.7, 1.3))
@@ -280,42 +271,6 @@ func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
 	return has_phone
 
 
-## Weigh the four explanations of the design doc and pick one.
-## deniability: how easy it is to explain without a god; timing: how exactly it
-## answered this person's need right now.
-func _explain(deniability: float, timing: float, friends_belief: float) -> StringName:
-	if scripted_explanation != &"":
-		var fixed := scripted_explanation
-		scripted_explanation = &""
-		return fixed
-	var weights := {
-		&"god": (1.0 - skepticism) * (0.3 + timing) * (1.0 - deniability * 0.5) + maxf(friends_belief, 0.0) * 0.5,
-		&"chance": deniability * (0.4 + skepticism * 0.6),
-		&"fraud": skepticism * (1.0 - deniability) * B.fraud_weight * (1.5 if has_phone else 1.0),
-		&"plot": skepticism * B.plot_weight,
-	}
-	var total := 0.0
-	for k in weights:
-		total += weights[k]
-	var roll := randf() * total
-	for k in weights:
-		roll -= weights[k]
-		if roll <= 0.0:
-			return k
-	return &"chance"
-
-
-## A short line over the head, so the player can read how a miracle landed.
-func _say(explanation: StringName, seconds: float) -> void:
-	var lines := {
-		&"god": ["It's a miracle!", Color(1.0, 0.85, 0.35)],
-		&"chance": ["Just luck.", Color(0.85, 0.85, 0.85)],
-		&"fraud": ["It's a hoax.", Color(1.0, 0.45, 0.4)],
-		&"plot": ["Someone's behind this...", Color(0.7, 0.6, 1.0)],
-	}
-	_say_line(lines[explanation][0], lines[explanation][1], seconds)
-
-
 func _turn_to(p: Vector3) -> void:
 	var d := p - global_position
 	rotation.y = atan2(d.x, d.z)
@@ -323,7 +278,9 @@ func _turn_to(p: Vector3) -> void:
 
 ## Answer a divine sign: walk to `spot` (along the streets), then stand
 ## there facing `face` for `stay` seconds, now and then saying `line`.
-func send_on_errand(spot: Vector3, face: Vector3, stay: float, line: String, color: Color) -> void:
+func send_on_errand(spot: Vector3, face: Vector3, stay: float, line: String, color: Color,
+		dance := false) -> void:
+	_dancing = dance
 	on_errand = true
 	errand_arrived = false
 	var corner: Vector3 = city.intersection(city.nearest_grid(spot))
@@ -344,6 +301,9 @@ func can_answer() -> bool:
 func end_errand() -> void:
 	if not on_errand:
 		return
+	if _dancing:
+		_dancing = false
+		_body.position.y = 0.9
 	on_errand = false
 	errand_arrived = false
 	resume_walking()
@@ -359,7 +319,10 @@ func _walk_errand(delta: float) -> void:
 		_step_toward(_errand_route[0], speed, delta)
 		return
 	errand_arrived = true
-	_turn_to(_errand_face)
+	if _dancing:
+		_dance(delta)
+	else:
+		_turn_to(_errand_face)
 	_errand_say -= delta
 	if _errand_say <= 0.0:
 		_errand_say = randf_range(_people.errand_line_min, _people.errand_line_max)
@@ -369,6 +332,13 @@ func _walk_errand(delta: float) -> void:
 	_errand_time -= delta
 	if _errand_time <= 0.0:
 		end_errand()
+
+
+## Bob up and down and turn on the spot (a block party).
+func _dance(delta: float) -> void:
+	_dance_time += delta
+	_body.position.y = 0.9 + absf(sin(_dance_time * _people.dance_bob_rate)) * _people.dance_bob_height
+	rotation.y += _people.dance_spin * delta
 
 
 ## Stay at this spot, facing `face`, claiming the place for the cult. Stays
@@ -528,15 +498,6 @@ func knock_over(push: Vector3) -> bool:
 	return true
 
 
-## A healing miracle: whoever is lying down gets straight back up.
-## Returns true if this person needed it.
-func heal() -> bool:
-	if state != State.DOWN and state != State.GETTING_UP:
-		return false
-	_stand_up()
-	return true
-
-
 func _land() -> void:
 	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
 	# A gentle drop from the hand lands on its feet, even from the height the hand carries people at.
@@ -593,6 +554,21 @@ func settle_at_home() -> void:
 	resume_walking()
 
 
+## Become `r`, who just stepped out of their home: the body is reused for
+## someone else instead of making a new one (Population keeps a fixed number
+## of people on the street).
+func become(r: Resident) -> void:
+	resident = r
+	speed = randf_range(_people.walk_speed_min, _people.walk_speed_max)
+	end_errand()
+	idle = false
+	_pause = 0.0
+	_flee_time = 0.0
+	_look_at_target = Vector3.INF
+	_events_seen.clear()
+	settle_at_home()
+
+
 ## Run from `danger` (a roach attack) to a corner down the street, shouting.
 func flee(danger: Vector3) -> void:
 	if state != State.WALKING:
@@ -611,18 +587,32 @@ func flee(danger: Vector3) -> void:
 	_say_line(FLEE_LINES[randi() % FLEE_LINES.size()], FLEE_COLOR, _people.errand_line_time)
 
 
-## The home changed while this person is out: from now on they wander around
-## the new one, walking there instead of appearing at it.
+## The home (or post) changed while this person is out: from now on they wander
+## around the new one, walking there instead of appearing at it.
 func move_out() -> void:
-	home = city.nearest_grid(resident.home.global_position)
+	var base: Node3D = resident.post if resident.post else resident.home
+	home = city.nearest_grid(base.global_position)
 
 
 func _pick_next_target() -> void:
 	# Everyone has a neighbourhood: believers gather where they live.
 	var next: Vector2i = city.random_neighbor(grid)
 	for attempt in 4:
-		if city.intersection(next).distance_to(city.intersection(home)) <= _people.home_range:
+		if city.intersection(next).distance_to(city.intersection(home)) <= _people.home_range \
+				and not _street_closed(grid, next):
 			break
 		next = city.random_neighbor(grid)
+	if _street_closed(grid, next):
+		# Every way out is shut for now: wait a beat at this corner.
+		_pause = randf_range(_people.notice_pause_min, _people.notice_pause_max)
+		return
 	grid = next
 	target = city.intersection(grid) + lane_offset
+
+
+## Is the street between two corners shut by a roadblock?
+func _street_closed(from: Vector2i, to: Vector2i) -> bool:
+	if police == null:
+		return false
+	var mid: Vector3 = (city.intersection(from) + city.intersection(to)) / 2.0
+	return police.is_closed_at(mid)

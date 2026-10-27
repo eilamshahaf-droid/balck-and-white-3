@@ -126,8 +126,8 @@ func set_zone(b: int, zone: String) -> void:
 	_update_mixed()
 
 
-func change_density(b: int, step: int) -> void:
-	blocks[b].density = clampi(blocks[b].density + step, 1, 3)
+func change_density(b: int, change: int) -> void:
+	blocks[b].density = clampi(blocks[b].density + change, 1, 3)
 
 
 ## Where a landmark of `kind` would stand if placed at `pos`: along the
@@ -226,7 +226,7 @@ func relayout() -> Array:
 		var poly: PackedVector2Array = f.polygon
 		var c := _centroid(poly)
 		var water := 0
-		for k in range(0, poly.size(), maxi(poly.size() / 8, 1)):
+		for k in range(0, poly.size(), maxi(poly.size() >> 3, 1)):
 			water += int(terrain.is_water(poly[k].lerp(c, 0.5)))
 		var block := {"polygon": poly, "sides": f.sides, "edges": f.edges, "area": absf(f.area),
 				"area_signed": f.area, "bbox": _bbox(poly), "center": _ground(c), "zone": "", "density": 1,

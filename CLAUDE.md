@@ -23,10 +23,13 @@ project.godot        main scene, autoloads, window settings
 scenes/              main.tscn (the game), city_planning.tscn (planning sandbox)
 scripts/             gameplay scripts for main.tscn
 scripts/people/      residents: Population, Resident records, social groups, debug card
+scripts/props/       Meshy props: facade and roof dressing, sidewalk props, building-state props, their models
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
 assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT), with their licence files
+assets/models/       third-party models (Kenney CC0) and our Meshy props (meshy/), with licence notes
+assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT) and our Meshy props (meshy/), with licence notes
 tests/               headless tests that drive the real game (run before pushing)
 docs/                screenshot for the README
 ```
@@ -37,15 +40,28 @@ The scene is small; most nodes are built in code at startup.
 
 | Node | Script | Role |
 | --- | --- | --- |
-| `Main` | `city.gd` | Builds the procedural Manhattan grid: ground, blocks, towers, park, trees, doors, taxis, citizens, litter, pigeons. Grid helpers used by citizens. Day/night (`set_daylight`). |
+| `Main` | `city.gd` | Builds the procedural Manhattan grid (unevenly spaced avenues and streets): ground, blocks, towers in two height clusters, park, plazas, trees, doors, taxis, citizens, litter, pigeons. Grid helpers (`intersection`, `nearest_grid`, `block_of`, ...) used by citizens and districts. Day/night (`set_daylight`). |
+| `CityProps` | `props/city_props.gd` (+ `street_prop.gd`, `prop_model.gd`, `prop_kind.gd`) | Dresses the built city with the Meshy models: air conditioners under windows and water tanks / cooling units on roofs (MultiMesh per kind and chunk of town; roof props follow new floors and hide under a penthouse), and sidewalk props the hand can pick up (`StreetProp`; trash bags squash under weight and on landing; dumpsters and bags in poor districts). Tunables `data/city_props.tres`. |
+| `StateProps` | `props/state_props.gd` | Shows who holds a building with Meshy props on top of it, redressed on `Districts.building_changed` / `building_abandoned` and on the floors and luxury decrees: banner and roof flag (yours), boarded windows and rubble (abandoned), flower boxes and planters (luxury), laundry (poor districts). |
+| `TypeMarkers` | `props/type_markers.gd` (+ `use_marker.gd`) | Shows a building's Change Use with a Meshy prop on its roof or by its front. Kept apart from `StateProps` so the source of a building's type can change. |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
-| `Population` | `people/population.gd` | Gives every person a `Resident` record (name, `SocialGroup`, home, work, family, friends). `resident.gd` is the record, `social_group.gd` the per-group traits, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
+| `Surroundings` | `world/surroundings.gd` (+ `world/outskirts.gd`) | Scenery past the grid, built once: land and hills (with a height-map collision floor), the river, promenade and bridges, roads leaving the grid, outer neighbourhoods and woods, clouds, and the depth haze that hides the edge. |
+| `Population` | `people/population.gd` | Every person is a `Resident` record (name, `SocialGroup`, home, work, family, friends, belief stage); `census.gd` (`Census`) builds them, at least 5 per home. About one in `residents_per_body` (at least one per lived-in home) has a `Citizen` body at a time; the rest are indoors and swap with housemates out of view. The belief pool's prayer comes only from believers living or sitting in buildings of group `prayer_houses`. Belief drifts back to a baseline (nothing pulls it up but a priest's preaching); `stage_changed` announces stages; `persuade(r, route, strength)` (PREACH, MONEY, FORCE) and `persuade_near` are the ways to win people; miracles don't convert. Residents have hidden wealth, comfort and fear (`scare`, `add_comfort`); preaching needs comfort, force works on fear, too much fear moves people out. `street.gd` (`Street`) keeps the bodies on the street. Free believers get a post (`assign`, `unassign`, `free_believers_near`): PRAY or PRIEST in a prayer house, SHOP in a building of group `shops`, with slot limits; `upgrade` / `upgrade_cost` / `note_floor` (rising prices, `Upgrade` enum), `staffed(building)` is the staff output (0 with nobody), comfort raises it, and `force_power_of` / `defense_of` give the fear bonuses (`Heat.threshold` uses the latter). Priests stop now and then for sermons (`people/sermons.gd`, `Population.sermons`): a crowd gathers, a hidden chance of a police raid (`police_moved_in`, ended by `end_sermon`), none while the homes are full (`housing_capacity`). Priests (the head priest `priest` and any ordained, `priest_count`) are drawn larger, preach around them (`priest_preached`) and pray; believers are gold, zealots orange. `resident.gd` is the record, `social_group.gd` the per-group traits and per-route responses, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
+| `Heat` | `heat.gd` | The police's hidden criteria: per-building heat from sit-ins, crowds, broken building rules and accidents (`raise`), decaying; `police_called(building, reason)` past a threshold scaled by district hardness (`set_hardness`). Tunables: `data/heat.tres`. |
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
-| `Miracles` | `miracles.gd` | Casts the miracles (water, fire, lightning, shield, heal): spends belief and reports to `Faith`. Effects: `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd`. |
-| `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (most residents believe): add floors, luxury, facade, change use, preserve. Preserved buildings are in group `preserved`. |
-| `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees and signs on a building, miracles elsewhere. A chosen miracle sits in the hand until cast. |
+| `Miracles` | `miracles.gd` | Casts the miracles (water, fire, roaches, money, block party, rain of frogs): spends belief and reports to `Faith`. A burnt-out, roach- or frog-infested building is emptied (`Population.evacuate`) and announced with `building_abandoned`; a fire put out in time is `building_saved` and awes the residents (`Population.awe`). Effects: `rain.gd`, `fire.gd`, `roaches.gd`, `money_rain.gd`, `block_party.gd`, `frog_rain.gd`. |
+| `Accidents` | `accidents.gd` | Now and then believers set one of your buildings on fire (likelier with zealots near, in a Prayer House or Course Center). Tunables in `data/miracles.tres`. |
+| `ConversionNotes` | `conversion_notes.gd` (+ `floating_note.gd`) | Floats "+ Believer" / "Zealot!" / "Lost a believer" over people from `Population.stage_changed`; `FloatingNote.pop` is the shared pop-up text |
+| `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (`Districts.owns()`): add floors, luxury, facade, change use, preserve; paid in belief and `Treasury` money. Preserved buildings are in group `preserved`. |
+| `BuildingMenus` | `building_menus.gd` | The second wheels of a building of yours: housing upgrades (paid from `Treasury`, applied with `Population.upgrade`) and posts for free believers in prayer houses and shops. |
+| `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees on your building, the three `Campaigns` takeover marks on anyone else's, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
+| `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts and keeps who holds every building: yours once most of its residents believe (an empty one, while a believer sits in); abandoned buildings; the cult starts from its headquarters; a district is yours at 60%. `DistrictView` puts a gold plate on yours. Tunables `data/districts.tres`. |
+| `Treasury` | `world/treasury.gd` | The cult's money: tithes from believers, and each building of yours earns or costs money by its decrees (`net_of`, `net_if`: rent, use upkeep, shop, luxury speed, floor efficiency) and its district's wealth; `spend_money` / `add_money`. Tunables `data/treasury.tres`. |
+| `Campaigns` | `world/campaigns.gd` (+ `campaign_marks.gd`) | The three takeover marks on a building (force, buy, missionaries), carried out by believers until most residents believe. Tunables `data/campaigns.tres`. |
+| `Government` | `government/government.gd` (+ `bulldozer.gd`, `demolition_notice.gd`) | City Hall: a hidden building code (floors past the limit, luxury, Combat Training) feeds `Heat` and slowly raises suspicion; at the limit an inspector visits, then a demolition notice and the bulldozer. Tunables `data/government.tres`. |
+| `Police` | `government/police.gd` | Crews at marked buildings raise `Heat`; when `Heat.police_called` fires the street is closed with a roadblock and the campaign waits (`Campaigns.block`). Controlled districts are exempt; hardness follows district wealth. Tunables `data/police.tres`. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |
 | `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Off for now (`enabled = false` in `main.tscn`), so the game starts in free play with a ready congregation. |
@@ -57,8 +73,11 @@ World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `
 `shared_meshes.gd` (`SharedMeshes`) hands out low-poly primitive meshes shared by every instance.
 `sfx.gd` makes placeholder sounds in code.
 
-Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`,
+Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `shops`, `prayer_houses`,
 `wind_reactive`, `no_toon`, `preserved`.
+Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `shops`,
+Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`,
+`wind_reactive`, `no_toon`, `preserved`, `prayer_houses`.
 
 Physics layers (bit values in code): 1 = world (ground, buildings), 2 = citizens,
 3 (4) = props (taxis, trees, litter), 4 (8) = critters (pigeons, as Area3D so the hand's wind
@@ -91,9 +110,16 @@ Tunables: `data/planning.tres`.
 | `data/balance.tres` | `Balance` | belief, witnesses, exposure |
 | `data/miracles.tres` | `MiracleSettings` | miracle costs, reach and effects |
 | `data/decrees.tres` | `DecreeSettings` | divine decree costs, exposure and limits |
-| `data/people.tres` | `PeopleSettings` (+ `SocialGroup`s) | residents, groups, names, walking |
+| `data/people.tres` | `PeopleSettings` (+ `SocialGroup`s) | residents, groups, names, walking, comfort and fear, jobs, colours, the priest |
+| `data/heat.tres` | `HeatSettings` | when the police step in |
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
+| `data/surroundings.tres` | `SurroundingsSettings` | land, river, outer neighbourhoods, clouds, haze |
+| `data/city_props.tres` | `CityPropsSettings` (+ `PropKind`s) | which Meshy props go where, how many, how bags squash, building-state and poor-district props, the taxi model |
+| `data/districts.tres` | `DistrictSettings` | districts, wealth, who holds a building, start district |
+| `data/treasury.tres` | `TreasurySettings` | money: tithes, rent, use upkeep, shops, luxury, floors |
+| `data/campaigns.tres` | `CampaignSettings` | takeover marks: crews, prices, sermons |
+| `data/police.tres` | `PoliceSettings` | roadblocks: crew heat, force and exposure multipliers, closing time |
 
 ### Who owns what
 
@@ -102,9 +128,11 @@ Several threads push to `main`. Message the owning thread before changing its fi
 | Area | Files | Owner thread |
 | --- | --- | --- |
 | Hand, miracles, decrees, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `decrees.gd`, `decree_looks.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
-| People | `citizen.gd`, `faith.gd`, `sign_followers.gd`, `scripts/people/` | "Build the people in the city" |
+| People | `citizen.gd`, `faith.gd`, `heat.gd`, `scripts/people/` | "Build the people in the city" |
 | Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
-| Building models | `building_visual.gd`, `assets/models/` | model-library |
+| Building models | `building_visual.gd`, `assets/models/kenney_modular/` | model-library |
+| Meshy props | `scripts/props/`, `assets/models/meshy/`, `data/city_props.tres` | "Test the Meshy connection" |
+| World: districts, City Hall, surroundings | `scripts/world/`, `scripts/government/` | "World and stages" |
 | Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
 
 ### The Alpha build
@@ -173,12 +201,23 @@ Target: a steady **60 fps on a mid-range PC**, and the game must also run on the
 - Turn off `_process` (`set_process(false)`) on objects with nothing to do.
 - Measure with the Godot profiler and the Monitors tab (draw calls, primitives, script time).
 
+### Versions
+
+The build is "<stage> <major.minor.patch>", set in `project.godot` (`config/release_stage`,
+`config/version`) and shown in the HUD corner and the window title. Bump the minor for a new
+feature round and the patch for a fix-only build; tag the commit `vX.Y.Z`; head the CHANGELOG
+section of the release with the version. Stages in order: Pre-Alpha, Alpha, Beta.
+
 ### Before pushing
 
 1. `git pull` right before you push; message the owning thread before changing its files.
-2. Run the project headless with no errors and no new warnings:
-   `godot --headless --path . --quit-after 600` and the same for
-   `res://scenes/city_planning.tscn`. After adding a `class_name`, run
+2. Run the project headless with no errors and no warnings:
+   `godot --headless --path . --debug --quit-after 600` and the same for
+   `res://scenes/city_planning.tscn`. `--debug` makes Godot print the GDScript warnings
+   (shadowed names, integer division, ...) that Eilam sees in the editor; without it they
+   stay silent. They print as `ERROR: '<warning text>'` with no file name, so if one shows
+   up, load the scripts one by one to find it. Read the output, not only the exit code: a
+   script that fails to compile still exits 0, and the hand test can still print PASS. After adding a `class_name`, run
    `godot --headless --path . --import` once so the class is registered.
 3. Run the hand test: `godot --headless --path . res://tests/hand_test.tscn` must print
    `HAND TEST: PASS` (exit code 0). Add a check there when you add a hand behaviour.
