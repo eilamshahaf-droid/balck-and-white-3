@@ -112,11 +112,12 @@ script = ExtResource("20_marks")
 campaigns = NodePath("../Campaigns")
 districts = NodePath("../Districts")
 
-[node name="Police" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts", "faith")]
+[node name="Police" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts", "faith", "heat")]
 script = ExtResource("21_police")
 campaigns = NodePath("../Campaigns")
 districts = NodePath("../Districts")
 faith = NodePath("../Faith")
+heat = NodePath("../Heat")
 
 [node name="Government" type="Node" parent="."]
 script = ExtResource("15_government")

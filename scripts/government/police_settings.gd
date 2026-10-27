@@ -1,16 +1,14 @@
 class_name PoliceSettings
 extends Resource
 ## Tunables for the police (police.gd). Open data/police.tres in Godot and
-## change values in the Inspector. Heat builds at a marked building while the
-## cult's crew works it; a lot of heat brings a roadblock.
+## change values in the Inspector. The crew working a marked building
+## adds to its hidden Heat (heat.gd); when Heat calls the police they close the street.
 
 @export var check_interval := 1.0           # seconds between looks
-@export var heat_per_crew := 1.0            # per second, per crew member at the building
-@export var heat_per_doubter := 0.15        # per second, per non-believer living there, while a crew works
+@export var doubter_share := 0.15           # each non-believer living there counts this much of a crew member
 @export var force_multiplier := 2.5         # fighters scaring people out draw much more
-@export var exposure_multiplier := 2.0      # heat times (1 + exposure * this)
-@export var heat_decay := 1.0               # per second, where nothing happens
-@export var roadblock_heat := 60.0
+@export var exposure_multiplier := 2.0      # load times (1 + exposure * this)
+@export var hardest_wealth := 2.0           # district wealth that counts as the hardest police (hardness 1)
 @export var roadblock_time := 45.0          # seconds the street stays closed
 @export var barrier_color := Color(0.95, 0.95, 0.95)
 @export var stripe_color := Color(0.9, 0.2, 0.15)

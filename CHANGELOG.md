@@ -5,6 +5,12 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 
 
 
+## 2026-10-27: Police roadblocks and a hidden building code
+- **Police**: crews working a marked building add to its hidden `Heat` (fighters most of all, more when exposure is high). When `Heat` calls the police they close the street in front of it (barriers, a patrol car, "POLICE LINE"), the crew goes home and the campaign waits about 45 seconds. Poor districts are soft, rich ones hard. A district that is yours is left alone. The HUD shows "Police: quiet / N streets closed".
+- **Hidden building code**: City Hall no longer reacts to divine signs. It quietly watches your buildings: more than 2 floor decrees, luxury on top of that, and a Combat Training use all count as breaches. A breach adds heat once, and suspicion builds until an inspector visits. Over-optimizing is what eventually brings the bulldozer.
+- Numbers: `data/police.tres`, `data/government.tres` ("Building code").
+- Try it: mark a building with the skull and let the crew work until the street closes, or stack floors on one of your buildings and wait for the inspector.
+
 ## 2026-10-27: Risky believers, Block Party, Rain of Frogs
 - Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
   - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.

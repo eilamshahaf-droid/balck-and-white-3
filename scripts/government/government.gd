@@ -24,6 +24,7 @@ const INSPECTOR_COLOR := Color(0.85, 0.9, 1.0)
 var _step := Step.QUIET
 var _suspicion := 0.0
 var _total_violations := 0.0
+var _flagged := {}             # building -> true while its breach has been reported to Heat
 var _cooldown := 0.0
 var _target: Node3D
 var _front := Vector3.ZERO     # the road in front of the target
@@ -42,6 +43,7 @@ var _rubble := _mat(Color(0.5, 0.47, 0.42))
 @onready var city: Node3D = get_parent()
 @onready var districts: Districts = get_node("../Districts")
 @onready var decrees: Decrees = get_node("../Decrees")
+@onready var heat: Heat = get_node("../Heat")
 
 
 func _ready() -> void:
@@ -113,6 +115,11 @@ func _pick_target() -> Node3D:
 			continue
 		var score := _violations(b)
 		_total_violations += score
+		if score > 0.0 and not _flagged.has(b):
+			_flagged[b] = true
+			heat.raise(b, Heat.Reason.CODE_BREACH, score)
+		elif score == 0.0:
+			_flagged.erase(b)
 		if score > worst_score:
 			worst_score = score
 			worst = b

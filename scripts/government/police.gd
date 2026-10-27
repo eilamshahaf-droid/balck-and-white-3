@@ -1,12 +1,12 @@
 class_name Police
 extends Node3D
 ## The police (design doc: "המשטרה והעירייה: לא רנדומלי"). They don't demolish
-## and they don't convert anyone; they keep the peace. A street where the
-## cult's crews work too hard, above all where fighters scare people out of a
-## building full of non-believers, heats up, and at enough heat the police
-## close it: a roadblock in front of the building, and the campaign waits until
-## it is gone. Exposure makes them jumpier. Districts that are yours are left
-## alone.
+## and they don't convert anyone; they keep the peace. The cult's crews add to
+## a building's hidden `Heat` while they work it (fighters scaring people out
+## most of all); when `Heat` calls the police the street in front of the
+## building is closed, and the campaign waits until the roadblock is gone.
+## Poor districts are soft, rich ones hard, and districts that are yours are
+## left alone. Exposure makes them jumpier.
 
 const S: PoliceSettings = preload("res://data/police.tres")
 const LINE := "POLICE LINE - DO NOT CROSS"
@@ -16,8 +16,8 @@ const CAR := Vector3(2.0, 1.4, 4.4)
 @export var campaigns: Campaigns
 @export var districts: Districts
 @export var faith: Node
+@export var heat: Heat
 
-var _heat := {}             # building -> heat
 var _blocks := {}           # building -> Roadblock
 var _timer := 0.0
 var _white := _mat(S.barrier_color)
@@ -30,48 +30,53 @@ class Roadblock:
 	var left := 0.0
 
 
+func _ready() -> void:
+	heat.police_called.connect(_on_police_called)
+
+
 func _physics_process(delta: float) -> void:
 	_timer -= delta
 	if _timer > 0.0:
 		return
 	_timer = S.check_interval
 	_lift_roadblocks()
-	var marked := campaigns.marked()
-	for b: Node3D in _heat.keys():
-		if not b in marked or not is_instance_valid(b):
-			_heat.erase(b)
-	for b in marked:
-		if _blocks.has(b):
+	for b in campaigns.marked():
+		var crew := campaigns.crew_at(b)
+		if crew == 0 or _blocks.has(b) or _is_safe(b):
 			continue
-		var heat: float = _heat.get(b, 0.0) + _heat_from(b) * S.check_interval
-		_heat[b] = maxf(heat, 0.0)
-		if heat >= S.roadblock_heat:
-			_heat[b] = 0.0
-			_close_street(b)
+		heat.set_hardness(b, _hardness_of(b))
+		var strain := crew + S.doubter_share * _doubters_in(b)
+		if campaigns.route_of(b) == Campaigns.Route.FORCE:
+			strain *= S.force_multiplier
+		strain *= 1.0 + faith.exposure * S.exposure_multiplier
+		heat.raise(b, Heat.Reason.CROWD, strain * S.check_interval)
 
 
 ## For the HUD: what the police are doing.
 func status_text() -> String:
-	if not _blocks.is_empty():
-		return "%d street%s closed" % [_blocks.size(), "" if _blocks.size() == 1 else "s"]
-	for b in _heat:
-		if _heat[b] > S.roadblock_heat / 2.0:
-			return "patrolling"
-	return "quiet"
+	if _blocks.is_empty():
+		return "quiet"
+	return "%d street%s closed" % [_blocks.size(), "" if _blocks.size() == 1 else "s"]
 
 
-func _heat_from(building: Node3D) -> float:
+func _on_police_called(building: Node3D, _reason: Heat.Reason) -> void:
+	if _blocks.has(building) or _is_safe(building):
+		return
+	_close_street(building)
+
+
+func _is_safe(building: Node3D) -> bool:
 	var i := districts.index_of(building)
-	if i < 0 or districts.is_controlled(districts.district_at(building.global_position)):
-		return -S.heat_decay
-	var crew := campaigns.crew_at(building)
-	if crew == 0:
-		return -S.heat_decay
-	var doubters := districts.residents_in(i) - districts.believers_at(i)
-	var heat := S.heat_per_crew * crew + S.heat_per_doubter * doubters
-	if campaigns.route_of(building) == Campaigns.Route.FORCE:
-		heat *= S.force_multiplier
-	return heat * (1.0 + faith.exposure * S.exposure_multiplier)
+	return i < 0 or districts.is_controlled(districts.district_at(building.global_position))
+
+
+func _doubters_in(building: Node3D) -> int:
+	var i := districts.index_of(building)
+	return districts.residents_in(i) - districts.believers_at(i)
+
+
+func _hardness_of(building: Node3D) -> float:
+	return clampf(districts.wealth_at(districts.index_of(building)) / S.hardest_wealth, 0.0, 1.0)
 
 
 func _close_street(building: Node3D) -> void:
