@@ -134,6 +134,13 @@ extends Resource
 @export var saved_seen_from := 60.0
 @export var saved_proof := 1.2               # the strongest proof: the god saved their home
 
+@export_group("Head priest marker: so you can find him")
+@export var priest_ring_radius := 2.2        # metres, the ring on the ground around him
+@export var priest_ring_color := Color(1.0, 0.85, 0.3)
+@export var priest_label_pixel := 0.0011
+@export var priest_label_height := 4.5       # metres above his feet
+@export var priest_preach_mark_time := 4.0   # seconds "preaching..." stays after he talks
+
 @export_group("Floating notes: who just came to believe")
 @export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once
 

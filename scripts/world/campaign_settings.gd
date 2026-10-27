@@ -5,6 +5,10 @@ extends Resource
 
 @export var tick := 0.5                     # seconds between steps of every campaign
 @export var line_color := Color(1.0, 0.85, 0.3)
+## The marks shrink as the camera comes in: full size from this far away...
+@export var mark_far_distance := 160.0
+## ...down to this share of it, up close.
+@export_range(0.05, 1.0) var mark_min_scale := 0.25
 
 @export_group("Force (skull)")
 ## The Change Use that trains fighters; you need one building with it.

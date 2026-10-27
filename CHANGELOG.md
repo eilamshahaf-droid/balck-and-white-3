@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: The game is called Spin Cycle (for now)
+- A temporary name until Eilam picks the real one: the project name and window title in `project.godot`, and the README title. The repository keeps its name.
+
+## 2026-10-27: Calmer marks and a narrower see-through tube
+- The takeover marks (skull, dollar, sky sign and their count) shrink as the camera comes in, down to a quarter of their size, so a close-up isn't covered by them. Numbers: `data/campaigns.tres` (`mark_far_distance`, `mark_min_scale`).
+- The camera's see-through tube is narrower (1.4 m instead of 3), so only buildings that really block the centre of the view fade, not their neighbours. The building at the centre stays solid within 6 m. Numbers: `data/hand_settings.tres` (`fade_radius`, `fade_keep_radius`).
+- Try it: press F5, zoom in on a marked building: the mark is small; orbit around: only the building in the way fades.
+
 ## 2026-10-27: Remove the old divine signs' followers and the healing leftovers
 - Believers no longer answer the old blessed / cursed / protected signs (the three takeover marks replaced them on the wheel). `sign_followers.gd`, its node and its settings are gone, and so is the leftover `Citizen.heal()` from the removed Heal miracle.
 - Try it: press F5; nothing changes in play.
