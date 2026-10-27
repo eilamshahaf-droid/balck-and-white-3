@@ -1,7 +1,7 @@
 extends Node
 ## City Hall (design doc: "הממשלה כאויב", escalation steps 2 and 4). Once
 ## exposure passes a threshold it sends a building inspector to one of your
-## buildings, preferring one with a blessed or protected sign. He posts a
+## buildings (never a preserved one). He posts a
 ## demolition notice, and when it runs out a bulldozer comes (bulldozer.gd
 ## says what stops it). Picking the inspector up before he gets there also
 ## works, for a while.
@@ -95,15 +95,8 @@ func _maybe_visit() -> void:
 	_send_inspector()
 
 
-## A building with a blessed or protected sign if there is one, else any of yours;
-## never a preserved one.
+## Any building of yours, never a preserved one.
 func _pick_target() -> Node3D:
-	var signed: Array[Node3D] = []
-	for mark in get_tree().get_nodes_in_group("divine_signs"):
-		if mark.kind != &"cursed" and not mark.is_queued_for_deletion() and _demolishable(mark.get_parent()):
-			signed.append(mark.get_parent())
-	if not signed.is_empty():
-		return signed.pick_random()
 	var mine: Array = districts.converted_buildings().filter(_demolishable)
 	return mine.pick_random() if not mine.is_empty() else null
 
