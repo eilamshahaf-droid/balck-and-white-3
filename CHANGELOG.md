@@ -44,6 +44,9 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 ## 2026-10-27: Pre-Alpha 0.5.1: buildings no longer fade for no reason
 - A building only fades when it is within `fade_max_distance` (70 m, `data/hand_settings.tres`) of the camera as well as in the tube between camera and hand. Far towers that the tube happened to cross used to go see-through at random, mostly when zoomed out. Checked from 384 combinations of height, angle and distance: nothing faded beyond the limit.
 - At most 6 speech bubbles ("It's a miracle!", "It's a hoax.") show at once (`max_explanations_shown` in `data/balance.tres`), so a crowd no longer covers the screen with overlapping text.
+- A building that burns down because nobody put the fire out now calls `Population.burn_down`: some of the people indoors die (people thread). Roaches and frogs still just empty a building.
+- Accidental fires are now a rare event: a chance every 4 minutes (was 40 s) and 15% (was 50%): `accident_interval`, `accident_chance` in `data/miracles.tres`.
+- The campaign mark labels ("2 / 11 believe") draw above everything else, so a nearer roof no longer cuts them off; the version label sits in the screen corner.
 - Try it: press F5, zoom out and orbit: no building fades unless it is near you; cast a miracle over a crowd and count the bubbles.
 
 ## 2026-10-27: Pre-Alpha 0.5.0: Building wheel upgrades, staff and double-click reset

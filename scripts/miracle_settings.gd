@@ -123,8 +123,8 @@ extends Resource
 @export_range(0.0, 1.0) var frog_roadblock_chance := 0.7
 
 @export_group("Accidents: believers set their own buildings on fire")
-@export var accident_interval := 40.0        # seconds between chances of an accident
-@export_range(0.0, 1.0) var accident_chance := 0.5
+@export var accident_interval := 240.0       # seconds between chances of an accident
+@export_range(0.0, 1.0) var accident_chance := 0.15
 @export var accident_use_weight := 3.0       # how much likelier a Prayer House or Course Center burns
 @export var accident_zealot_radius := 20.0   # each zealot this close makes a building likelier to burn
 @export var accident_burn_time := 35.0       # seconds to put it out before the building is lost

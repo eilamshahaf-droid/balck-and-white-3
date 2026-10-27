@@ -335,11 +335,15 @@ func _roof(building: Node3D) -> Vector3:
 
 func _on_burned(building: Node3D) -> void:
 	if is_instance_valid(building):
-		_abandon(building)
+		_abandon(building, true)
 
 
-func _abandon(building: Node3D) -> void:
-	population.evacuate(building)
+## `building` is emptied; a fire that burnt it down also kills some indoors.
+func _abandon(building: Node3D, burnt := false) -> void:
+	if burnt:
+		population.burn_down(building)
+	else:
+		population.evacuate(building)
 	building_abandoned.emit(building)
 
 

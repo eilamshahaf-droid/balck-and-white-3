@@ -36,7 +36,7 @@ func _on_started(building: Node3D, route: Campaigns.Route) -> void:
 	icon.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	icon.shaded = false
 	icon.no_depth_test = true  # a mark stays readable behind a tower
-	icon.render_priority = 1
+	icon.render_priority = 99
 	icon.add_to_group(&"no_toon")
 	var label := Label3D.new()
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -44,7 +44,7 @@ func _on_started(building: Node3D, route: Campaigns.Route) -> void:
 	label.outline_size = 24
 	label.pixel_size = 0.04
 	label.no_depth_test = true
-	label.render_priority = 2
+	label.render_priority = 100
 	label.position = Vector3.DOWN * 9.5
 	icon.add_child(label)
 	add_child(icon)
