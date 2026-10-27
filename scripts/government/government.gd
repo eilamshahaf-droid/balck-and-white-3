@@ -1,7 +1,9 @@
 extends Node
-## City Hall (design doc: "הממשלה כאויב", escalation steps 2 and 4). Once
-## exposure passes a threshold it sends a building inspector to one of your
-## buildings (never a preserved one). He posts a
+## City Hall (design doc: "הממשלה כאויב", and "המשטרה והעירייה: לא רנדומלי").
+## It watches the building code, quietly: floors past what the code allows,
+## luxury piled on top, a fight club. The player never sees the rule, only
+## that City Hall turns up when a building is pushed too far. Then it sends a
+## building inspector to the worst offender (never a preserved one). He posts a
 ## demolition notice, and when it runs out a bulldozer comes (bulldozer.gd
 ## says what stops it). Picking the inspector up before he gets there also
 ## works, for a while.
@@ -20,6 +22,8 @@ const INSPECTOR_LINE := "Department of Buildings. Routine inspection."
 const INSPECTOR_COLOR := Color(0.85, 0.9, 1.0)
 
 var _step := Step.QUIET
+var _suspicion := 0.0
+var _total_violations := 0.0
 var _cooldown := 0.0
 var _target: Node3D
 var _front := Vector3.ZERO     # the road in front of the target
@@ -36,8 +40,8 @@ var _dark := _mat(Color(0.2, 0.2, 0.22))
 var _rubble := _mat(Color(0.5, 0.47, 0.42))
 
 @onready var city: Node3D = get_parent()
-@onready var faith: Node = get_node("../Faith")
-@onready var districts: Node = get_node("../Districts")
+@onready var districts: Districts = get_node("../Districts")
+@onready var decrees: Decrees = get_node("../Decrees")
 
 
 func _ready() -> void:
@@ -55,7 +59,7 @@ func status_text() -> String:
 			return "demolition notice, %d s left" % ceili(_notice_left)
 		Step.BULLDOZER:
 			return _bulldozer.status_text()
-	return "watching" if faith.exposure >= G.inspector_exposure else "quiet"
+	return "watching" if _suspicion >= G.suspicion_visit / 2.0 else "quiet"
 
 
 func _physics_process(delta: float) -> void:
@@ -81,22 +85,48 @@ func _physics_process(delta: float) -> void:
 
 
 func _maybe_visit() -> void:
-	if _cooldown > 0.0 or faith.exposure < G.inspector_exposure:
+	if _cooldown > 0.0:
 		return
+	_cooldown = G.check_interval
 	_target = _pick_target()
 	if _target == null:
-		_cooldown = G.check_interval
+		_suspicion = 0.0
 		return
+	_suspicion = maxf(_suspicion + (G.suspicion_rate * _total_violations - G.suspicion_decay) * G.check_interval, 0.0)
+	if _suspicion < G.suspicion_visit:
+		return
+	_suspicion = 0.0
 	var size := DivineSign.building_size(_target)
 	var p := _target.global_position
 	_front = Vector3(p.x, 0.0, p.z + size.z / 2.0 + OFF_KERB)
 	_send_inspector()
 
 
-## Any building of yours, never a preserved one.
+## The building of yours that breaks the code worst (never a preserved one),
+## or null when none breaks it. Also adds up every violation.
 func _pick_target() -> Node3D:
-	var mine: Array = districts.converted_buildings().filter(_demolishable)
-	return mine.pick_random() if not mine.is_empty() else null
+	var worst: Node3D = null
+	var worst_score := 0.0
+	_total_violations = 0.0
+	for b in districts.converted_buildings():
+		if not _demolishable(b):
+			continue
+		var score := _violations(b)
+		_total_violations += score
+		if score > worst_score:
+			worst_score = score
+			worst = b
+	return worst
+
+
+func _violations(building: Node3D) -> float:
+	var past: int = maxi(building.get_meta(&"decree_floors", 0) - G.code_floor_levels, 0)
+	var score := G.level_violation * past
+	if past > 0 and building.get_meta(&"decree_luxury", false):
+		score += G.luxury_violation
+	if decrees.use_of(building) == Campaigns.S.training_use:
+		score += G.training_violation
+	return score
 
 
 ## A Preserve decree makes a building a landmark: City Hall can't touch it.
