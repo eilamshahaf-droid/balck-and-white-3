@@ -16,6 +16,7 @@ extends Node
 
 const S: ArtStyleSettings = preload("res://data/art_style.tres")
 const TOON := preload("res://shaders/toon.gdshader")
+const TOON_TINTED := preload("res://shaders/toon_tinted.gdshader")
 const GHOST := preload("res://shaders/toon_ghost.gdshader")
 const SCREEN := preload("res://shaders/screen_pass.gdshader")
 const DOF := preload("res://shaders/depth_of_field.gdshader")
@@ -27,8 +28,8 @@ var _layer := CanvasLayer.new()
 var _dof := MeshInstance3D.new()   # screen-covering quad that blurs the far background
 var _toon := {}       # StandardMaterial3D -> its toon ShaderMaterial
 var _colors := {}     # StandardMaterial3D -> albedo last copied into the toon material
-var _meshes := {}     # every MeshInstance3D we look after (used as a set)
-var _pending: Array[MeshInstance3D] = []   # meshes that entered the tree since the last frame
+var _meshes := {}     # every MeshInstance3D and MultiMeshInstance3D we look after (used as a set)
+var _pending: Array[GeometryInstance3D] = []   # meshes that entered the tree since the last frame
 var _shot_path := ""
 var _shot_frames := 120
 
@@ -66,7 +67,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		enabled = not enabled
 		_layer.visible = enabled
 		_dof.visible = enabled and S.dof_blur > 0.0
-		for m: MeshInstance3D in _meshes:
+		for m: GeometryInstance3D in _meshes:
 			_apply(m)
 
 
@@ -98,7 +99,7 @@ func _process(_delta: float) -> void:
 
 ## Call after changing `mesh.material_override` at runtime (a burnt building,
 ## the belief debug tint), so the new plain material gets the style too.
-func restyle(mesh: MeshInstance3D) -> void:
+func restyle(mesh: GeometryInstance3D) -> void:
 	if _meshes.has(mesh):
 		_apply(mesh)
 
@@ -123,8 +124,8 @@ func set_ghost_alpha(mat: Material, a: float) -> void:
 
 
 func _on_node_added(node: Node) -> void:
-	if node is MeshInstance3D:
-		_pending.append(node as MeshInstance3D)
+	if node is MeshInstance3D or node is MultiMeshInstance3D:
+		_pending.append(node as GeometryInstance3D)
 	elif node is WorldEnvironment:
 		_style_environment.call_deferred(node)
 	elif node is DirectionalLight3D:
@@ -132,7 +133,7 @@ func _on_node_added(node: Node) -> void:
 
 
 func _on_node_removed(node: Node) -> void:
-	if node is MeshInstance3D:
+	if node is GeometryInstance3D:
 		_meshes.erase(node)
 
 
@@ -145,7 +146,7 @@ func _belongs_to_world(m: Node) -> bool:
 	return true
 
 
-func _apply(m: MeshInstance3D) -> void:
+func _apply(m: GeometryInstance3D) -> void:
 	var mat := m.material_override
 	if enabled:
 		if mat is StandardMaterial3D and _convertible(mat):
@@ -165,7 +166,8 @@ func _toon_for(src: StandardMaterial3D) -> ShaderMaterial:
 	if _toon.has(src):
 		return _toon[src]
 	var t := ShaderMaterial.new()
-	t.shader = TOON
+	# a crowd's per-instance colours (vertex colour as albedo) multiply the toon albedo
+	t.shader = TOON_TINTED if src.vertex_color_use_as_albedo else TOON
 	t.set_meta("toon_source", src)
 	_push_toon_params(t)
 	t.set_shader_parameter("albedo", src.albedo_color)

@@ -126,8 +126,8 @@ func set_zone(b: int, zone: String) -> void:
 	_update_mixed()
 
 
-func change_density(b: int, step: int) -> void:
-	blocks[b].density = clampi(blocks[b].density + step, 1, 3)
+func change_density(b: int, change: int) -> void:
+	blocks[b].density = clampi(blocks[b].density + change, 1, 3)
 
 
 ## Where a landmark of `kind` would stand if placed at `pos`: along the
@@ -226,7 +226,7 @@ func relayout() -> Array:
 		var poly: PackedVector2Array = f.polygon
 		var c := _centroid(poly)
 		var water := 0
-		for k in range(0, poly.size(), maxi(poly.size() / 8, 1)):
+		for k in range(0, poly.size(), maxi(poly.size() >> 3, 1)):
 			water += int(terrain.is_water(poly[k].lerp(c, 0.5)))
 		var block := {"polygon": poly, "sides": f.sides, "edges": f.edges, "area": absf(f.area),
 				"area_signed": f.area, "bbox": _bbox(poly), "center": _ground(c), "zone": "", "density": 1,
@@ -642,10 +642,10 @@ func _reach_bonus(kind: String, pos: Vector3) -> float:
 
 
 ## Add (direction 1) or take away (direction -1) a structure's fields around `pos`.
-func _stamp(def: Dictionary, pos: Vector3, sign: float, reach_bonus := 0.0) -> void:
+func _stamp(def: Dictionary, pos: Vector3, direction: float, reach_bonus := 0.0) -> void:
 	var c := (Vector2(pos.x, pos.z) - grid_origin) / CELL
 	for metric in def:
-		var v: float = def[metric][0] * sign
+		var v: float = def[metric][0] * direction
 		var r: float = def[metric][1] + reach_bonus
 		var rc := r / CELL
 		var arr: PackedFloat32Array = _field[metric]

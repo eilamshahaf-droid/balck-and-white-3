@@ -3,6 +3,25 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Every building has residents; belief grows in stages, slower
+- Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.
+- Belief now has five stages: skeptic, curious, sympathizer, believer, zealot. A single miracle (or visit, or offer) moves a person at most one stage, so winning someone over takes several.
+- Belief slowly slides back to what a person believed before the cult, unless friends who believe or a home full of believers hold it up. Friends who believe more slowly pull people up.
+- Each social group answers the four routes differently: students and artists fall for miracles, retirees for a visit from missionaries, shopkeepers and bankers for money, police for force.
+- Numbers: `data/balance.tres` ("Stages of belief", "Drift": `persuasion_scale` is the one knob for how fast the cult grows) and `data/people.tres` (groups' responses, `min_residents_per_home`, `street_people`).
+- Try it: press F5, press B and hover a person: the card shows their stage.
+
+## 2026-10-27: Last editor warning fixed
+- `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.
+
+## 2026-10-27: Catch editor warnings before pushing
+- `CLAUDE.md` now runs the headless checks with `--debug`, which prints the same GDScript warnings the editor shows (they were silent before, so warnings reached Eilam's editor unnoticed).
+- Try it: `godot --headless --path . --debug --quit-after 600` prints nothing but the banner.
+
+## 2026-10-27: Last editor warnings fixed
+- `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), and the planning scripts no longer divide whole numbers by whole numbers ("Integer division"), so the editor's warning list is empty.
+- Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.
+
 ## 2026-10-27: Decrees cost money; the building wheel marks buildings for takeover
 - Every decree now costs money as well as belief: +3 floors $120, luxury $150, facade $60, change use $80, preserve $40. The slice shows both ("30 belief + $120").
 - The building wheel depends on whose building it is. Yours: the five decrees. Anyone else's: the three takeover marks, **Skull: Force**, **$: Buy** and **Sky Sign: Missionaries**. A slice that can't be chosen says why ("needs a Combat Training building", "needs $80"); the mark already on the building reads "call off".
@@ -57,6 +76,16 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/people.tres`, group "Fleeing".
 - Two editor warnings in `citizen.gd` and `sign_followers.gd` are gone.
 - Try it: play until City Hall demolishes a building; the error no longer appears.
+
+## 2026-10-27: The toon look for MultiMesh crowds
+- ArtStyle now also styles `MultiMeshInstance3D` nodes, not only `MeshInstance3D`. A material that takes its colour from the vertices (`vertex_color_use_as_albedo`, as a MultiMesh with per-instance colours does) gets a toon variant (`shaders/toon_tinted.gdshader`) that multiplies the toon colour by each instance's colour. This is for the crowd of people being drawn as one MultiMesh.
+- `ArtStyle.restyle()` accepts either kind of mesh.
+- Try it: once the crowd is in the game, press F5 and press V to compare: the people are cel-shaded like the buildings.
+
+## 2026-10-27: The god's hand is now the white cloth glove
+- The box placeholder is gone. The hand is the cloth glove from the hand page: the WebXR generic hand (MIT) turned into a glove in Blender, with seams around every finger, a stitched wrist hem, three stitched lines on the back and creases at the joints, all baked into its maps. Above the wrist the glove runs on up the arm and crumbles away in holes.
+- Same behaviour as before: the poses (open, pointing, grabbing, tapping) now curl the glove's real finger bones, and believers nearby make it brighter with a warm glow. Only `scripts/hand_visual.gd` changed; the model and its maps are in `assets/models/god_hand/`.
+- Try it: press F5, zoom in close and move the hand over a person (it points), pick them up (it grabs) and click a wall (it taps).
 
 ## 2026-10-27: The hand no longer lifts trees; editor warnings fixed
 - Trees stay rooted: the hand can't grab or uproot them any more (they still bend in its wind). The uprooted tree and its settings (`uproot_effort`, `hand_strength`, ...) are gone.
