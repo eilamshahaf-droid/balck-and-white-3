@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Last editor warning fixed
+- `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.
+- Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.
+
 ## 2026-10-27: Many more people in the city
 - The city now has 500 residents instead of 60 (`data/people.tres`, "Resident Count").
 - To keep 60 fps, all the people are drawn together in one go (a MultiMesh) instead of one by one, and walking on the flat streets no longer goes through the physics engine. Speech bubbles and phones are made only for the people who speak or film.
