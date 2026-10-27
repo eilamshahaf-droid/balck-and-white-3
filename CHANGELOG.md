@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Alpha (refreshed, economy round)
+- The combined build again: main (the head priest, belief in stages, only Prayer Houses pray), the world branch (building economy, police and the hidden building code, poor start district), the hand round (miracles leave proof and priests convert, Block Party, Rain of Frogs, accidents, costs and cooldowns, camera that keeps the building you look at solid) and the Meshy props showing each building's state.
+- Headless run (with --debug), planning scene and hand test pass with no errors or warnings; the Compatibility renderer starts.
+- Try it: press F5. F1 shows the debug panel.
+
 ## 2026-10-27: Models for the core building and housing upgrades
 - Four more Meshy models in `assets/models/meshy/`, not in the game yet: a large blank signboard in a gold frame for the core building (the text goes on top, in code, so it stays readable and editable), a glass elevator shaft, security cameras and an iron security gate for housing upgrades. They are overlays for buildings, like the others, and wait for the building-type and upgrade fields from the economy round. The core building's portico is `portico.glb` from the 16 type models.
 
@@ -21,6 +26,11 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
   - **Poor districts** (Spin Cycle Flats, where you start): laundry lines under the windows, and dumpsters and heaps of trash bags on the sidewalks. The dumpsters can be picked up and thrown.
 - Numbers: `data/city_props.tres`, groups "Poor districts" and "Building states".
 - Try it: press F5. Your headquarters' district has laundry, boarded-up empty buildings and dumpsters. Take a building (debug panel, "Take 10 buildings here") and watch the banners and flags go up; give one of yours the Luxury decree.
+
+## 2026-10-27: The building you look at stays solid
+- The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
+- Number: `data/hand_settings.tres`, `fade_keep_radius`.
+- Try it: press F5, double-click a building to fly to it, and orbit around it: it stays solid while the ones in front of it fade.
 
 ## 2026-10-27: Meshy props in the city
 - The first models made with Meshy are in the game (`assets/models/meshy/`, about 0.5 MB each). Window air conditioners (four kinds) hang under windows of the brick and stone buildings; water tanks and big cooling units stand on roofs. They are drawn as MultiMeshes, one per kind and chunk of town, and disappear past 260 m.
@@ -122,6 +132,8 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - A building given the Prayer House use (Change Use decree) joins the group `prayer_houses`, and leaves it when its use changes again. Only believers there pray belief into the pool (people thread, `Population.prayer`).
 - Try it: press F5, change one of your buildings to Prayer House and watch belief start to rise.
 
+
+
 ## 2026-10-27: The building you look at stays solid
 - The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
 - Number: `data/hand_settings.tres`, `fade_keep_radius`.
@@ -165,6 +177,15 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - **District wealth:** each district has a wealth that scales rent, shop takings and the price of buying people out. The start district by the river is poor (0.4), downtown is rich (2.0), and the panel says "(poor)" or "(rich)".
 - Numbers: `data/treasury.tres` (Rent, Uses, Luxury, Floors) and `wealth` in `data/districts.tres`.
 - Try it: press F5, click "Take 10 buildings here" on the debug panel (F1), and look at the "Building" line as you give one of them decrees.
+
+## 2026-10-27: Meshy props in the city
+- The first models made with Meshy are in the game (`assets/models/meshy/`, about 0.5 MB each). Window air conditioners (four kinds) hang under windows of the brick and stone buildings; water tanks and big cooling units stand on roofs. They are drawn as MultiMeshes, one per kind and chunk of town, and disappear past 260 m.
+- The sidewalks have trash cans, heaps of trash bags, hydrants, benches, newspaper boxes, mailboxes and the odd hot-dog cart. The hand can pick all of them up and throw them, like the taxis.
+- Trash bags give way: a bag squashes under whatever lies on it and dents when it lands hard, then slowly puffs back up (a "squash" blend shape on the model).
+- The taxis are now the Meshy cab, a little short and tall like a toy.
+- Roof props follow a building that grows new floors by decree, and make way for a luxury penthouse.
+- Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
+- Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
 
 ## 2026-10-27: Take buildings by force, money or missionaries; a money meter
 - The claim meter and its roof colours are gone. Eilam's rule instead: a building is yours once most of the people who live there believe. An empty one is yours while a believer lives in it or sits in on it.

@@ -29,6 +29,7 @@ data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
 assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT), with their licence files
 assets/models/       third-party models (Kenney CC0) and our Meshy props (meshy/), with licence notes
+assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT) and our Meshy props (meshy/), with licence notes
 tests/               headless tests that drive the real game (run before pushing)
 docs/                screenshot for the README
 ```
@@ -74,6 +75,7 @@ World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `
 Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `shops`, `prayer_houses`,
 `wind_reactive`, `no_toon`, `preserved`.
 Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `shops`,
+Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`,
 `wind_reactive`, `no_toon`, `preserved`, `prayer_houses`.
 
 Physics layers (bit values in code): 1 = world (ground, buildings), 2 = citizens,
