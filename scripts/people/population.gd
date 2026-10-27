@@ -378,10 +378,43 @@ func staff_count(building: Node3D, job := Resident.Job.FREE) -> int:
 ## What `building`'s staff put out: each person counts for more the more
 ## comfortable they are. No staff, no output.
 func staffed(building: Node3D) -> float:
+	return _raw_staffed(building) * (1.0 + _people.storefront_output * count_of(building, Upgrade.STOREFRONT))
+
+
+## Holy warriors a gym trains: its staff output per gym (0 without one); Campaigns uses them.
+func fighters_of(building: Node3D) -> float:
+	return _raw_staffed(building) * _people.gym_fighters * count_of(building, Upgrade.GYM)
+
+
+## What buying a flat costs, as a share of the normal price, for a building with
+## real estate offices (1 = no discount).
+func buy_price_factor(building: Node3D) -> float:
+	var discount := _people.real_estate_discount * count_of(building, Upgrade.REAL_ESTATE)
+	return maxf(1.0 - discount, _people.buy_discount_floor)
+
+
+func _raw_staffed(building: Node3D) -> float:
 	var total := 0.0
 	for r: Resident in _staff.get(building, []):
 		total += _output_of(r)
 	return total
+
+
+## How far a priest's preaching reaches and how strong it is: his prayer house's
+## loudspeakers widen it, lecture halls and banners strengthen it.
+func preach_reach(priest: Resident) -> float:
+	var reach := _people.priest_reach
+	if priest.post:
+		reach *= 1.0 + _people.loudspeaker_reach * count_of(priest.post, Upgrade.LOUDSPEAKER)
+	return reach
+
+
+func preach_strength(priest: Resident) -> float:
+	var strength := _people.priest_strength
+	if priest.post:
+		strength *= 1.0 + _people.lecture_hall_strength * count_of(priest.post, Upgrade.LECTURE_HALL) \
+				+ _people.banner_strength * count_of(priest.post, Upgrade.BANNERS)
+	return strength
 
 
 ## What the next upgrade or added floor for `building` costs; it rises with each purchase.
@@ -542,12 +575,8 @@ func _preach() -> void:
 	for staff: Array in _staff.values():
 		for r: Resident in staff:
 			if r.job == Resident.Job.PRIEST and _has_body(r) and not sermons.is_preaching(r):
-				var reach := _people.priest_reach
-				var strength := _people.priest_strength
-				if r.post:
-					reach *= 1.0 + _people.loudspeaker_reach * count_of(r.post, Upgrade.LOUDSPEAKER)
-					strength *= 1.0 + _people.lecture_hall_strength * count_of(r.post, Upgrade.LECTURE_HALL)
-				var reached := persuade_near(r.body.global_position, reach, strength)
+				var reached := persuade_near(
+						r.body.global_position, preach_reach(r), preach_strength(r))
 				priest_preached.emit(r, reached)
 
 

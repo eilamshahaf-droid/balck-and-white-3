@@ -115,6 +115,15 @@ extends Resource
 ## lecture hall makes their preaching stronger, by this share.
 @export var loudspeaker_reach := 0.25
 @export var lecture_hall_strength := 0.25
+## Each banner makes the priests of its prayer house preach this much stronger.
+@export var banner_strength := 0.2
+## Workplace upgrades: each storefront raises the shop's output, each gym turns
+## the staff into this many fighters per person (see fighters_of), each real
+## estate office takes this share off buying nearby (down to buy_discount_floor).
+@export var storefront_output := 0.3
+@export var gym_fighters := 1.0
+@export_range(0.0, 1.0) var real_estate_discount := 0.15
+@export_range(0.0, 1.0) var buy_discount_floor := 0.4
 
 @export_group("Fire")
 ## A building burns down with its people inside: each one indoors dies with this chance.
