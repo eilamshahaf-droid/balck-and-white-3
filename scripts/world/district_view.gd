@@ -1,30 +1,17 @@
 class_name DistrictView
 extends Node3D
-## Shows who holds what, so the takeover reads at a glance. Every building
-## shows what the player can do with it (Districts.Reach): a gold roof plate
-## when it is yours, red when it is abandoned and can be taken over, green when
-## it is next to yours and can be converted, nothing while it is out of reach.
-## The claim filling up shows either as gold spreading over the roof (plates)
-## or as a glass column over it that fills with gold (beacons). An outline on
-## the roads around each district turns gold once the district is yours. All
-## of it is MultiMeshes, so hundreds of roofs cost a few draw calls.
+## Shows who holds what: a gold plate on the roof of every building of yours,
+## and an outline on the roads around each district that turns gold once the
+## district is yours. Both are MultiMeshes, so hundreds of roofs cost one draw
+## call. The takeover marks (skull, dollar, sky sign) are campaign_marks.gd.
 
-enum Style { PLATES, BEACONS }
-
-const S = preload("res://data/districts.tres")
+const S: DistrictSettings = preload("res://data/districts.tres")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 const ROOF_LIFT := 1.4      # above the roof modules (Kenney roofs stand about a metre proud of the box)
 const ROOF_INSET := 0.8     # plate size as a share of the roof
-const FILL_LIFT := 0.1      # the gold fill just above the plate
-const RISE_INSET := 0.6     # the gold in a beacon, as a share of the glass
 const BORDER_LIFT := 0.03   # just above the asphalt
 
-var style: Style = S.marker_style as Style
-
 var _roofs := MultiMesh.new()
-var _fills := MultiMesh.new()
-var _tubes := MultiMesh.new()
-var _rises := MultiMesh.new()
 var _borders := MultiMesh.new()
 var _hidden := Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO)
 
@@ -33,32 +20,21 @@ var _hidden := Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO)
 
 func _ready() -> void:
 	districts.layout_ready.connect(_build)
-	districts.building_changed.connect(func(i: int, _yours: bool) -> void: _refresh(i))
-	districts.claims_updated.connect(_refresh_all)
+	districts.building_changed.connect(_on_building_changed)
 	districts.district_controlled.connect(_on_district_controlled)
 	get_node("../Decrees").decree_issued.connect(_on_decree_issued)
 
 
-## Plates or beacons (the debug panel switches to compare them).
-func toggle_style() -> void:
-	style = Style.BEACONS if style == Style.PLATES else Style.PLATES
-	_refresh_all()
-
-
 func _build() -> void:
-	var count := districts.buildings.size()
 	var plate := BoxMesh.new()
 	plate.size = Vector3(1.0, 0.25, 1.0)
-	plate.material = _unshaded(Color.WHITE, true)
-	var column := BoxMesh.new()
-	column.material = plate.material
-	for m: MultiMesh in [_roofs, _fills, _tubes, _rises]:
-		m.transform_format = MultiMesh.TRANSFORM_3D
-		m.use_colors = true
-		m.mesh = plate if m == _roofs or m == _fills else column
-		m.instance_count = count
-		_add_instance(m)
-	_refresh_all()
+	plate.material = _unshaded(S.roof_color, false)
+	_roofs.transform_format = MultiMesh.TRANSFORM_3D
+	_roofs.mesh = plate
+	_roofs.instance_count = districts.buildings.size()
+	for i in _roofs.instance_count:
+		_roofs.set_instance_transform(i, _hidden)
+	_add_instance(_roofs)
 
 	var strip := BoxMesh.new()
 	strip.size = Vector3(1.0, 0.05, 1.0)
@@ -72,58 +48,21 @@ func _build() -> void:
 	_add_instance(_borders)
 
 
-func _refresh_all() -> void:
-	for i in _roofs.instance_count:
-		_refresh(i)
-
-
-func _refresh(i: int) -> void:
-	var b: Node3D = districts.buildings[i]
-	var reach := districts.reach_of(i) if b else Districts.Reach.LOCKED
-	var claiming := reach == Districts.Reach.TAKE or reach == Districts.Reach.CONVERT
-	var show_plate := reach == Districts.Reach.YOURS or (claiming and style == Style.PLATES)
-	var show_beacon := claiming and style == Style.BEACONS
-	if not show_plate:
-		_roofs.set_instance_transform(i, _hidden)
-		_fills.set_instance_transform(i, _hidden)
-	if not show_beacon:
-		_tubes.set_instance_transform(i, _hidden)
-		_rises.set_instance_transform(i, _hidden)
-	if not (show_plate or show_beacon):
+func _on_building_changed(index: int, yours: bool) -> void:
+	var b: Node3D = districts.buildings[index]
+	if b == null or not yours:
+		_roofs.set_instance_transform(index, _hidden)
 		return
 	var size := DivineSign.building_size(b)  # live: decrees add floors
 	var top := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT)
-	var roof := Vector3(size.x, 1.0, size.z) * ROOF_INSET
-	var claim := districts.claim_of(i)
-	var color := S.take_color if reach == Districts.Reach.TAKE else S.convert_color
-	if show_plate:
-		_roofs.set_instance_color(i, S.roof_color if reach == Districts.Reach.YOURS else color)
-		_roofs.set_instance_transform(i, Transform3D(Basis.from_scale(roof), top))
-		if claiming and claim > 0.0:
-			# Area grows with the claim, so a half-claimed roof looks half gold.
-			var fill := roof * Vector3(sqrt(claim), 1.0, sqrt(claim))
-			_fills.set_instance_color(i, S.roof_color)
-			_fills.set_instance_transform(i, Transform3D(Basis.from_scale(fill), top + Vector3.UP * FILL_LIFT))
-		else:
-			_fills.set_instance_transform(i, _hidden)
-	if show_beacon:
-		var w := S.beacon_width
-		var h := S.beacon_height
-		_tubes.set_instance_color(i, color)
-		_tubes.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3(w, h, w)), top + Vector3.UP * h / 2.0))
-		if claim > 0.0:
-			var rise := Vector3(w * RISE_INSET, h * claim, w * RISE_INSET)
-			_rises.set_instance_color(i, S.roof_color)
-			_rises.set_instance_transform(i, Transform3D(Basis.from_scale(rise), top + Vector3.UP * rise.y / 2.0))
-		else:
-			_rises.set_instance_transform(i, _hidden)
+	_roofs.set_instance_transform(index, Transform3D(Basis.from_scale(Vector3(size.x, 1.0, size.z) * ROOF_INSET), top))
 
 
-## +3 Floors lifts the roof, so the markers follow it.
+## +3 Floors lifts the roof, so the plate follows it.
 func _on_decree_issued(_kind: StringName, building: Node3D) -> void:
-	var i: int = districts.buildings.find(building)
+	var i := districts.index_of(building)
 	if i >= 0:
-		_refresh(i)
+		_on_building_changed(i, districts.is_yours(i))
 
 
 func _on_district_controlled(d: int) -> void:

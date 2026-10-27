@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -18,6 +18,9 @@
 [ext_resource type="Script" path="res://scripts/world/district_hud.gd" id="16_district_hud"]
 [ext_resource type="Script" path="res://scripts/world/surroundings.gd" id="17_surroundings"]
 [ext_resource type="Script" path="res://scripts/decrees.gd" id="13_decrees"]
+[ext_resource type="Script" path="res://scripts/world/treasury.gd" id="18_treasury"]
+[ext_resource type="Script" path="res://scripts/world/campaigns.gd" id="19_campaigns"]
+[ext_resource type="Script" path="res://scripts/world/campaign_marks.gd" id="20_marks"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -64,6 +67,24 @@ script = ExtResource("13_districts")
 [node name="DistrictView" type="Node3D" parent="."]
 script = ExtResource("14_district_view")
 
+[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "population")]
+script = ExtResource("18_treasury")
+faith = NodePath("../Faith")
+districts = NodePath("../Districts")
+population = NodePath("../Population")
+
+[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "treasury")]
+script = ExtResource("19_campaigns")
+districts = NodePath("../Districts")
+population = NodePath("../Population")
+faith = NodePath("../Faith")
+treasury = NodePath("../Treasury")
+
+[node name="CampaignMarks" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts")]
+script = ExtResource("20_marks")
+campaigns = NodePath("../Campaigns")
+districts = NodePath("../Districts")
+
 [node name="Government" type="Node" parent="."]
 script = ExtResource("15_government")
 
@@ -83,14 +104,14 @@ offset_right = 900.0
 offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
-Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and signs    Right-drag a circle: water
+Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
 The hand can lift anything. Only miracles change what people believe."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
-offset_top = 116.0
+offset_top = 176.0
 offset_right = 900.0
-offset_bottom = 146.0
+offset_bottom = 206.0
 script = ExtResource("5_hud")
 
 [node name="District" type="Label" parent="HUD"]

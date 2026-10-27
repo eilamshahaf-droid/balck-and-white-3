@@ -99,9 +99,9 @@ func _maybe_visit() -> void:
 ## never a preserved one.
 func _pick_target() -> Node3D:
 	var signed: Array[Node3D] = []
-	for sign in get_tree().get_nodes_in_group("divine_signs"):
-		if sign.kind != &"cursed" and not sign.is_queued_for_deletion() and _demolishable(sign.get_parent()):
-			signed.append(sign.get_parent())
+	for mark in get_tree().get_nodes_in_group("divine_signs"):
+		if mark.kind != &"cursed" and not mark.is_queued_for_deletion() and _demolishable(mark.get_parent()):
+			signed.append(mark.get_parent())
 	if not signed.is_empty():
 		return signed.pick_random()
 	var mine: Array = districts.converted_buildings().filter(_demolishable)
@@ -154,7 +154,6 @@ func _inspect() -> void:
 	_notice.global_position = Vector3(_target.global_position.x, roof + NOTICE_LIFT, _target.global_position.z)
 	_notice_left = G.notice_time
 	_notice.show_seconds(_notice_left)
-	districts.lower_claim(_target, G.inspection_claim_cut)
 	_step = Step.NOTICE
 
 
