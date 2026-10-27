@@ -166,7 +166,7 @@ func believers_in(building: Node3D) -> int:
 func yield_of(building: Node3D) -> float:
 	if building.is_in_group(SHOPS):
 		return staffed(building)
-	if not building.is_in_group(PRAYER_HOUSES):
+	if not building.is_in_group(PRAYER_HOUSES) or _blockaded(building):
 		return 0.0
 	var seen := {}
 	var total := 0.0
@@ -378,6 +378,8 @@ func staff_count(building: Node3D, job := Resident.Job.FREE) -> int:
 ## What `building`'s staff put out: each person counts for more the more
 ## comfortable they are. No staff, no output.
 func staffed(building: Node3D) -> float:
+	if _blockaded(building):
+		return 0.0
 	return _raw_staffed(building) * (1.0 + _people.storefront_output * count_of(building, Upgrade.STOREFRONT))
 
 
@@ -391,6 +393,11 @@ func fighters_of(building: Node3D) -> float:
 func buy_price_factor(building: Node3D) -> float:
 	var discount := _people.real_estate_discount * count_of(building, Upgrade.REAL_ESTATE)
 	return maxf(1.0 - discount, _people.buy_discount_floor)
+
+
+## A police roadblock stops what a building produces while it stands.
+func _blockaded(building: Node3D) -> bool:
+	return police != null and police.is_blockaded(building)
 
 
 func _raw_staffed(building: Node3D) -> float:
@@ -810,7 +817,8 @@ func _refresh_presence() -> void:
 			_presence[r.occupying] += r.belief
 		# Only prayer-house staff and believers sitting in one make belief; living
 		# next to the altar doesn't, so the player has to staff the house.
-		if r.job == Resident.Job.PRAY or (r.occupying and r.occupying.is_in_group(PRAYER_HOUSES)):
+		var house: Node3D = r.post if r.job == Resident.Job.PRAY else r.occupying
+		if house and house.is_in_group(PRAYER_HOUSES) and not _blockaded(house):
 			prayer += B.prayer_rate * r.belief * _output_of(r)
 	if priest:
 		prayer += _people.priest_prayer
