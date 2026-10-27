@@ -167,9 +167,12 @@ Target: a steady **60 fps on a mid-range PC**, and the game must also run on the
 ### Before pushing
 
 1. `git pull` right before you push; message the owning thread before changing its files.
-2. Run the project headless with no errors and no new warnings:
-   `godot --headless --path . --quit-after 600` and the same for
-   `res://scenes/city_planning.tscn`. After adding a `class_name`, run
+2. Run the project headless with no errors and no warnings:
+   `godot --headless --path . --debug --quit-after 600` and the same for
+   `res://scenes/city_planning.tscn`. `--debug` makes Godot print the GDScript warnings
+   (shadowed names, integer division, ...) that Eilam sees in the editor; without it they
+   stay silent. They print as `ERROR: '<warning text>'` with no file name, so if one shows
+   up, load the scripts one by one to find it. After adding a `class_name`, run
    `godot --headless --path . --import` once so the class is registered.
 3. Run the hand test: `godot --headless --path . res://tests/hand_test.tscn` must print
    `HAND TEST: PASS` (exit code 0). Add a check there when you add a hand behaviour.
