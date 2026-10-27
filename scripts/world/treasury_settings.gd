@@ -28,7 +28,8 @@ extends Resource
 
 @export_group("Floors: more room, less and less worth it")
 ## Efficiency = 1 + floor_gain * (1 - floor_falloff ^ levels): the first floors
-## help most, later ones barely, while their upkeep keeps growing.
+## help most, later ones barely. Upkeep = floor_upkeep * levels², small for the
+## first levels and soon more than they bring in.
 @export var floor_gain := 0.8
 @export_range(0.0, 1.0) var floor_falloff := 0.55
-@export var floor_upkeep := 0.35            # money per second per floor level
+@export var floor_upkeep := 0.05            # money per second, times the levels squared
