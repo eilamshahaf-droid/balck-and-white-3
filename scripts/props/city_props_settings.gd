@@ -30,6 +30,37 @@ extends Resource
 ## How far out from the wall the props stand.
 @export var wall_gap := 0.7
 
+@export_group("Poor districts")
+## A district poorer than this (Districts.wealth_of) gets these sidewalks instead.
+@export var poor_wealth := 0.6
+@export var poor_street_kinds: Array[PropKind] = []
+@export var poor_street_spacing := Vector2(5.0, 12.0)
+## Laundry lines hang under this share of a poor building's windows.
+@export_range(0.0, 1.0) var laundry_chance := 0.15
+@export var laundry: PropKind
+## Metres from the bottom of a floor to the laundry line's brackets.
+@export var laundry_height := 0.4
+
+@export_group("Building states")
+## Flower boxes: under this share of an ordinary building's windows, times its
+## district's wealth; under most windows of a luxury building.
+@export var flower_box: PropKind
+@export_range(0.0, 1.0) var flower_chance := 0.08
+@export_range(0.0, 1.0) var luxury_flower_chance := 0.7
+## Topiary planters flank a luxury building's entrance canopy.
+@export var planter: PropKind
+## An abandoned building: this share of its windows boarded up, and rubble out front.
+@export var boarded_window: PropKind
+@export_range(0.0, 1.0) var boarded_share := 0.5
+## Metres from the bottom of a floor to the middle of a boarded window.
+@export var window_middle := 1.6
+@export var rubble: PropKind
+## A building of yours: the cult's banner down its front and its flag on the roof.
+@export var banner: PropKind
+@export var flag: PropKind
+## Metres from the roof down to the banner's top.
+@export var banner_drop := 0.8
+
 @export_group("Squashy props (trash bags)")
 ## How much each thing lying on top presses a bag flat (1 = fully flat).
 @export var squash_per_load := 0.45

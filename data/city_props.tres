@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=47 format=3]
 
 [ext_resource type="Script" path="res://scripts/props/city_props_settings.gd" id="1_settings"]
 [ext_resource type="Script" path="res://scripts/props/prop_kind.gd" id="2_kind"]
@@ -16,6 +16,14 @@
 [ext_resource type="PackedScene" path="res://assets/models/meshy/mailbox.glb" id="14_mailbox"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/hot_dog_cart.glb" id="15_hot_dog_cart"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/taxi.glb" id="16_taxi"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/boarded_window.glb" id="17_boarded"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/rubble.glb" id="18_rubble"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/dumpster.glb" id="19_dumpster"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/laundry_line.glb" id="20_laundry"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/flower_box.glb" id="21_flower"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/topiary_planter.glb" id="22_planter"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/cult_banner.glb" id="23_banner"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/roof_flag.glb" id="24_flag"]
 
 [sub_resource type="Resource" id="Kind_ac_window"]
 script = ExtResource("2_kind")
@@ -123,9 +131,61 @@ weight = 1.0
 mass = 4.0
 surface = &"metal"
 
+[sub_resource type="Resource" id="Kind_boarded_window"]
+script = ExtResource("2_kind")
+model = ExtResource("17_boarded")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_rubble"]
+script = ExtResource("2_kind")
+model = ExtResource("18_rubble")
+scale = Vector3(1.4, 1.4, 1.4)
+surface = &"concrete"
+
+[sub_resource type="Resource" id="Kind_dumpster"]
+script = ExtResource("2_kind")
+model = ExtResource("19_dumpster")
+scale = Vector3(1.1, 0.8, 1.0)
+weight = 1.5
+mass = 6.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_laundry_line"]
+script = ExtResource("2_kind")
+model = ExtResource("20_laundry")
+surface = &"cloth"
+
+[sub_resource type="Resource" id="Kind_flower_box"]
+script = ExtResource("2_kind")
+model = ExtResource("21_flower")
+scale = Vector3(1.5, 1.5, 1.5)
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_planter"]
+script = ExtResource("2_kind")
+model = ExtResource("22_planter")
+scale = Vector3(1.6, 1.6, 1.6)
+
+[sub_resource type="Resource" id="Kind_banner"]
+script = ExtResource("2_kind")
+model = ExtResource("23_banner")
+surface = &"cloth"
+
+[sub_resource type="Resource" id="Kind_flag"]
+script = ExtResource("2_kind")
+model = ExtResource("24_flag")
+
 [resource]
 script = ExtResource("1_settings")
 facade_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_ac_window"), SubResource("Kind_ac_vintage"), SubResource("Kind_ac_modern"), SubResource("Kind_ac_split")])
 roof_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_water_tank"), SubResource("Kind_ac_rooftop")])
 street_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_trash_can"), SubResource("Kind_trash_bag"), SubResource("Kind_hydrant"), SubResource("Kind_bench"), SubResource("Kind_newspaper_box"), SubResource("Kind_mailbox"), SubResource("Kind_hot_dog_cart")])
+poor_street_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_trash_bag"), SubResource("Kind_dumpster"), SubResource("Kind_trash_can"), SubResource("Kind_hydrant")])
+laundry = SubResource("Kind_laundry_line")
+flower_box = SubResource("Kind_flower_box")
+planter = SubResource("Kind_planter")
+boarded_window = SubResource("Kind_boarded_window")
+rubble = SubResource("Kind_rubble")
+banner = SubResource("Kind_banner")
+flag = SubResource("Kind_flag")
 taxi = SubResource("Kind_taxi")

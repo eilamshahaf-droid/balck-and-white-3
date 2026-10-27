@@ -4,8 +4,13 @@ extends Node3D
 ## assets/models/meshy/: air conditioners under windows, water tanks and
 ## cooling units on roofs (both drawn as MultiMeshes, a chunk of town each),
 ## and trash cans, bags, hydrants and benches on the sidewalks that the hand
-## can pick up. Roof props follow a building that grows new floors and make
-## way for a penthouse, and go with a building that is torn down.
+## can pick up; the poor districts get dumpsters and heaps of bags instead. Roof
+## props follow a building that grows new floors, a luxury building drops its
+## units for central air, and all go with a building that is torn down.
+## StateProps (state_props.gd) adds the props that show who holds a building.
+
+## Every prop is placed (StateProps waits for the window units).
+signal dressed
 
 const SETTINGS_PATH := "res://data/city_props.tres"
 const D: DecreeSettings = preload("res://data/decrees.tres")
@@ -23,12 +28,15 @@ const HIDDEN := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vec
 @export var city: Node3D
 ## Decrees reshape buildings; roof props follow.
 @export var decrees: Decrees
+## Says how poor each district is, for the sidewalks.
+@export var districts: Districts
 
 var _s: CityPropsSettings
 var _rng := RandomNumberGenerator.new()
 var _placements: Array[Placement] = []
 var _roofs := {}        # building (Node3D) -> Array[Placement] on its roof
 var _on_building := {}  # building (Node3D) -> Array[Placement] on its facades and roof
+var _ac_slots := {}     # building (Node3D) -> PackedInt32Array of slot_key()s with a unit
 var _blockers := {}     # Vector2i cell -> PackedVector4Array (x, y, z, clearance)
 
 
@@ -62,6 +70,35 @@ func _dress() -> void:
 		_line_sidewalk(building, size)
 		building.tree_exiting.connect(_on_building_gone.bind(building))
 	_draw_placements()
+	dressed.emit()
+
+
+## The window grid of a facade (columns, floors): the same as building_visual.gd's,
+## so props sit at real windows.
+static func facade_grid(size: Vector3) -> Vector2i:
+	return Vector2i(maxi(1, roundi(size.x / BuildingVisual.BAY)),
+			maxi(1, roundi(size.y / DecreeLooks.FLOOR_HEIGHT)))
+
+
+## One number per window: `side` is -1 or 1 (the -Z or +Z face).
+static func slot_key(side: float, floor_index: int, column: int) -> int:
+	return (floor_index * 256 + column) * 2 + (1 if side > 0.0 else 0)
+
+
+## A frame on the wall at window (`floor_index`, `column`) of the `side` face,
+## `height` metres above that floor, facing out along +Z.
+static func window_frame(building: Node3D, size: Vector3, side: float, floor_index: int,
+		column: int, height: float) -> Transform3D:
+	var grid := facade_grid(size)
+	var x := -size.x / 2.0 + (column + 0.5) * size.x / grid.x
+	var y := -size.y / 2.0 + floor_index * size.y / grid.y + height
+	var facing := Basis(Vector3.UP, 0.0 if side > 0.0 else PI)
+	return Transform3D(facing, building.global_position + Vector3(x, y, side * size.z / 2.0))
+
+
+## The windows of `building` that have an air conditioner under them (slot_key()s).
+func ac_slots(building: Node3D) -> PackedInt32Array:
+	return _ac_slots.get(building, PackedInt32Array())
 
 
 # --- Facades ---
@@ -69,27 +106,23 @@ func _dress() -> void:
 func _dress_facades(building: Node3D, size: Vector3) -> void:
 	if size.y > _s.facade_max_height or _s.facade_kinds.is_empty():
 		return
-	# The same window grid as building_visual.gd, so units sit under real windows.
-	var cols := maxi(1, roundi(size.x / BuildingVisual.BAY))
-	var floors := maxi(1, roundi(size.y / DecreeLooks.FLOOR_HEIGHT))
-	var bay := size.x / cols
-	var storey := size.y / floors
-	var base := building.global_position - Vector3.UP * size.y / 2.0
+	var grid := facade_grid(size)
+	var taken := PackedInt32Array()
 	for side: float in [-1.0, 1.0]:
-		var facing := Basis(Vector3.UP, 0.0 if side > 0.0 else PI)
-		for f in range(1, floors):   # the ground floor is shopfronts
-			for c in cols:
+		for f in range(1, grid.y):   # the ground floor is shopfronts
+			for c in grid.x:
 				if _rng.randf() >= _s.facade_chance:
 					continue
 				var kind := _pick(_s.facade_kinds)
-				var x := -size.x / 2.0 + (c + 0.5) * bay
-				var at := base + Vector3(x, f * storey + _s.sill_height, side * size.z / 2.0)
 				var p := Placement.new()
 				p.building = building
 				p.kind = kind
 				p.on_facade = true
-				p.transform = Transform3D(facing, at) * PropModel.of(kind).against_wall()
+				p.transform = window_frame(building, size, side, f, c, _s.sill_height) \
+						* PropModel.of(kind).against_wall()
 				_placements.append(p)
+				taken.append(slot_key(side, f, c))
+	_ac_slots[building] = taken
 
 
 # --- Roofs ---
@@ -122,18 +155,20 @@ func _roof_frame(building: Node3D, size: Vector3) -> Transform3D:
 
 
 func _on_decree_issued(kind: StringName, building: Node3D) -> void:
-	if not _roofs.has(building) or not (kind == &"floors" or kind == &"luxury"):
+	if kind == &"luxury":
+		# Central air and a penthouse: the window units and roof tanks go.
+		for p: Placement in _on_building.get(building, []):
+			p.multimesh.set_instance_transform(p.index, HIDDEN)
 		return
-	if kind == &"floors":
-		# Move up once the new floors have risen out of the old roof.
-		await get_tree().create_timer(D.grow_time).timeout
-	if not is_instance_valid(building):
+	if kind != &"floors" or not _roofs.has(building):
+		return
+	# Move up once the new floors have risen out of the old roof.
+	await get_tree().create_timer(D.grow_time).timeout
+	if not is_instance_valid(building) or building.get_meta(&"decree_luxury", false):
 		return
 	var size := DivineSign.building_size(building)
-	var penthouse: bool = building.get_meta(&"decree_luxury", false)
 	for p: Placement in _roofs[building]:
-		var t := HIDDEN if penthouse else _roof_frame(building, size) * p.local
-		p.multimesh.set_instance_transform(p.index, t)
+		p.multimesh.set_instance_transform(p.index, _roof_frame(building, size) * p.local)
 
 
 func _on_building_gone(building: Node3D) -> void:
@@ -141,20 +176,24 @@ func _on_building_gone(building: Node3D) -> void:
 		p.multimesh.set_instance_transform(p.index, HIDDEN)
 	_on_building.erase(building)
 	_roofs.erase(building)
+	_ac_slots.erase(building)
 
 
 # --- Sidewalks ---
 
 func _line_sidewalk(building: Node3D, size: Vector3) -> void:
-	if _s.street_kinds.is_empty():
-		return
 	var centre := building.global_position
+	var poor := districts and districts.wealth_of(districts.district_at(centre)) < _s.poor_wealth
+	var kinds := _s.poor_street_kinds if poor else _s.street_kinds
+	var spacing := _s.poor_street_spacing if poor else _s.street_spacing
+	if kinds.is_empty():
+		return
 	var ground := centre.y - size.y / 2.0
 	for side: float in [-1.0, 1.0]:
 		var wall := centre.z + side * size.z / 2.0
-		var x := centre.x - size.x / 2.0 + _rng.randf_range(0.5, _s.street_spacing.x)
+		var x := centre.x - size.x / 2.0 + _rng.randf_range(0.5, spacing.x)
 		while x < centre.x + size.x / 2.0 - 1.0:
-			var kind := _pick(_s.street_kinds)
+			var kind := _pick(kinds)
 			var model := PropModel.of(kind)
 			for n in _rng.randi_range(kind.cluster.x, kind.cluster.y):
 				var out := wall + side * (_s.wall_gap + model.size.z / 2.0)
@@ -162,7 +201,7 @@ func _line_sidewalk(building: Node3D, size: Vector3) -> void:
 				if _is_clear(at, model.size.x / 2.0):
 					_spawn(kind, at, side)
 				x += model.size.x + 0.15
-			x += _rng.randf_range(_s.street_spacing.x, _s.street_spacing.y)
+			x += _rng.randf_range(spacing.x, spacing.y)
 
 
 func _spawn(kind: PropKind, at: Vector3, side: float) -> void:

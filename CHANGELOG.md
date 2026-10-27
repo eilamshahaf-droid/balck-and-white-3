@@ -3,6 +3,16 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: You can tell a building's state at a glance
+- Eight new Meshy models show who holds a building, on top of the building and changing live:
+  - **Yours**: the cult's purple banner with the white glove down both fronts, and its flag on a roof corner.
+  - **Abandoned**: about half the windows boarded up with graffitied plywood, and a pile of rubble on the sidewalk.
+  - **Luxury** (the decree): flower boxes under most windows and brass topiary planters by the entrance canopy; the window air conditioners go too (central air).
+  - **Ordinary inhabited**: a few flower boxes, more in rich districts.
+  - **Poor districts** (Spin Cycle Flats, where you start): laundry lines under the windows, and dumpsters and heaps of trash bags on the sidewalks. The dumpsters can be picked up and thrown.
+- Numbers: `data/city_props.tres`, groups "Poor districts" and "Building states".
+- Try it: press F5. Your headquarters' district has laundry, boarded-up empty buildings and dumpsters. Take a building (debug panel, "Take 10 buildings here") and watch the banners and flags go up; give one of yours the Luxury decree.
+
 ## 2026-10-27: Meshy props in the city
 - The first models made with Meshy are in the game (`assets/models/meshy/`, about 0.5 MB each). Window air conditioners (four kinds) hang under windows of the brick and stone buildings; water tanks and big cooling units stand on roofs. They are drawn as MultiMeshes, one per kind and chunk of town, and disappear past 260 m.
 - The sidewalks have trash cans, heaps of trash bags, hydrants, benches, newspaper boxes, mailboxes and the odd hot-dog cart. The hand can pick all of them up and throw them, like the taxis.
