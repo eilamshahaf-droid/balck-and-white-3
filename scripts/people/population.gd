@@ -41,6 +41,9 @@ const B: Balance = preload("res://data/balance.tres")
 ## Buildings whose use is prayer; whoever sets a building's use keeps this group.
 const PRAYER_HOUSES := &"prayer_houses"
 
+## Where a miracle left proof, a priest's preaching is stronger.
+@export var miracles: Miracles
+
 var residents: Array[Resident] = []
 ## The cult's head priest (a Resident with a body), once the congregation is founded.
 var priest: Resident
@@ -174,11 +177,16 @@ func persuade(r: Resident, route: SocialGroup.Route, strength: float) -> void:
 	r.persuade(route, strength * (1.0 - r.skepticism))
 
 
-## Preach to everyone on the street within `radius` of `p`.
+## Preach to everyone on the street within `radius` of `p`. A miracle seen
+## there is proof: it multiplies the strength by 1 + the proof, and a botched
+## one (negative proof) can make it nothing.
 func persuade_near(p: Vector3, radius: float, strength: float) -> void:
+	var boosted := strength * maxf(1.0 + miracles.proof_at(p), 0.0)
+	if boosted <= 0.0:
+		return
 	for c in _street.bodies:
 		if c.resident != priest and c.global_position.distance_to(p) < radius:
-			persuade(c.resident, SocialGroup.Route.PREACH, strength)
+			persuade(c.resident, SocialGroup.Route.PREACH, boosted)
 
 
 ## Everyone living in `building` is frightened by `amount` (roaches, a fire).

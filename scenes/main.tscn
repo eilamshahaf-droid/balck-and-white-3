@@ -57,7 +57,8 @@ decrees = NodePath("../Decrees")
 [node name="Surroundings" type="Node3D" parent="."]
 script = ExtResource("17_surroundings")
 
-[node name="Population" type="Node" parent="."]
+[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles")]
+miracles = NodePath("../Miracles")
 script = ExtResource("11_population")
 
 [node name="Faith" type="Node" parent="." node_paths=PackedStringArray("population")]

@@ -54,6 +54,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Miracles no longer convert anyone. Witnesses still stare, explain what they saw and film it, but belief now comes from the cult's people: the head priest (dressed in white) walks the streets and preaches to everyone around him every few seconds, and prays a little belief into the pool on his own. The congregation's home is the first prayer house (the headquarters).
 - Every resident has hidden wealth, comfort and fear. Preaching only reaches people who are comfortable and not afraid; force works on the frightened; money works on the poor. A miracle that hurts people scares them, and someone too afraid moves to another home. Two ways to play: keep people comfortable, or keep them afraid.
 - The police's hidden criteria: every building quietly collects heat from sit-ins, crowds, broken building rules and accidents, which fades over time. When it passes a threshold (higher in a hard district), the police are called. Nothing is random. Numbers: `data/heat.tres`.
+- A miracle seen where the priest preaches is proof: it multiplies his strength by 1 plus the proof, and a botched miracle (a bad Rain of Frogs) can make him useless there for a while.
 - Numbers: `data/people.tres`, groups "Comfort and fear" and "Priest"; each social group has a wealth range.
 - Try it: press F5, press B and hover the person in white near the starting corner: the card shows everyone's stage, wealth, comfort and fear.
 
