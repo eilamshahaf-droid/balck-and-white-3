@@ -49,7 +49,14 @@ const B: Balance = preload("res://data/balance.tres")
 ## Buildings whose use is prayer; whoever sets a building's use keeps this group.
 const PRAYER_HOUSES := &"prayer_houses"
 ## The housing upgrades on the menu.
-enum Upgrade { ELEVATOR, ROOF_GARDEN, CAMERAS, GATE }
+enum Upgrade {
+	# Housing
+	ELEVATOR, ROOF_GARDEN, CAMERAS, GATE,
+	# Prayer house
+	LOUDSPEAKER, BANNERS, LECTURE_HALL,
+	# Workplace (a building of group shops)
+	STOREFRONT, GYM, REAL_ESTATE, SEMINARY, RESTAURANT,
+}
 ## Buildings that take shop staff; whoever sets a building's use keeps this group.
 const SHOPS := &"shops"
 
@@ -65,6 +72,8 @@ var priest: Resident
 ## second their prayers add to the pool.
 var believer_count := 0
 var prayer := 0.0
+## How many believers the homes of the city hold; there can be no more believers than this.
+var housing_capacity := 0
 ## How many priests the cult has (the head priest, and whoever is ordained).
 var priest_count := 0
 
@@ -77,6 +86,8 @@ var _footprints: Dictionary = {}  # building -> Rect2 on the ground (x, z)
 var _presence_timer := 0.0
 var _census: Census
 var _street := Street.new()
+## The sermons priests give; its signals tell the player where one is and whether the police step in.
+var sermons := Sermons.new()
 var _stages: Dictionary = {}       # resident -> the stage last announced
 var _priest_timer := 0.0
 var _bought: Dictionary = {}          # building -> Array[Upgrade] bought for it
@@ -93,6 +104,8 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.seed = 7
 	add_child(Crowd.new())
+	sermons.setup(self)
+	add_child(sermons)
 	_street.set_down.connect(_on_set_down)
 	_street.stopped_occupying.connect(_on_stopped_occupying)
 	add_child(_street)
@@ -160,7 +173,6 @@ func yield_of(building: Node3D) -> float:
 	var people: Array = []
 	people.append_array(_staff.get(building, []))
 	people.append_array(occupants(building))
-	people.append_array(_by_home.get(building, []))
 	for r: Resident in people:
 		if seen.has(r) or r.belief <= B.believer_threshold:
 			continue
@@ -276,6 +288,8 @@ func persuade(r: Resident, route: SocialGroup.Route, strength: float) -> void:
 			strength *= lerpf(_people.force_without_fear, 1.0, r.fear)
 		SocialGroup.Route.MONEY:
 			strength *= lerpf(1.0, _people.money_on_rich, r.wealth)
+	if r.belief <= B.believer_threshold and believer_count >= housing_capacity:
+		return  # no home left for another believer
 	r.persuade(route, strength * (1.0 - r.skepticism))
 
 
@@ -313,7 +327,8 @@ func assign(r: Resident, job: Resident.Job, building: Node3D) -> bool:
 	if job == Resident.Job.FREE or r.belief <= B.believer_threshold or building == null:
 		return false
 	var group := SHOPS if job == Resident.Job.SHOP else PRAYER_HOUSES
-	if not building.is_in_group(group) or staff_count(building) >= capacity(building):
+	var is_seminary := job == Resident.Job.PRIEST and count_of(building, Upgrade.SEMINARY) > 0
+	if not (building.is_in_group(group) or is_seminary) or staff_count(building) >= capacity(building):
 		return false
 	if job == Resident.Job.PRIEST and staff_count(building, job) >= _priest_slots_of(building):
 		return false
@@ -378,9 +393,9 @@ func upgrade_cost(building: Node3D) -> float:
 ## an elevator or roof garden, fear for cameras or a gate. Adds places for staff.
 func upgrade(building: Node3D, kind: Upgrade) -> void:
 	match kind:
-		Upgrade.ELEVATOR, Upgrade.ROOF_GARDEN:
+		Upgrade.ELEVATOR, Upgrade.ROOF_GARDEN, Upgrade.RESTAURANT:
 			add_comfort(building, _people.upgrade_comfort)
-		_:
+		Upgrade.CAMERAS, Upgrade.GATE:
 			scare(building, _people.upgrade_fear)
 	note_floor(building)
 	if not _bought.has(building):
@@ -388,6 +403,21 @@ func upgrade(building: Node3D, kind: Upgrade) -> void:
 		_bought[building] = list
 	(_bought[building] as Array[Upgrade]).append(kind)
 	upgraded.emit(building, kind)
+
+
+## The upgrades `building` can buy, by what it is: a prayer house, a workplace or a home.
+func upgrades_for(building: Node3D) -> Array[Upgrade]:
+	if building.is_in_group(PRAYER_HOUSES):
+		return [Upgrade.LOUDSPEAKER, Upgrade.BANNERS, Upgrade.LECTURE_HALL]
+	if building.is_in_group(SHOPS):
+		return [Upgrade.STOREFRONT, Upgrade.GYM, Upgrade.REAL_ESTATE, Upgrade.SEMINARY,
+				Upgrade.RESTAURANT]
+	return [Upgrade.ELEVATOR, Upgrade.ROOF_GARDEN, Upgrade.CAMERAS, Upgrade.GATE]
+
+
+## How many times `kind` was bought for `building`.
+func count_of(building: Node3D, kind: Upgrade) -> int:
+	return (_bought.get(building, []) as Array).count(kind)
 
 
 ## The upgrades bought for `building`, in order (repeats allowed).
@@ -459,6 +489,7 @@ func found_congregation() -> void:
 	near.sort_custom(func(a: Node3D, b: Node3D) -> bool:
 		return a.global_position.distance_squared_to(corner) < b.global_position.distance_squared_to(corner))
 	near[0].add_to_group(PRAYER_HOUSES)
+	_headquarters = near[0]
 	var converted := 0
 	for home: Node3D in near:
 		if converted >= _people.congregation_size:
@@ -489,12 +520,34 @@ func _kill(r: Resident) -> void:
 		r.body = null
 
 
+## Every priest, the head priest first.
+func priests() -> Array[Resident]:
+	var out: Array[Resident] = []
+	for staff: Array in _staff.values():
+		for r: Resident in staff:
+			if r.job == Resident.Job.PRIEST:
+				out.append(r)
+	return out
+
+
+func street_bodies() -> Array[Citizen]:
+	return _street.bodies
+
+
+func has_body(r: Resident) -> bool:
+	return _has_body(r)
+
+
 func _preach() -> void:
 	for staff: Array in _staff.values():
 		for r: Resident in staff:
-			if r.job == Resident.Job.PRIEST and _has_body(r):
-				var reached := persuade_near(
-						r.body.global_position, _people.priest_reach, _people.priest_strength)
+			if r.job == Resident.Job.PRIEST and _has_body(r) and not sermons.is_preaching(r):
+				var reach := _people.priest_reach
+				var strength := _people.priest_strength
+				if r.post:
+					reach *= 1.0 + _people.loudspeaker_reach * count_of(r.post, Upgrade.LOUDSPEAKER)
+					strength *= 1.0 + _people.lecture_hall_strength * count_of(r.post, Upgrade.LECTURE_HALL)
+				var reached := persuade_near(r.body.global_position, reach, strength)
 				priest_preached.emit(r, reached)
 
 
@@ -541,6 +594,8 @@ func _populate() -> void:
 		for r: Resident in _by_home[home]:
 			total += r.wealth
 		_home_comfort[home] = total / maxi((_by_home[home] as Array).size(), 1)
+	for home: Node3D in _by_home:
+		_housing[home] = ceili((_by_home[home] as Array).size() * _people.housing_slack)
 	for r in residents:
 		_stages[r] = r.stage()
 	_street.police = police
@@ -677,7 +732,41 @@ func _footprint(building: Node3D) -> Rect2:
 	return Rect2()
 
 
+## Shops and prayer houses have no residents: whoever lives in a building
+## that became one moves to the nearest home, which crowds it.
+func _vacate_work_buildings() -> void:
+	for b: Node3D in _by_home.keys():
+		if b == _headquarters or (_by_home[b] as Array).is_empty():
+			continue
+		if not (b.is_in_group(SHOPS) or b.is_in_group(PRAYER_HOUSES)):
+			continue
+		_homes.erase(b)
+		var new_home := home_near(b.global_position)
+		if new_home == null:
+			return
+		for r: Resident in (_by_home[b] as Array).duplicate():
+			_set_home(r, new_home)
+			if _has_body(r):
+				r.body.move_out()
+
+
+## 0 for a home with room, up to 1 at twice its capacity.
+func _crowding(building: Node3D) -> float:
+	var cap := _capacity_of_home(building)
+	if cap <= 0:
+		return 0.0
+	return clampf(float(residents_in(building)) / cap - 1.0, 0.0, 1.0)
+
+
+func _capacity_of_home(building: Node3D) -> int:
+	return _housing.get(building, 0) + _extra_places(building)
+
+
 func _refresh_presence() -> void:
+	_vacate_work_buildings()
+	housing_capacity = 0
+	for home: Node3D in _homes:
+		housing_capacity += _capacity_of_home(home)
 	for b: Node3D in _presence:
 		_presence[b] = 0.0
 	believer_count = 0
@@ -689,9 +778,9 @@ func _refresh_presence() -> void:
 		_presence[r.home] += r.belief
 		if r.occupying and r.occupying != r.home:
 			_presence[r.occupying] += r.belief
-		# Only prayer-house staff and seats taken in one make belief.
-		var at := r.occupying if r.occupying else r.home
-		if r.job == Resident.Job.PRAY or at.is_in_group(PRAYER_HOUSES):
+		# Only prayer-house staff and believers sitting in one make belief; living
+		# next to the altar doesn't, so the player has to staff the house.
+		if r.job == Resident.Job.PRAY or (r.occupying and r.occupying.is_in_group(PRAYER_HOUSES)):
 			prayer += B.prayer_rate * r.belief * _output_of(r)
 	if priest:
 		prayer += _people.priest_prayer
@@ -716,7 +805,9 @@ func _refresh_presence() -> void:
 
 ## Comfort follows the home; fear fades, and too much of it moves people out.
 func _feel(r: Resident, dt: float) -> void:
-	r.comfort = move_toward(r.comfort, _home_comfort.get(r.home, r.wealth), _people.comfort_rate * dt)
+	var target: float = _home_comfort.get(r.home, r.wealth) \
+			- _people.crowding_penalty * _crowding(r.home)
+	r.comfort = move_toward(r.comfort, maxf(target, 0.0), _people.comfort_rate * dt)
 	r.fear = maxf(r.fear - _people.fear_decay * dt, 0.0)
 	if r.fear > _people.flee_fear and r != priest:
 		r.fear *= 0.5
