@@ -43,11 +43,13 @@ The scene is small; most nodes are built in code at startup.
 | `Population` | `people/population.gd` | Gives every person a `Resident` record (name, `SocialGroup`, home, work, family, friends). `resident.gd` is the record, `social_group.gd` the per-group traits, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
-| `Miracles` | `miracles.gd` | Casts the miracles (water, fire, lightning, shield, heal): spends belief and reports to `Faith`. Effects: `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd`. |
-| `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (`Districts.owns()`, the claim meter): add floors, luxury, facade, change use, preserve. Preserved buildings are in group `preserved`. |
+| `Miracles` | `miracles.gd` | Casts the miracles (water, fire, lightning, shield, heal, roaches, money): spends belief and reports to `Faith`. A burnt-out or roach-infested building is emptied (`Population.evacuate`) and announced with `building_abandoned`. Effects: `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd`, `roaches.gd`, `money_rain.gd`. |
+| `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (`Districts.owns()`): add floors, luxury, facade, change use, preserve. Preserved buildings are in group `preserved`. |
 | `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees and signs on a building, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
-| `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts and keeps a claim meter per building (`Population.power_presence`, your neighbours) and each building's `Reach` (yours, take, convert, locked); `DistrictView` marks them on the roofs (plates or beacons); outside your zone only abandoned places can be claimed; the cult starts from its headquarters; a district is yours at 60%. Tunables `data/districts.tres`. |
+| `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts and keeps who holds every building: yours once most of its residents believe (an empty one, while a believer sits in); abandoned buildings; the cult starts from its headquarters; a district is yours at 60%. `DistrictView` puts a gold plate on yours. Tunables `data/districts.tres`. |
+| `Treasury` | `world/treasury.gd` | The cult's money: tithes from believers, shops in your Facade buildings; `spend_money` / `add_money`. Tunables `data/treasury.tres`. |
+| `Campaigns` | `world/campaigns.gd` (+ `campaign_marks.gd`) | The three takeover marks on a building (force, buy, missionaries), carried out by believers until most residents believe. Tunables `data/campaigns.tres`. |
 | `Government` | `government/government.gd` (+ `bulldozer.gd`, `demolition_notice.gd`) | City Hall: inspector, demolition notice, bulldozer. Tunables `data/government.tres`. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |
@@ -98,6 +100,9 @@ Tunables: `data/planning.tres`.
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
 | `data/surroundings.tres` | `SurroundingsSettings` | land, river, outer neighbourhoods, clouds, haze |
+| `data/districts.tres` | `DistrictSettings` | districts, who holds a building, start district |
+| `data/treasury.tres` | `TreasurySettings` | money: start, tithes, shop income |
+| `data/campaigns.tres` | `CampaignSettings` | takeover marks: crews, prices, sermons |
 
 ### Who owns what
 

@@ -15,7 +15,6 @@ enum Route { FORCE, BUY, PREACH }
 
 const S: CampaignSettings = preload("res://data/campaigns.tres")
 const B: Balance = preload("res://data/balance.tres")
-const D: DecreeSettings = preload("res://data/decrees.tres")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 const NONE := -1
 const SIDEWALK_GAP := 1.5   # metres out from the wall
@@ -24,6 +23,7 @@ const SIDEWALK_GAP := 1.5   # metres out from the wall
 @export var population: Node
 @export var faith: Node
 @export var treasury: Treasury
+@export var decrees: Decrees
 
 var _campaigns: Array[Campaign] = []
 var _timer := 0.0
@@ -244,8 +244,7 @@ func _spare(i: int) -> bool:
 ## A building of yours with the Combat Training use, or null.
 func _training() -> Node3D:
 	for b in districts.converted_buildings():
-		var use: int = b.get_meta(&"decree_use", 0)
-		if use > 0 and use <= D.uses.size() and D.uses[use - 1] == S.training_use:
+		if decrees.use_of(b) == S.training_use:
 			return b
 	return null
 

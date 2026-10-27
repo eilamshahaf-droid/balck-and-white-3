@@ -43,8 +43,10 @@ script = ExtResource("4_faith")
 [node name="GodHand" type="Node3D" parent="."]
 script = ExtResource("3_hand")
 
-[node name="Miracles" type="Node" parent="."]
+[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury")]
 script = ExtResource("7_miracles")
+population = NodePath("../Population")
+treasury = NodePath("../Treasury")
 
 [node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "districts")]
 script = ExtResource("13_decrees")
@@ -73,12 +75,13 @@ faith = NodePath("../Faith")
 districts = NodePath("../Districts")
 population = NodePath("../Population")
 
-[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "treasury")]
+[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "treasury", "decrees")]
 script = ExtResource("19_campaigns")
 districts = NodePath("../Districts")
 population = NodePath("../Population")
 faith = NodePath("../Faith")
 treasury = NodePath("../Treasury")
+decrees = NodePath("../Decrees")
 
 [node name="CampaignMarks" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts")]
 script = ExtResource("20_marks")
@@ -105,7 +108,7 @@ offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
 Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
-The hand can lift anything. Only miracles change what people believe."
+The hand lifts people and things (not trees). Only miracles change what people believe."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
@@ -124,3 +127,5 @@ offset_right = 900.0
 offset_bottom = -12.0
 grow_vertical = 0
 script = ExtResource("16_district_hud")
+
+[connection signal="building_abandoned" from="Miracles" to="Districts" method="mark_abandoned"]

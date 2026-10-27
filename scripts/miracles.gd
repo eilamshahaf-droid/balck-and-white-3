@@ -17,18 +17,26 @@ const FireScript = preload("res://scripts/fire.gd")
 const LightningScript = preload("res://scripts/lightning.gd")
 const ShieldScript = preload("res://scripts/shield.gd")
 const HealScript = preload("res://scripts/heal.gd")
+const RoachScript = preload("res://scripts/roaches.gd")
+const MoneyScript = preload("res://scripts/money_rain.gd")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 
 ## A miracle was cast: `kind`, and the node that performs it.
 signal miracle_cast(kind: StringName, miracle: Node3D)
 ## A miracle could not be cast: &"no_belief", &"shielded" or &"no_target".
 signal miracle_failed(reason: StringName)
+## A building burned out or was overrun by roaches: its people have left for good.
+signal building_abandoned(building: Node3D)
 
 const RAY_LENGTH := 3000.0
 const LAYER_WORLD := 1
-const HARMFUL: Array[StringName] = [&"fire", &"lightning"]
+const HARMFUL: Array[StringName] = [&"fire", &"lightning", &"roaches"]
 const FIRE_SNAP := 15.0       # metres: water cast this close to a fire goes onto it
 const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets it alight
+
+@export var population: Node
+## Where money from the sky goes. Optional until the money system is in the scene.
+@export var treasury: Node
 
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
@@ -48,6 +56,8 @@ func wheel_items() -> Array[Dictionary]:
 		{"id": &"lightning", "label": "Lightning", "color": Color(0.85, 0.85, 1.0), "cost": cost(&"lightning")},
 		{"id": &"shield", "label": "Shield", "color": Color(0.5, 0.95, 0.9), "cost": cost(&"shield")},
 		{"id": &"heal", "label": "Heal", "color": Color(1.0, 0.85, 0.35), "cost": cost(&"heal")},
+		{"id": &"roaches", "label": "Roaches", "color": Color(0.6, 0.42, 0.25), "cost": cost(&"roaches")},
+		{"id": &"money", "label": "Money", "color": Color(0.55, 0.85, 0.45), "cost": cost(&"money")},
 	]
 
 
@@ -62,6 +72,8 @@ func cost(kind: StringName, power := -1.0) -> float:
 		&"lightning": return M.lightning_cost * scale
 		&"shield": return M.shield_cost * scale
 		&"heal": return M.heal_cost * scale
+		&"roaches": return M.roach_cost * scale
+		&"money": return M.money_cost * scale
 	return 0.0
 
 
@@ -109,6 +121,11 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 		Sfx.play(get_tree(), ground, &"hum", 0.8)
 		miracle_failed.emit(&"shielded")
 		return
+	if kind == &"roaches" and building == null:
+		building = _building_near(ground, BUILDING_SNAP)  # roaches need walls to come out of
+		if building == null:
+			miracle_failed.emit(&"no_target")
+			return
 	var power := power_at(ground)
 	if not faith.spend(cost(kind, power)):
 		miracle_failed.emit(&"no_belief")
@@ -122,6 +139,8 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 		&"lightning": miracle = _lightning(ground, size)
 		&"shield": miracle = _shield(ground, size, length)
 		&"heal": miracle = _heal(ground, size, length)
+		&"roaches": miracle = _roaches(building, size, length)
+		&"money": miracle = _money(ground, power, size, length)
 	miracle_cast.emit(kind, miracle)
 
 
@@ -166,6 +185,7 @@ func set_alight(building: Node3D, length := 1.0) -> Node3D:
 		var size := DivineSign.building_size(building)
 		fire.ignite(building, size)
 		fire.endangered = _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 3.0)
+		fire.extinguished.connect(_on_burned.bind(building))  # a burnt building stands empty
 	fire.burn_time = M.fire_burn_time * length
 	return fire
 
@@ -195,6 +215,38 @@ func _heal(ground: Vector3, size: float, length: float) -> Node3D:
 	faith.report(heal, &"see_heal", M.heal_intensity, M.heal_situation, M.heal_time * length, true,
 			M.heal_deniability, helped, M.heal_seen_from)
 	return heal
+
+
+func _roaches(building: Node3D, size: float, length: float) -> Node3D:
+	var swarm: Node3D = RoachScript.new()
+	city.add_child(swarm)
+	swarm.infest(building, size, length)
+	faith.report(swarm, &"see_roaches", M.roach_intensity, M.roach_situation, M.roach_time * length, true,
+			M.roach_deniability, [], M.roach_seen_from)
+	_abandon(building)
+	return swarm
+
+
+func _money(ground: Vector3, power: float, size: float, length: float) -> Node3D:
+	var notes: Node3D = MoneyScript.new()
+	city.add_child(notes)
+	notes.start(ground, size, length)
+	# Your believers pick the notes up and hand them in; strangers keep theirs.
+	if treasury:
+		treasury.add_money(M.money_amount * lerpf(M.money_weak_share, 1.0, power))
+	faith.report(notes, &"see_money", M.money_intensity, M.money_situation, M.money_time * length, true,
+			M.money_deniability, _people_near(ground, M.money_radius * size), M.money_seen_from)
+	return notes
+
+
+func _on_burned(building: Node3D) -> void:
+	if is_instance_valid(building):
+		_abandon(building)
+
+
+func _abandon(building: Node3D) -> void:
+	population.evacuate(building)
+	building_abandoned.emit(building)
 
 
 func _fire_near(camera: Camera3D, screen_pos: Vector2, radius: float) -> Node3D:

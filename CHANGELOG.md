@@ -3,22 +3,28 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
-## 2026-10-26: Taking over buildings, made clear
-- Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.
-- A second marker style to compare: beacons, a glass column over the roof (red or green) that fills with gold. The debug panel (F1) has a "Markers: plates / beacons" button; the default is in `data/districts.tres` (`marker_style`).
-- The bottom-left panel has a key to the colours and says what to do with the building in the middle of the screen ("abandoned, take it over: 40% (set believers down on it)").
-- The claim meter now uses the people's believing presence: believers who live in a building or sit in on it (set them down on its roof or at its walls). Believers just walking past no longer count.
-- The start district by the river is now called Spin Cycle Flats (where the congregation lives).
-- Try it: press F5, find a red roof near the gold one, pick up a believer (B shows them in gold), set them down on that roof and watch the gold spread. Press F1 and click "Markers: plates / beacons" to compare.
+## 2026-10-27: Take buildings by force, money or missionaries; a money meter
+- The claim meter and its roof colours are gone. Eilam's rule instead: a building is yours once most of the people who live there believe. An empty one is yours while a believer lives in it or sits in on it.
+- Three takeover marks float over a marked building, with "3 / 7 believe" underneath:
+  - **Skull: force.** Fighters from your Combat Training building scare non-believers out one by one, and believers move in. Exposure rises with every resident scared out.
+  - **Dollar: buy.** A believer with a cash offer buys out non-believers ($80 each), and believers move in.
+  - **Sky sign: missionaries.** Believers preach at the door. Each sermon costs belief and moves one resident's belief (less if they are skeptical).
+- The mark comes off when the building is yours, and the mark's line says what holds it up ("needs $80", "on the way").
+- **Money**: every believer gives a little, and your buildings with the Facade decree open shops that bring money in. Decrees, buying and the money miracle use it.
+- **Meters**: belief, money (with income per second), believers, buildings and exposure are now cards along the top.
+- A burnt-out or roach-infested building becomes abandoned, and anyone who moves in holds it.
+- Numbers: `data/campaigns.tres`, `data/treasury.tres`, `data/districts.tres` ("Who holds a building").
+- Try it: press F5 and open the debug panel (F1). Look at a building near the gold roofs, click "Mark: sky sign (preach)" or "Mark: dollar (buy)", and watch the count over it. Force needs a building of yours set to Combat Training (Change Use).
 
-## 2026-10-26: Taking over a place: the claim meter
-- Every building now has a claim meter from 0 to 100%. At 100% it is yours; it slips back below 50%. For now only the power route fills it: believers who live there, believers in the street outside, and your buildings next door. With nothing holding it, the claim slowly fades.
-- The beachhead rule: outside your influence zone (the buildings next to yours) only an abandoned place can be claimed. The cult starts from its headquarters, the building where most believers live; its district is the neglected start district, where about a third of the buildings are abandoned. A few more are scattered through the city.
-- Abandoned places nobody holds have a grey roof plate; yours stay gold. The bottom-left panel shows the claim on the building in the middle of the screen ("Building: 40% claimed, abandoned").
-- City Hall's inspection now cuts the claim on the building it inspects (35 points), on top of the demolition notice.
-- Decrees follow the claim meter: a building is yours for decrees once its claim is full, no longer when half of its residents believe (`owner_share` is gone from `data/decrees.tres`).
-- Numbers: `data/districts.tres` (Claim meter, Start district) and `inspection_claim_cut` in `data/government.tres`.
-- Try it: press F5. Move the view to a grey roof near the start, then drag a couple of believers next to it with the hand and watch the "Building" line climb.
+## 2026-10-27: Roaches, money from the sky, and dearer miracles
+- New miracle **Roaches**: a swarm pours out of a building's walls. Its residents run out, move elsewhere for good, and the building is abandoned.
+- New miracle **Money**: banknotes flutter down on a spot. Your believers pick them up and hand the money in (more with believers nearby).
+- **Fire** now leaves a building abandoned once it has burned: the residents leave and don't come back.
+- Miracles cost about four times as much (water 60, fire 50, lightning 80, shield 100, heal 60, roaches 70, money 90 belief), and up to 1.6x that far from your believers, so each one is a choice.
+- **Change Use** opens a second wheel to pick the use: Prayer House, Course Center, Free Personality Test or Combat Training (the force route trains believers there).
+- Shield blocks roaches like fire and lightning. `Miracles.building_abandoned` tells the districts when a place is emptied.
+- Numbers: `data/miracles.tres`, groups "Roaches" and "Money from the sky"; uses in `data/decrees.tres`.
+- Try it: press F5, hold the left button still on a street, pick Roaches, then click a building with people in it.
 
 ## 2026-10-27: Many more people in the city
 - The city now has 500 residents instead of 60 (`data/people.tres`, "Resident Count").
@@ -39,6 +45,25 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Fixed editor warnings in the hand's files: names that shadowed built-ins (`sign`, `size`, `to_local`).
 - The hand test checks that trees can't be picked up.
 - Try it: press F5 and try to drag a tree: the city moves instead.
+
+
+
+## 2026-10-26: Taking over buildings, made clear
+- Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.
+- A second marker style to compare: beacons, a glass column over the roof (red or green) that fills with gold. The debug panel (F1) has a "Markers: plates / beacons" button; the default is in `data/districts.tres` (`marker_style`).
+- The bottom-left panel has a key to the colours and says what to do with the building in the middle of the screen ("abandoned, take it over: 40% (set believers down on it)").
+- The claim meter now uses the people's believing presence: believers who live in a building or sit in on it (set them down on its roof or at its walls). Believers just walking past no longer count.
+- The start district by the river is now called Spin Cycle Flats (where the congregation lives).
+- Try it: press F5, find a red roof near the gold one, pick up a believer (B shows them in gold), set them down on that roof and watch the gold spread. Press F1 and click "Markers: plates / beacons" to compare.
+
+## 2026-10-26: Taking over a place: the claim meter
+- Every building now has a claim meter from 0 to 100%. At 100% it is yours; it slips back below 50%. For now only the power route fills it: believers who live there, believers in the street outside, and your buildings next door. With nothing holding it, the claim slowly fades.
+- The beachhead rule: outside your influence zone (the buildings next to yours) only an abandoned place can be claimed. The cult starts from its headquarters, the building where most believers live; its district is the neglected start district, where about a third of the buildings are abandoned. A few more are scattered through the city.
+- Abandoned places nobody holds have a grey roof plate; yours stay gold. The bottom-left panel shows the claim on the building in the middle of the screen ("Building: 40% claimed, abandoned").
+- City Hall's inspection now cuts the claim on the building it inspects (35 points), on top of the demolition notice.
+- Decrees follow the claim meter: a building is yours for decrees once its claim is full, no longer when half of its residents believe (`owner_share` is gone from `data/decrees.tres`).
+- Numbers: `data/districts.tres` (Claim meter, Start district) and `inspection_claim_cut` in `data/government.tres`.
+- Try it: press F5. Move the view to a grey roof near the start, then drag a couple of believers next to it with the hand and watch the "Building" line climb.
 
 ## 2026-10-26: Believers sit in to claim a building
 - Pick up a believer and set them down on a roof, or on the pavement right at a building's walls: they stay there and sit in ("We're not leaving.", "Form 7-C, signed."), facing the building, until the hand picks them up again.

@@ -144,14 +144,21 @@ func building_near(p: Vector3) -> int:
 	return best
 
 
-## Everyone leaves `building` for good (burnt out, roaches): it becomes an
-## abandoned place anyone can move into.
+## Everyone leaves `building` for good: it becomes an abandoned place anyone
+## can move into.
 func abandon(building: Node3D) -> void:
+	if mark_abandoned(building):
+		population.evacuate(building)
+
+
+## `building` was emptied already (a miracle fire burnt it out, roaches):
+## Miracles.building_abandoned is connected here. True if it was not before.
+func mark_abandoned(building: Node3D) -> bool:
 	var i: int = _index.get(building, -1)
 	if i < 0 or _abandoned[i] == 1:
-		return
+		return false
 	_abandoned[i] = 1
-	population.evacuate(building)
+	return true
 
 
 func converted_buildings() -> Array[Node3D]:
