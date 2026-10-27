@@ -23,10 +23,11 @@ project.godot        main scene, autoloads, window settings
 scenes/              main.tscn (the game), city_planning.tscn (planning sandbox)
 scripts/             gameplay scripts for main.tscn
 scripts/people/      residents: Population, Resident records, social groups, debug card
+scripts/props/       Meshy props: facade and roof dressing, sidewalk props, their models
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
-assets/models/       third-party models (Kenney CC0), with their licence files
+assets/models/       third-party models (Kenney CC0) and our Meshy props (meshy/), with licence notes
 tests/               headless tests that drive the real game (run before pushing)
 docs/                screenshot for the README
 ```
@@ -38,6 +39,7 @@ The scene is small; most nodes are built in code at startup.
 | Node | Script | Role |
 | --- | --- | --- |
 | `Main` | `city.gd` | Builds the procedural Manhattan grid (unevenly spaced avenues and streets): ground, blocks, towers in two height clusters, park, plazas, trees, doors, taxis, citizens, litter, pigeons. Grid helpers (`intersection`, `nearest_grid`, `block_of`, ...) used by citizens and districts. Day/night (`set_daylight`). |
+| `CityProps` | `props/city_props.gd` (+ `street_prop.gd`, `prop_model.gd`, `prop_kind.gd`) | Dresses the built city with the Meshy models: air conditioners under windows and water tanks / cooling units on roofs (MultiMesh per kind and chunk of town; roof props follow new floors and hide under a penthouse), and sidewalk props the hand can pick up (`StreetProp`; trash bags squash under weight and on landing). Tunables `data/city_props.tres`. |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
 | `Surroundings` | `world/surroundings.gd` (+ `world/outskirts.gd`) | Scenery past the grid, built once: land and hills (with a height-map collision floor), the river, promenade and bridges, roads leaving the grid, outer neighbourhoods and woods, clouds, and the depth haze that hides the edge. |
 | `Population` | `people/population.gd` | Gives every person a `Resident` record (name, `SocialGroup`, home, work, family, friends). `resident.gd` is the record, `social_group.gd` the per-group traits. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) feeds the claim meter's power route. |
@@ -98,6 +100,7 @@ Tunables: `data/planning.tres`.
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
 | `data/surroundings.tres` | `SurroundingsSettings` | land, river, outer neighbourhoods, clouds, haze |
+| `data/city_props.tres` | `CityPropsSettings` (+ `PropKind`s) | which Meshy props go where, how many, how bags squash, the taxi model |
 
 ### Who owns what
 
@@ -108,7 +111,8 @@ Several threads push to `main`. Message the owning thread before changing its fi
 | Hand, miracles, decrees, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `decrees.gd`, `decree_looks.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
 | People | `citizen.gd`, `faith.gd`, `sign_followers.gd`, `scripts/people/` | "Build the people in the city" |
 | Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
-| Building models | `building_visual.gd`, `assets/models/` | model-library |
+| Building models | `building_visual.gd`, `assets/models/kenney_modular/` | model-library |
+| Meshy props | `scripts/props/`, `assets/models/meshy/`, `data/city_props.tres` | "Test the Meshy connection" |
 | World: districts, City Hall, surroundings | `scripts/world/`, `scripts/government/` | "World and stages" |
 | Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
 

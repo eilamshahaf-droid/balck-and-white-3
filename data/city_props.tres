@@ -1,0 +1,131 @@
+[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=31 format=3]
+
+[ext_resource type="Script" path="res://scripts/props/city_props_settings.gd" id="1_settings"]
+[ext_resource type="Script" path="res://scripts/props/prop_kind.gd" id="2_kind"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_window.glb" id="3_ac_window"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_vintage.glb" id="4_ac_vintage"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_modern.glb" id="5_ac_modern"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_split.glb" id="6_ac_split"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/water_tank.glb" id="7_water_tank"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/ac_rooftop.glb" id="8_ac_rooftop"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/trash_can.glb" id="9_trash_can"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/trash_bag.glb" id="10_trash_bag"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/hydrant.glb" id="11_hydrant"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/bench.glb" id="12_bench"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/newspaper_box.glb" id="13_newspaper_box"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/mailbox.glb" id="14_mailbox"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/hot_dog_cart.glb" id="15_hot_dog_cart"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/taxi.glb" id="16_taxi"]
+
+[sub_resource type="Resource" id="Kind_ac_window"]
+script = ExtResource("2_kind")
+model = ExtResource("3_ac_window")
+scale = Vector3(1.6, 1.6, 1.6)
+weight = 3.0
+mass = 1.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_ac_vintage"]
+script = ExtResource("2_kind")
+model = ExtResource("4_ac_vintage")
+scale = Vector3(1.6, 1.6, 1.6)
+weight = 2.0
+mass = 1.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_ac_modern"]
+script = ExtResource("2_kind")
+model = ExtResource("5_ac_modern")
+scale = Vector3(1.6, 1.6, 1.6)
+weight = 2.0
+mass = 1.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_ac_split"]
+script = ExtResource("2_kind")
+model = ExtResource("6_ac_split")
+scale = Vector3(1.6, 1.6, 1.6)
+weight = 1.0
+mass = 1.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_water_tank"]
+script = ExtResource("2_kind")
+model = ExtResource("7_water_tank")
+weight = 3.0
+mass = 1.0
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_ac_rooftop"]
+script = ExtResource("2_kind")
+model = ExtResource("8_ac_rooftop")
+weight = 2.0
+mass = 1.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_trash_can"]
+script = ExtResource("2_kind")
+model = ExtResource("9_trash_can")
+weight = 4.0
+mass = 1.2
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_trash_bag"]
+script = ExtResource("2_kind")
+model = ExtResource("10_trash_bag")
+weight = 4.0
+mass = 0.4
+surface = &"cloth"
+cluster = Vector2i(2, 3)
+
+[sub_resource type="Resource" id="Kind_hydrant"]
+script = ExtResource("2_kind")
+model = ExtResource("11_hydrant")
+weight = 2.0
+mass = 2.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_bench"]
+script = ExtResource("2_kind")
+model = ExtResource("12_bench")
+weight = 1.5
+mass = 2.5
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_newspaper_box"]
+script = ExtResource("2_kind")
+model = ExtResource("13_newspaper_box")
+weight = 1.5
+mass = 1.5
+surface = &"metal"
+cluster = Vector2i(1, 2)
+
+[sub_resource type="Resource" id="Kind_mailbox"]
+script = ExtResource("2_kind")
+model = ExtResource("14_mailbox")
+weight = 1.0
+mass = 2.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_hot_dog_cart"]
+script = ExtResource("2_kind")
+model = ExtResource("15_hot_dog_cart")
+weight = 0.4
+mass = 3.0
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_taxi"]
+script = ExtResource("2_kind")
+model = ExtResource("16_taxi")
+yaw_degrees = 90.0
+scale = Vector3(0.85, 0.75, 1.0)
+weight = 1.0
+mass = 4.0
+surface = &"metal"
+
+[resource]
+script = ExtResource("1_settings")
+facade_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_ac_window"), SubResource("Kind_ac_vintage"), SubResource("Kind_ac_modern"), SubResource("Kind_ac_split")])
+roof_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_water_tank"), SubResource("Kind_ac_rooftop")])
+street_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_trash_can"), SubResource("Kind_trash_bag"), SubResource("Kind_hydrant"), SubResource("Kind_bench"), SubResource("Kind_newspaper_box"), SubResource("Kind_mailbox"), SubResource("Kind_hot_dog_cart")])
+taxi = SubResource("Kind_taxi")

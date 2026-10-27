@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Meshy props in the city
+- The first models made with Meshy are in the game (`assets/models/meshy/`, about 0.5 MB each). Window air conditioners (four kinds) hang under windows of the brick and stone buildings; water tanks and big cooling units stand on roofs. They are drawn as MultiMeshes, one per kind and chunk of town, and disappear past 260 m.
+- The sidewalks have trash cans, heaps of trash bags, hydrants, benches, newspaper boxes, mailboxes and the odd hot-dog cart. The hand can pick all of them up and throw them, like the taxis.
+- Trash bags give way: a bag squashes under whatever lies on it and dents when it lands hard, then slowly puffs back up (a "squash" blend shape on the model).
+- The taxis are now the Meshy cab, a little short and tall like a toy.
+- Roof props follow a building that grows new floors by decree, and make way for a luxury penthouse.
+- Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
+- Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
+
 ## 2026-10-26: Taking over buildings, made clear
 - Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.
 - A second marker style to compare: beacons, a glass column over the roof (red or green) that fills with gold. The debug panel (F1) has a "Markers: plates / beacons" button; the default is in `data/districts.tres` (`marker_style`).
