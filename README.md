@@ -117,7 +117,6 @@
 - `scripts/divine_sign.gd` – האותות על הבניינים.
 - `scripts/decrees.gd` – הצווים האלוהיים: של מי הבניין, מחיר ומה כל צו עושה. `scripts/decree_looks.gd` – איך הבניין משתנה (קומות, יוקרה, באנרים, שלט על הגג, לוחית שימור). המספרים ב-`data/decrees.tres`.
 - `scripts/debug_panel.gd` – לוח הדיבאג לבדיקות.
-- `scripts/sign_followers.gd` – איך המאמינים עונים לאותות. המספרים בקבוצה "Divine signs" ב-`data/miracles.tres`.
 - `scripts/miracle_settings.gd`, `data/miracles.tres` – כל המספרים של הניסים והאותות (מחיר, רדיוס, משך).
 - `scripts/hand_visual.gd` – המראה של היד: כפפת הבד הלבנה (המודל ב-`assets/models/god_hand`).
 - `scripts/hand_settings.gd`, `data/hand_settings.tres` – הגדרות היד והמצלמה.

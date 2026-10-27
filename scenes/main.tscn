@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -8,7 +8,6 @@
 [ext_resource type="Script" path="res://scripts/opening.gd" id="6_opening"]
 [ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
 [ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
-[ext_resource type="Script" path="res://scripts/sign_followers.gd" id="9_signs"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
 [ext_resource type="Script" path="res://scripts/people/population.gd" id="11_population"]
 [ext_resource type="Script" path="res://scripts/people/resident_card.gd" id="12_card"]
@@ -38,7 +37,8 @@ far = 3000.0
 [node name="Surroundings" type="Node3D" parent="."]
 script = ExtResource("17_surroundings")
 
-[node name="Population" type="Node" parent="."]
+[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles")]
+miracles = NodePath("../Miracles")
 script = ExtResource("11_population")
 
 [node name="Faith" type="Node" parent="." node_paths=PackedStringArray("population")]
@@ -80,9 +80,6 @@ population = NodePath("../Population")
 [node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns")]
 script = ExtResource("8_tools")
 campaigns = NodePath("../Campaigns")
-
-[node name="SignFollowers" type="Node" parent="."]
-script = ExtResource("9_signs")
 
 [node name="ResidentCard" type="CanvasLayer" parent="."]
 script = ExtResource("12_card")
