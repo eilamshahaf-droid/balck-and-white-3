@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: One fixed link for the newest Alpha
+- https://github.com/eilamshahaf-droid/balck-and-white-3/archive/refs/heads/alpha.zip always downloads the newest Alpha (the `alpha` branch). `README.md` shows it and `CLAUDE.md` tells every thread that refreshes the Alpha to push it to that branch.
+- Try it: open the link; the ZIP holds the folder `balck-and-white-3-alpha`, import its `project.godot` in Godot and press F5.
+
 ## 2026-10-27: Alpha (refreshed, economy round)
 - The combined build again: main (the head priest, belief in stages, only Prayer Houses pray), the world branch (building economy, police and the hidden building code, poor start district), the hand round (miracles leave proof and priests convert, Block Party, Rain of Frogs, accidents, costs and cooldowns, camera that keeps the building you look at solid) and the Meshy props showing each building's state.
 - Headless run (with --debug), planning scene and hand test pass with no errors or warnings; the Compatibility renderer starts.
