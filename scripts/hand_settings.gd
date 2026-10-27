@@ -24,6 +24,7 @@ extends Resource
 @export_range(0.0, 1.0) var fade_amount := 0.85   # how see-through a faded building gets
 @export var fade_speed := 8.0
 @export var fade_near_camera := 6.0         # buildings this close to the camera fade too
+@export var fade_max_distance := 70.0         # only buildings this close to the camera ever fade
 @export var fade_keep_radius := 6.0         # buildings this close to the centre of the view never fade
 
 @export_group("Building menus")

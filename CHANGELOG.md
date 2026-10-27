@@ -41,6 +41,11 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
 - Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
 
+## 2026-10-27: Pre-Alpha 0.5.1: buildings no longer fade for no reason
+- A building only fades when it is within `fade_max_distance` (70 m, `data/hand_settings.tres`) of the camera as well as in the tube between camera and hand. Far towers that the tube happened to cross used to go see-through at random, mostly when zoomed out. Checked from 384 combinations of height, angle and distance: nothing faded beyond the limit.
+- At most 6 speech bubbles ("It's a miracle!", "It's a hoax.") show at once (`max_explanations_shown` in `data/balance.tres`), so a crowd no longer covers the screen with overlapping text.
+- Try it: press F5, zoom out and orbit: no building fades unless it is near you; cast a miracle over a crowd and count the bubbles.
+
 ## 2026-10-27: Pre-Alpha 0.5.0: Building wheel upgrades, staff and double-click reset
 - The wheel on a building of yours has two more slices. **Upgrades** opens a second wheel: Elevator and Roof Garden (more comfort), Cameras and Gate (more fear). Each costs money, and every upgrade or floor makes the next one dearer (`Population.upgrade_cost`).
 - **Staff** (prayer houses and shops only) sends a free believer from the street nearby to pray, train as a priest, or work in the shop. Nobody working means no output.

@@ -14,6 +14,7 @@ extends Resource
 ## Each witness explains the miracle: god, chance, fraud or a plot.
 @export var helped_situation := 1.0          # S for someone the miracle actually helped
 @export_range(0.0, 1.0) var bystander_timing := 0.3   # how much a miracle seems "meant for me" when it wasn't
+@export var max_explanations_shown := 6    # speech bubbles ("It's a miracle!") up at once
 @export var fraud_weight := 0.6              # how readily skeptics call it a hoax
 @export var plot_weight := 0.15              # how readily skeptics suspect someone's scheme
 

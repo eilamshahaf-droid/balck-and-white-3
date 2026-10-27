@@ -87,8 +87,10 @@ var _events_seen := {}     # ids of miracle events already reacted to
 var _phone: MeshInstance3D
 var _phone_timer := 0.0
 var _look_at_target := Vector3.INF   # where a witness stares while stopped
+static var _explaining := 0   # explanation bubbles showing now, over everyone
 var _bubble: Label3D
 var _bubble_timer := 0.0
+var _bubble_counted := false   # this bubble is one of the `_explaining` ones
 var _errand_route: Array[Vector3] = []
 var _errand_time := 0.0
 var _errand_line := ""
@@ -207,11 +209,14 @@ func _process(delta: float) -> void:
 		_phone.visible = _phone_timer > 0.0 and state == State.WALKING
 	if _bubble:
 		_bubble.visible = _bubble_timer > 0.0
+	if _bubble_counted and _bubble_timer <= 0.0:
+		_uncount_bubble()
 	if _phone_timer <= 0.0 and _bubble_timer <= 0.0:
 		set_process(false)
 
 
 func _exit_tree() -> void:
+	_uncount_bubble()
 	Crowd.leave(self)
 
 
@@ -301,7 +306,10 @@ func _explain(deniability: float, timing: float, friends_belief: float) -> Strin
 
 
 ## A short line over the head, so the player can read how a miracle landed.
+## Only so many show at once; a crowd of identical lines is just clutter.
 func _say(explanation: StringName, seconds: float) -> void:
+	if _explaining >= B.max_explanations_shown:
+		return
 	var lines := {
 		&"god": ["It's a miracle!", Color(1.0, 0.85, 0.35)],
 		&"chance": ["Just luck.", Color(0.85, 0.85, 0.85)],
@@ -309,6 +317,15 @@ func _say(explanation: StringName, seconds: float) -> void:
 		&"plot": ["Someone's behind this...", Color(0.7, 0.6, 1.0)],
 	}
 	_say_line(lines[explanation][0], lines[explanation][1], seconds)
+	if not _bubble_counted:
+		_bubble_counted = true
+		_explaining += 1
+
+
+func _uncount_bubble() -> void:
+	if _bubble_counted:
+		_bubble_counted = false
+		_explaining -= 1
 
 
 func _turn_to(p: Vector3) -> void:

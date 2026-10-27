@@ -235,7 +235,10 @@ func _update_fade(delta: float) -> void:
 	var to_pivot := pivot - cam
 	var end := cam + to_pivot * maxf(0.0, 1.0 - 3.0 / maxf(to_pivot.length(), 0.01))
 	for body in _bodies_between(cam, end, S.fade_radius):
-		wanted[body] = true
+		# A building far from the camera is not "in the way" however the tube
+		# crosses it; fading it only looks like a random glitch.
+		if body.global_position.distance_to(cam) <= S.fade_max_distance:
+			wanted[body] = true
 	for body in _bodies_between(cam, cam + Vector3.UP * 0.1, S.fade_near_camera):
 		wanted[body] = true
 	wanted.erase(hand.pointed_building)
