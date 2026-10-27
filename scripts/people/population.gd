@@ -35,6 +35,7 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.seed = 7
+	add_child(Crowd.new())
 	# The city builds its blocks in its own _ready, which runs after ours.
 	city.ready.connect(_populate, CONNECT_ONE_SHOT)
 
@@ -74,7 +75,7 @@ func resident_near(p: Vector3, radius: float) -> Resident:
 	var best: Resident = null
 	var best_d := radius
 	for r in residents:
-		if not is_instance_valid(r.body):
+		if not _has_body(r):
 			continue
 		var d := Vector2(r.body.global_position.x - p.x, r.body.global_position.z - p.z).length()
 		if d < best_d:
@@ -97,7 +98,7 @@ func home_near(p: Vector3) -> Node3D:
 
 func move_home(r: Resident, building: Node3D) -> void:
 	_set_home(r, building)
-	if is_instance_valid(r.body):
+	if _has_body(r):
 		r.body.settle_at_home()
 
 
@@ -110,7 +111,7 @@ func evict(r: Resident) -> void:
 	if new_home == null:
 		return
 	_set_home(r, new_home)
-	if is_instance_valid(r.body):
+	if _has_body(r):
 		r.body.move_out()
 
 
@@ -132,7 +133,7 @@ func evacuate(building: Node3D) -> void:
 	var leaving: Array = _by_home.get(building, []).duplicate()
 	for r: Resident in leaving:
 		_set_home(r, new_home)
-		if not is_instance_valid(r.body):
+		if not _has_body(r):
 			continue
 		r.body.move_out()
 		if r.body.global_position.distance_to(building.global_position) < _people.flee_reach:
@@ -230,10 +231,15 @@ func _forget_building(building: Node3D) -> void:
 
 func _release_occupants(building: Node3D) -> void:
 	for r: Resident in occupants(building).duplicate():
-		if is_instance_valid(r.body):
+		if _has_body(r):
 			r.body.leave_occupied()
 		else:
 			_on_stopped_occupying(r)
+
+
+## A body walking the city; bodies leave the tree before the buildings when the game quits.
+func _has_body(r: Resident) -> bool:
+	return is_instance_valid(r.body) and r.body.is_inside_tree()
 
 
 func _set_home(r: Resident, building: Node3D) -> void:
@@ -277,6 +283,11 @@ func _refresh_presence() -> void:
 		_presence[r.home] += r.belief
 		if r.occupying and r.occupying != r.home:
 			_presence[r.occupying] += r.belief
+	for r in residents:
+		var total := 0.0
+		for id in r.friends:
+			total += residents[id].belief
+		r.friends_belief = total / r.friends.size() if not r.friends.is_empty() else 0.0
 
 
 func _add_family() -> void:

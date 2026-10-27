@@ -4,7 +4,7 @@ extends Resource
 ## Open data/people.tres in Godot and change values in the Inspector.
 
 @export_group("Population")
-@export var resident_count := 60
+@export var resident_count := 500
 @export var groups: Array[SocialGroup] = []
 @export var family_size_min := 1
 @export var family_size_max := 4

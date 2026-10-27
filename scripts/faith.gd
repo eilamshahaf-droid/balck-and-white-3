@@ -90,16 +90,6 @@ func _witness(subject: Node3D, e: Dictionary, people: Array) -> void:
 			query.exclude = see_through
 		if space.intersect_ray(query):
 			continue  # a building is in the way
-		var filmed: bool = c.witness(e, at, _friends_belief(c, people))
+		var filmed: bool = c.witness(e, at, c.resident.friends_belief)
 		if filmed:
 			exposure = minf(exposure + B.exposure_per_video * e.intensity, 1.0)
-
-
-func _friends_belief(person: Node3D, people: Array) -> float:
-	var total := 0.0
-	var n := 0
-	for c in people:
-		if c != person and c.global_position.distance_to(person.global_position) < B.friends_radius:
-			total += c.belief
-			n += 1
-	return total / n if n > 0 else 0.0
