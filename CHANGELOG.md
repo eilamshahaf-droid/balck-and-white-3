@@ -5,6 +5,14 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 
 
 
+## 2026-10-27: Miracles prove, priests convert
+- Eilam's economy round: a miracle no longer converts anyone. It leaves **proof** where it lands, fading over a minute, and priests preaching there persuade better (up to about twice as well after a strong one). Witnesses still react (staring, "It's a hoax", filming, exposure).
+- Each miracle has a job: **gather** a crowd (Block Party; Rain of Frogs now draws gawkers instead of scattering everyone), **save** a burning building (Water: the strongest proof), **clear** a building (Fire, Roaches), or bring **money**.
+- Rain of Frogs' proof is random and can be negative: a bad frog day makes the street harder to win.
+- Proof is weaker where many miracles landed in the last three minutes. Casting the same miracle again soon costs 50% more per recent cast, and each miracle has a cooldown; the wheel shows "ready in 12s".
+- Numbers: `data/miracles.tres`, group "Proof" and each miracle's `_proof` and `_cooldown`.
+- Try it: press F5, cast Block Party twice in a row: the second costs more, and after it the slice says how long until it is ready.
+
 ## 2026-10-27: Prayer Houses join the prayer_houses group
 - A building given the Prayer House use (Change Use decree) joins the group `prayer_houses`, and leaves it when its use changes again. Only believers there pray belief into the pool (people thread, `Population.prayer`).
 - Try it: press F5, change one of your buildings to Prayer House and watch belief start to rise.

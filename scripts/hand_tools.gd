@@ -23,7 +23,7 @@ const MARKS := {&"force": Campaigns.Route.FORCE, &"buy": Campaigns.Route.BUY,
 @export var campaigns: Campaigns
 
 @onready var hand: Node3D = get_node("../GodHand")
-@onready var miracles: Node = get_node("../Miracles")
+@onready var miracles: Miracles = get_node("../Miracles")
 @onready var faith: Node = get_node("../Faith")
 @onready var decrees: Decrees = get_node("../Decrees")
 
@@ -114,8 +114,10 @@ func _open(hit: Dictionary, at: Vector2) -> void:
 		_mode = Mode.MIRACLES
 		var items: Array[Dictionary] = miracles.wheel_items()
 		for item in items:
-			item.note = "%d belief" % roundi(item.cost)
-			item.enabled = faith.belief_pool >= item.cost
+			var wait: float = miracles.ready_in(item.id)
+			var price := "%d belief" % roundi(item.cost)
+			item.note = "ready in %ds" % ceili(wait) if wait > 0.0 else price
+			item.enabled = wait <= 0.0 and faith.belief_pool >= item.cost
 		_wheel.open(at, items)
 
 

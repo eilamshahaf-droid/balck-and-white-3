@@ -3,9 +3,11 @@ extends Node
 ## Casts the miracles: water, fire, roaches, money, block party, rain of frogs.
 ##
 ## Every miracle spends belief from the pool and is reported to the witnesses
-## (faith.gd): this is the only way the god changes what people believe.
-## A burning building is lost if it burns long enough, and saved, to its
-## residents' awe, if water puts it out first.
+## (faith.gd), who react to it. A miracle converts nobody by itself: it leaves
+## proof on the spot (miracle_proof.gd) that makes priests there persuade
+## better. Each has a job: gather a crowd (Block Party, Rain of Frogs), save a
+## burning building (Water), clear a building (Fire, Roaches), or bring money.
+## Casting one again soon costs more, and each needs a moment before the next.
 ##
 ## A miracle's power comes from the believers near the spot it is cast on:
 ## among them it is bigger, lasts longer and costs less; among skeptics it is
@@ -24,7 +26,7 @@ const DivineSign = preload("res://scripts/divine_sign.gd")
 
 ## A miracle was cast: `kind`, and the node that performs it.
 signal miracle_cast(kind: StringName, miracle: Node3D)
-## A miracle could not be cast: &"no_belief" or &"no_target".
+## A miracle could not be cast: &"no_belief", &"cooling" or &"no_target".
 signal miracle_failed(reason: StringName)
 ## A building burned out or was overrun by roaches or frogs: its people have
 ## left for good.
@@ -49,6 +51,7 @@ const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets 
 ## 0..1: the power of a miracle cast under the hand now (for the wheel and HUD).
 var power_here := 0.0
 var _power_timer := 0.0
+var _proof := MiracleProof.new()
 
 
 ## The wheel's slices, in order.
@@ -67,7 +70,7 @@ func wheel_items() -> Array[Dictionary]:
 func cost(kind: StringName, power := -1.0) -> float:
 	if power < 0.0:
 		power = power_here
-	var scale := lerpf(M.weak_cost, M.strong_cost, power)
+	var scale := lerpf(M.weak_cost, M.strong_cost, power) * _proof.cost_scale(kind)
 	match kind:
 		&"water": return M.water_cost * scale
 		&"fire": return M.fire_cost * scale
@@ -88,7 +91,19 @@ func power_at(p: Vector3) -> float:
 	return clampf(sum / M.full_power_belief, 0.0, 1.0)
 
 
+## The proof miracles left at `p`: priests there persuade (1 + this) times as
+## well. Can be negative where a miracle went badly.
+func proof_at(p: Vector3) -> float:
+	return _proof.proof_at(p)
+
+
+## Seconds until `kind` can be cast again (0: ready).
+func ready_in(kind: StringName) -> float:
+	return _proof.ready_in(kind)
+
+
 func _physics_process(delta: float) -> void:
+	_proof.tick(delta)
 	_power_timer -= delta
 	if _power_timer <= 0.0:
 		_power_timer = M.power_update
@@ -123,6 +138,9 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 		if building == null:
 			miracle_failed.emit(&"no_target")
 			return
+	if _proof.ready_in(kind) > 0.0:
+		miracle_failed.emit(&"cooling")
+		return
 	var power := power_at(ground)
 	if not faith.spend(cost(kind, power)):
 		miracle_failed.emit(&"no_belief")
@@ -137,7 +155,31 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 		&"money": miracle = _money(ground, power, size, length)
 		&"party": miracle = _party(ground, size, length)
 		&"frogs": miracle = _frogs(ground, size, length)
+	_proof.used(kind, _cooldown(kind))
+	if kind != &"frogs":  # the frogs decide their own proof
+		_proof.leave(miracle.global_position, M.proof_radius * size, _proof_strength(kind))
 	miracle_cast.emit(kind, miracle)
+
+
+func _cooldown(kind: StringName) -> float:
+	match kind:
+		&"water": return M.water_cooldown
+		&"fire": return M.fire_cooldown
+		&"roaches": return M.roach_cooldown
+		&"money": return M.money_cooldown
+		&"party": return M.party_cooldown
+		&"frogs": return M.frog_cooldown
+	return 0.0
+
+
+func _proof_strength(kind: StringName) -> float:
+	match kind:
+		&"water": return M.water_proof
+		&"fire": return M.fire_proof
+		&"roaches": return M.roach_proof
+		&"money": return M.money_proof
+		&"party": return M.party_proof
+	return 0.0
 
 
 func _water(ground: Vector3, size: float, length: float) -> Node3D:
@@ -227,9 +269,9 @@ func _party(ground: Vector3, size: float, length: float) -> Node3D:
 	return party
 
 
-## Chaos: people scatter or get knocked flat, a building under the frogs may be
-## overrun (yours too), and the city reads it as a blessing or a curse, which
-## nobody can tell beforehand.
+## Chaos: a crowd gathers to gawk and some get knocked flat, a building under
+## the frogs may be overrun (yours too), and the city reads it as a blessing or
+## a curse, which nobody can tell beforehand.
 func _frogs(ground: Vector3, size: float, length: float) -> Node3D:
 	var frogs: Node3D = FrogScript.new()
 	city.add_child(frogs)
@@ -239,13 +281,23 @@ func _frogs(ground: Vector3, size: float, length: float) -> Node3D:
 		if randf() < M.frog_knock_chance:
 			var away := Vector3(randf_range(-1.0, 1.0), 0.6, randf_range(-1.0, 1.0))
 			c.knock_over(away.normalized() * M.frog_push)
-		else:
-			c.flee(c.global_position + Vector3(randf_range(-4.0, 4.0), 0.0, randf_range(-4.0, 4.0)))
+	var gawkers: Array = []
+	var most := roundi(M.frog_gawkers * size)
+	for c in _people_near(ground, M.frog_gather_radius * size):
+		if gawkers.size() < most and c.can_answer():
+			gawkers.append(c)
+	for c in gawkers:
+		var a := randf() * TAU
+		var spot := ground + Vector3(cos(a), 0.0, sin(a)) * radius * randf_range(0.6, 1.0)
+		c.send_on_errand(spot, ground, M.frog_time * length,
+				M.frog_lines[randi() % M.frog_lines.size()], Color(0.6, 0.95, 0.45))
 	for b in _buildings_near(ground, radius):
 		if randf() < M.frog_overrun_chance:
 			FloatingNote.pop(city, _roof(b), "Overrun by frogs!", Color(0.5, 0.9, 0.35))
 			_abandon(b)
-	var situation := randf_range(M.frog_situation_min, M.frog_situation_max)
+	var luck := randf()
+	var situation := lerpf(M.frog_situation_min, M.frog_situation_max, luck)
+	_proof.leave(ground, M.proof_radius * size, lerpf(M.frog_proof_min, M.frog_proof_max, luck))
 	faith.report(frogs, &"see_frogs", M.frog_intensity, situation, M.frog_time * length, true,
 			M.frog_deniability, [], M.frog_seen_from)
 	return frogs
@@ -262,7 +314,7 @@ func _on_saved(building: Node3D, fire: Node3D) -> void:
 	for c in _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 6.0):
 		if not c in helped:
 			helped.append(c)
-	population.awe(building, M.saved_awe)
+	_proof.leave(building.global_position, M.proof_radius, M.saved_proof)
 	faith.report(fire, &"see_saved", M.saved_intensity, M.saved_situation, 3.0, true,
 			M.saved_deniability, helped, M.saved_seen_from)
 	building_saved.emit(building)
