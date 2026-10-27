@@ -33,6 +33,8 @@ extends Resource
 @export var repeat_cost_step := 0.5
 @export var repeat_memory := 120.0
 
+@export var scatter_radius := 18.0           # any miracle throws police officers this far clear, at size 1
+
 @export_group("Water: a cloud rains on one spot")
 @export var water_cost := 60.0               # belief; miracles are dear, to be used deliberately
 @export var water_intensity := 0.8

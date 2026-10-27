@@ -54,6 +54,7 @@ The scene is small; most nodes are built in code at startup.
 | `Accidents` | `accidents.gd` | Now and then believers set one of your buildings on fire (likelier with zealots near, in a Prayer House or Course Center). Tunables in `data/miracles.tres`. |
 | `ConversionNotes` | `conversion_notes.gd` (+ `floating_note.gd`) | Floats "+ Believer" / "Zealot!" / "Lost a believer" over people from `Population.stage_changed`; `FloatingNote.pop` is the shared pop-up text |
 | `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (`Districts.owns()`): add floors, luxury, facade, change use, preserve; paid in belief and `Treasury` money. Preserved buildings are in group `preserved`. |
+| `SermonAlerts` | `sermon_alerts.gd` | A ring on the ground and a click-to-fly button for each sermon and police raid (`Population.sermons` signals). |
 | `BuildingMenus` | `building_menus.gd` | The second wheels of a building of yours: housing upgrades (paid from `Treasury`, applied with `Population.upgrade`) and posts for free believers in prayer houses and shops. |
 | `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees on your building, the three `Campaigns` takeover marks on anyone else's, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |

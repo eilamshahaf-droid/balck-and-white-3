@@ -79,12 +79,13 @@ population = NodePath("../Population")
 script = ExtResource("3_hand")
 districts = NodePath("../Districts")
 
-[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury", "districts", "police")]
+[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury", "districts", "police", "arrests")]
 script = ExtResource("7_miracles")
 population = NodePath("../Population")
 treasury = NodePath("../Treasury")
 districts = NodePath("../Districts")
 police = NodePath("../Police")
+arrests = NodePath("../Arrests")
 
 [node name="Accidents" type="Node" parent="." node_paths=PackedStringArray("miracles", "districts", "decrees", "population", "heat")]
 script = ExtResource("39_accidents")

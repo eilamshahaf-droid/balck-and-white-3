@@ -48,11 +48,12 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
 - Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
 
-## 2026-10-27: Pre-Alpha 0.5.1: buildings no longer fade for no reason
+## 2026-10-27: Pre-Alpha 0.6.0: buildings no longer fade for no reason, sermon alerts, rarer fires
 - A building only fades when it is within `fade_max_distance` (70 m, `data/hand_settings.tres`) of the camera as well as in the tube between camera and hand. Far towers that the tube happened to cross used to go see-through at random, mostly when zoomed out. Checked from 384 combinations of height, angle and distance: nothing faded beyond the limit.
 - A building that burns down because nobody put the fire out now calls `Population.burn_down`: some of the people indoors die (people thread). Roaches and frogs still just empty a building.
 - Accidental fires are now a rare event: a chance every 4 minutes (was 40 s) and 15% (was 50%): `accident_interval`, `accident_chance` in `data/miracles.tres`.
 - The campaign mark labels ("2 / 11 believe") draw above everything else, so a nearer roof no longer cuts them off; the version label sits in the screen corner.
+- Sermon alerts: when a priest stops to preach a gold ring marks the spot and a button at the top of the screen flies the camera there; when the police move in the ring turns red and the button says so (`scripts/sermon_alerts.gd`). The raid chance stays hidden. Any miracle cast near an arrest throws the officers clear (`scatter_radius` in `data/miracles.tres`).
 - Try it: press F5, zoom out and orbit: no building fades unless it is near you;.
 
 ## 2026-10-27: Pre-Alpha 0.5.0: Building wheel upgrades, staff and double-click reset
