@@ -12,6 +12,9 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - The core building of every district (the one nearest its middle, set by the world thread) now has a columned portico in front and a big gold-framed signboard on its roof with the district's name on it. When the core is demolished, both move to the next building that takes over.
 - Numbers: `data/city_props.tres` ("Core buildings": text size, colour, how far it shows).
 - Try it: press F5 and fly to the purple beacon over a district's centre.
+## 2026-10-27: One fixed link for the newest Alpha
+- https://github.com/eilamshahaf-droid/balck-and-white-3/archive/refs/heads/alpha.zip always downloads the newest Alpha (the `alpha` branch). `README.md` shows it and `CLAUDE.md` tells every thread that refreshes the Alpha to push it to that branch.
+- Try it: open the link; the ZIP holds the folder `balck-and-white-3-alpha`, import its `project.godot` in Godot and press F5.
 
 ## 2026-10-27: Alpha (refreshed, economy round)
 - The combined build again: main (the head priest, belief in stages, only Prayer Houses pray), the world branch (building economy, police and the hidden building code, poor start district), the hand round (miracles leave proof and priests convert, Block Party, Rain of Frogs, accidents, costs and cooldowns, camera that keeps the building you look at solid) and the Meshy props showing each building's state.
