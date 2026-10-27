@@ -13,6 +13,7 @@ var _timer := 0.0
 @onready var districts: Districts = get_node("../../Districts")
 @onready var government: Node = get_node("../../Government")
 @onready var treasury: Treasury = get_node("../../Treasury")
+@onready var police: Police = get_node("../../Police")
 @onready var rig: Node3D = get_node("../../CameraRig")
 
 
@@ -38,6 +39,6 @@ func _process(delta: float) -> void:
 			place = "%d of %d residents believe (more than half makes it yours)" % [districts.believers_at(i), people]
 	var wealth := districts.wealth_of(d)
 	var standing := " (poor)" if wealth < POOR else (" (rich)" if wealth > RICH else "")
-	var line := "Marks: skull = take by force, dollar = buy, sky sign = send missionaries\nDistrict: %s%s, %s\nBuilding: %s\nCity Hall: %s" % [districts.district_name(d), standing, hold, place, government.status_text()]
+	var line := "Marks: skull = take by force, dollar = buy, sky sign = send missionaries\nDistrict: %s%s, %s\nBuilding: %s\nCity Hall: %s    Police: %s" % [districts.district_name(d), standing, hold, place, government.status_text(), police.status_text()]
 	if text != line:
 		text = line

@@ -7,7 +7,7 @@ extends RefCounted
 ##
 ## Belief moves in stages (skeptic, curious, sympathizer, believer, zealot).
 ## One push can move a person at most one stage, so winning someone over takes
-## several miracles, visits or offers.
+## several visits or offers.
 
 enum Stage { SKEPTIC, CURIOUS, SYMPATHIZER, BELIEVER, ZEALOT }
 
@@ -37,8 +37,12 @@ var has_phone := false
 ## Average belief of this person's close friends, refreshed by Population:
 ## what they hear over dinner pulls their own belief.
 var friends_belief := 0.0
-## Miracle kind -> times seen: the same trick twice convinces less.
-var seen_miracles := {}
+## Hidden meters, 0..1. Comfort and fear are the two ways to play: a priest
+## only reaches people who are comfortable and not afraid, force works on the
+## frightened, and too much fear makes people move away.
+var wealth := 0.5
+var comfort := 0.5
+var fear := 0.0
 var color := Color.WHITE
 ## Null while indoors.
 var body: Citizen

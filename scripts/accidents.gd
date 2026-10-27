@@ -19,6 +19,7 @@ const RISKY_USES: Array[String] = ["Prayer House", "Course Center"]
 @export var districts: Districts
 @export var decrees: Decrees
 @export var population: Population
+@export var heat: Heat
 
 var _wait := 0.0
 
@@ -46,6 +47,7 @@ func start_fire(building: Node3D) -> void:
 	FloatingNote.pop(building.get_parent(), building.global_position + Vector3.UP * roof,
 			line + "  Water, quick!", Color(1.0, 0.55, 0.25))
 	Sfx.play(get_tree(), building.global_position, &"fire", 1.0)
+	heat.raise(building, Heat.Reason.ACCIDENT)
 	accident.emit(building)
 
 

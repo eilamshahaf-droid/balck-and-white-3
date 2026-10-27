@@ -8,9 +8,10 @@ extends Resource
 ## resident_count, whichever is more.
 @export var min_residents_per_home := 5
 @export var resident_count := 500
-## Residents walking the streets at once; the rest are indoors. Each one on the
-## street costs frame time, so this is the knob for slower computers.
-@export var street_people := 500
+## One resident in this many walks the streets at a time (at least one from
+## every lived-in home); the rest are indoors. Each body on the street costs
+## frame time, so this is the knob for slower computers.
+@export var residents_per_body := 25
 ## Seconds between one person going indoors and another coming out (out of view).
 @export var swap_interval := 0.5
 @export var groups: Array[SocialGroup] = []
@@ -60,6 +61,34 @@ extends Resource
 @export var occupy_time := 0.0
 ## Seconds between refreshes of each building's cached believing presence.
 @export var presence_refresh := 0.5
+
+@export_group("Comfort and fear")
+## Comfort drifts toward a home's comfort at this rate per second. A home's
+## comfort starts at its residents' average wealth; decrees and events add to it.
+@export var comfort_rate := 0.01
+## Fear fades by this much per second.
+@export var fear_decay := 0.004
+## Fear a miracle that hurt someone adds, times its intensity and how bad it was.
+@export var fear_per_harm := 0.5
+## A priest only reaches people at least this comfortable and at most this afraid.
+@export_range(0.0, 1.0) var preach_min_comfort := 0.3
+@export_range(0.0, 1.0) var preach_max_fear := 0.5
+## Force works this well on someone with no fear at all (1 = as on the terrified).
+@export_range(0.0, 1.0) var force_without_fear := 0.2
+## Money works this well on the richest (1 = as on the poorest).
+@export_range(0.0, 1.0) var money_on_rich := 0.3
+## Above this fear a resident moves to another home; their fear halves.
+@export_range(0.0, 1.0) var flee_fear := 0.85
+
+@export_group("Priest")
+## The cult's head priest, a believer from the starting congregation, walks
+## the streets and preaches to everyone within reach every few seconds.
+@export var priest_interval := 3.0
+@export var priest_reach := 12.0
+@export var priest_strength := 0.15
+## Belief per second the priest prays into the pool on his own.
+@export var priest_prayer := 0.3
+@export var priest_color := Color(1.0, 1.0, 1.0)
 
 @export_group("Dancing")
 ## People sent on an errand to dance (a block party) bob this high, this fast, and turn.
