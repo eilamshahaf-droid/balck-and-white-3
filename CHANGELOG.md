@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Remove the old divine signs' followers and the healing leftovers
+- Believers no longer answer the old blessed / cursed / protected signs (the three takeover marks replaced them on the wheel). `sign_followers.gd`, its node and its settings are gone, and so is the leftover `Citizen.heal()` from the removed Heal miracle.
+- Try it: press F5; nothing changes in play.
+
 ## 2026-10-27: Miracles and decrees touch the people's mood
 - Fire and Roaches frighten the residents of the building (`Population.scare`), Luxury makes them more satisfied (`Population.add_comfort`), and an accidental fire raises police heat (`Heat.raise`, reason ACCIDENT).
 - Numbers: `data/miracles.tres` (`roach_scare`, `fire_scare`), `data/decrees.tres` (`luxury_comfort`).
