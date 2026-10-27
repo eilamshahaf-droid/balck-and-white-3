@@ -39,13 +39,16 @@ func _ready() -> void:
 	_noise.frequency = S.hill_frequency
 	_noise.fractal_octaves = 3
 	_set_haze(city.env)
+	# Scenery nobody sees on the first frame: one step per frame, so the game starts sooner.
 	_build_land()
+	await get_tree().process_frame
 	_build_water()
 	_lay_roads()
 	for i in roads.size():
 		_ribbon(roads[i], road_widths[i], ROAD_LIFT, S.road_color)
 	_build_bridges()
-	OutskirtsScript.new(self).build()
+	await get_tree().process_frame
+	await OutskirtsScript.new(self).build()
 	_build_clouds()
 	_flush()
 	set_process(true)

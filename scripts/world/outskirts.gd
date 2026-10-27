@@ -25,11 +25,14 @@ func _init(land: Surroundings) -> void:
 	_rng.seed = 13
 
 
+## A coroutine: it waits a frame every few columns of lots, so the town grows in
+## while the game is already running.
 func build() -> void:
 	_side = ceili(S.reach * 2.0 / RASTER)
 	_taken.resize(_side * _side)
 	for i in _land.roads.size():
 		_claim_road(_land.roads[i], _land.road_widths[i])
+	var columns := 0
 	var x := -S.reach
 	while x < S.reach:
 		var z := -S.reach
@@ -38,6 +41,9 @@ func build() -> void:
 			_try_lot(Vector2(x, z) + jitter)
 			z += S.lot_spacing
 		x += S.lot_spacing
+		columns += 1
+		if columns % S.columns_per_frame == 0:
+			await _land.get_tree().process_frame
 	_plant_trees()
 
 
