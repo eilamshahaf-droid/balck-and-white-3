@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -21,6 +21,8 @@
 [ext_resource type="Script" path="res://scripts/world/treasury.gd" id="18_treasury"]
 [ext_resource type="Script" path="res://scripts/world/campaigns.gd" id="19_campaigns"]
 [ext_resource type="Script" path="res://scripts/world/campaign_marks.gd" id="20_marks"]
+[ext_resource type="Script" path="res://scripts/accidents.gd" id="39_accidents"]
+[ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -48,6 +50,17 @@ script = ExtResource("3_hand")
 script = ExtResource("7_miracles")
 population = NodePath("../Population")
 treasury = NodePath("../Treasury")
+
+[node name="Accidents" type="Node" parent="." node_paths=PackedStringArray("miracles", "districts", "decrees", "population")]
+script = ExtResource("39_accidents")
+miracles = NodePath("../Miracles")
+districts = NodePath("../Districts")
+decrees = NodePath("../Decrees")
+population = NodePath("../Population")
+
+[node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population")]
+script = ExtResource("40_notes")
+population = NodePath("../Population")
 
 [node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "districts", "treasury")]
 script = ExtResource("13_decrees")

@@ -155,9 +155,14 @@ func _price(kind: StringName, building: Node3D) -> String:
 ## What the decree does to the building's money per second: "$/s +1.5 > -0.8",
 ## or "" when it changes nothing.
 func _money_effect(building: Node3D, kind: StringName, use_name := "") -> String:
-	var now := treasury.net_of(building)
-	var after := treasury.net_if(building, kind, use_name)
+	var now := _tidy(treasury.net_of(building))
+	var after := _tidy(treasury.net_if(building, kind, use_name))
 	return "" if is_equal_approx(now, after) else "$/s %+.1f > %+.1f" % [now, after]
+
+
+## Rounded to the tenth the wheel shows, so a tiny loss doesn't read "-0.0".
+func _tidy(per_second: float) -> float:
+	return snappedf(per_second, 0.1) + 0.0 if absf(per_second) >= 0.05 else 0.0
 
 
 func _exposure(kind: StringName) -> float:

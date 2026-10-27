@@ -62,7 +62,7 @@ extends Resource
 @export var party_intensity := 0.7
 @export_range(-1.0, 1.0) var party_situation := 0.7     # who doesn't like a party
 @export_range(0.0, 1.0) var party_deniability := 0.5   # "just a flash mob"
-@export var party_radius := 14.0             # people this close drop everything and dance
+@export var party_radius := 24.0             # people this close drop everything and dance
 @export var party_time := 14.0               # seconds the party lasts
 @export var party_dancers := 30              # most people who join, at full size
 @export var party_lines: Array[String] = ["Woo!", "This is my song!",
@@ -88,6 +88,7 @@ extends Resource
 @export var accident_interval := 40.0        # seconds between chances of an accident
 @export_range(0.0, 1.0) var accident_chance := 0.5
 @export var accident_use_weight := 3.0       # how much likelier a Prayer House or Course Center burns
+@export var accident_zealot_radius := 20.0   # each zealot this close makes a building likelier to burn
 @export var accident_burn_time := 35.0       # seconds to put it out before the building is lost
 @export var accident_lines: Array[String] = ["Who left the candles on?",
 		"The incense! THE INCENSE!", "It was a very moving sermon.", "Fire is a sign, right? RIGHT?"]
@@ -98,6 +99,9 @@ extends Resource
 @export_range(0.0, 1.0) var saved_deniability := 0.2   # rain on exactly one burning building
 @export var saved_seen_from := 60.0
 @export var saved_awe := 1.0                 # strength of the awe for the building's residents
+
+@export_group("Floating notes: who just came to believe")
+@export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once
 
 @export_group("Divine signs on buildings")
 @export var sign_reach := 220.0              # believers this close to a signed building answer it

@@ -10,13 +10,13 @@ const FADE := 1.0          # of which the last second fades out
 var _age := 0.0
 
 
-## Float `text` in `color` over `at`, as a child of `parent`.
-static func pop(parent: Node, at: Vector3, text: String, color: Color) -> FloatingNote:
+## Float `line` in `color` over `at`, as a child of `parent`.
+static func pop(parent: Node, at: Vector3, line: String, color: Color) -> FloatingNote:
 	var note := FloatingNote.new()
-	note.text = text
+	note.text = line
 	note.modulate = color
-	note.position = at
 	parent.add_child(note)
+	note.global_position = at
 	return note
 
 

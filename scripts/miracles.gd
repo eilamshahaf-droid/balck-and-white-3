@@ -37,7 +37,7 @@ const LAYER_WORLD := 1
 const FIRE_SNAP := 15.0       # metres: water cast this close to a fire goes onto it
 const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets it alight
 
-@export var population: Node
+@export var population: Population
 ## Where money from the sky goes. Optional until the money system is in the scene.
 @export var treasury: Treasury
 
@@ -262,6 +262,7 @@ func _on_saved(building: Node3D, fire: Node3D) -> void:
 	for c in _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 6.0):
 		if not c in helped:
 			helped.append(c)
+	population.awe(building, M.saved_awe)
 	faith.report(fire, &"see_saved", M.saved_intensity, M.saved_situation, 3.0, true,
 			M.saved_deniability, helped, M.saved_seen_from)
 	building_saved.emit(building)
