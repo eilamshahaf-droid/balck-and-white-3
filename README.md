@@ -117,7 +117,7 @@
 - `scripts/debug_panel.gd` – לוח הדיבאג לבדיקות.
 - `scripts/sign_followers.gd` – איך המאמינים עונים לאותות. המספרים בקבוצה "Divine signs" ב-`data/miracles.tres`.
 - `scripts/miracle_settings.gd`, `data/miracles.tres` – כל המספרים של הניסים והאותות (מחיר, רדיוס, משך).
-- `scripts/hand_visual.gd` – המראה הזמני של היד, יוחלף במודל אמיתי.
+- `scripts/hand_visual.gd` – המראה של היד: כפפת הבד הלבנה (המודל ב-`assets/models/god_hand`).
 - `scripts/hand_settings.gd`, `data/hand_settings.tres` – הגדרות היד והמצלמה.
 - `scripts/balance.gd`, `data/balance.tres` – כל המספרים של אמונה, עדים, חשיפה וכוח היד (כמו קובץ ה-Balance של BW2).
 - `scripts/art_style.gd`, `scripts/art_style_settings.gd`, `data/art_style.tres`, `shaders/` – הסגנון האמנותי.

@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: The god's hand is now the white cloth glove
+- The box placeholder is gone. The hand is the cloth glove from the hand page: the WebXR generic hand (MIT) turned into a glove in Blender, with seams around every finger, a stitched wrist hem, three stitched lines on the back and creases at the joints, all baked into its maps. Above the wrist the glove runs on up the arm and crumbles away in holes.
+- Same behaviour as before: the poses (open, pointing, grabbing, tapping) now curl the glove's real finger bones, and believers nearby make it brighter with a warm glow. Only `scripts/hand_visual.gd` changed; the model and its maps are in `assets/models/god_hand/`.
+- Try it: press F5, zoom in close and move the hand over a person (it points), pick them up (it grabs) and click a wall (it taps).
+
 ## 2026-10-26: Believers sit in to claim a building
 - Pick up a believer and set them down on a roof, or on the pavement right at a building's walls: they stay there and sit in ("We're not leaving.", "Form 7-C, signed."), facing the building, until the hand picks them up again.
 - This is the power route of the claim meter: each building's believing presence (the summed belief of believers who live there or sit in on it) is now available to the districts system, cached every 0.5 s.
