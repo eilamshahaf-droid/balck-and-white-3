@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Faster start for the Meshy props
+- The game started slowly because the props settings loaded all 46 Meshy models at once (6 s on a test machine). A model now loads the first time something needs it, so the models for uses, upgrades and abandoned buildings only load when they show up.
+- The textures are smaller too: 512 px instead of 1024, and the metal and roughness maps (the game ignores them) are cut to a few pixels. The Meshy folder went from 42 MB to 9.6 MB. At street scale it looks the same.
+- Numbers: `PropKind.model_path` in `data/city_props.tres` replaces the model scene.
+- Try it: press F5 and watch the time to the first frame.
 ## 2026-10-27: Gyms and real estate offices in the takeover marks
 - The skull (force) crew grows by the holy warriors the Combat Training building's gyms train (`Population.fighters_of`), up to `max_fighters` (`data/campaigns.tres`).
 - The dollar (buy) price is cut by the target building's real estate offices (`Population.buy_price_factor`).
