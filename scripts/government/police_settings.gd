@@ -28,3 +28,14 @@ extends Resource
 @export var break_heat := 2.0               # heat (times a crowd's) a smashed roadblock raises
 @export var label_size := 0.008             # world size of one label pixel
 @export var closed_half_length := 14.0     # barriers stand this far either side of the building's front
+
+@export_group("Arresting the priest")
+@export var officers := 4                   # in the squad
+@export var ring_radius := 2.0              # metres from the priest
+@export var arrest_time := 40.0             # seconds before he is taken
+@export var arrest_tick := 0.25             # seconds between looks at the squad
+@export var free_distance := 6.0            # officers farther than this from him no longer hold him
+@export var officer_mass := 1.0
+@export var scatter_impulse := 6.0          # what a miracle throws an officer with
+@export var uniform_color := Color(0.15, 0.25, 0.6)
+@export var skin_color := Color(0.9, 0.72, 0.6)
