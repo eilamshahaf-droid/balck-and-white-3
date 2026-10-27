@@ -11,7 +11,13 @@ extends Node
 ## out, so everyone gets their turn on the street.
 ##
 ## Belief for the pool comes only from prayer houses (buildings in the
-## prayer_houses group): the believers living or sitting in one pray.
+## prayer_houses group): the believers living or sitting in one pray. The
+## starting congregation's home is the first, and its head priest prays and
+## preaches on his own.
+##
+## Every resident also has hidden wealth, comfort and fear: the priest only
+## reaches the comfortable and unafraid, force works on the frightened, and
+## too much fear makes people move away.
 ##
 ## Belief drifts slowly: back toward what a person believed before the cult,
 ## unless friends who believe or a building of believers hold it up. A change
@@ -36,6 +42,8 @@ const B: Balance = preload("res://data/balance.tres")
 const PRAYER_HOUSES := &"prayer_houses"
 
 var residents: Array[Resident] = []
+## The cult's head priest (a Resident with a body), once the congregation is founded.
+var priest: Resident
 ## Refreshed with the presence: how many residents believe, and the belief per
 ## second their prayers add to the pool.
 var believer_count := 0
@@ -49,9 +57,10 @@ var _presence: Dictionary = {}    # building -> summed belief of its believers, 
 var _footprints: Dictionary = {}  # building -> Rect2 on the ground (x, z)
 var _presence_timer := 0.0
 var _census: Census
+var _street := Street.new()
 var _stages: Dictionary = {}       # resident -> the stage last announced
-var _bodies: Array[Citizen] = []
-var _swap_timer := 0.0
+var _priest_timer := 0.0
+var _home_comfort: Dictionary = {}   # building -> the comfort its residents drift toward
 var _rng := RandomNumberGenerator.new()
 
 @onready var city: Node3D = get_parent()
@@ -60,15 +69,19 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.seed = 7
 	add_child(Crowd.new())
+	_street.set_down.connect(_on_set_down)
+	_street.stopped_occupying.connect(_on_stopped_occupying)
+	add_child(_street)
 	# The city builds its blocks in its own _ready, which runs after ours.
 	city.ready.connect(_populate, CONNECT_ONE_SHOT)
 
 
 func _physics_process(delta: float) -> void:
-	_swap_timer -= delta
-	if _swap_timer <= 0.0:
-		_swap_timer = _people.swap_interval
-		_swap_someone()
+	_priest_timer -= delta
+	if _priest_timer <= 0.0:
+		_priest_timer = _people.priest_interval
+		if priest and _has_body(priest):
+			persuade_near(priest.body.global_position, _people.priest_reach, _people.priest_strength)
 	_presence_timer -= delta
 	if _presence_timer > 0.0:
 		return
@@ -100,16 +113,12 @@ func believer_share(building: Node3D) -> float:
 
 ## The resident whose body stands nearest `p` on the ground, within `radius`; null if none.
 func resident_near(p: Vector3, radius: float) -> Resident:
-	var best: Resident = null
-	var best_d := radius
-	for r in residents:
-		if not _has_body(r):
-			continue
-		var d := Vector2(r.body.global_position.x - p.x, r.body.global_position.z - p.z).length()
-		if d < best_d:
-			best_d = d
-			best = r
-	return best
+	return _street.resident_near(p, radius)
+
+
+## Zealots on the street within `radius` of `p`: the ones who might overdo it.
+func zealots_near(p: Vector3, radius: float) -> Array[Citizen]:
+	return _street.zealots_near(p, radius)
 
 
 ## The building people can live in nearest to `p`.
@@ -149,31 +158,43 @@ func preach_to(r: Resident, strength: float) -> void:
 	persuade(r, SocialGroup.Route.PREACH, strength)
 
 
-## Push `r` toward belief by `route` (a miracle, preaching, money, force):
-## less for skeptics, weighted by how their group answers that route, and at
-## most one stage at a time.
+## Push `r` toward belief by `route` (preaching, money, force): less for
+## skeptics, weighted by how their group answers that route, and at most one
+## stage at a time. Preaching only reaches the comfortable and unafraid; force
+## works on the frightened, money on the poor.
 func persuade(r: Resident, route: SocialGroup.Route, strength: float) -> void:
+	match route:
+		SocialGroup.Route.PREACH:
+			if r.comfort < _people.preach_min_comfort or r.fear > _people.preach_max_fear:
+				return
+		SocialGroup.Route.FORCE:
+			strength *= lerpf(_people.force_without_fear, 1.0, r.fear)
+		SocialGroup.Route.MONEY:
+			strength *= lerpf(1.0, _people.money_on_rich, r.wealth)
 	r.persuade(route, strength * (1.0 - r.skepticism))
 
 
-## The god saved `building` (a fire put out): everyone who lives there, indoors
-## or out, takes it as a miracle.
-func awe(building: Node3D, strength: float) -> void:
+## Preach to everyone on the street within `radius` of `p`.
+func persuade_near(p: Vector3, radius: float, strength: float) -> void:
+	for c in _street.bodies:
+		if c.resident != priest and c.global_position.distance_to(p) < radius:
+			persuade(c.resident, SocialGroup.Route.PREACH, strength)
+
+
+## Everyone living in `building` is frightened by `amount` (roaches, a fire).
+func scare(building: Node3D, amount: float) -> void:
 	for r: Resident in _by_home.get(building, []):
-		persuade(r, SocialGroup.Route.MIRACLE, strength)
+		r.fear = minf(r.fear + amount, 1.0)
+
+
+## `building` became nicer (or worse) to live in by `amount`; its residents'
+## comfort drifts toward the new level.
+func add_comfort(building: Node3D, amount: float) -> void:
+	_home_comfort[building] = clampf(_home_comfort.get(building, 0.5) + amount, 0.0, 1.0)
 
 
 func stage(r: Resident) -> Resident.Stage:
 	return r.stage()
-
-
-## Zealots on the street within `radius` of `p`: the ones who might overdo it.
-func zealots_near(p: Vector3, radius: float) -> Array[Citizen]:
-	var out: Array[Citizen] = []
-	for c in _bodies:
-		if c.resident.stage() == Resident.Stage.ZEALOT and c.global_position.distance_to(p) < radius:
-			out.append(c)
-	return out
 
 
 ## Everyone leaves `building` for good (roaches, fire): the people who live
@@ -197,24 +218,29 @@ func evacuate(building: Node3D) -> void:
 
 
 ## Skip the story: the families in the homes nearest one corner become a
-## small congregation of believers.
+## small congregation of believers. The nearest home is the headquarters (the
+## first prayer house), and its most devoted believer the head priest.
 func found_congregation() -> void:
 	var corner: Vector3 = city.intersection(_people.congregation_corner)
 	var near := _homes.duplicate()
 	near.sort_custom(func(a: Node3D, b: Node3D) -> bool:
 		return a.global_position.distance_squared_to(corner) < b.global_position.distance_squared_to(corner))
+	near[0].add_to_group(PRAYER_HOUSES)
 	var converted := 0
 	for home: Node3D in near:
+		if converted >= _people.congregation_size:
+			break
 		for r: Resident in _by_home.get(home, []):
 			if converted >= _people.congregation_size:
-				return
+				break
 			r.belief = _rng.randf_range(_people.congregation_belief_min, _people.congregation_belief_max)
 			r.baseline = r.belief
 			r.skepticism = _rng.randf_range(0.0, _people.congregation_skepticism_max)
 			_stages[r] = r.stage()
 			if r.body == null:
-				_bring_out(r)
+				_street.bring_out(r)
 			converted += 1
+	_ordain_priest(near[0])
 
 
 func _populate() -> void:
@@ -224,21 +250,14 @@ func _populate() -> void:
 	_by_home = _census.by_home
 	_homes = _census.homes
 	_offices = _census.offices
+	for home: Node3D in _by_home:
+		var total := 0.0
+		for r: Resident in _by_home[home]:
+			total += r.wealth
+		_home_comfort[home] = total / maxi((_by_home[home] as Array).size(), 1)
 	for r in residents:
 		_stages[r] = r.stage()
-	# One out of every lived-in home, then a random sample up to the ratio.
-	for home: Node3D in _by_home:
-		var people: Array = _by_home[home]
-		if not people.is_empty():
-			_spawn_body(people[_rng.randi() % people.size()])
-	var wanted := ceili(float(residents.size()) / _people.residents_per_body)
-	var order := residents.duplicate()
-	order.shuffle()
-	for r: Resident in order:
-		if _bodies.size() >= wanted:
-			break
-		if r.body == null:
-			_spawn_body(r)
+	_street.fill(city, _by_home, residents)
 	for b in _homes + _offices:
 		_footprints[b] = _footprint(b)
 		_presence[b] = 0.0
@@ -246,74 +265,21 @@ func _populate() -> void:
 	_refresh_presence()
 
 
-func _spawn_body(r: Resident) -> void:
-	var c := Citizen.new()
-	c.city = city
-	c.resident = r
-	c.collision_layer = city.LAYER_CITIZENS
-	c.collision_mask = city.LAYER_WORLD
-	r.body = c
-	_bodies.append(c)
-	city.add_child(c)
-	c.set_down.connect(_on_set_down.bind(c))
-	c.stopped_occupying.connect(_on_stopped_occupying.bind(c))
-	c.tree_exiting.connect(func() -> void: _bodies.erase(c), CONNECT_ONE_SHOT)
-
-
-## Out of the god's view, a skeptic walking the street goes home and a
-## housemate who is indoors comes out in their body. Believers stay out.
-func _swap_someone() -> void:
-	if _bodies.is_empty():
+func _ordain_priest(headquarters: Node3D) -> void:
+	var best: Resident = null
+	for r: Resident in _by_home.get(headquarters, []):
+		if best == null or r.belief > best.belief:
+			best = r
+	if best == null:
 		return
-	var camera := get_viewport().get_camera_3d()
-	for _attempt in 8:
-		var c := _bodies[_rng.randi() % _bodies.size()]
-		if not c.can_answer() or c.belief > B.believer_threshold or _seen_by(camera, c.global_position):
-			continue
-		var home := c.resident.home
-		if _seen_by(camera, city.intersection(city.nearest_grid(home.global_position))):
-			continue
-		var r := _indoors_at(home)
-		if r:
-			_give_body(r, c)
-			return
-
-
-## Bring `r` out onto the street now, in a skeptic's body: a housemate's if
-## one is out, else anyone's.
-func _bring_out(r: Resident) -> void:
-	for c in _bodies:
-		if c.resident.home == r.home and c.can_answer() and c.belief <= B.believer_threshold:
-			_give_body(r, c)
-			return
-	for _attempt in 32:
-		var c := _bodies[_rng.randi() % _bodies.size()]
-		if c.can_answer() and c.belief <= B.believer_threshold:
-			_give_body(r, c)
-			return
-
-
-## A random resident of `home` who is indoors, or null.
-func _indoors_at(home: Node3D) -> Resident:
-	var people: Array = _by_home.get(home, [])
-	if people.is_empty():
-		return null
-	var start := _rng.randi() % people.size()
-	for k in people.size():
-		var r: Resident = people[(start + k) % people.size()]
-		if r.body == null:
-			return r
-	return null
-
-
-func _give_body(r: Resident, c: Citizen) -> void:
-	c.resident.body = null
-	r.body = c
-	c.become(r)
-
-
-func _seen_by(camera: Camera3D, p: Vector3) -> bool:
-	return camera != null and camera.is_position_in_frustum(p)
+	priest = best
+	priest.belief = 1.0
+	priest.baseline = 1.0
+	priest.comfort = 1.0
+	priest.color = _people.priest_color
+	_stages[priest] = priest.stage()
+	if priest.body == null:
+		_street.bring_out(priest)
 
 
 ## A believer set down on a building, or right at its walls, sits in there.
@@ -422,6 +388,8 @@ func _refresh_presence() -> void:
 		var at := r.occupying if r.occupying else r.home
 		if at.is_in_group(PRAYER_HOUSES):
 			prayer += B.prayer_rate * r.belief
+	if priest:
+		prayer += _people.priest_prayer
 	var dt := _people.presence_refresh
 	for r in residents:
 		var total := 0.0
@@ -429,11 +397,21 @@ func _refresh_presence() -> void:
 			total += residents[id].belief
 		r.friends_belief = total / r.friends.size() if not r.friends.is_empty() else 0.0
 		_drift(r, dt)
+		_feel(r, dt)
 		var now := r.stage()
 		var before: int = _stages[r]
 		if now != before:
 			_stages[r] = now
 			stage_changed.emit(r, before, now)
+
+
+## Comfort follows the home; fear fades, and too much of it moves people out.
+func _feel(r: Resident, dt: float) -> void:
+	r.comfort = move_toward(r.comfort, _home_comfort.get(r.home, r.wealth), _people.comfort_rate * dt)
+	r.fear = maxf(r.fear - _people.fear_decay * dt, 0.0)
+	if r.fear > _people.flee_fear and r != priest:
+		r.fear *= 0.5
+		evict(r)
 
 
 ## Belief slides back toward what a person believed before the cult, unless

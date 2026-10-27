@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: The head priest, comfort and fear, and the police's hidden criteria
+- Miracles no longer convert anyone. Witnesses still stare, explain what they saw and film it, but belief now comes from the cult's people: the head priest (dressed in white) walks the streets and preaches to everyone around him every few seconds, and prays a little belief into the pool on his own. The congregation's home is the first prayer house (the headquarters).
+- Every resident has hidden wealth, comfort and fear. Preaching only reaches people who are comfortable and not afraid; force works on the frightened; money works on the poor. A miracle that hurts people scares them, and someone too afraid moves to another home. Two ways to play: keep people comfortable, or keep them afraid.
+- The police's hidden criteria: every building quietly collects heat from sit-ins, crowds, broken building rules and accidents, which fades over time. When it passes a threshold (higher in a hard district), the police are called. Nothing is random. Numbers: `data/heat.tres`.
+- Numbers: `data/people.tres`, groups "Comfort and fear" and "Priest"; each social group has a wealth range.
+- Try it: press F5, press B and hover the person in white near the starting corner: the card shows everyone's stage, wealth, comfort and fear.
+
 ## 2026-10-27: Only prayer houses make belief; fewer bodies on the street
 - Believers no longer fill the belief pool wherever they are. Only believers who live or sit in a prayer house pray (buildings in the `prayer_houses` group), so prayer houses are now the precious resource.
 - One resident in 25 walks the streets (`residents_per_body` in `data/people.tres`), and at least one from every lived-in home. Out of your view, a person goes home and a housemate comes out, so each building keeps its people on its corner.

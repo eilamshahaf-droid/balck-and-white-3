@@ -60,6 +60,8 @@ func _add_family(home: Node3D, max_size: int) -> void:
 		r.baseline = r.belief
 		r.color = Color.from_hsv(_rng.randf(), 0.45, 0.85)
 		r.skepticism = _rng.randf_range(r.group.skepticism_min, r.group.skepticism_max)
+		r.wealth = _rng.randf_range(r.group.wealth_min, r.group.wealth_max)
+		r.comfort = r.wealth
 		r.has_phone = _rng.randf() < B.phone_chance
 		residents.append(r)
 		_set_home(r, home)
