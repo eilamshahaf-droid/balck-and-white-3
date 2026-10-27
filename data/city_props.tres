@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=85 format=3]
+[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=87 format=3]
 
 [ext_resource type="Script" path="res://scripts/props/city_props_settings.gd" id="1_settings"]
 [ext_resource type="Script" path="res://scripts/props/prop_kind.gd" id="2_kind"]
@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://assets/models/meshy/hot_dog_cart.glb" id="15_hot_dog_cart"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/taxi.glb" id="16_taxi"]
 [ext_resource type="Script" path="res://scripts/props/use_marker.gd" id="40_marker"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/core_sign.glb" id="60_core_sign"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/hand_statue.glb" id="41_hand_statue"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/prayer_entrance.glb" id="42_prayer_entrance"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/shop_awning.glb" id="43_shop_awning"]
@@ -302,6 +303,11 @@ use_name = "Combat Training"
 kind = SubResource("Kind_boxing_ring")
 on_roof = true
 
+[sub_resource type="Resource" id="Kind_core_sign"]
+script = ExtResource("2_kind")
+model = ExtResource("60_core_sign")
+surface = &"metal"
+
 [resource]
 script = ExtResource("1_settings")
 facade_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_ac_window"), SubResource("Kind_ac_vintage"), SubResource("Kind_ac_modern"), SubResource("Kind_ac_split")])
@@ -316,4 +322,6 @@ rubble = SubResource("Kind_rubble")
 banner = SubResource("Kind_banner")
 flag = SubResource("Kind_flag")
 use_markers = Array[ExtResource("40_marker")]([SubResource("Mark_0"), SubResource("Mark_1"), SubResource("Mark_2"), SubResource("Mark_3"), SubResource("Mark_4")])
+core_portico = SubResource("Kind_portico")
+core_sign = SubResource("Kind_core_sign")
 taxi = SubResource("Kind_taxi")
