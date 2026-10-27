@@ -133,7 +133,8 @@ func _tick(s: Sermon, delta: float) -> void:
 		s.preach_timer = _people.priest_interval
 		var crowd_boost := 1.0 + _people.crowd_boost * float(s.crowd) / maxi(_people.crowd_size, 1)
 		var reached := _population.persuade_near(
-				s.at, _people.priest_reach, _people.priest_strength * crowd_boost)
+				s.at, _population.preach_reach(s.priest),
+				_population.preach_strength(s.priest) * crowd_boost)
 		_population.priest_preached.emit(s.priest, reached)
 
 
