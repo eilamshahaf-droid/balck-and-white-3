@@ -126,6 +126,13 @@ func crew_at(building: Node3D) -> int:
 
 ## The police close the street in front of `building` for `seconds`: the crew
 ## goes home and the campaign waits.
+## A roadblock was wrecked: the crews may go back to work.
+func unblock(building: Node3D) -> void:
+	var c := _campaign_on(building)
+	if c:
+		c.blocked = 0.0
+
+
 func block(building: Node3D, seconds: float) -> void:
 	var c := _campaign_on(building)
 	if c == null:

@@ -105,6 +105,22 @@ func _close_street(building: Node3D) -> void:
 	_blocks[building] = roadblock
 
 
+## Something big (the frogs) came down at `at`: wreck a roadblock within
+## `radius`, which counts as a crowd at that building. True if one went.
+func break_near(at: Vector3, radius: float) -> bool:
+	for b: Node3D in _blocks.keys():
+		var roadblock: Roadblock = _blocks[b]
+		var flat := roadblock.node.global_position - at
+		if Vector2(flat.x, flat.z).length() > radius:
+			continue
+		roadblock.node.queue_free()
+		_blocks.erase(b)
+		campaigns.unblock(b)
+		heat.raise(b, Heat.Reason.CROWD, S.roadblock_break_heat)
+		return true
+	return false
+
+
 func _lift_roadblocks() -> void:
 	for b: Node3D in _blocks.keys():
 		var roadblock: Roadblock = _blocks[b]
