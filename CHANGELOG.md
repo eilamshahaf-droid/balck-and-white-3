@@ -45,7 +45,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
   - **No use:** it brings rent in.
   - **A use** (Prayer House, Course Center, Free Personality Test, Combat Training): it costs upkeep instead. A shop earns (the hand thread adds the Shop use).
   - **Luxury:** the building does its job 1.6 times faster (rent, shop takings, training fighters), but its upkeep goes up.
-  - **Floors:** each floor level makes the building yield more, by less every time (+36%, then +20%, +11%, ...), while each level adds upkeep. Pumping floors stops paying off.
+  - **Floors:** each floor level makes the building yield more, by less every time (+36%, then +20%, +11%, ...), while upkeep grows with the square of the levels. The first floors pay; after two or three they stop paying off.
 - Shops no longer come from Facade.
 - **District wealth:** each district has a wealth that scales rent, shop takings and the price of buying people out. The start district by the river is poor (0.4), downtown is rich (2.0), and the panel says "(poor)" or "(rich)".
 - Numbers: `data/treasury.tres` (Rent, Uses, Luxury, Floors) and `wealth` in `data/districts.tres`.
