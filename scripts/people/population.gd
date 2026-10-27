@@ -35,6 +35,8 @@ signal occupant_left(building: Node3D, resident: Resident)
 signal stage_changed(resident: Resident, old: int, new: int)
 ## `kind` was bought for `building` (see upgrades_of).
 signal upgraded(building: Node3D, kind: Upgrade)
+## `count` people died when `building` burned down with them inside.
+signal people_died(building: Node3D, count: int)
 ## The player let every believer go from `building` (it can be settled again).
 signal believers_dismissed(building: Node3D, count: int)
 ## A priest preached to `reached` people on the street.
@@ -206,6 +208,29 @@ func evict(r: Resident) -> void:
 	_set_home(r, new_home)
 	if _has_body(r):
 		r.body.move_out()
+
+
+## `building` burned down for good (a fire nobody put out): some of the people
+## indoors, those living there without a body on the street and those sitting
+## in or working there, die; the rest are evacuated as usual.
+func burn_down(building: Node3D) -> void:
+	var inside: Array = []
+	inside.append_array(occupants(building))
+	inside.append_array(_staff.get(building, []))
+	for r: Resident in _by_home.get(building, []):
+		if r.body == null:
+			inside.append(r)
+	var dead := {}
+	for r: Resident in inside:
+		if r.alive and r != priest and _rng.randf() < _people.fire_death_chance:
+			dead[r] = true
+	# Leave first, so the dead are not moved to another home.
+	_release_occupants(building)
+	for r: Resident in dead:
+		_kill(r)
+	evacuate(building)
+	if not dead.is_empty():
+		people_died.emit(building, dead.size())
 
 
 ## Reset `building`: every believer living or sitting in there is let go. The
@@ -442,6 +467,19 @@ func found_congregation() -> void:
 	_ordain_priest(near[0])
 
 
+func _kill(r: Resident) -> void:
+	unassign(r)
+	r.alive = false
+	r.belief = -1.0
+	r.baseline = -1.0
+	if r.home:
+		(_by_home[r.home] as Array).erase(r)
+	if _has_body(r):
+		_street.bodies.erase(r.body)
+		r.body.queue_free()
+		r.body = null
+
+
 func _preach() -> void:
 	for staff: Array in _staff.values():
 		for r: Resident in staff:
@@ -643,6 +681,8 @@ func _refresh_presence() -> void:
 		prayer += _people.priest_prayer
 	var dt := _people.presence_refresh
 	for r in residents:
+		if not r.alive:
+			continue
 		var total := 0.0
 		for id in r.friends:
 			total += residents[id].belief

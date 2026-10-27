@@ -103,6 +103,10 @@ extends Resource
 ## Each purchase also adds this many places to every job in the building.
 @export var slots_per_purchase := 2
 
+@export_group("Fire")
+## A building burns down with its people inside: each one indoors dies with this chance.
+@export_range(0.0, 1.0) var fire_death_chance := 0.5
+
 @export_group("Colours")
 @export var believer_color := Color(1.0, 0.78, 0.15)
 @export var zealot_color := Color(1.0, 0.45, 0.1)

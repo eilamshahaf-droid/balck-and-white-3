@@ -48,6 +48,8 @@ var comfort := 0.5
 var fear := 0.0
 var color := Color.WHITE
 var job := Job.FREE
+## False once the person died (a building burned down around them).
+var alive := true
 ## The building this person works in (null while FREE); their body stays around it.
 var post: Node3D
 ## Null while indoors.
