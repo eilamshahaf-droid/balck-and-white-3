@@ -53,6 +53,8 @@ const SHOPS := &"shops"
 
 ## Where a miracle left proof, a priest's preaching is stronger.
 @export var miracles: Miracles
+## Roadblocks stop people from crossing a closed street.
+@export var police: Police
 
 var residents: Array[Resident] = []
 ## The cult's head priest (a Resident with a body), once the congregation is founded.
@@ -487,6 +489,7 @@ func _populate() -> void:
 		_home_comfort[home] = total / maxi((_by_home[home] as Array).size(), 1)
 	for r in residents:
 		_stages[r] = r.stage()
+	_street.police = police
 	_street.fill(city, _by_home, residents)
 	for b in _homes + _offices:
 		_footprints[b] = _footprint(b)
