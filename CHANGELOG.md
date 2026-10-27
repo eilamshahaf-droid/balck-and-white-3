@@ -3,6 +3,53 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Miracles and decrees touch the people's mood
+- Fire and Roaches frighten the residents of the building (`Population.scare`), Luxury makes them more satisfied (`Population.add_comfort`), and an accidental fire raises police heat (`Heat.raise`, reason ACCIDENT).
+- Numbers: `data/miracles.tres` (`roach_scare`, `fire_scare`), `data/decrees.tres` (`luxury_comfort`).
+
+## 2026-10-27: The head priest, comfort and fear, and the police's hidden criteria
+- Miracles no longer convert anyone. Witnesses still stare, explain what they saw and film it, but belief now comes from the cult's people: the head priest (dressed in white) walks the streets and preaches to everyone around him every few seconds, and prays a little belief into the pool on his own. The congregation's home is the first prayer house (the headquarters).
+- Every resident has hidden wealth, comfort and fear. Preaching only reaches people who are comfortable and not afraid; force works on the frightened; money works on the poor. A miracle that hurts people scares them, and someone too afraid moves to another home. Two ways to play: keep people comfortable, or keep them afraid.
+- The police's hidden criteria: every building quietly collects heat from sit-ins, crowds, broken building rules and accidents, which fades over time. When it passes a threshold (higher in a hard district), the police are called. Nothing is random. Numbers: `data/heat.tres`.
+- A miracle seen where the priest preaches is proof: it multiplies his strength by 1 plus the proof, and a botched miracle (a bad Rain of Frogs) can make him useless there for a while.
+- Numbers: `data/people.tres`, groups "Comfort and fear" and "Priest"; each social group has a wealth range.
+- Try it: press F5, press B and hover the person in white near the starting corner: the card shows everyone's stage, wealth, comfort and fear.
+
+## 2026-10-27: Only prayer houses make belief; fewer bodies on the street
+- Believers no longer fill the belief pool wherever they are. Only believers who live or sit in a prayer house pray (buildings in the `prayer_houses` group), so prayer houses are now the precious resource.
+- One resident in 25 walks the streets (`residents_per_body` in `data/people.tres`), and at least one from every lived-in home. Out of your view, a person goes home and a housemate comes out, so each building keeps its people on its corner.
+- Try it: press F5. The belief pool no longer grows until a building becomes a prayer house.
+
+
+
+## 2026-10-27: Miracles prove, priests convert
+- Eilam's economy round: a miracle no longer converts anyone. It leaves **proof** where it lands, fading over a minute, and priests preaching there persuade better (up to about twice as well after a strong one). Witnesses still react (staring, "It's a hoax", filming, exposure).
+- Each miracle has a job: **gather** a crowd (Block Party; Rain of Frogs now draws gawkers instead of scattering everyone), **save** a burning building (Water: the strongest proof), **clear** a building (Fire, Roaches), or bring **money**.
+- Rain of Frogs' proof is random and can be negative: a bad frog day makes the street harder to win.
+- Proof is weaker where many miracles landed in the last three minutes. Casting the same miracle again soon costs 50% more per recent cast, and each miracle has a cooldown; the wheel shows "ready in 12s".
+- Numbers: `data/miracles.tres`, group "Proof" and each miracle's `_proof` and `_cooldown`.
+- Try it: press F5, cast Block Party twice in a row: the second costs more, and after it the slice says how long until it is ready.
+
+## 2026-10-27: Prayer Houses join the prayer_houses group
+- A building given the Prayer House use (Change Use decree) joins the group `prayer_houses`, and leaves it when its use changes again. Only believers there pray belief into the pool (people thread, `Population.prayer`).
+- Try it: press F5, change one of your buildings to Prayer House and watch belief start to rise.
+
+## 2026-10-27: The building you look at stays solid
+- The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
+- Number: `data/hand_settings.tres`, `fade_keep_radius`.
+- Try it: press F5, double-click a building to fly to it, and orbit around it: it stays solid while the ones in front of it fade.
+
+## 2026-10-27: Risky believers, Block Party, Rain of Frogs
+- Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
+  - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.
+  - **Rain of Frogs**, the chaotic one: frogs fall and hop about, people run or get knocked flat, any building under them (yours too) may be overrun and emptied, and the city reads it as a blessing or a curse, at random.
+- **Accidents**: every 40 seconds or so, believers may set one of your buildings on fire by accident (candles, incense, a very moving sermon), likelier in a Prayer House or Course Center and near zealots. "Water, quick!" floats over it.
+- **Saving a building**: water that puts out a burning building before it is lost saves it ("Saved!"), and everyone who lives there is won over a step. A fire left burning for its full time burns the building down and empties it.
+- **Who just came to believe**: "+ Believer", "Zealot!" or "Lost a believer" floats over people on the street when their belief stage changes.
+- **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
+- Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
+- Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
+
 ## 2026-10-27: Every building has residents; belief grows in stages, slower
 - Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.
 - Belief now has five stages: skeptic, curious, sympathizer, believer, zealot. A single miracle (or visit, or offer) moves a person at most one stage, so winning someone over takes several.
@@ -12,9 +59,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Try it: press F5, press B and hover a person: the card shows their stage.
 - People can be sent to dance (for the block party): they bob and turn on the spot (`data/people.tres`, "Dancing").
 
-## 2026-10-27: Last editor warning fixed
-- `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.
-
 ## 2026-10-27: Catch editor warnings before pushing
 - `CLAUDE.md` now runs the headless checks with `--debug`, which prints the same GDScript warnings the editor shows (they were silent before, so warnings reached Eilam's editor unnoticed).
 - Try it: `godot --headless --path . --debug --quit-after 600` prints nothing but the banner.
@@ -22,6 +66,47 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 ## 2026-10-27: Last editor warnings fixed
 - `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), and the planning scripts no longer divide whole numbers by whole numbers ("Integer division"), so the editor's warning list is empty.
 - Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.
+
+## 2026-10-27: Decrees cost money; the building wheel marks buildings for takeover
+- Every decree now costs money as well as belief: +3 floors $120, luxury $150, facade $60, change use $80, preserve $40. The slice shows both ("30 belief + $120").
+- The building wheel depends on whose building it is. Yours: the five decrees. Anyone else's: the three takeover marks, **Skull: Force**, **$: Buy** and **Sky Sign: Missionaries**. A slice that can't be chosen says why ("needs a Combat Training building", "needs $80"); the mark already on the building reads "call off".
+- The three divine signs (beam, storm, halo) are off the wheel; the marks replace them.
+- Numbers: `data/decrees.tres` (the `..._money` values).
+- Try it: press F5, hold the left button still on a building that isn't yours and pick a mark; then on one of yours, pick a decree and watch the money card drop.
+
+## 2026-10-27: Buildings earn or cost money; a poor start district
+- Every building of yours now earns or costs money each second, and the bottom-left panel shows it ("yours, earns $0.4/s").
+  - **No use:** it brings rent in.
+  - **A use** (Prayer House, Course Center, Free Personality Test, Combat Training): it costs upkeep instead. A shop earns (the hand thread adds the Shop use).
+  - **Luxury:** the building does its job 1.6 times faster (rent, shop takings, training fighters), but its upkeep goes up.
+  - **Floors:** each floor level makes the building yield more, by less every time (+36%, then +20%, +11%, ...), while upkeep grows with the square of the levels. The first floors pay; after two or three they stop paying off.
+- Shops no longer come from Facade.
+- **District wealth:** each district has a wealth that scales rent, shop takings and the price of buying people out. The start district by the river is poor (0.4), downtown is rich (2.0), and the panel says "(poor)" or "(rich)".
+- Numbers: `data/treasury.tres` (Rent, Uses, Luxury, Floors) and `wealth` in `data/districts.tres`.
+- Try it: press F5, click "Take 10 buildings here" on the debug panel (F1), and look at the "Building" line as you give one of them decrees.
+
+## 2026-10-27: Take buildings by force, money or missionaries; a money meter
+- The claim meter and its roof colours are gone. Eilam's rule instead: a building is yours once most of the people who live there believe. An empty one is yours while a believer lives in it or sits in on it.
+- Three takeover marks float over a marked building, with "3 / 7 believe" underneath:
+  - **Skull: force.** Fighters from your Combat Training building scare non-believers out one by one, and believers move in. Exposure rises with every resident scared out.
+  - **Dollar: buy.** A believer with a cash offer buys out non-believers ($80 each), and believers move in.
+  - **Sky sign: missionaries.** Believers preach at the door. Each sermon costs belief and moves one resident's belief (less if they are skeptical).
+- The mark comes off when the building is yours, and the mark's line says what holds it up ("needs $80", "on the way").
+- **Money**: every believer gives a little, and your buildings with the Facade decree open shops that bring money in. Decrees, buying and the money miracle use it.
+- **Meters**: belief, money (with income per second), believers, buildings and exposure are now cards along the top.
+- A burnt-out or roach-infested building becomes abandoned, and anyone who moves in holds it.
+- Numbers: `data/campaigns.tres`, `data/treasury.tres`, `data/districts.tres` ("Who holds a building").
+- Try it: press F5 and open the debug panel (F1). Look at a building near the gold roofs, click "Mark: sky sign (preach)" or "Mark: dollar (buy)", and watch the count over it. Force needs a building of yours set to Combat Training (Change Use).
+
+## 2026-10-27: Roaches, money from the sky, and dearer miracles
+- New miracle **Roaches**: a swarm pours out of a building's walls. Its residents run out, move elsewhere for good, and the building is abandoned.
+- New miracle **Money**: banknotes flutter down on a spot. Your believers pick them up and hand the money in (more with believers nearby).
+- **Fire** now leaves a building abandoned once it has burned: the residents leave and don't come back.
+- Miracles cost about four times as much (water 60, fire 50, lightning 80, shield 100, heal 60, roaches 70, money 90 belief), and up to 1.6x that far from your believers, so each one is a choice.
+- **Change Use** opens a second wheel to pick the use: Prayer House, Course Center, Free Personality Test or Combat Training (the force route trains believers there).
+- Shield blocks roaches like fire and lightning. `Miracles.building_abandoned` tells the districts when a place is emptied.
+- Numbers: `data/miracles.tres`, groups "Roaches" and "Money from the sky"; uses in `data/decrees.tres`.
+- Try it: press F5, hold the left button still on a street, pick Roaches, then click a building with people in it.
 
 ## 2026-10-27: Many more people in the city
 - The city now has 500 residents instead of 60 (`data/people.tres`, "Resident Count").
@@ -53,6 +138,25 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - The hand test checks that trees can't be picked up.
 - Try it: press F5 and try to drag a tree: the city moves instead.
 
+
+
+## 2026-10-26: Taking over buildings, made clear
+- Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.
+- A second marker style to compare: beacons, a glass column over the roof (red or green) that fills with gold. The debug panel (F1) has a "Markers: plates / beacons" button; the default is in `data/districts.tres` (`marker_style`).
+- The bottom-left panel has a key to the colours and says what to do with the building in the middle of the screen ("abandoned, take it over: 40% (set believers down on it)").
+- The claim meter now uses the people's believing presence: believers who live in a building or sit in on it (set them down on its roof or at its walls). Believers just walking past no longer count.
+- The start district by the river is now called Spin Cycle Flats (where the congregation lives).
+- Try it: press F5, find a red roof near the gold one, pick up a believer (B shows them in gold), set them down on that roof and watch the gold spread. Press F1 and click "Markers: plates / beacons" to compare.
+
+## 2026-10-26: Taking over a place: the claim meter
+- Every building now has a claim meter from 0 to 100%. At 100% it is yours; it slips back below 50%. For now only the power route fills it: believers who live there, believers in the street outside, and your buildings next door. With nothing holding it, the claim slowly fades.
+- The beachhead rule: outside your influence zone (the buildings next to yours) only an abandoned place can be claimed. The cult starts from its headquarters, the building where most believers live; its district is the neglected start district, where about a third of the buildings are abandoned. A few more are scattered through the city.
+- Abandoned places nobody holds have a grey roof plate; yours stay gold. The bottom-left panel shows the claim on the building in the middle of the screen ("Building: 40% claimed, abandoned").
+- City Hall's inspection now cuts the claim on the building it inspects (35 points), on top of the demolition notice.
+- Decrees follow the claim meter: a building is yours for decrees once its claim is full, no longer when half of its residents believe (`owner_share` is gone from `data/decrees.tres`).
+- Numbers: `data/districts.tres` (Claim meter, Start district) and `inspection_claim_cut` in `data/government.tres`.
+- Try it: press F5. Move the view to a grey roof near the start, then drag a couple of believers next to it with the hand and watch the "Building" line climb.
+
 ## 2026-10-26: Believers sit in to claim a building
 - Pick up a believer and set them down on a roof, or on the pavement right at a building's walls: they stay there and sit in ("We're not leaving.", "Form 7-C, signed."), facing the building, until the hand picks them up again.
 - This is the power route of the claim meter: each building's believing presence (the summed belief of believers who live there or sit in on it) is now available to the districts system, cached every 0.5 s.
@@ -77,6 +181,27 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - The new direction has no good or evil, so the god's path is gone: no good/evil deed counting, no "Path" in the HUD, no Path buttons on the debug panel.
 - Believers answering a cursed building now hold a rally in front of the entrance (no more vandalising, boycotts or asking for the manager). A protected building gets a human chain in robes, which still fights fire. Blessed is unchanged: they pray.
 - Try it: press F5, hold the left button still on a building, pick the storm cloud, and watch nearby believers walk over and rally.
+
+## 2026-10-26: Districts follow the residents; City Hall respects landmarks
+- One answer to "is this building yours?", shared by districts and decrees: a building people live in is yours while at least half of its residents believe; an empty one (offices, shops) turns through influence, from believers in the street outside and your buildings next door. Its gold roof plate comes and goes with it, and you can now decree on an empty building you won through influence.
+- City Hall never targets a preserved building, and a visit with a notice up is called off if the building is preserved in the meantime ("the building was declared a landmark").
+- The gold roof plate rises with +3 Floors, and the bulldozer measures the building when it arrives, not when it was sent.
+- Try it: press F5, open the debug panel (F1), click "Take 10 buildings here" (their residents now start believing), then preserve one of them from the building wheel and raise exposure.
+
+## 2026-10-26: A city that doesn't end in a void
+- The city no longer sits on a grey slab in white emptiness. Around it now: green land that rises into wooded hills, a river along the east side with a promenade on both banks and two bridges, and outer neighbourhoods. The avenues and side streets carry on past the grid and bend and fan out, ring roads circle the city, and houses line the roads and turn with them: blocks near the city, houses with red roofs further out, and a second little skyline across the river. Clouds drift around the horizon, and a haze in the colour of the sky melts the far land into it, so there is no edge.
+- The grid itself is less even: avenues and streets are spaced unevenly, so blocks come in different sizes; towers rise in two clusters (downtown at the south tip and midtown), with low streets between them; four half blocks are open plazas with a lawn and trees. The sky is a brighter blue.
+- All of it is scenery, built once into a few merged meshes. Things thrown out of town land on the hills or in the river.
+- Numbers: `data/surroundings.tres` (land, river, roads, neighbourhoods, clouds, haze, colours).
+- Try it: press F5, zoom all the way out (mouse wheel) and tilt the camera low (R/F), then look toward the river and the hills.
+
+## 2026-10-26: Districts, buildings that change sides, and City Hall's bulldozer
+- The city is split into 9 districts (3 x 3), outlined on the roads. The bottom left of the screen shows the district in the middle of the screen, how much of it is yours, and what City Hall is doing.
+- Buildings change sides on their own: believers on the street outside lean on a building, and every building that is already yours leans on its neighbours across the street. Wide avenues stop the spread. A building of yours gets a glowing gold plate on its roof; a district is yours at 60%, and its outline turns gold.
+- City Hall: once exposure reaches 10%, a building inspector in a white hard hat walks to one of your buildings (one with a blessed or protected sign first) and posts a red demolition notice. 45 seconds later a bulldozer drives up and pushes the building into the ground, leaving rubble.
+- What stops it: a shield over the bulldozer, three believers standing at the building (put a Protected or Blessed sign on it), lightning near the bulldozer, or simply picking the bulldozer up. Picking up the inspector before he arrives also sends him home. After a visit City Hall waits a minute (30 seconds if you stopped it); taking a district brings it right away.
+- Numbers: `data/districts.tres` and `data/government.tres`. Debug panel: "Exposure +20%" and "Take 10 buildings here".
+- Try it: press F5, click "Believers come here", "Take 10 buildings here" and "Exposure +20%", then follow the inspector and get a shield ready for the bulldozer.
 
 ## 2026-10-26: Smoother city, faster planning scene, sturdier hand
 - Trees, pigeons and people are drawn with far fewer triangles (round shapes were 4,000 triangles each; now a few hundred), and every tree shares one shape. The city draws about 2.3 million triangles a frame instead of 6.2 million. It looks the same.

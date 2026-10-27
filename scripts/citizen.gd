@@ -232,26 +232,14 @@ func body_color() -> Color:
 	return Color.WHITE.lerp(Color(1.0, 0.8, 0.1), belief)
 
 
-## Shift belief after witnessing or experiencing a miracle, by the formula in
-## balance.gd. situation: + it helped this person, - it hurt them.
-func react_to_miracle(kind: StringName, intensity: float, situation: float, friends_belief := 0.0) -> void:
-	var times: int = resident.seen_miracles.get(kind, 0)
-	resident.seen_miracles[kind] = times + 1
-	var novelty := maxf(1.0 - B.novelty_step * times, B.novelty_floor)
-	var change := intensity * situation * (1.0 - skepticism) * novelty
-	# A repeat that reads as a trick turns people away, believers or not.
-	if novelty < 0.0:
-		change = intensity * absf(situation) * novelty
-	resident.persuade(SocialGroup.Route.MIRACLE, change + B.friends_weight * friends_belief)
-
-
 func has_seen_event(id: int) -> bool:
 	return _events_seen.has(id)
 
 
-## Saw miracle event `e` (see faith.gd) happen at `at`. First picks an
-## explanation (god, chance, fraud or a plot), which decides what the miracle
-## does to belief, then stops to stare and maybe films it.
+## Saw miracle event `e` (see faith.gd) happen at `at`. Picks an explanation
+## (god, chance, fraud or a plot) and says it, stops to stare and maybe films
+## it. A miracle doesn't change belief by itself (it gives a priest proof to
+## preach with), but one that hurt this person scares them.
 ## Returns true if this person filmed it.
 func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
 	if _events_seen.size() > 30:
@@ -260,13 +248,8 @@ func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
 	var helped: bool = e.helped.has(self)
 	var situation: float = B.helped_situation if helped else e.situation
 	var explanation := _explain(e.deniability, 1.0 if helped else B.bystander_timing, friends_belief)
-	match explanation:
-		&"god":
-			react_to_miracle(e.kind, e.intensity, situation, friends_belief)
-		&"fraud":
-			resident.shift(-e.intensity * B.fraud_penalty)
-		&"plot":
-			resident.shift(-e.intensity * B.plot_penalty)
+	if situation < 0.0:
+		resident.fear = minf(resident.fear - situation * e.intensity * _people.fear_per_harm, 1.0)
 	# Big miracles hold people longer, and they keep talking about them.
 	var hold: float = B.look_time * (1.0 + e.intensity * 3.0)
 	_say(explanation, hold * 1.4)

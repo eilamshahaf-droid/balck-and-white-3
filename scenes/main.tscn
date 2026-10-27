@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -12,7 +12,18 @@
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
 [ext_resource type="Script" path="res://scripts/people/population.gd" id="11_population"]
 [ext_resource type="Script" path="res://scripts/people/resident_card.gd" id="12_card"]
+[ext_resource type="Script" path="res://scripts/world/districts.gd" id="13_districts"]
+[ext_resource type="Script" path="res://scripts/world/district_view.gd" id="14_district_view"]
+[ext_resource type="Script" path="res://scripts/government/government.gd" id="15_government"]
+[ext_resource type="Script" path="res://scripts/world/district_hud.gd" id="16_district_hud"]
+[ext_resource type="Script" path="res://scripts/world/surroundings.gd" id="17_surroundings"]
 [ext_resource type="Script" path="res://scripts/decrees.gd" id="13_decrees"]
+[ext_resource type="Script" path="res://scripts/world/treasury.gd" id="18_treasury"]
+[ext_resource type="Script" path="res://scripts/world/campaigns.gd" id="19_campaigns"]
+[ext_resource type="Script" path="res://scripts/world/campaign_marks.gd" id="20_marks"]
+[ext_resource type="Script" path="res://scripts/accidents.gd" id="39_accidents"]
+[ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
+[ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -23,33 +34,86 @@ script = ExtResource("2_cam")
 [node name="Camera3D" type="Camera3D" parent="CameraRig"]
 far = 3000.0
 
-[node name="Population" type="Node" parent="."]
+[node name="Surroundings" type="Node3D" parent="."]
+script = ExtResource("17_surroundings")
+
+[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles")]
+miracles = NodePath("../Miracles")
 script = ExtResource("11_population")
 
 [node name="Faith" type="Node" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("4_faith")
 population = NodePath("../Population")
 
+[node name="Heat" type="Node" parent="." node_paths=PackedStringArray("population")]
+script = ExtResource("14_heat")
+population = NodePath("../Population")
+
 [node name="GodHand" type="Node3D" parent="."]
 script = ExtResource("3_hand")
 
-[node name="Miracles" type="Node" parent="."]
+[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury")]
 script = ExtResource("7_miracles")
+population = NodePath("../Population")
+treasury = NodePath("../Treasury")
 
-[node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "population")]
+[node name="Accidents" type="Node" parent="." node_paths=PackedStringArray("miracles", "districts", "decrees", "population", "heat")]
+script = ExtResource("39_accidents")
+miracles = NodePath("../Miracles")
+districts = NodePath("../Districts")
+decrees = NodePath("../Decrees")
+population = NodePath("../Population")
+heat = NodePath("../Heat")
+
+[node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population")]
+script = ExtResource("40_notes")
+population = NodePath("../Population")
+
+[node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "districts", "treasury", "population")]
 script = ExtResource("13_decrees")
 faith = NodePath("../Faith")
 miracles = NodePath("../Miracles")
+districts = NodePath("../Districts")
+treasury = NodePath("../Treasury")
 population = NodePath("../Population")
 
-[node name="HandTools" type="Node" parent="."]
+[node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns")]
 script = ExtResource("8_tools")
+campaigns = NodePath("../Campaigns")
 
 [node name="SignFollowers" type="Node" parent="."]
 script = ExtResource("9_signs")
 
 [node name="ResidentCard" type="CanvasLayer" parent="."]
 script = ExtResource("12_card")
+
+[node name="Districts" type="Node" parent="."]
+script = ExtResource("13_districts")
+
+[node name="DistrictView" type="Node3D" parent="."]
+script = ExtResource("14_district_view")
+
+[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "decrees")]
+script = ExtResource("18_treasury")
+faith = NodePath("../Faith")
+districts = NodePath("../Districts")
+decrees = NodePath("../Decrees")
+
+[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "treasury", "decrees")]
+script = ExtResource("19_campaigns")
+districts = NodePath("../Districts")
+population = NodePath("../Population")
+faith = NodePath("../Faith")
+treasury = NodePath("../Treasury")
+decrees = NodePath("../Decrees")
+
+[node name="CampaignMarks" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts")]
+script = ExtResource("20_marks")
+campaigns = NodePath("../Campaigns")
+districts = NodePath("../Districts")
+
+[node name="Government" type="Node" parent="."]
+script = ExtResource("15_government")
 
 [node name="DebugPanel" type="CanvasLayer" parent="."]
 script = ExtResource("10_debug")
@@ -67,12 +131,25 @@ offset_right = 900.0
 offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
-Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and signs    Right-drag a circle: water
-The hand can lift anything. Only miracles change what people believe."
+Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
+The hand lifts people and things (not trees). Only miracles change what people believe."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
-offset_top = 116.0
+offset_top = 176.0
 offset_right = 900.0
-offset_bottom = 146.0
+offset_bottom = 206.0
 script = ExtResource("5_hud")
+
+[node name="District" type="Label" parent="HUD"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -64.0
+offset_right = 900.0
+offset_bottom = -12.0
+grow_vertical = 0
+script = ExtResource("16_district_hud")
+
+[connection signal="building_abandoned" from="Miracles" to="Districts" method="mark_abandoned"]

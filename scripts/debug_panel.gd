@@ -1,15 +1,22 @@
 extends CanvasLayer
 ## Testing shortcuts, top right (F1 hides it): convert or lose believers,
-## move all believers to where the camera looks and fill the belief pool.
-## Not part of the game; there to make testing quick.
+## move all believers to where the camera looks, fill the belief pool, raise
+## exposure (to call City Hall), take buildings, add money and mark the building in the middle of the screen
+## (until the building wheel has the marks). Not part of the game; there to make testing quick.
 
 const B = preload("res://data/balance.tres")
 const STEP := 5
 const BELIEF_GIFT := 100.0
+const EXPOSURE_GIFT := 0.2
+const TAKE_COUNT := 10
+const MONEY_GIFT := 200.0
 
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
 @onready var population: Node = get_node("../Population")
+@onready var districts: Districts = get_node("../Districts")
+@onready var treasury: Treasury = get_node("../Treasury")
+@onready var campaigns: Campaigns = get_node("../Campaigns")
 
 var _panel: PanelContainer
 
@@ -31,6 +38,12 @@ func _ready() -> void:
 	_button(box, "Believers -%d" % STEP, func(): _unconvert(STEP))
 	_button(box, "Believers come here", _gather_here)
 	_button(box, "Belief +%d" % roundi(BELIEF_GIFT), func(): faith.belief_pool += BELIEF_GIFT)
+	_button(box, "Exposure +%d%%" % roundi(EXPOSURE_GIFT * 100.0), func(): faith.exposure = minf(faith.exposure + EXPOSURE_GIFT, 1.0))
+	_button(box, "Take %d buildings here" % TAKE_COUNT, func(): districts.convert_near(rig.target_pivot, TAKE_COUNT))
+	_button(box, "Money +%d" % roundi(MONEY_GIFT), func(): treasury.add_money(MONEY_GIFT))
+	_button(box, "Mark: skull (force)", func(): _mark(Campaigns.Route.FORCE))
+	_button(box, "Mark: dollar (buy)", func(): _mark(Campaigns.Route.BUY))
+	_button(box, "Mark: sky sign (preach)", func(): _mark(Campaigns.Route.PREACH))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -76,3 +89,11 @@ func _people_by_distance(believers: bool) -> Array:
 			func(c): return (c.belief > B.believer_threshold) == believers)
 	out.sort_custom(func(a, b): return a.global_position.distance_to(p) < b.global_position.distance_to(p))
 	return out
+
+
+## Marks the building in the middle of the screen, as the wheel will.
+func _mark(route: Campaigns.Route) -> void:
+	var i := districts.building_near(rig.target_pivot)
+	var b: Node3D = districts.buildings[i]
+	if not campaigns.mark(b, route):
+		print("Can't mark: ", campaigns.why_not(b, route))

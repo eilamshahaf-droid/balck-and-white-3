@@ -2,24 +2,28 @@ extends Node
 ## The god's two wheels, on top of the hand's movement (god_hand.gd).
 ##
 ## Hold the left button still for a moment: a wheel opens around the hand.
-## On a building it is the building wheel: divine decrees (only on your own
-## buildings) and divine signs. Anywhere else, the miracle wheel. The
-## hand stays in the middle and points where the mouse goes; letting go
-## signs the decree or gives the sign to the building (choosing the sign it
-## already has takes it down), or puts the miracle in the hand (a glowing
-## orb in the palm). It fills the hand: nothing can be picked up meanwhile.
+## On a building it is the building wheel: divine decrees on your own
+## buildings, and the three takeover marks (force, buy, missionaries) on
+## everyone else's. Anywhere else, the miracle wheel. The hand stays in the
+## middle and points where the mouse goes; letting go signs the decree or
+## marks the building (choosing the mark it already has calls it off), or
+## puts the miracle in the hand (a glowing orb in the palm). It fills the hand: nothing can be picked up meanwhile.
 ## The next short click (or long press), on the ground or a building, casts
 ## it there; a right click puts it away. Dragging still moves the city. A circle drawn with the right button casts water straight away.
 
-const M = preload("res://data/miracles.tres")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 const RadialWheel = preload("res://scripts/radial_wheel.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
-enum Mode { NONE, MIRACLES, BUILDING }
+enum Mode { NONE, MIRACLES, BUILDING, USES }
+
+## The takeover marks on the wheel, by slice id.
+const MARKS := {&"force": Campaigns.Route.FORCE, &"buy": Campaigns.Route.BUY,
+		&"preach": Campaigns.Route.PREACH}
+
+@export var campaigns: Campaigns
 
 @onready var hand: Node3D = get_node("../GodHand")
-@onready var miracles: Node = get_node("../Miracles")
+@onready var miracles: Miracles = get_node("../Miracles")
 @onready var faith: Node = get_node("../Faith")
 @onready var decrees: Decrees = get_node("../Decrees")
 
@@ -88,6 +92,8 @@ func _input(event: InputEvent) -> void:
 		_wheel.point_at(event.position)  # where the button came up, not where the mouse is a frame later
 		_choose()
 		get_viewport().set_input_as_handled()
+	elif event.button_index == MOUSE_BUTTON_LEFT:
+		get_viewport().set_input_as_handled()  # the click that picks from a second wheel
 	elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		_close()  # never mind
 		get_viewport().set_input_as_handled()
@@ -108,8 +114,10 @@ func _open(hit: Dictionary, at: Vector2) -> void:
 		_mode = Mode.MIRACLES
 		var items: Array[Dictionary] = miracles.wheel_items()
 		for item in items:
-			item.note = "%d belief" % roundi(item.cost)
-			item.enabled = faith.belief_pool >= item.cost
+			var wait: float = miracles.ready_in(item.id)
+			var price := "%d belief" % roundi(item.cost)
+			item.note = "ready in %ds" % ceili(wait) if wait > 0.0 else price
+			item.enabled = wait <= 0.0 and faith.belief_pool >= item.cost
 		_wheel.open(at, items)
 
 
@@ -121,17 +129,26 @@ func _choose() -> void:
 			Mode.MIRACLES:
 				_charge(id)
 			Mode.BUILDING:
-				if building and id in DivineSign.KINDS:
-					_give_sign(building, id)
+				if building and MARKS.has(id):
+					campaigns.mark(building, MARKS[id])
+					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+				elif building and id == &"use":
+					# Which use: a second wheel in the same place; the next click picks.
+					_mode = Mode.USES
+					_wheel.open(_wheel.center, decrees.use_items(building))
+					return
 				elif building:
 					decrees.issue(id, building)
+			Mode.USES:
+				if building:
+					decrees.issue(&"use", building, String(id))
 	_close()
 
 
 func _close() -> void:
 	_wheel.visible = false
 	_wheel.set_process(false)
-	if _mode == Mode.BUILDING and is_instance_valid(_target.collider):
+	if _mode in [Mode.BUILDING, Mode.USES] and is_instance_valid(_target.collider):
 		_set_outline(_target.collider, false)
 	_target = {}
 	_mode = Mode.NONE
@@ -154,35 +171,23 @@ func _charge(kind: StringName) -> void:
 		Sfx.play(get_tree(), hand.global_position, &"chime", 0.4)
 
 
-## Decrees first, then the signs; the sign the building has reads "Take down".
+## Decrees on your own building; the takeover marks on anyone else's. The
+## mark a building already has reads "call off".
 func _building_items(building: Node3D) -> Array[Dictionary]:
-	var items := decrees.wheel_items(building)
-	var current := _sign_on(building)
-	for item in DivineSign.wheel_items():
-		if item.id == current:
-			item.note = "take down"
-		else:
-			item.note = "%d belief" % roundi(M.sign_cost)
-			item.enabled = faith.belief_pool >= M.sign_cost
-		items.append(item)
+	if decrees.is_yours(building):
+		return decrees.wheel_items(building)
+	var items: Array[Dictionary] = [
+		{"id": &"force", "label": "Skull: Force", "color": Color(0.85, 0.3, 0.3)},
+		{"id": &"buy", "label": "$: Buy", "color": Color(0.4, 0.8, 0.4)},
+		{"id": &"preach", "label": "Sky Sign: Missionaries", "color": Color(0.5, 0.75, 1.0)},
+	]
+	var current := campaigns.route_of(building)
+	for item in items:
+		var route: Campaigns.Route = MARKS[item.id]
+		var why := campaigns.why_not(building, route)
+		item.note = "call off" if route == current else ("go" if why == "" else why)
+		item.enabled = route == current or why == ""
 	return items
-
-
-func _give_sign(building: Node3D, kind: StringName) -> void:
-	if kind == _sign_on(building):
-		DivineSign.mark(building, &"clear")
-	elif faith.spend(M.sign_cost):
-		DivineSign.mark(building, kind)
-		faith.exposure = minf(faith.exposure + M.sign_exposure, 1.0)
-	else:
-		return
-	Sfx.play(get_tree(), _target.position, &"chime", 0.5)
-
-
-func _sign_on(building: Node3D) -> StringName:
-	if building.has_meta(DivineSign.META) and is_instance_valid(building.get_meta(DivineSign.META)):
-		return building.get_meta(DivineSign.META).kind
-	return &""
 
 
 func _set_outline(building: Node3D, on: bool) -> void:

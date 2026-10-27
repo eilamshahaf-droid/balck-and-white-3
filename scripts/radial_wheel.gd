@@ -4,7 +4,8 @@ extends Control
 ## comes up is the choice. Releasing in the middle chooses nothing.
 ##
 ## Items: {"id": StringName, "label": String, "color": Color,
-## optional "note": String, optional "enabled": bool}.
+## optional "note": String, optional "effect": String (a third line), optional
+## "enabled": bool}.
 
 const S = preload("res://data/hand_settings.tres")
 
@@ -89,6 +90,8 @@ func _draw() -> void:
 		_text(at + Vector2(0, -2), item.label, 17, Color.WHITE if enabled else Color(1, 1, 1, 0.5))
 		if item.has("note"):
 			_text(at + Vector2(0, 16), item.note, 12, Color(1, 1, 1, 0.8 if enabled else 0.4))
+		if item.has("effect"):
+			_text(at + Vector2(0, 30), item.effect, 12, Color(0.75, 1.0, 0.7, 0.85 if enabled else 0.4))
 
 
 func _text(at: Vector2, text: String, font_size: int, col: Color) -> void:

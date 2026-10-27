@@ -1,18 +1,21 @@
 extends Node3D
 ## Builds a simple procedural Manhattan-style city: a grid of avenues and
-## streets, blocks of towers that grow taller toward midtown, a park,
-## taxis to throw around, and the grid that residents walk (see people/population.gd).
+## streets with uneven blocks, towers that rise toward downtown and midtown, a
+## park and a few plazas, taxis to throw around, and the grid that residents
+## walk (see people/population.gd). What lies beyond the grid is surroundings.gd.
 
 const AVENUES := 7            # north-south roads
 const STREETS := 14           # east-west roads
-const AVENUE_SPACING := 80.0
-const STREET_SPACING := 28.0
+const AVENUE_GAPS := Vector2(64.0, 96.0)   # min, max distance between avenues: real blocks are not all alike
+const STREET_GAPS := Vector2(22.0, 36.0)
 const AVENUE_WIDTH := 14.0
 const STREET_WIDTH := 9.0
 const SIDEWALK := 2.5
 const TAXI_COUNT := 30
 const LITTER_COUNT := 160
 const PIGEON_FLOCKS := 8
+const PLAZAS := 4             # half blocks left open as small squares
+const GROUND_MARGIN := Vector2(AVENUE_WIDTH, STREET_WIDTH) / 2.0 + Vector2.ONE   # asphalt past the outer road centre lines
 
 # Physics layers: 1 = world, 2 = citizens, 3 = props, 4 = critters (pigeons).
 const LAYER_WORLD := 1
@@ -36,11 +39,15 @@ var sun: DirectionalLight3D
 var _sky_mat: ProceduralSkyMaterial
 var half_size := Vector2.ZERO
 var _materials := {}
+var _avenue_x := PackedFloat32Array()   # road centre lines, west to east
+var _street_z := PackedFloat32Array()   # south to north
 
 
 func _ready() -> void:
 	rng.seed = 3
-	half_size = Vector2((AVENUES - 1) * AVENUE_SPACING, (STREETS - 1) * STREET_SPACING) / 2.0
+	_avenue_x = _road_lines(AVENUES, AVENUE_GAPS)
+	_street_z = _road_lines(STREETS, STREET_GAPS)
+	half_size = Vector2(_avenue_x[AVENUES - 1], _street_z[STREETS - 1])
 	_build_environment()
 	_build_ground()
 	_build_blocks()
@@ -57,13 +64,16 @@ func _unhandled_input(event: InputEvent) -> void:
 # --- Grid helpers (used by citizens) ---
 
 func intersection(g: Vector2i) -> Vector3:
-	return Vector3(g.x * AVENUE_SPACING - half_size.x, 0.0, g.y * STREET_SPACING - half_size.y)
+	return Vector3(_avenue_x[g.x], 0.0, _street_z[g.y])
 
 
 func nearest_grid(p: Vector3) -> Vector2i:
-	var gx := clampi(roundi((p.x + half_size.x) / AVENUE_SPACING), 0, AVENUES - 1)
-	var gz := clampi(roundi((p.z + half_size.y) / STREET_SPACING), 0, STREETS - 1)
-	return Vector2i(gx, gz)
+	return Vector2i(_nearest(_avenue_x, p.x), _nearest(_street_z, p.z))
+
+
+## The block a point stands in, by its south-west corner (clamped to the city).
+func block_of(p: Vector3) -> Vector2i:
+	return Vector2i(_below(_avenue_x, p.x), _below(_street_z, p.z))
 
 
 func random_neighbor(g: Vector2i) -> Vector2i:
@@ -79,7 +89,33 @@ func random_grid() -> Vector2i:
 	return Vector2i(rng.randi_range(0, AVENUES - 1), rng.randi_range(0, STREETS - 1))
 
 
+static func _nearest(lines: PackedFloat32Array, v: float) -> int:
+	var best := 0
+	for i in lines.size():
+		if absf(lines[i] - v) < absf(lines[best] - v):
+			best = i
+	return best
+
+
+static func _below(lines: PackedFloat32Array, v: float) -> int:
+	var i := 0
+	while i < lines.size() - 2 and v >= lines[i + 1]:
+		i += 1
+	return i
+
+
 # --- Construction ---
+
+## `count` road centre lines with uneven gaps, centred on 0.
+func _road_lines(count: int, gaps: Vector2) -> PackedFloat32Array:
+	var lines := PackedFloat32Array([0.0])
+	for n in count - 1:
+		lines.append(lines[n] + rng.randf_range(gaps.x, gaps.y))
+	var mid := lines[count - 1] / 2.0
+	for n in count:
+		lines[n] -= mid
+	return lines
+
 
 func _build_environment() -> void:
 	var sky_mat := ProceduralSkyMaterial.new()
@@ -109,22 +145,29 @@ func _build_environment() -> void:
 
 ## 0 = night, 1 = full day. The opening starts at night.
 func set_daylight(t: float) -> void:
-	_sky_mat.sky_top_color = Color(0.03, 0.04, 0.1).lerp(Color(0.35, 0.55, 0.85), t)
-	_sky_mat.sky_horizon_color = Color(0.1, 0.1, 0.18).lerp(Color(0.75, 0.8, 0.88), t)
-	_sky_mat.ground_horizon_color = Color(0.06, 0.06, 0.08).lerp(Color(0.6, 0.6, 0.62), t)
-	env.fog_light_color = Color(0.08, 0.08, 0.14).lerp(Color(0.75, 0.8, 0.88), t)
+	var horizon := Color(0.1, 0.1, 0.18).lerp(Color(0.74, 0.86, 0.97), t)
+	_sky_mat.sky_top_color = Color(0.03, 0.04, 0.1).lerp(Color(0.22, 0.5, 0.92), t)
+	_sky_mat.sky_horizon_color = horizon
+	# Below the horizon the sky matches the fog, so the land melts into it with no edge.
+	_sky_mat.ground_horizon_color = horizon
+	_sky_mat.ground_bottom_color = horizon
+	env.fog_light_color = horizon
 	env.ambient_light_energy = lerpf(0.4, 0.5, t)
 	sun.light_energy = lerpf(0.3, 0.9, t)
 	sun.light_color = Color(0.6, 0.7, 1.0).lerp(Color.WHITE, t)
 
 
 func _build_ground() -> void:
-	var size := Vector3(half_size.x * 2 + 200, 1.0, half_size.y * 2 + 200)
-	_make_box(size, Vector3(0, -0.5, 0), _mat(Color(0.18, 0.18, 0.2)), true).set_meta("surface", &"asphalt")
+	var size := Vector3((half_size.x + GROUND_MARGIN.x) * 2.0, 0.5, (half_size.y + GROUND_MARGIN.y) * 2.0)
+	_make_box(size, Vector3(0, -0.25, 0), _mat(Color(0.18, 0.18, 0.2)), true).set_meta("surface", &"asphalt")
 
 
 func _build_blocks() -> void:
-	var max_dist := half_size.length()
+	var plazas := {}
+	while plazas.size() < PLAZAS:
+		var b := Vector2i(rng.randi_range(0, AVENUES - 2), rng.randi_range(0, STREETS - 2))
+		if b.x != 3 or b.y < 9:
+			plazas[b] = true
 	for i in AVENUES - 1:
 		for j in STREETS - 1:
 			var a := intersection(Vector2i(i, j))
@@ -141,11 +184,28 @@ func _build_blocks() -> void:
 
 			if i == 3 and j >= 9:
 				_build_park(center, size)
+				continue
+			_line_street_trees(center, size)
+			var tall := _skyline(center)
+			if plazas.has(Vector2i(i, j)):
+				# Towers on one half, an open square on the other.
+				var west := rng.randf() < 0.5
+				var half := Vector2(size.x / 2.0, size.y)
+				var shift := Vector3(size.x / 4.0, 0, 0)
+				_build_towers(center - shift if west else center + shift, half, tall)
+				_build_plaza(center + shift if west else center - shift, half)
 			else:
-				_line_street_trees(center, size)
-				# Midtown sits a little south of the middle, like Manhattan.
-				var dist := Vector2(center.x, center.z + half_size.y * 0.25).length()
-				_build_towers(center, size, 1.0 - clampf(dist / max_dist, 0.0, 1.0))
+				_build_towers(center, size, tall)
+
+
+## 0..1: how tall this part of town builds. Two peaks, like Manhattan: downtown
+## at the south tip and midtown a little south of the middle, with low streets
+## of walk-ups between them.
+func _skyline(center: Vector3) -> float:
+	var p := Vector2(center.x / half_size.x, center.z / half_size.y)
+	var downtown := exp(-(p - Vector2(0.15, -0.85)).length_squared() * 6.0)
+	var midtown := exp(-(p - Vector2(-0.05, -0.2)).length_squared() * 3.5)
+	return clampf(maxf(downtown, midtown) + rng.randf_range(-0.12, 0.12), 0.0, 1.0)
 
 
 func _line_street_trees(center: Vector3, size: Vector2) -> void:
@@ -191,6 +251,15 @@ func _build_park(center: Vector3, size: Vector2) -> void:
 	for n in 14:
 		var p := center + Vector3(rng.randf_range(-size.x, size.x) * 0.42, 0, rng.randf_range(-size.y, size.y) * 0.35)
 		_plant_tree(p + Vector3.UP * 0.3, rng.randf_range(1.6, 2.6))
+
+
+func _build_plaza(center: Vector3, size: Vector2) -> void:
+	var inner := size - Vector2.ONE * SIDEWALK * 2
+	_make_box(Vector3(inner.x, 0.06, inner.y), center + Vector3(0, 0.23, 0), _mat(Color(0.78, 0.72, 0.62)), true)
+	_make_box(Vector3(inner.x * 0.5, 0.1, inner.y * 0.5), center + Vector3(0, 0.27, 0), _mat(Color(0.3, 0.58, 0.26)), true).set_meta("surface", &"grass")
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			_plant_tree(center + Vector3(sx * inner.x * 0.35, 0.3, sz * inner.y * 0.3), rng.randf_range(1.3, 1.9))
 
 
 func _plant_tree(pos: Vector3, crown_radius: float) -> void:
