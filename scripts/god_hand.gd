@@ -376,17 +376,6 @@ func _hold_rigid(body: RigidBody3D) -> void:
 
 func _pull_held(delta: float) -> void:
 	var anchor := global_position - Vector3.UP * 1.2
-	if held.has_method("hand_pull"):
-		# Rooted things (trees) resist; when they give way they hand back the loose object.
-		var loose: Node3D = held.hand_pull(anchor, hand_velocity, delta)
-		if loose and loose != held:
-			held = loose
-			if held is RigidBody3D:
-				_hold_rigid(held)
-			if held.has_method("on_grabbed"):
-				held.on_grabbed()
-			Sfx.play(get_tree(), held.global_position, &"earth", 1.0)
-		return
 	var to_anchor := anchor - held.global_position
 	if to_anchor.length() > 40.0:
 		held.global_position = anchor  # stuck behind something; don't stretch forever
@@ -502,7 +491,7 @@ func _blow() -> void:
 		var node: Node = near.collider
 		if node.is_in_group("wind_reactive"):
 			reached[node] = true
-	# Untyped: a tree uprooted since last tick is a freed key here, and a typed
+	# Untyped: a tree removed since last tick is a freed key here, and a typed
 	# loop variable would fail on it before the validity check.
 	for node: Variant in _windy:
 		if is_instance_valid(node) and not reached.has(node):
@@ -573,11 +562,11 @@ func _pick_target(hit: Dictionary) -> Node3D:
 func _pick_bounds(obj: Node3D) -> AABB:
 	if obj.has_meta("pick_bounds"):
 		return obj.get_meta("pick_bounds")
-	var to_local := obj.global_transform.affine_inverse()
+	var into_obj := obj.global_transform.affine_inverse()
 	var box := AABB()
 	var first := true
 	for mesh in obj.find_children("*", "MeshInstance3D", true, false):
-		var b: AABB = (to_local * mesh.global_transform) * mesh.get_aabb()
+		var b: AABB = (into_obj * mesh.global_transform) * mesh.get_aabb()
 		box = b if first else box.merge(b)
 		first = false
 	var bounds := AABB(box.get_center(), Vector3.ONE * box.size.length() * 0.3)
@@ -679,8 +668,6 @@ func _mass(obj: Node3D) -> float:
 		return (obj as RigidBody3D).mass
 	if obj is Citizen:
 		return (obj as Citizen).mass
-	if obj is SwayingTree:
-		return (obj as SwayingTree).mass
 	return 1.0
 
 

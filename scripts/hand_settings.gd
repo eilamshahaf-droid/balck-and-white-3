@@ -44,13 +44,6 @@ extends Resource
 @export var wheel_radius_px := 150.0
 @export var wheel_dead_zone_px := 50.0       # the hand sits in this hole; releasing inside it chooses nothing
 
-@export_group("Trees")
-@export var uproot_effort := 6.0             # metres-seconds of pulling to uproot a big tree
-@export var uproot_speed_bonus := 0.5        # how much fast hand motion (wiggling, yanking) adds to the pull
-@export var hand_strength := 1.0             # overall pulling power of the hand on rooted trees
-@export var uproot_slack := 1.5              # pulling closer than this does nothing
-@export var roots_hold_time := 20.0          # holding a tree longer than this kills its roots
-
 @export_group("Wind")
 @export var wind_full_radius := 5.0          # full effect inside this distance, sharper when closer
 @export var wind_fade_radius := 10.0         # fades out smoothly up to this distance
