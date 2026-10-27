@@ -21,6 +21,8 @@ const OCCUPY_LINES: Array[String] = [
 	"We're not leaving.", "This floor is holy now.", "Form 7-C, signed.", "Sit-in for the Hand!",
 ]
 const OCCUPY_COLOR := Color(1.0, 0.85, 0.35)
+const FLEE_LINES: Array[String] = ["ROACHES!", "Not my kitchen!", "I'm never going back in there!", "It touched me!"]
+const FLEE_COLOR := Color(1.0, 0.55, 0.45)
 const B = preload("res://data/balance.tres")
 # Loaded at run time: a parse-time preload would load social_group.gd before
 # its class_name is registered and break the typed groups array.
@@ -94,6 +96,7 @@ var _errand_color := Color.WHITE
 var _errand_face := Vector3.ZERO
 var _errand_say := 0.0
 var _occupy_time := 0.0
+var _flee_time := 0.0
 var _from_hand := false       # the fall in progress started in the hand
 
 
@@ -203,11 +206,15 @@ func _physics_process(delta: float) -> void:
 				return
 			var to_target := target - global_position
 			to_target.y = 0
+			var pace := speed
+			if _flee_time > 0.0:
+				_flee_time -= delta
+				pace *= _people.flee_speed_factor
 			if to_target.length() < 0.6:
 				_pick_next_target()
 			else:
 				var dir := to_target.normalized()
-				velocity = Vector3(dir.x * speed, -1.0, dir.z * speed)
+				velocity = Vector3(dir.x * pace, -1.0, dir.z * pace)
 				rotation.y = atan2(dir.x, dir.z)
 				move_and_slide()
 
@@ -393,11 +400,16 @@ func _sit_in(delta: float) -> void:
 		return
 	_occupy_time -= delta
 	if _occupy_time <= 0.0:
-		_stop_occupying()
-		# Down the stairs from a roof, back to the street.
-		if global_position.y > 1.0:
-			global_position = city.intersection(city.nearest_grid(global_position)) + lane_offset + Vector3.UP * 0.1
-		resume_walking()
+		leave_occupied()
+
+
+## Stop sitting in and go back to walking the streets.
+func leave_occupied() -> void:
+	_stop_occupying()
+	# Down the stairs from a roof, back to the street.
+	if global_position.y > 1.0:
+		global_position = city.intersection(city.nearest_grid(global_position)) + lane_offset + Vector3.UP * 0.1
+	resume_walking()
 
 
 func _stop_occupying() -> void:
@@ -450,12 +462,12 @@ func on_released(throw_velocity: Vector3) -> void:
 	state = State.FALLING
 	velocity = throw_velocity
 	_fall_speed = 0.0
-	var speed := throw_velocity.length()
-	if speed > _people.tumble_min_speed:
+	var throw_speed := throw_velocity.length()
+	if throw_speed > _people.tumble_min_speed:
 		var axis := throw_velocity.cross(Vector3.UP)
 		if axis.length() < 0.01:
 			axis = Vector3.RIGHT
-		_spin = axis.normalized() * clampf(speed * 0.5, 2.0, 14.0)
+		_spin = axis.normalized() * clampf(throw_speed * 0.5, 2.0, 14.0)
 	else:
 		_spin = Vector3.ZERO
 
@@ -528,10 +540,34 @@ func resume_walking() -> void:
 
 ## Moved house: start again from the corner nearest the new home.
 func settle_at_home() -> void:
-	home = city.nearest_grid(resident.home.global_position)
+	move_out()
 	grid = home
 	global_position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
 	resume_walking()
+
+
+## Run from `danger` (a roach attack) to a corner down the street, shouting.
+func flee(danger: Vector3) -> void:
+	if state != State.WALKING:
+		return
+	_stop_occupying()
+	end_errand()
+	idle = false
+	_pause = 0.0
+	var away := global_position - danger
+	away.y = 0.0
+	if away.length() < 0.1:
+		away = Vector3.RIGHT
+	grid = city.nearest_grid(global_position + away.normalized() * _people.flee_distance)
+	target = city.intersection(grid) + lane_offset
+	_flee_time = _people.flee_time
+	_say_line(FLEE_LINES[randi() % FLEE_LINES.size()], FLEE_COLOR, _people.errand_line_time)
+
+
+## The home changed while this person is out: from now on they wander around
+## the new one, walking there instead of appearing at it.
+func move_out() -> void:
+	home = city.nearest_grid(resident.home.global_position)
 
 
 func _pick_next_target() -> void:
