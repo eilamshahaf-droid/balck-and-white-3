@@ -103,7 +103,8 @@ func _describe(r: Resident) -> String:
 		r.full_name(), r.group.title.to_lower(), _corner(r.home), work,
 		_names(r.family, true), _names(r.friends, false),
 		roundi(r.belief * 100.0), roundi(r.skepticism * 100.0)] \
-		+ "\n" + STAGE_NAMES[r.stage()] \
+		+ "\n%s   Wealth %d%%   Comfort %d%%   Fear %d%%" % [STAGE_NAMES[r.stage()],
+				roundi(r.wealth * 100.0), roundi(r.comfort * 100.0), roundi(r.fear * 100.0)] \
 		+ ("\nSitting in near %s" % _corner(r.occupying) if r.occupying else "")
 
 

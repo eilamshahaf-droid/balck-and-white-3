@@ -40,7 +40,8 @@ The scene is small; most nodes are built in code at startup.
 | `Main` | `city.gd` | Builds the procedural Manhattan grid (unevenly spaced avenues and streets): ground, blocks, towers in two height clusters, park, plazas, trees, doors, taxis, citizens, litter, pigeons. Grid helpers (`intersection`, `nearest_grid`, `block_of`, ...) used by citizens and districts. Day/night (`set_daylight`). |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
 | `Surroundings` | `world/surroundings.gd` (+ `world/outskirts.gd`) | Scenery past the grid, built once: land and hills (with a height-map collision floor), the river, promenade and bridges, roads leaving the grid, outer neighbourhoods and woods, clouds, and the depth haze that hides the edge. |
-| `Population` | `people/population.gd` | Every person is a `Resident` record (name, `SocialGroup`, home, work, family, friends, belief stage); `census.gd` (`Census`) builds them, at least 5 per home. Only `street_people` have a `Citizen` body at a time; the rest are indoors and swap out of view. Belief drifts back to a baseline unless friends or a believing home hold it; `stage_changed` announces stages; `persuade(r, route, strength)` and `awe(building, strength)` are the ways to win people. `resident.gd` is the record, `social_group.gd` the per-group traits and per-route responses, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
+| `Population` | `people/population.gd` | Every person is a `Resident` record (name, `SocialGroup`, home, work, family, friends, belief stage); `census.gd` (`Census`) builds them, at least 5 per home. About one in `residents_per_body` (at least one per lived-in home) has a `Citizen` body at a time; the rest are indoors and swap with housemates out of view. The belief pool's prayer comes only from believers living or sitting in buildings of group `prayer_houses`. Belief drifts back to a baseline unless friends or a believing home hold it; `stage_changed` announces stages; `persuade(r, route, strength)` (PREACH, MONEY, FORCE) and `persuade_near` are the ways to win people; miracles don't convert. Residents have hidden wealth, comfort and fear (`scare`, `add_comfort`); preaching needs comfort, force works on fear, too much fear moves people out. `street.gd` (`Street`) keeps the bodies on the street. The head priest (`priest`) preaches around him and prays. `resident.gd` is the record, `social_group.gd` the per-group traits and per-route responses, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
+| `Heat` | `heat.gd` | The police's hidden criteria: per-building heat from sit-ins, crowds, broken building rules and accidents (`raise`), decaying; `police_called(building, reason)` past a threshold scaled by district hardness (`set_hardness`). Tunables: `data/heat.tres`. |
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
 | `Miracles` | `miracles.gd` | Casts the miracles (water, fire, roaches, money, block party, rain of frogs): spends belief and reports to `Faith`. A burnt-out, roach- or frog-infested building is emptied (`Population.evacuate`) and announced with `building_abandoned`; a fire put out in time is `building_saved` and awes the residents (`Population.awe`). Effects: `rain.gd`, `fire.gd`, `roaches.gd`, `money_rain.gd`, `block_party.gd`, `frog_rain.gd`. |
@@ -66,6 +67,8 @@ World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `
 
 Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `prayer_houses`,
 `wind_reactive`, `no_toon`, `preserved`.
+Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`,
+`wind_reactive`, `no_toon`, `preserved`, `prayer_houses`.
 
 Physics layers (bit values in code): 1 = world (ground, buildings), 2 = citizens,
 3 (4) = props (taxis, trees, litter), 4 (8) = critters (pigeons, as Area3D so the hand's wind
@@ -98,7 +101,8 @@ Tunables: `data/planning.tres`.
 | `data/balance.tres` | `Balance` | belief, witnesses, exposure |
 | `data/miracles.tres` | `MiracleSettings` | miracle costs, reach and effects |
 | `data/decrees.tres` | `DecreeSettings` | divine decree costs, exposure and limits |
-| `data/people.tres` | `PeopleSettings` (+ `SocialGroup`s) | residents, groups, names, walking |
+| `data/people.tres` | `PeopleSettings` (+ `SocialGroup`s) | residents, groups, names, walking, comfort and fear, the priest |
+| `data/heat.tres` | `HeatSettings` | when the police step in |
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
 | `data/surroundings.tres` | `SurroundingsSettings` | land, river, outer neighbourhoods, clouds, haze |
@@ -113,7 +117,7 @@ Several threads push to `main`. Message the owning thread before changing its fi
 | Area | Files | Owner thread |
 | --- | --- | --- |
 | Hand, miracles, decrees, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `decrees.gd`, `decree_looks.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
-| People | `citizen.gd`, `faith.gd`, `sign_followers.gd`, `scripts/people/` | "Build the people in the city" |
+| People | `citizen.gd`, `faith.gd`, `heat.gd`, `sign_followers.gd`, `scripts/people/` | "Build the people in the city" |
 | Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
 | Building models | `building_visual.gd`, `assets/models/` | model-library |
 | World: districts, City Hall, surroundings | `scripts/world/`, `scripts/government/` | "World and stages" |
