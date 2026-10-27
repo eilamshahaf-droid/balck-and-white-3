@@ -125,6 +125,43 @@ func believer_share(building: Node3D) -> float:
 	return float(n) / people.size()
 
 
+## How many people live in `building`, and how many of them believe: the
+## "X of Y" of its tooltip.
+func residents_in(building: Node3D) -> int:
+	return (_by_home.get(building, []) as Array).size()
+
+
+func believers_in(building: Node3D) -> int:
+	var n := 0
+	for r: Resident in _by_home.get(building, []):
+		if r.belief > B.believer_threshold:
+			n += 1
+	return n
+
+
+## What `building` yields now: belief per second for a prayer house, the staff
+## output for a shop, 0 for anything else. Meant for tooltips, not for every frame.
+func yield_of(building: Node3D) -> float:
+	if building.is_in_group(SHOPS):
+		return staffed(building)
+	if not building.is_in_group(PRAYER_HOUSES):
+		return 0.0
+	var seen := {}
+	var total := 0.0
+	var people: Array = []
+	people.append_array(_staff.get(building, []))
+	people.append_array(occupants(building))
+	people.append_array(_by_home.get(building, []))
+	for r: Resident in people:
+		if seen.has(r) or r.belief <= B.believer_threshold:
+			continue
+		seen[r] = true
+		# Someone posted elsewhere prays there, not here.
+		if r.post == null or r.post == building:
+			total += B.prayer_rate * r.belief * _output_of(r)
+	return total
+
+
 ## The resident whose body stands nearest `p` on the ground, within `radius`; null if none.
 func resident_near(p: Vector3, radius: float) -> Resident:
 	return _street.resident_near(p, radius)

@@ -9,6 +9,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - `Population.priest_preached(priest, reached)` and `priest_count` are new; every priest preaches, not only the head priest.
 - Housing upgrades (elevator, roof garden: comfort; cameras, gate: fear): `Population.upgrade(building, kind)`, `upgrade_cost(building)` rises with every purchase, `note_floor(building)` counts an added floor; each purchase adds job places. Treasury should charge `upgrade_cost`.
 - `Population.dismiss_believers(building)` lets every believer go from a building (sitters go home, residents move to the nearest other home, staff lose their posts) and emits `believers_dismissed`; the building stays usable. The hand's double-click calls it.
+- For building tooltips: `Population.believers_in(building)` and `residents_in(building)` ("X of Y") and `yield_of(building)` (belief per second of a prayer house, staff output of a shop).
 - A believer the hand sets down on a prayer house starts praying there, and on a shop starts working in it (`_on_set_down` assigns), if there is a free place; elsewhere they still sit in.
 - Numbers: `data/people.tres`, groups "Jobs", "Upgrades", "Colours" and `priest_scale`.
 - Try it: press F5 and look for gold believers in the street; the assignment menu is not wired to the hand yet.
