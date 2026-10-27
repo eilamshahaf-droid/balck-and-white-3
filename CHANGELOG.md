@@ -3,8 +3,8 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
-## 2026-10-27: Housing upgrades show on the building
-- A housing upgrade you buy now appears on the building: an elevator shaft up its side, a garden with deck chairs on its roof, security cameras by the door and an iron gate at the street. They come with the buy button in the building's wheel and stay for good.
+## 2026-10-27: Upgrades show on the building
+- An upgrade you buy now appears on the building and stays for good. Homes: an elevator shaft up the side, a garden with deck chairs on the roof, security cameras by the door, an iron gate at the street. Prayer houses: loudspeakers on the roof, the cult banner on the front, a lecture podium with chairs at the street. Shops: a striped awning, a gym corner, a for-sale sign, a bell tower on the roof (seminary), café tables.
 - Numbers: `data/city_props.tres` ("Housing upgrades": where on the building each one goes).
 - Try it: press F5, take a building, hold on it, open its upgrade wheel and buy one.
 

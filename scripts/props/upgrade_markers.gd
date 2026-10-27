@@ -1,8 +1,8 @@
 class_name UpgradeMarkers
 extends Node3D
-## Shows the housing upgrades a building has bought with Meshy props: an
-## elevator shaft up its side, a garden on its roof, cameras by the door and
-## a gate at the street. Kept apart from the other markers so the upgrade list
+## Shows the upgrades a building has bought with Meshy props: an elevator
+## shaft up a home's side, a garden on its roof, cameras by the door, a gate,
+## loudspeakers on a prayer house, a gym corner at a shop. Kept apart from the other markers so the upgrade list
 ## can grow without touching how states or uses look. A handful of buildings
 ## at most, so each prop is its own node, sharing the model's mesh and material.
 
