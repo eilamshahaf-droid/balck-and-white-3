@@ -63,8 +63,6 @@ var has_phone: bool:
 var home := Vector2i.ZERO
 ## Stand still (watching a fire, waiting on a roof) instead of walking the grid.
 var idle := false
-## Story moments can fix how this person explains the next miracle (&"god", &"fraud", ...).
-var scripted_explanation := &""
 ## Answering a divine sign: walking to a building, or standing at it.
 var on_errand := false
 ## On an errand and already standing at the spot.
@@ -249,23 +247,20 @@ func has_seen_event(id: int) -> bool:
 	return _events_seen.has(id)
 
 
-## Saw miracle event `e` (see faith.gd) happen at `at`. Picks an explanation
-## (god, chance, fraud or a plot) and says it, stops to stare and maybe films
-## it. A miracle doesn't change belief by itself (it gives a priest proof to
+## Saw miracle event `e` (see faith.gd) happen at `at`: stops to stare and
+## maybe films it. A miracle doesn't change belief by itself (it gives a priest proof to
 ## preach with), but one that hurt this person scares them.
 ## Returns true if this person filmed it.
-func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
+func witness(e: Dictionary, at: Vector3) -> bool:
 	if _events_seen.size() > 30:
 		_events_seen.clear()
 	_events_seen[e.id] = true
 	var helped: bool = e.helped.has(self)
 	var situation: float = B.helped_situation if helped else e.situation
-	var explanation := _explain(e.deniability, 1.0 if helped else B.bystander_timing, friends_belief)
 	if situation < 0.0:
 		resident.fear = minf(resident.fear - situation * e.intensity * _people.fear_per_harm, 1.0)
-	# Big miracles hold people longer, and they keep talking about them.
+	# Big miracles hold people longer.
 	var hold: float = B.look_time * (1.0 + e.intensity * 3.0)
-	_say(explanation, hold * 1.4)
 	if state != State.WALKING:
 		return false
 	_pause = maxf(_pause, hold * randf_range(0.7, 1.3))
@@ -274,42 +269,6 @@ func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
 	if has_phone:
 		_film(_pause)
 	return has_phone
-
-
-## Weigh the four explanations of the design doc and pick one.
-## deniability: how easy it is to explain without a god; timing: how exactly it
-## answered this person's need right now.
-func _explain(deniability: float, timing: float, friends_belief: float) -> StringName:
-	if scripted_explanation != &"":
-		var fixed := scripted_explanation
-		scripted_explanation = &""
-		return fixed
-	var weights := {
-		&"god": (1.0 - skepticism) * (0.3 + timing) * (1.0 - deniability * 0.5) + maxf(friends_belief, 0.0) * 0.5,
-		&"chance": deniability * (0.4 + skepticism * 0.6),
-		&"fraud": skepticism * (1.0 - deniability) * B.fraud_weight * (1.5 if has_phone else 1.0),
-		&"plot": skepticism * B.plot_weight,
-	}
-	var total := 0.0
-	for k in weights:
-		total += weights[k]
-	var roll := randf() * total
-	for k in weights:
-		roll -= weights[k]
-		if roll <= 0.0:
-			return k
-	return &"chance"
-
-
-## A short line over the head, so the player can read how a miracle landed.
-func _say(explanation: StringName, seconds: float) -> void:
-	var lines := {
-		&"god": ["It's a miracle!", Color(1.0, 0.85, 0.35)],
-		&"chance": ["Just luck.", Color(0.85, 0.85, 0.85)],
-		&"fraud": ["It's a hoax.", Color(1.0, 0.45, 0.4)],
-		&"plot": ["Someone's behind this...", Color(0.7, 0.6, 1.0)],
-	}
-	_say_line(lines[explanation][0], lines[explanation][1], seconds)
 
 
 func _turn_to(p: Vector3) -> void:
@@ -606,7 +565,6 @@ func become(r: Resident) -> void:
 	_pause = 0.0
 	_flee_time = 0.0
 	_look_at_target = Vector3.INF
-	scripted_explanation = &""
 	_events_seen.clear()
 	settle_at_home()
 
