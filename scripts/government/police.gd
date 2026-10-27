@@ -11,8 +11,8 @@ extends Node3D
 const S: PoliceSettings = preload("res://data/police.tres")
 const BARRIER := Vector3(3.2, 1.0, 0.3)
 const CAR := Vector3(2.0, 1.4, 4.4)
+const STREET_WIDTH := 10.0              # the carriageway between the two barriers
 const PROPS_LAYER := 4                   # physics layer 3: taxis, litter, trees
-const TILE := Vector3(9.0, 0.06, 12.0)   # the stretch of street that is shut
 
 @export var campaigns: Campaigns
 @export var districts: Districts
@@ -90,6 +90,15 @@ func _hardness_of(building: Node3D) -> float:
 	return clampf(districts.wealth_at(districts.index_of(building)) / S.hardest_wealth, 0.0, 1.0)
 
 
+## Is the street at `point` shut by a roadblock? Commuters ask this before they cross.
+func is_closed_at(point: Vector3) -> bool:
+	for b: Node3D in _blocks.keys():
+		var local := (_blocks[b] as Roadblock).node.to_local(point)
+		if absf(local.x) <= S.closed_half_length and absf(local.z - 1.5) <= STREET_WIDTH / 2.0:
+			return true
+	return false
+
+
 ## A frog lands at `point` (Miracles rolls the chance): a roadblock within `radius` is
 ## smashed and its campaign goes on, and the police notice. True when one broke.
 func break_near(point: Vector3, radius: float) -> bool:
@@ -121,9 +130,10 @@ func _close_street(building: Node3D) -> void:
 	block.global_position = spot
 	block.look_at(Vector3(building.global_position.x, spot.y, building.global_position.z), Vector3.UP, true)
 	for side in [-1.0, 1.0]:
-		parts.append(_part(block, BARRIER, Vector3(side * 2.2, BARRIER.y / 2.0, 1.5), _white))
-		_part(block, Vector3(BARRIER.x, 0.25, BARRIER.z * 1.1), Vector3(side * 2.2, BARRIER.y * 0.7, 1.5), _red)
-	_part(block, CAR, Vector3(0.0, CAR.y / 2.0, 4.5), _blue)
+		var end: float = side * S.closed_half_length
+		parts.append(_part(block, BARRIER, Vector3(end, BARRIER.y / 2.0, 1.5), _white))
+		_part(block, Vector3(BARRIER.x, 0.25, BARRIER.z * 1.1), Vector3(end, BARRIER.y * 0.7, 1.5), _red)
+	_part(block, CAR, Vector3(-S.closed_half_length + 3.0, CAR.y / 2.0, 1.5), _blue)
 	var label := Label3D.new()
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.font_size = 64
@@ -132,7 +142,7 @@ func _close_street(building: Node3D) -> void:
 	label.modulate = S.stripe_color.lightened(0.3)
 	label.position = Vector3(0.0, 3.5, 1.5)
 	block.add_child(label)
-	_part(block, TILE, Vector3(0.0, TILE.y / 2.0, TILE.z / 2.0 - 1.0), _closed)
+	_part(block, Vector3(S.closed_half_length * 2.0, 0.06, STREET_WIDTH), Vector3(0.0, 0.03, 1.5), _closed)
 	var roadblock := Roadblock.new()
 	roadblock.node = block
 	roadblock.label = label
@@ -143,9 +153,9 @@ func _close_street(building: Node3D) -> void:
 	hit_area.collision_mask = PROPS_LAYER
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(TILE.x, 3.0, 4.0)
+	box.size = Vector3(S.closed_half_length * 2.0, 3.0, STREET_WIDTH)
 	shape.shape = box
-	shape.position = Vector3(0.0, 1.5, 2.0)
+	shape.position = Vector3(0.0, 1.5, 1.5)
 	hit_area.add_child(shape)
 	block.add_child(hit_area)
 	hit_area.body_entered.connect(_on_thrown_at.bind(building))

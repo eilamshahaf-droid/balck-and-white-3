@@ -27,3 +27,4 @@ extends Resource
 @export var wreck_tilt := 18.0              # degrees the barriers lean per damage stage
 @export var break_heat := 2.0               # heat (times a crowd's) a smashed roadblock raises
 @export var label_size := 0.008             # world size of one label pixel
+@export var closed_half_length := 14.0     # barriers stand this far either side of the building's front
