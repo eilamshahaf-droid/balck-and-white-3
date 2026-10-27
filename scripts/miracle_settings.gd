@@ -76,6 +76,8 @@ extends Resource
 @export_range(-1.0, 1.0) var money_situation := 0.7
 @export_range(0.0, 1.0) var money_deniability := 0.2   # "an armoured truck lost its doors"
 @export var money_radius := 9.0
+## Over a building that is yours the notes bring this many times the money.
+@export var money_own_multiplier := 2.0
 @export var money_time := 6.0
 @export var money_seen_from := 80.0
 @export var money_proof := 0.3
@@ -117,6 +119,8 @@ extends Resource
 @export var frog_proof_min := -0.6
 @export var frog_proof_max := 1.0
 @export var frog_cooldown := 40.0
+## Chance that the frogs wreck a police roadblock within their reach.
+@export_range(0.0, 1.0) var frog_roadblock_chance := 0.7
 
 @export_group("Accidents: believers set their own buildings on fire")
 @export var accident_interval := 40.0        # seconds between chances of an accident

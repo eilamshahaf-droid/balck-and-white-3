@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Spin Cycle: money over your own building, frogs wreck roadblocks
+- The game is now called "Spin Cycle" (temporary name).
+- Money from the sky over a building you own brings double (`money_own_multiplier`); elsewhere it is unchanged.
+- The Rain of Frogs wrecks a police roadblock in its reach, 70% of the time (`frog_roadblock_chance`). The world thread's `Police.break_near` smashes the barrier, raises crowd heat and lets the campaign resume.
+- Buildings near the camera's pivot no longer fade out, the fade tube is narrower, and campaign marks shrink as you zoom out.
+- Fixed `heat.gd` failing to compile on Godot 4.3 (untyped `base`).
+- Try it: park the police at a building (see "Police"), then cast frogs over the roadblock; cast money over a gold-plated building and watch the money meter.
+
 ## 2026-10-27: The head priest stands out
 - A golden ring on the ground around the head priest and a label with his name ("Head Priest, Name") over him, with "preaching..." for a few seconds whenever he talks to the street. The people thread made his body bigger.
 - A PRIESTS card on the HUD.
