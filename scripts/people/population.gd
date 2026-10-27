@@ -788,10 +788,6 @@ func _refresh_presence() -> void:
 	for r in residents:
 		if not r.alive:
 			continue
-		var total := 0.0
-		for id in r.friends:
-			total += residents[id].belief
-		r.friends_belief = total / r.friends.size() if not r.friends.is_empty() else 0.0
 		_drift(r, dt)
 		_feel(r, dt)
 		if r.job != Resident.Job.FREE and r.belief <= B.believer_threshold:
@@ -815,14 +811,9 @@ func _feel(r: Resident, dt: float) -> void:
 
 
 ## Belief slides back toward what a person believed before the cult, unless
-## something holds it up: sitting in for the cult, a home most of whose
-## residents believe, or friends who believe as much. Friends who believe
-## more slowly pull it up.
+## they are sitting in for it. Nothing pulls it up on its own (no friends, no
+## believing neighbours): only a priest's preaching converts.
 func _drift(r: Resident, dt: float) -> void:
-	if r.belief < r.friends_belief:
-		r.belief = minf(r.belief + B.contagion_rate * dt, r.friends_belief)
+	if r.belief <= r.baseline or r.occupying:
 		return
-	var hold := maxf(r.baseline, r.friends_belief)
-	if r.belief <= hold or r.occupying or believer_share(r.home) > 0.5:
-		return
-	r.belief = maxf(r.belief - B.belief_decay * dt, hold)
+	r.belief = maxf(r.belief - B.belief_decay * dt, r.baseline)

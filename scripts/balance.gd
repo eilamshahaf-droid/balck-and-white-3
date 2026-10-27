@@ -42,4 +42,3 @@ extends Resource
 ## cult, unless their friends or their building hold it up.
 @export var belief_decay := 0.0008
 ## Belief per second pulled up toward close friends who believe more.
-@export var contagion_rate := 0.0015
