@@ -44,6 +44,7 @@ func wheel_items(building: Node3D) -> Array[Dictionary]:
 			item.note = "done"
 		else:
 			item.note = _price(kind, building)
+			item.effect = _money_effect(building, kind)
 		item.enabled = yours and not is_done(kind, building) and can_afford(kind, building)
 	return items
 
@@ -59,6 +60,7 @@ func use_items(building: Node3D) -> Array[Dictionary]:
 		items.append({"id": StringName(use_name), "label": use_name,
 				"color": Color.from_hsv(0.3 + 0.12 * i, 0.45, 0.9),
 				"note": "now" if use_name == current else price,
+				"effect": _money_effect(building, &"use", use_name),
 				"enabled": use_name != current and affordable})
 	return items
 
@@ -83,13 +85,17 @@ func is_done(kind: StringName, building: Node3D) -> bool:
 
 ## Are there belief and money enough for `kind` on `building`?
 func can_afford(kind: StringName, building: Node3D) -> bool:
-	return faith.belief_pool >= cost(kind, building) and treasury.can_afford(money_cost(kind))
+	return faith.belief_pool >= cost(kind, building) \
+			and treasury.can_afford(money_cost(kind, building))
 
 
-## The money `kind` costs: the same everywhere.
-func money_cost(kind: StringName) -> float:
+## The money `kind` costs on `building`: the same everywhere, but every further
+## floor decree costs more than the last, until more floors don't pay.
+func money_cost(kind: StringName, building: Node3D) -> float:
 	match kind:
-		&"floors": return D.floors_money
+		&"floors":
+			var done: int = building.get_meta(&"decree_floors", 0)
+			return D.floors_money * pow(D.floors_money_growth, done)
 		&"luxury": return D.luxury_money
 		&"facade": return D.facade_money
 		&"use": return D.use_money
@@ -117,13 +123,14 @@ func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 	if is_done(kind, building):
 		decree_failed.emit(&"done")
 		return
-	if not treasury.can_afford(money_cost(kind)):
+	var money := money_cost(kind, building)
+	if not treasury.can_afford(money):
 		decree_failed.emit(&"no_money")
 		return
 	if not faith.spend(cost(kind, building)):
 		decree_failed.emit(&"no_belief")
 		return
-	treasury.spend_money(money_cost(kind))
+	treasury.spend_money(money)
 	match kind:
 		&"floors":
 			building.set_meta(&"decree_floors", building.get_meta(&"decree_floors", 0) + 1)
@@ -142,7 +149,15 @@ func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 
 
 func _price(kind: StringName, building: Node3D) -> String:
-	return "%d belief + $%d" % [roundi(cost(kind, building)), roundi(money_cost(kind))]
+	return "%d belief + $%d" % [roundi(cost(kind, building)), roundi(money_cost(kind, building))]
+
+
+## What the decree does to the building's money per second: "$/s +1.5 > -0.8",
+## or "" when it changes nothing.
+func _money_effect(building: Node3D, kind: StringName, use_name := "") -> String:
+	var now := treasury.net_of(building)
+	var after := treasury.net_if(building, kind, use_name)
+	return "" if is_equal_approx(now, after) else "$/s %+.1f > %+.1f" % [now, after]
 
 
 func _exposure(kind: StringName) -> float:

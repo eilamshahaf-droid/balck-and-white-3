@@ -1,9 +1,11 @@
+class_name Miracles
 extends Node
-## Casts the five prototype miracles: water, fire, lightning, shield, heal.
+## Casts the miracles: water, fire, roaches, money, block party, rain of frogs.
 ##
 ## Every miracle spends belief from the pool and is reported to the witnesses
 ## (faith.gd): this is the only way the god changes what people believe.
-## Fire and lightning are harmful, so a shield stops them.
+## A burning building is lost if it burns long enough, and saved, to its
+## residents' awe, if water puts it out first.
 ##
 ## A miracle's power comes from the believers near the spot it is cast on:
 ## among them it is bigger, lasts longer and costs less; among skeptics it is
@@ -14,23 +16,24 @@ const B = preload("res://data/balance.tres")
 const Sfx = preload("res://scripts/sfx.gd")
 const RainScript = preload("res://scripts/rain.gd")
 const FireScript = preload("res://scripts/fire.gd")
-const LightningScript = preload("res://scripts/lightning.gd")
-const ShieldScript = preload("res://scripts/shield.gd")
-const HealScript = preload("res://scripts/heal.gd")
 const RoachScript = preload("res://scripts/roaches.gd")
 const MoneyScript = preload("res://scripts/money_rain.gd")
+const PartyScript = preload("res://scripts/block_party.gd")
+const FrogScript = preload("res://scripts/frog_rain.gd")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 
 ## A miracle was cast: `kind`, and the node that performs it.
 signal miracle_cast(kind: StringName, miracle: Node3D)
-## A miracle could not be cast: &"no_belief", &"shielded" or &"no_target".
+## A miracle could not be cast: &"no_belief" or &"no_target".
 signal miracle_failed(reason: StringName)
-## A building burned out or was overrun by roaches: its people have left for good.
+## A building burned out or was overrun by roaches or frogs: its people have
+## left for good.
 signal building_abandoned(building: Node3D)
+## Water put out a burning building in time.
+signal building_saved(building: Node3D)
 
 const RAY_LENGTH := 3000.0
 const LAYER_WORLD := 1
-const HARMFUL: Array[StringName] = [&"fire", &"lightning", &"roaches"]
 const FIRE_SNAP := 15.0       # metres: water cast this close to a fire goes onto it
 const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets it alight
 
@@ -53,11 +56,10 @@ func wheel_items() -> Array[Dictionary]:
 	return [
 		{"id": &"water", "label": "Water", "color": Color(0.45, 0.7, 1.0), "cost": cost(&"water")},
 		{"id": &"fire", "label": "Fire", "color": Color(1.0, 0.5, 0.2), "cost": cost(&"fire")},
-		{"id": &"lightning", "label": "Lightning", "color": Color(0.85, 0.85, 1.0), "cost": cost(&"lightning")},
-		{"id": &"shield", "label": "Shield", "color": Color(0.5, 0.95, 0.9), "cost": cost(&"shield")},
-		{"id": &"heal", "label": "Heal", "color": Color(1.0, 0.85, 0.35), "cost": cost(&"heal")},
 		{"id": &"roaches", "label": "Roaches", "color": Color(0.6, 0.42, 0.25), "cost": cost(&"roaches")},
 		{"id": &"money", "label": "Money", "color": Color(0.55, 0.85, 0.45), "cost": cost(&"money")},
+		{"id": &"party", "label": "Block Party", "color": Color(1.0, 0.45, 0.85), "cost": cost(&"party")},
+		{"id": &"frogs", "label": "Rain of Frogs", "color": Color(0.4, 0.8, 0.3), "cost": cost(&"frogs")},
 	]
 
 
@@ -69,11 +71,10 @@ func cost(kind: StringName, power := -1.0) -> float:
 	match kind:
 		&"water": return M.water_cost * scale
 		&"fire": return M.fire_cost * scale
-		&"lightning": return M.lightning_cost * scale
-		&"shield": return M.shield_cost * scale
-		&"heal": return M.heal_cost * scale
 		&"roaches": return M.roach_cost * scale
 		&"money": return M.money_cost * scale
+		&"party": return M.party_cost * scale
+		&"frogs": return M.frog_cost * scale
 	return 0.0
 
 
@@ -117,10 +118,6 @@ func cast_at_screen(kind: StringName, screen_pos: Vector2, screen_radius := 40.0
 
 ## Cast `kind` at `ground`; `building` is the building there, if any.
 func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
-	if kind in HARMFUL and _shield_over(ground):
-		Sfx.play(get_tree(), ground, &"hum", 0.8)
-		miracle_failed.emit(&"shielded")
-		return
 	if kind == &"roaches" and building == null:
 		building = _building_near(ground, BUILDING_SNAP)  # roaches need walls to come out of
 		if building == null:
@@ -136,11 +133,10 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 	match kind:
 		&"water": miracle = _water(ground, size, length)
 		&"fire": miracle = _fire(ground, building, size, length)
-		&"lightning": miracle = _lightning(ground, size)
-		&"shield": miracle = _shield(ground, size, length)
-		&"heal": miracle = _heal(ground, size, length)
 		&"roaches": miracle = _roaches(building, size, length)
 		&"money": miracle = _money(ground, power, size, length)
+		&"party": miracle = _party(ground, size, length)
+		&"frogs": miracle = _frogs(ground, size, length)
 	miracle_cast.emit(kind, miracle)
 
 
@@ -185,36 +181,10 @@ func set_alight(building: Node3D, length := 1.0) -> Node3D:
 		var size := DivineSign.building_size(building)
 		fire.ignite(building, size)
 		fire.endangered = _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 3.0)
-		fire.extinguished.connect(_on_burned.bind(building))  # a burnt building stands empty
+		fire.burned_down.connect(_on_burned.bind(building))  # a burnt building stands empty
+		fire.put_out.connect(_on_saved.bind(building, fire))
 	fire.burn_time = M.fire_burn_time * length
 	return fire
-
-
-func _lightning(ground: Vector3, size: float) -> Node3D:
-	var bolt: Node3D = LightningScript.new()
-	city.add_child(bolt)
-	bolt.strike(ground, size)
-	faith.report(bolt, &"see_lightning", M.lightning_intensity, M.lightning_situation, 1.5, true,
-			M.lightning_deniability, [], M.lightning_seen_from)
-	return bolt
-
-
-func _shield(ground: Vector3, size: float, length: float) -> Node3D:
-	var shield: Node3D = ShieldScript.new()
-	city.add_child(shield)
-	shield.raise(ground, size, length)
-	faith.report(shield, &"see_shield", M.shield_intensity, M.shield_situation, M.shield_time * length, true,
-			M.shield_deniability, shield.helped(), M.shield_seen_from)
-	return shield
-
-
-func _heal(ground: Vector3, size: float, length: float) -> Node3D:
-	var heal: Node3D = HealScript.new()
-	city.add_child(heal)
-	var helped: Array = heal.bless(ground, size, length)
-	faith.report(heal, &"see_heal", M.heal_intensity, M.heal_situation, M.heal_time * length, true,
-			M.heal_deniability, helped, M.heal_seen_from)
-	return heal
 
 
 func _roaches(building: Node3D, size: float, length: float) -> Node3D:
@@ -237,6 +207,68 @@ func _money(ground: Vector3, power: float, size: float, length: float) -> Node3D
 	faith.report(notes, &"see_money", M.money_intensity, M.money_situation, M.money_time * length, true,
 			M.money_deniability, _people_near(ground, M.money_radius * size), M.money_seen_from)
 	return notes
+
+
+func _party(ground: Vector3, size: float, length: float) -> Node3D:
+	var party: Node3D = PartyScript.new()
+	city.add_child(party)
+	party.start(ground, size, length)
+	var dancers: Array = []
+	var most := roundi(M.party_dancers * size)
+	for c in _people_near(ground, M.party_radius * size):
+		if dancers.size() < most and c.can_answer():
+			dancers.append(c)
+	for i in dancers.size():
+		var spot: Vector3 = party.dance_spot(i, dancers.size())
+		dancers[i].send_on_errand(spot, ground, M.party_time * length,
+				M.party_lines[randi() % M.party_lines.size()], Color(1.0, 0.6, 0.9))
+	faith.report(party, &"see_party", M.party_intensity, M.party_situation, M.party_time * length,
+			true, M.party_deniability, dancers, M.party_seen_from)
+	return party
+
+
+## Chaos: people scatter or get knocked flat, a building under the frogs may be
+## overrun (yours too), and the city reads it as a blessing or a curse, which
+## nobody can tell beforehand.
+func _frogs(ground: Vector3, size: float, length: float) -> Node3D:
+	var frogs: Node3D = FrogScript.new()
+	city.add_child(frogs)
+	frogs.start(ground, size, length)
+	var radius := M.frog_radius * size
+	for c in _people_near(ground, radius):
+		if randf() < M.frog_knock_chance:
+			var away := Vector3(randf_range(-1.0, 1.0), 0.6, randf_range(-1.0, 1.0))
+			c.knock_over(away.normalized() * M.frog_push)
+		else:
+			c.flee(c.global_position + Vector3(randf_range(-4.0, 4.0), 0.0, randf_range(-4.0, 4.0)))
+	for b in _buildings_near(ground, radius):
+		if randf() < M.frog_overrun_chance:
+			FloatingNote.pop(city, _roof(b), "Overrun by frogs!", Color(0.5, 0.9, 0.35))
+			_abandon(b)
+	var situation := randf_range(M.frog_situation_min, M.frog_situation_max)
+	faith.report(frogs, &"see_frogs", M.frog_intensity, situation, M.frog_time * length, true,
+			M.frog_deniability, [], M.frog_seen_from)
+	return frogs
+
+
+## Water put the fire out before the building was lost: its people saw the god
+## save their home.
+func _on_saved(building: Node3D, fire: Node3D) -> void:
+	if not is_instance_valid(building) or fire.lost:
+		return
+	FloatingNote.pop(city, _roof(building), "Saved!", Color(1.0, 0.85, 0.3))
+	var size := DivineSign.building_size(building)
+	var helped: Array = fire.endangered.filter(func(c): return is_instance_valid(c))
+	for c in _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 6.0):
+		if not c in helped:
+			helped.append(c)
+	faith.report(fire, &"see_saved", M.saved_intensity, M.saved_situation, 3.0, true,
+			M.saved_deniability, helped, M.saved_seen_from)
+	building_saved.emit(building)
+
+
+func _roof(building: Node3D) -> Vector3:
+	return building.global_position + Vector3.UP * (DivineSign.building_size(building).y / 2.0 + 3.0)
 
 
 func _on_burned(building: Node3D) -> void:
@@ -272,6 +304,14 @@ func _burning_near(p: Vector3, radius: float) -> Node3D:
 	return best
 
 
+func _buildings_near(p: Vector3, radius: float) -> Array[Node3D]:
+	var out: Array[Node3D] = []
+	for b in get_tree().get_nodes_in_group("buildings"):
+		if Vector2(b.global_position.x - p.x, b.global_position.z - p.z).length() < radius:
+			out.append(b)
+	return out
+
+
 func _building_near(p: Vector3, margin: float) -> Node3D:
 	for b in get_tree().get_nodes_in_group("buildings"):
 		var half := DivineSign.building_size(b) / 2.0 + Vector3.ONE * margin
@@ -287,13 +327,6 @@ func fire_on(building: Node3D) -> Node3D:
 		if fire.building == building:
 			return fire
 	return null
-
-
-func _shield_over(p: Vector3) -> bool:
-	for shield in get_tree().get_nodes_in_group("shields"):
-		if shield.covers(p):
-			return true
-	return false
 
 
 func _people_near(p: Vector3, radius: float) -> Array:
