@@ -23,6 +23,9 @@ var belief := 0.0
 ## Hidden personal coefficient k: 0 believes easily, 1 always finds a rational explanation.
 var skepticism := 0.5
 var has_phone := false
+## Average belief of this person's close friends, refreshed by Population:
+## what they hear over dinner pulls their own belief.
+var friends_belief := 0.0
 var body: Citizen
 
 

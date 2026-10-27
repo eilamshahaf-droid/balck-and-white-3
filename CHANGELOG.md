@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Many more people in the city
+- The city now has 500 residents instead of 60 (`data/people.tres`, "Resident Count").
+- To keep 60 fps, all the people are drawn together in one go (a MultiMesh) instead of one by one, and walking on the flat streets no longer goes through the physics engine. Speech bubbles and phones are made only for the people who speak or film.
+- A person the hand hovers shows their own body, so the outline still works.
+- A miracle's witnesses are now pulled by their close friends' belief (the friends from the resident card) instead of by whoever stands nearby.
+- Try it: press F5 and look at the streets; press B and hover a person to see their card.
+
 ## 2026-10-27: Fix: error after City Hall demolishes a building; residents can flee
 - The red error "_refresh_presence: Trying to assign invalid previously freed instance" came from a building City Hall's bulldozer removed while the residents still lived, worked or sat in there. Its people now move to the nearest other home and find other work.
 - New for the takeover routes and the roach miracle: `Population.evacuate(building)` (everyone moves out for good and those nearby run into the street shouting "ROACHES!"), `evict(resident)` (one person moves elsewhere) and `preach_to(resident, strength)` (belief rises, less for skeptics).

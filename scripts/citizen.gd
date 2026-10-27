@@ -71,12 +71,14 @@ var errand_arrived := false
 ## Sitting in on a building (a roof, a lobby) to claim it for the cult.
 var occupying := false
 
+## The body's pose (tumbling, lying down). The crowd (crowd.gd) draws every
+## body; this mesh stays hidden and gives the hand its size, and shows only
+## while the hand outlines this person, since the outline is drawn on it.
 var _body: MeshInstance3D
 static var _phone_screen: StandardMaterial3D
 
-var _own_mat := StandardMaterial3D.new()
-var _debug_mat := StandardMaterial3D.new()
-var _showing_belief := false
+var _color := Color.WHITE
+var _own_mat: StandardMaterial3D
 var _fall_speed := 0.0
 var _pause := 0.0
 var _spin := Vector3.ZERO      # tumble while flying, radians per second around this axis
@@ -115,32 +117,13 @@ func _ready() -> void:
 	_body = MeshInstance3D.new()
 	_body.mesh = SharedMeshes.capsule(0.35, 1.8)
 	_body.position.y = 0.9
-	_own_mat.albedo_color = Color.from_hsv(randf(), 0.45, 0.85)
-	_body.material_override = _own_mat
+	_body.visible = false
 	add_child(_body)
-
-	_phone = MeshInstance3D.new()
-	_phone.mesh = SharedMeshes.box(Vector3(0.12, 0.22, 0.03))
-	if _phone_screen == null:
-		_phone_screen = StandardMaterial3D.new()
-		_phone_screen.albedo_color = Color(0.85, 0.95, 1.0)
-		_phone_screen.emission_enabled = true
-		_phone_screen.emission = Color(0.7, 0.9, 1.0)
-	_phone.material_override = _phone_screen
-	_phone.position = Vector3(0, 1.55, 0.35)
-	_phone.visible = false
-	add_child(_phone)
-
-	_bubble = Label3D.new()
-	_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_bubble.position.y = 2.6
-	_bubble.font_size = 40
-	_bubble.fixed_size = true       # readable from a god's height
-	_bubble.pixel_size = 0.0011
-	_bubble.outline_size = 12
-	_bubble.no_depth_test = true
-	_bubble.visible = false
-	add_child(_bubble)
+	_color = Color.from_hsv(randf(), 0.45, 0.85)
+	Crowd.join(self)
+	# The phone and the speech bubble are made the first time they are needed:
+	# most of the crowd never films or speaks.
+	set_process(false)
 
 	speed = randf_range(_people.walk_speed_min, _people.walk_speed_max)
 	if resident.id < 0:
@@ -155,6 +138,8 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if (_body.material_overlay != null) != _body.visible:
+		_show_own_body(not _body.visible)
 	match state:
 		State.HELD:
 			move_and_slide()  # The god's hand drives our velocity through a spring.
@@ -189,8 +174,6 @@ func _physics_process(delta: float) -> void:
 				_stand_up()
 		State.WALKING:
 			if idle:
-				velocity = Vector3(0, -1.0, 0)
-				move_and_slide()
 				if _look_at_target != Vector3.INF:
 					_turn_to(_look_at_target)
 				if occupying:
@@ -213,29 +196,40 @@ func _physics_process(delta: float) -> void:
 			if to_target.length() < 0.6:
 				_pick_next_target()
 			else:
-				var dir := to_target.normalized()
-				velocity = Vector3(dir.x * pace, -1.0, dir.z * pace)
-				rotation.y = atan2(dir.x, dir.z)
-				move_and_slide()
+				_step_toward(target, pace, delta)
 
 
+## Runs only while this person is filming or talking.
 func _process(delta: float) -> void:
 	_phone_timer -= delta
-	_phone.visible = _phone_timer > 0.0 and state == State.WALKING
 	_bubble_timer -= delta
-	_bubble.visible = _bubble_timer > 0.0
-	if city.show_belief:
-		# Red = skeptic, white = undecided, gold = believer.
-		var c := Color.WHITE
-		if belief < 0:
-			c = Color.WHITE.lerp(Color(0.9, 0.15, 0.1), -belief)
-		else:
-			c = Color.WHITE.lerp(Color(1.0, 0.8, 0.1), belief)
-		_debug_mat.albedo_color = c
-	if city.show_belief != _showing_belief:
-		_showing_belief = city.show_belief
-		_body.material_override = _debug_mat if _showing_belief else _own_mat
-		ArtStyle.restyle(_body)
+	if _phone:
+		_phone.visible = _phone_timer > 0.0 and state == State.WALKING
+	if _bubble:
+		_bubble.visible = _bubble_timer > 0.0
+	if _phone_timer <= 0.0 and _bubble_timer <= 0.0:
+		set_process(false)
+
+
+func _exit_tree() -> void:
+	Crowd.leave(self)
+
+
+## Where the crowd draws this body (nowhere while it shows its own mesh).
+func body_transform() -> Transform3D:
+	if _body.visible:
+		return Transform3D(Basis.from_scale(Vector3.ZERO), global_position)
+	return global_transform * _body.transform
+
+
+## The body's colour; with the belief view on (B), red = skeptic, white =
+## undecided, gold = believer.
+func body_color() -> Color:
+	if not city.show_belief:
+		return _color
+	if belief < 0:
+		return Color.WHITE.lerp(Color(0.9, 0.15, 0.1), -belief)
+	return Color.WHITE.lerp(Color(1.0, 0.8, 0.1), belief)
 
 
 ## Shift belief after witnessing or experiencing a miracle, by the formula in
@@ -282,7 +276,7 @@ func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
 	_look_at_target = at
 	_turn_to(at)
 	if has_phone:
-		_phone_timer = _pause
+		_film(_pause)
 	return has_phone
 
 
@@ -362,10 +356,7 @@ func _walk_errand(delta: float) -> void:
 		if to_point.length() < 0.8:
 			_errand_route.pop_front()
 			return
-		var dir := to_point.normalized()
-		velocity = Vector3(dir.x * speed, -1.0, dir.z * speed)
-		rotation.y = atan2(dir.x, dir.z)
-		move_and_slide()
+		_step_toward(_errand_route[0], speed, delta)
 		return
 	errand_arrived = true
 	_turn_to(_errand_face)
@@ -421,9 +412,65 @@ func _stop_occupying() -> void:
 
 
 func _say_line(text: String, color: Color, seconds: float) -> void:
+	if _bubble == null:
+		_bubble = Label3D.new()
+		_bubble.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_bubble.position.y = 2.6
+		_bubble.font_size = 40
+		_bubble.fixed_size = true       # readable from a god's height
+		_bubble.pixel_size = 0.0011
+		_bubble.outline_size = 12
+		_bubble.no_depth_test = true
+		add_child(_bubble)
 	_bubble.text = text
 	_bubble.modulate = color
 	_bubble_timer = seconds
+	set_process(true)
+
+
+func _film(seconds: float) -> void:
+	if _phone == null:
+		_phone = MeshInstance3D.new()
+		_phone.mesh = SharedMeshes.box(Vector3(0.12, 0.22, 0.03))
+		if _phone_screen == null:
+			_phone_screen = StandardMaterial3D.new()
+			_phone_screen.albedo_color = Color(0.85, 0.95, 1.0)
+			_phone_screen.emission_enabled = true
+			_phone_screen.emission = Color(0.7, 0.9, 1.0)
+		_phone.material_override = _phone_screen
+		_phone.position = Vector3(0, 1.55, 0.35)
+		add_child(_phone)
+	_phone_timer = seconds
+	set_process(true)
+
+
+## The hand outlines what it hovers by drawing over its meshes, so a hovered
+## person leaves the crowd and shows a mesh of their own until it lets go.
+func _show_own_body(on: bool) -> void:
+	_body.visible = on
+	if not on:
+		return
+	if _own_mat == null:
+		_own_mat = StandardMaterial3D.new()
+		_body.material_override = _own_mat
+		ArtStyle.restyle(_body)
+	_own_mat.albedo_color = body_color()
+
+
+## Walk toward `point` without the physics engine: the streets are flat, so a
+## walker only needs a position. Up on a roof or a kerb, physics keeps them
+## from walking through walls and lets them step down.
+func _step_toward(point: Vector3, pace: float, delta: float) -> void:
+	var dir := point - global_position
+	dir.y = 0.0
+	dir = dir.normalized()
+	rotation.y = atan2(dir.x, dir.z)
+	if global_position.y > point.y + 0.5:
+		velocity = Vector3(dir.x * pace, -1.0, dir.z * pace)
+		move_and_slide()
+		return
+	global_position = Vector3(global_position.x + dir.x * pace * delta, point.y,
+			global_position.z + dir.z * pace * delta)
 
 
 func on_grabbed() -> void:
