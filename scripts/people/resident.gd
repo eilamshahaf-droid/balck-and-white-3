@@ -10,6 +10,9 @@ extends RefCounted
 ## several visits or offers.
 
 enum Stage { SKEPTIC, CURIOUS, SYMPATHIZER, BELIEVER, ZEALOT }
+## What a believer does for the cult: FREE believers have no post. PRAY and
+## PRIEST staff a prayer house, SHOP staffs a shop.
+enum Job { FREE, PRAY, SHOP, PRIEST }
 
 const B: Balance = preload("res://data/balance.tres")
 
@@ -44,6 +47,9 @@ var wealth := 0.5
 var comfort := 0.5
 var fear := 0.0
 var color := Color.WHITE
+var job := Job.FREE
+## The building this person works in (null while FREE); their body stays around it.
+var post: Node3D
 ## Null while indoors.
 var body: Citizen
 

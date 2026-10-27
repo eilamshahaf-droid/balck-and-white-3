@@ -33,6 +33,8 @@ signal occupant_added(building: Node3D, resident: Resident)
 signal occupant_left(building: Node3D, resident: Resident)
 ## `resident` moved from stage `old` to stage `new` (Resident.Stage).
 signal stage_changed(resident: Resident, old: int, new: int)
+## A priest preached to `reached` people on the street.
+signal priest_preached(priest: Resident, reached: int)
 
 # Loaded at run time: a parse-time preload would load social_group.gd before
 # its class_name is registered and break the typed groups array.
@@ -40,6 +42,8 @@ var _people: PeopleSettings = load("res://data/people.tres")
 const B: Balance = preload("res://data/balance.tres")
 ## Buildings whose use is prayer; whoever sets a building's use keeps this group.
 const PRAYER_HOUSES := &"prayer_houses"
+## Buildings that take shop staff; whoever sets a building's use keeps this group.
+const SHOPS := &"shops"
 
 ## Where a miracle left proof, a priest's preaching is stronger.
 @export var miracles: Miracles
@@ -51,6 +55,8 @@ var priest: Resident
 ## second their prayers add to the pool.
 var believer_count := 0
 var prayer := 0.0
+## How many priests the cult has (the head priest, and whoever is ordained).
+var priest_count := 0
 
 var _homes: Array[Node3D] = []
 var _offices: Array[Node3D] = []
@@ -63,6 +69,7 @@ var _census: Census
 var _street := Street.new()
 var _stages: Dictionary = {}       # resident -> the stage last announced
 var _priest_timer := 0.0
+var _staff: Dictionary = {}          # building -> Array[Resident] with a post there
 var _home_comfort: Dictionary = {}   # building -> the comfort its residents drift toward
 var _rng := RandomNumberGenerator.new()
 
@@ -83,8 +90,7 @@ func _physics_process(delta: float) -> void:
 	_priest_timer -= delta
 	if _priest_timer <= 0.0:
 		_priest_timer = _people.priest_interval
-		if priest and _has_body(priest):
-			persuade_near(priest.body.global_position, _people.priest_reach, _people.priest_strength)
+		_preach()
 	_presence_timer -= delta
 	if _presence_timer > 0.0:
 		return
@@ -180,13 +186,96 @@ func persuade(r: Resident, route: SocialGroup.Route, strength: float) -> void:
 ## Preach to everyone on the street within `radius` of `p`. A miracle seen
 ## there is proof: it multiplies the strength by 1 + the proof, and a botched
 ## one (negative proof) can make it nothing.
-func persuade_near(p: Vector3, radius: float, strength: float) -> void:
+## Returns how many people were reached.
+func persuade_near(p: Vector3, radius: float, strength: float) -> int:
 	var boosted := strength * maxf(1.0 + miracles.proof_at(p), 0.0)
 	if boosted <= 0.0:
-		return
+		return 0
+	var reached := 0
 	for c in _street.bodies:
-		if c.resident != priest and c.global_position.distance_to(p) < radius:
+		if c.resident.job != Resident.Job.PRIEST and c.global_position.distance_to(p) < radius:
 			persuade(c.resident, SocialGroup.Route.PREACH, boosted)
+			reached += 1
+	return reached
+
+
+## Believers on the street within `radius` of `p` who have no post yet.
+func free_believers_near(p: Vector3, radius: float) -> Array[Resident]:
+	var out: Array[Resident] = []
+	for c in _street.bodies:
+		var r := c.resident
+		if r.job == Resident.Job.FREE and r.belief > B.believer_threshold \
+				and c.global_position.distance_to(p) < radius:
+			out.append(r)
+	return out
+
+
+## Give the free believer `r` a post: PRAY or PRIEST in a prayer house, SHOP in
+## a shop. False if `r` doesn't believe, the building doesn't take that job or
+## has no free place. A new post replaces the old one.
+func assign(r: Resident, job: Resident.Job, building: Node3D) -> bool:
+	if job == Resident.Job.FREE or r.belief <= B.believer_threshold or building == null:
+		return false
+	var group := SHOPS if job == Resident.Job.SHOP else PRAYER_HOUSES
+	if not building.is_in_group(group) or staff_count(building, job) >= _slots_of(job):
+		return false
+	unassign(r)
+	r.job = job
+	r.post = building
+	if not _staff.has(building):
+		_staff[building] = []
+	(_staff[building] as Array).append(r)
+	if job == Resident.Job.PRIEST:
+		priest_count += 1
+	if r.body == null:
+		_street.bring_out(r)
+	if _has_body(r):
+		r.body.move_out()
+	return true
+
+
+## `r` goes back to being a free believer.
+func unassign(r: Resident) -> void:
+	if r.job == Resident.Job.FREE:
+		return
+	if r.job == Resident.Job.PRIEST:
+		priest_count -= 1
+	var staff: Array = _staff.get(r.post, [])
+	staff.erase(r)
+	r.job = Resident.Job.FREE
+	r.post = null
+	if _has_body(r):
+		r.body.move_out()
+
+
+## How many people work in `building` (only those with `job`, unless FREE).
+func staff_count(building: Node3D, job := Resident.Job.FREE) -> int:
+	var n := 0
+	for r: Resident in _staff.get(building, []):
+		if job == Resident.Job.FREE or r.job == job:
+			n += 1
+	return n
+
+
+## What `building`'s staff put out: each person counts for more the more
+## comfortable they are. No staff, no output.
+func staffed(building: Node3D) -> float:
+	var total := 0.0
+	for r: Resident in _staff.get(building, []):
+		total += _output_of(r)
+	return total
+
+
+## How much harder the believers living in `building` fight a takeover by
+## force (1 = no extra): the more afraid they are, the more.
+func force_power_of(building: Node3D) -> float:
+	return 1.0 + _people.fear_force_bonus * _believer_fear(building)
+
+
+## How much more heat the police need before they step in at `building`
+## (1 = no extra): frightened believers resist.
+func defense_of(building: Node3D) -> float:
+	return 1.0 + _people.fear_defense_bonus * _believer_fear(building)
 
 
 ## Everyone living in `building` is frightened by `amount` (roaches, a fire).
@@ -251,6 +340,38 @@ func found_congregation() -> void:
 	_ordain_priest(near[0])
 
 
+func _preach() -> void:
+	for staff: Array in _staff.values():
+		for r: Resident in staff:
+			if r.job == Resident.Job.PRIEST and _has_body(r):
+				var reached := persuade_near(
+						r.body.global_position, _people.priest_reach, _people.priest_strength)
+				priest_preached.emit(r, reached)
+
+
+func _slots_of(job: Resident.Job) -> int:
+	match job:
+		Resident.Job.SHOP:
+			return _people.shop_slots
+		Resident.Job.PRIEST:
+			return _people.priest_slots
+	return _people.prayer_slots
+
+
+func _output_of(r: Resident) -> float:
+	return 1.0 + _people.comfort_output_bonus * r.comfort
+
+
+func _believer_fear(building: Node3D) -> float:
+	var total := 0.0
+	var n := 0
+	for r: Resident in _by_home.get(building, []):
+		if r.belief > B.believer_threshold:
+			total += r.fear
+			n += 1
+	return total / n if n > 0 else 0.0
+
+
 func _populate() -> void:
 	_census = Census.new(_people, _rng)
 	_census.take(get_tree().get_nodes_in_group("buildings"))
@@ -286,6 +407,10 @@ func _ordain_priest(headquarters: Node3D) -> void:
 	priest.comfort = 1.0
 	priest.color = _people.priest_color
 	_stages[priest] = priest.stage()
+	priest.job = Resident.Job.PRIEST
+	priest.post = headquarters
+	_staff[headquarters] = [priest]
+	priest_count += 1
 	if priest.body == null:
 		_street.bring_out(priest)
 
@@ -328,6 +453,9 @@ func _forget_building(building: Node3D) -> void:
 	_footprints.erase(building)
 	_presence.erase(building)
 	_occupants.erase(building)
+	for r: Resident in (_staff.get(building, []) as Array).duplicate():
+		unassign(r)
+	_staff.erase(building)
 	if _homes.is_empty():
 		return
 	for r in residents:
@@ -392,10 +520,10 @@ func _refresh_presence() -> void:
 		_presence[r.home] += r.belief
 		if r.occupying and r.occupying != r.home:
 			_presence[r.occupying] += r.belief
-		# Only seats taken in a prayer house make belief.
+		# Only prayer-house staff and seats taken in one make belief.
 		var at := r.occupying if r.occupying else r.home
-		if at.is_in_group(PRAYER_HOUSES):
-			prayer += B.prayer_rate * r.belief
+		if r.job == Resident.Job.PRAY or at.is_in_group(PRAYER_HOUSES):
+			prayer += B.prayer_rate * r.belief * _output_of(r)
 	if priest:
 		prayer += _people.priest_prayer
 	var dt := _people.presence_refresh
@@ -406,6 +534,8 @@ func _refresh_presence() -> void:
 		r.friends_belief = total / r.friends.size() if not r.friends.is_empty() else 0.0
 		_drift(r, dt)
 		_feel(r, dt)
+		if r.job != Resident.Job.FREE and r.belief <= B.believer_threshold:
+			unassign(r)
 		var now := r.stage()
 		var before: int = _stages[r]
 		if now != before:

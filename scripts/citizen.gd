@@ -219,13 +219,25 @@ func _exit_tree() -> void:
 func body_transform() -> Transform3D:
 	if _body.visible:
 		return Transform3D(Basis.from_scale(Vector3.ZERO), global_position)
-	return global_transform * _body.transform
+	var t := global_transform * _body.transform
+	if resident.job != Resident.Job.PRIEST:
+		return t
+	# Grow about the feet, so a priest doesn't sink into the street.
+	var s := _people.priest_scale
+	return Transform3D(t.basis.scaled(Vector3.ONE * s), global_position + (t.origin - global_position) * s)
 
 
-## The body's colour; with the belief view on (B), red = skeptic, white =
-## undecided, gold = believer.
+## The body's colour: priests white, believers gold, zealots orange. With the
+## belief view on (B): red = skeptic, white = undecided, gold = believer.
 func body_color() -> Color:
 	if not city.show_belief:
+		if resident.job == Resident.Job.PRIEST:
+			return _people.priest_color
+		match resident.stage():
+			Resident.Stage.ZEALOT:
+				return _people.zealot_color
+			Resident.Stage.BELIEVER:
+				return _people.believer_color
 		return resident.color
 	if belief < 0:
 		return Color.WHITE.lerp(Color(0.9, 0.15, 0.1), -belief)
@@ -616,10 +628,11 @@ func flee(danger: Vector3) -> void:
 	_say_line(FLEE_LINES[randi() % FLEE_LINES.size()], FLEE_COLOR, _people.errand_line_time)
 
 
-## The home changed while this person is out: from now on they wander around
-## the new one, walking there instead of appearing at it.
+## The home (or post) changed while this person is out: from now on they wander
+## around the new one, walking there instead of appearing at it.
 func move_out() -> void:
-	home = city.nearest_grid(resident.home.global_position)
+	var base: Node3D = resident.post if resident.post else resident.home
+	home = city.nearest_grid(base.global_position)
 
 
 func _pick_next_target() -> void:
