@@ -102,10 +102,12 @@ func why_not(building: Node3D, route: Route) -> String:
 	return ""
 
 
-## What buying one resident out of `building` costs: dearer in rich districts.
+## What buying one resident out of `building` costs: dearer in rich districts, cheaper
+## where real estate offices stand.
 func price_in(building: Node3D) -> float:
 	var i := districts.index_of(building)
-	return S.apartment_price * (districts.wealth_at(i) if i >= 0 else 1.0)
+	return (S.apartment_price * (districts.wealth_at(i) if i >= 0 else 1.0)
+			* population.buy_price_factor(building))
 
 
 ## Every marked building.
@@ -225,6 +227,9 @@ func _buy_out(c: Campaign) -> bool:
 func _top_up(c: Campaign) -> void:
 	c.agents = c.agents.filter(func(a: Citizen) -> bool: return is_instance_valid(a) and a.on_errand)
 	var wanted: int = [S.fighters, S.buyers, S.missionaries][c.route]
+	var gym := _training() if c.route == Route.FORCE else null
+	if gym:
+		wanted = mini(wanted + floori(population.fighters_of(gym)), S.max_fighters)
 	if c.agents.size() >= wanted:
 		return
 	var from := c.building.global_position
