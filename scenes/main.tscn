@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -24,6 +24,7 @@
 [ext_resource type="Script" path="res://scripts/government/police.gd" id="21_police"]
 [ext_resource type="Script" path="res://scripts/accidents.gd" id="39_accidents"]
 [ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
+[ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -42,6 +43,10 @@ script = ExtResource("11_population")
 
 [node name="Faith" type="Node" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("4_faith")
+population = NodePath("../Population")
+
+[node name="Heat" type="Node" parent="." node_paths=PackedStringArray("population")]
+script = ExtResource("14_heat")
 population = NodePath("../Population")
 
 [node name="GodHand" type="Node3D" parent="."]

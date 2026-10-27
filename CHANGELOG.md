@@ -15,6 +15,17 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
 - Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
 - Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
+## 2026-10-27: The head priest, comfort and fear, and the police's hidden criteria
+- Miracles no longer convert anyone. Witnesses still stare, explain what they saw and film it, but belief now comes from the cult's people: the head priest (dressed in white) walks the streets and preaches to everyone around him every few seconds, and prays a little belief into the pool on his own. The congregation's home is the first prayer house (the headquarters).
+- Every resident has hidden wealth, comfort and fear. Preaching only reaches people who are comfortable and not afraid; force works on the frightened; money works on the poor. A miracle that hurts people scares them, and someone too afraid moves to another home. Two ways to play: keep people comfortable, or keep them afraid.
+- The police's hidden criteria: every building quietly collects heat from sit-ins, crowds, broken building rules and accidents, which fades over time. When it passes a threshold (higher in a hard district), the police are called. Nothing is random. Numbers: `data/heat.tres`.
+- Numbers: `data/people.tres`, groups "Comfort and fear" and "Priest"; each social group has a wealth range.
+- Try it: press F5, press B and hover the person in white near the starting corner: the card shows everyone's stage, wealth, comfort and fear.
+
+## 2026-10-27: Only prayer houses make belief; fewer bodies on the street
+- Believers no longer fill the belief pool wherever they are. Only believers who live or sit in a prayer house pray (buildings in the `prayer_houses` group), so prayer houses are now the precious resource.
+- One resident in 25 walks the streets (`residents_per_body` in `data/people.tres`), and at least one from every lived-in home. Out of your view, a person goes home and a housemate comes out, so each building keeps its people on its corner.
+- Try it: press F5. The belief pool no longer grows until a building becomes a prayer house.
 
 ## 2026-10-27: Every building has residents; belief grows in stages, slower
 - Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.
