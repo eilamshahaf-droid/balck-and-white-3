@@ -136,9 +136,11 @@ func _violations(building: Node3D) -> float:
 	return score
 
 
-## A Preserve decree makes a building a landmark: City Hall can't touch it.
+## A Preserve decree makes a building a landmark, and a district whose core
+## building is yours is left alone: City Hall can't touch either.
 func _demolishable(building: Node3D) -> bool:
-	return not building.is_in_group(Decrees.PRESERVED)
+	return not building.is_in_group(Decrees.PRESERVED) \
+			and not districts.leaves_alone(districts.district_at(building.global_position))
 
 
 ## He walks down the avenue to the corner, then to the door.

@@ -67,7 +67,7 @@ func _on_police_called(building: Node3D, _reason: Heat.Reason) -> void:
 
 func _is_safe(building: Node3D) -> bool:
 	var i := districts.index_of(building)
-	return i < 0 or districts.is_controlled(districts.district_at(building.global_position))
+	return i < 0 or districts.is_controlled(districts.district_at(building.global_position)) or districts.leaves_alone(districts.district_at(building.global_position))
 
 
 func _doubters_in(building: Node3D) -> int:

@@ -23,6 +23,9 @@ extends Resource
 @export var tick := 0.5                     # seconds between counts
 ## Share of a building's residents who must believe for it to be yours.
 @export_range(0.0, 1.0) var capture_share := 0.5
+## A district's core building (the one nearest its middle) is harder: this share of its
+## residents must believe. Once it is yours, City Hall and the police leave the district alone.
+@export_range(0.0, 1.0) var core_capture_share := 0.75
 @export_range(0.0, 1.0) var control_share := 0.6   # share of a district's buildings that makes it yours
 
 @export_group("Start district")
