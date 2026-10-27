@@ -526,15 +526,6 @@ func knock_over(push: Vector3) -> bool:
 	return true
 
 
-## A healing miracle: whoever is lying down gets straight back up.
-## Returns true if this person needed it.
-func heal() -> bool:
-	if state != State.DOWN and state != State.GETTING_UP:
-		return false
-	_stand_up()
-	return true
-
-
 func _land() -> void:
 	var impact := _fall_speed + Vector2(velocity.x, velocity.z).length() * 0.5
 	# A gentle drop from the hand lands on its feet, even from the height the hand carries people at.
