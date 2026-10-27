@@ -40,7 +40,7 @@ The scene is small; most nodes are built in code at startup.
 | `Main` | `city.gd` | Builds the procedural Manhattan grid (unevenly spaced avenues and streets): ground, blocks, towers in two height clusters, park, plazas, trees, doors, taxis, citizens, litter, pigeons. Grid helpers (`intersection`, `nearest_grid`, `block_of`, ...) used by citizens and districts. Day/night (`set_daylight`). |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
 | `Surroundings` | `world/surroundings.gd` (+ `world/outskirts.gd`) | Scenery past the grid, built once: land and hills (with a height-map collision floor), the river, promenade and bridges, roads leaving the grid, outer neighbourhoods and woods, clouds, and the depth haze that hides the edge. |
-| `Population` | `people/population.gd` | Gives every person a `Resident` record (name, `SocialGroup`, home, work, family, friends). `resident.gd` is the record, `social_group.gd` the per-group traits, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
+| `Population` | `people/population.gd` | Every person is a `Resident` record (name, `SocialGroup`, home, work, family, friends, belief stage); `census.gd` (`Census`) builds them, at least 5 per home. Only `street_people` have a `Citizen` body at a time; the rest are indoors and swap out of view. Belief drifts back to a baseline unless friends or a believing home hold it; `stage_changed` announces stages; `persuade(r, route, strength)` and `awe(building, strength)` are the ways to win people. `resident.gd` is the record, `social_group.gd` the per-group traits and per-route responses, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
 | `Miracles` | `miracles.gd` | Casts the miracles (water, fire, lightning, shield, heal, roaches, money): spends belief and reports to `Faith`. A burnt-out or roach-infested building is emptied (`Population.evacuate`) and announced with `building_abandoned`. Effects: `rain.gd`, `fire.gd`, `lightning.gd`, `shield.gd`, `heal.gd`, `roaches.gd`, `money_rain.gd`. |
@@ -177,9 +177,12 @@ Target: a steady **60 fps on a mid-range PC**, and the game must also run on the
 ### Before pushing
 
 1. `git pull` right before you push; message the owning thread before changing its files.
-2. Run the project headless with no errors and no new warnings:
-   `godot --headless --path . --quit-after 600` and the same for
-   `res://scenes/city_planning.tscn`. After adding a `class_name`, run
+2. Run the project headless with no errors and no warnings:
+   `godot --headless --path . --debug --quit-after 600` and the same for
+   `res://scenes/city_planning.tscn`. `--debug` makes Godot print the GDScript warnings
+   (shadowed names, integer division, ...) that Eilam sees in the editor; without it they
+   stay silent. They print as `ERROR: '<warning text>'` with no file name, so if one shows
+   up, load the scripts one by one to find it. After adding a `class_name`, run
    `godot --headless --path . --import` once so the class is registered.
 3. Run the hand test: `godot --headless --path . res://tests/hand_test.tscn` must print
    `HAND TEST: PASS` (exit code 0). Add a check there when you add a hand behaviour.

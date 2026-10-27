@@ -3,6 +3,21 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Every building has residents; belief grows in stages, slower
+- Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.
+- Belief now has five stages: skeptic, curious, sympathizer, believer, zealot. A single miracle (or visit, or offer) moves a person at most one stage, so winning someone over takes several.
+- Belief slowly slides back to what a person believed before the cult, unless friends who believe or a home full of believers hold it up. Friends who believe more slowly pull people up.
+- Each social group answers the four routes differently: students and artists fall for miracles, retirees for a visit from missionaries, shopkeepers and bankers for money, police for force.
+- Numbers: `data/balance.tres` ("Stages of belief", "Drift": `persuasion_scale` is the one knob for how fast the cult grows) and `data/people.tres` (groups' responses, `min_residents_per_home`, `street_people`).
+- Try it: press F5, press B and hover a person: the card shows their stage.
+
+## 2026-10-27: Last editor warning fixed
+- `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.
+
+## 2026-10-27: Catch editor warnings before pushing
+- `CLAUDE.md` now runs the headless checks with `--debug`, which prints the same GDScript warnings the editor shows (they were silent before, so warnings reached Eilam's editor unnoticed).
+- Try it: `godot --headless --path . --debug --quit-after 600` prints nothing but the banner.
+
 ## 2026-10-27: Last editor warnings fixed
 - `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), and the planning scripts no longer divide whole numbers by whole numbers ("Integer division"), so the editor's warning list is empty.
 - Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.

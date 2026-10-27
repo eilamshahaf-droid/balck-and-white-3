@@ -4,7 +4,15 @@ extends Resource
 ## Open data/people.tres in Godot and change values in the Inspector.
 
 @export_group("Population")
+## Every home gets at least this many residents; the city's total is that or
+## resident_count, whichever is more.
+@export var min_residents_per_home := 5
 @export var resident_count := 500
+## Residents walking the streets at once; the rest are indoors. Each one on the
+## street costs frame time, so this is the knob for slower computers.
+@export var street_people := 500
+## Seconds between one person going indoors and another coming out (out of view).
+@export var swap_interval := 0.5
 @export var groups: Array[SocialGroup] = []
 @export var family_size_min := 1
 @export var family_size_max := 4
