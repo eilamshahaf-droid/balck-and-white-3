@@ -215,7 +215,7 @@ static func _along_roads(model, kinds: Array, radius: float, spacing: float, sid
 
 static func _mid(e: Dictionary) -> Vector2:
 	var pts: PackedVector2Array = e.points
-	return pts[pts.size() / 2]
+	return pts[pts.size() >> 1]
 
 
 static func _flat(p: Vector3) -> Vector2:
