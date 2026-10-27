@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Alpha (refreshed)
+- The combined build with everything every thread has so far: main (the cloth glove, 500 people in one crowd, the error fixes), the world branch (takeover by force / buy / missionaries, money and the new meters, PR #11), the Meshy props (PR #17) and the hand round (roaches, money from the sky, dearer miracles, decrees that cost money, the takeover marks in the building wheel, no tree lifting).
+- Headless run, planning scene and hand test pass with no errors; the Compatibility renderer starts.
+- Try it: press F5. F1 shows the debug panel.
+
 ## 2026-10-27: Decrees cost money; the building wheel marks buildings for takeover
 - Every decree now costs money as well as belief: +3 floors $120, luxury $150, facade $60, change use $80, preserve $40. The slice shows both ("30 belief + $120").
 - The building wheel depends on whose building it is. Yours: the five decrees. Anyone else's: the three takeover marks, **Skull: Force**, **$: Buy** and **Sky Sign: Missionaries**. A slice that can't be chosen says why ("needs a Combat Training building", "needs $80"); the mark already on the building reads "call off".
