@@ -163,8 +163,9 @@ districts = NodePath("../Districts")
 faith = NodePath("../Faith")
 heat = NodePath("../Heat")
 
-[node name="Arrests" type="Node3D" parent="."]
+[node name="Arrests" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("23_arrests")
+population = NodePath("../Population")
 
 [node name="Government" type="Node" parent="."]
 script = ExtResource("15_government")

@@ -4,7 +4,8 @@ extends Node3D
 ## stands still; the player frees him by getting the officers away (pick them
 ## up and throw them, or a miracle scatters them). If the squad is still around
 ## him when the time runs out, he is taken. Whoever decides that an arrest
-## happens (the priest's sermon, via Sermons.police_moved_in) calls `arrest`.
+## happens (the priest's sermon: Sermons.police_moved_in) starts it, and the end of
+## the arrest ends the sermon.
 
 ## A squad surrounds `priest`; `where` is on the street, for the alert.
 signal arrest_started(priest: Resident, where: Vector3)
@@ -14,10 +15,18 @@ signal arrest_ended(priest: Resident, freed: bool)
 
 const S: PoliceSettings = preload("res://data/police.tres")
 
+@export var population: Population
+
 var _squads: Array[Squad] = []
 var _timer := 0.0
 var _uniform := _mat(S.uniform_color)
 var _skin := _mat(S.skin_color)
+
+
+func _ready() -> void:
+	population.sermons.police_moved_in.connect(
+			func(priest: Resident, _at: Vector3) -> void: arrest(priest))
+	arrest_ended.connect(_on_arrest_ended)
 
 
 class Squad:
@@ -97,6 +106,15 @@ func _physics_process(delta: float) -> void:
 	_timer = S.arrest_tick
 	for squad in _squads.duplicate():
 		_tend(squad, step)
+
+
+## An arrested priest who is taken loses his post and his home; the head priest is spared.
+func _on_arrest_ended(priest: Resident, freed: bool) -> void:
+	population.sermons.end_sermon(priest)
+	if freed or priest == population.priest:
+		return
+	population.unassign(priest)
+	population.evict(priest)
 
 
 func _tend(squad: Squad, step: float) -> void:
