@@ -1,7 +1,7 @@
 extends Label
 ## The meters the player may see, as a row of cards along the top: belief (what
 ## miracles and missionaries spend), money (what buying and decrees spend, and
-## what comes in), believers, buildings of yours and exposure. Under them, the
+## what comes in), believers, priests, buildings of yours and exposure. Under them, the
 ## miracle power under the hand and what the hand holds. Belief itself stays
 ## hidden (B shows it, for debugging).
 
@@ -15,14 +15,28 @@ var _values: Array[Label] = []
 @onready var miracles: Node = get_node("../../Miracles")
 @onready var treasury: Treasury = get_node("../../Treasury")
 @onready var districts: Districts = get_node("../../Districts")
+@onready var population: Population = get_node("../../Population")
 
 
 func _ready() -> void:
+	var version := "%s %s" % [ProjectSettings.get_setting("application/config/release_stage"),
+			ProjectSettings.get_setting("application/config/version")]
+	DisplayServer.window_set_title("%s %s" % [ProjectSettings.get_setting("application/config/name"), version])
+	var corner := Label.new()
+	corner.text = version
+	corner.add_theme_font_size_override(&"font_size", 11)
+	corner.modulate = Color(1, 1, 1, 0.5)
+	corner.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	corner.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	corner.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	corner.offset_left = -8.0
+	corner.offset_top = -6.0
+	add_child(corner)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 8)
 	row.position = Vector2(0.0, -52.0)
 	add_child(row)
-	for title in ["BELIEF", "MONEY", "BELIEVERS", "BUILDINGS", "EXPOSURE"]:
+	for title in ["BELIEF", "MONEY", "BELIEVERS", "PRIESTS", "BUILDINGS", "EXPOSURE"]:
 		var card := PanelContainer.new()
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override(&"separation", -4)
@@ -47,8 +61,9 @@ func _process(delta: float) -> void:
 	_show(0, "%d" % floori(faith.belief_pool))
 	_show(1, "$%d  %+.1f/s" % [floori(treasury.money), treasury.income])
 	_show(2, "%d" % faith.believers)
-	_show(3, "%d" % districts.converted_buildings().size())
-	_show(4, "%d%%" % roundi(faith.exposure * 100.0))
+	_show(3, "%d" % population.priest_count)
+	_show(4, "%d" % districts.converted_buildings().size())
+	_show(5, "%d%%" % roundi(faith.exposure * 100.0))
 	var line := "Miracle power here: %d%%" % roundi(miracles.power_here * 100.0)
 	if tools.charged != &"":
 		line += "    In the hand: %s (click to cast, right-click to drop)" % String(tools.charged).capitalize()

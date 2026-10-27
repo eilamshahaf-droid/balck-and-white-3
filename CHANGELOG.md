@@ -3,6 +3,67 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Alpha (refreshed, economy round)
+- The combined build again: main (the head priest, belief in stages, only Prayer Houses pray), the world branch (building economy, police and the hidden building code, poor start district), the hand round (miracles leave proof and priests convert, Block Party, Rain of Frogs, accidents, costs and cooldowns, camera that keeps the building you look at solid) and the Meshy props showing each building's state.
+- Headless run (with --debug), planning scene and hand test pass with no errors or warnings; the Compatibility renderer starts.
+- Try it: press F5. F1 shows the debug panel.
+
+## 2026-10-27: Models for the core building and housing upgrades
+- Four more Meshy models in `assets/models/meshy/`, not in the game yet: a large blank signboard in a gold frame for the core building (the text goes on top, in code, so it stays readable and editable), a glass elevator shaft, security cameras and an iron security gate for housing upgrades. They are overlays for buildings, like the others, and wait for the building-type and upgrade fields from the economy round. The core building's portico is `portico.glb` from the 16 type models.
+
+## 2026-10-27: 16 new models for the kinds of building
+- Sixteen more Meshy models, each a marker for a kind of building: a gold hand statue and a stained-glass entrance (Prayer House), a fruit awning (shop), a washing-machine storefront (laundromat), a chalkboard easel (Course Center), a promotion booth (Free Personality Test), a boxing ring (Combat Training), a bell tower (seminary), a fire escape and a roof garden (homes), an antenna cluster and a revolving door (offices), a loading dock (workshop), café tables (restaurant), a columned portico (City Hall) and a vault entrance (bank).
+- Four are in the game already, shown by **Change Use**: Prayer House gets the hand statue on the roof and the entrance by the street, Course Center an easel, Free Personality Test the booth, Combat Training a boxing ring on the roof. The others wait for the building-type field the economy round will add.
+- Numbers: `data/city_props.tres` ("Building uses"). Models in `assets/models/meshy/`.
+- Try it: press F5, take a building (debug panel, "Take 10 buildings here"), hold on it and choose Change Use, then a use.
+
+## 2026-10-27: You can tell a building's state at a glance
+- Eight new Meshy models show who holds a building, on top of the building and changing live:
+  - **Yours**: the cult's purple banner with the white glove down both fronts, and its flag on a roof corner.
+  - **Abandoned**: about half the windows boarded up with graffitied plywood, and a pile of rubble on the sidewalk.
+  - **Luxury** (the decree): flower boxes under most windows and brass topiary planters by the entrance canopy; the window air conditioners go too (central air).
+  - **Ordinary inhabited**: a few flower boxes, more in rich districts.
+  - **Poor districts** (Spin Cycle Flats, where you start): laundry lines under the windows, and dumpsters and heaps of trash bags on the sidewalks. The dumpsters can be picked up and thrown.
+- Numbers: `data/city_props.tres`, groups "Poor districts" and "Building states".
+- Try it: press F5. Your headquarters' district has laundry, boarded-up empty buildings and dumpsters. Take a building (debug panel, "Take 10 buildings here") and watch the banners and flags go up; give one of yours the Luxury decree.
+
+## 2026-10-27: The building you look at stays solid
+- The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
+- Number: `data/hand_settings.tres`, `fade_keep_radius`.
+- Try it: press F5, double-click a building to fly to it, and orbit around it: it stays solid while the ones in front of it fade.
+
+## 2026-10-27: Meshy props in the city
+- The first models made with Meshy are in the game (`assets/models/meshy/`, about 0.5 MB each). Window air conditioners (four kinds) hang under windows of the brick and stone buildings; water tanks and big cooling units stand on roofs. They are drawn as MultiMeshes, one per kind and chunk of town, and disappear past 260 m.
+- The sidewalks have trash cans, heaps of trash bags, hydrants, benches, newspaper boxes, mailboxes and the odd hot-dog cart. The hand can pick all of them up and throw them, like the taxis.
+- Trash bags give way: a bag squashes under whatever lies on it and dents when it lands hard, then slowly puffs back up (a "squash" blend shape on the model).
+- The taxis are now the Meshy cab, a little short and tall like a toy.
+- Roof props follow a building that grows new floors by decree, and make way for a luxury penthouse.
+- Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
+- Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
+
+## 2026-10-27: Pre-Alpha 0.5.0: Building wheel upgrades, staff and double-click reset
+- The wheel on a building of yours has two more slices. **Upgrades** opens a second wheel: Elevator and Roof Garden (more comfort), Cameras and Gate (more fear). Each costs money, and every upgrade or floor makes the next one dearer (`Population.upgrade_cost`).
+- **Staff** (prayer houses and shops only) sends a free believer from the street nearby to pray, train as a priest, or work in the shop. Nobody working means no output.
+- A double-click on a building of yours lets every believer there go (`Population.dismiss_believers`); on any other building it still flies the camera there.
+- Numbers: `staff_reach` in `data/hand_settings.tres`; prices in `data/people.tres`.
+- Versioning starts here: Pre-Alpha 0.5.0, shown in the corner of the screen and in the window title (`config/version` and `config/release_stage` in `project.godot`).
+- Try it: hold the button still on a building of yours and pick Upgrades or Staff; double-click a building of yours.
+
+## 2026-10-27: Spin Cycle: money over your own building, frogs wreck roadblocks
+- The game is now called "Spin Cycle" (temporary name).
+- Money from the sky over a building you own brings double (`money_own_multiplier`); elsewhere it is unchanged.
+- The Rain of Frogs wrecks a police roadblock in its reach, 70% of the time (`frog_roadblock_chance`). The world thread's `Police.break_near` smashes the barrier, raises crowd heat and lets the campaign resume.
+- Buildings near the camera's pivot no longer fade out, the fade tube is narrower, and campaign marks shrink as you zoom out.
+- Fixed `heat.gd` failing to compile on Godot 4.3 (untyped `base`).
+- Try it: park the police at a building (see "Police"), then cast frogs over the roadblock; cast money over a gold-plated building and watch the money meter.
+
+## 2026-10-27: The head priest stands out
+- A golden ring on the ground around the head priest and a label with his name ("Head Priest, Name") over him, with "preaching..." for a few seconds whenever he talks to the street. The people thread made his body bigger.
+- A PRIESTS card on the HUD.
+- A building changed to the Shop use joins the group `shops` (like Prayer Houses join `prayer_houses`), so free believers can be assigned to work there.
+- Numbers: `data/miracles.tres`, group "Head priest marker".
+- Try it: press F5 and look for the white priest with the gold ring.
+
 ## 2026-10-27: Give believers jobs, colours and fear bonuses
 - Believers are gold on the map, zealots orange, priests white and larger. Free believers can be given a post with `Population.assign`: pray or train as a priest in a prayer house, or work in a shop (building group `shops`). Each building takes only so many; a building with no staff has zero output (`staffed`).
 - Comfortable staff pray and earn more. Frightened believers are better at forcing a takeover (`force_power_of`) and make the police wait for more heat (`defense_of`).
@@ -15,9 +76,44 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/people.tres`, groups "Jobs", "Upgrades", "Colours" and `priest_scale`.
 - Try it: press F5 and look for gold believers in the street; the assignment menu is not wired to the hand yet.
 
+## 2026-10-27: The game is called Spin Cycle (for now)
+- A temporary name until Eilam picks the real one: the project name and window title in `project.godot`, and the README title. The repository keeps its name.
+
+## 2026-10-27: Calmer marks and a narrower see-through tube
+- The takeover marks (skull, dollar, sky sign and their count) shrink as the camera comes in, down to a quarter of their size, so a close-up isn't covered by them. Numbers: `data/campaigns.tres` (`mark_far_distance`, `mark_min_scale`).
+- The camera's see-through tube is narrower (1.4 m instead of 3), so only buildings that really block the centre of the view fade, not their neighbours. The building at the centre stays solid within 6 m. Numbers: `data/hand_settings.tres` (`fade_radius`, `fade_keep_radius`).
+- Try it: press F5, zoom in on a marked building: the mark is small; orbit around: only the building in the way fades.
+
 ## 2026-10-27: Remove the old divine signs' followers and the healing leftovers
 - Believers no longer answer the old blessed / cursed / protected signs (the three takeover marks replaced them on the wheel). `sign_followers.gd`, its node and its settings are gone, and so is the leftover `Citizen.heal()` from the removed Heal miracle.
 - Try it: press F5; nothing changes in play.
+
+## 2026-10-27: Roadblocks you can break, core beacons, building tooltips
+- **Roadblocks** have a name and a countdown ("ROADBLOCK 2, street closed, 74 s"), a red-tinted shut stretch of street, and last 90 seconds. They have hit points and show damage: barriers dent and lean as it falls. A thrown taxi or crate, a fire nearby and a crowd of believers at the building wear one down; at zero it is gone and the campaign goes on. `Police.break_near(point, radius)` lets frogs smash one (Miracles rolls 70% per landing; the police notice); `damage_near` is for anything else.
+- A roadblock now has a barrier at each end of the shut stretch (14 m either side, `closed_half_length`) and a patrol car at one. `Police.is_closed_at(point)` tells commuters whether the street is shut.
+- `Districts.core_changed(district)` fires when a core building is demolished and the next nearest one takes over (the beacon follows).
+- **Core buildings** carry a purple beacon above the roof, gold once yours.
+- **Tooltip**: hover any building to see its kind, whether it is a district core, "X of Y believe", its staff, and what it earns or costs when yours.
+- Numbers: `data/police.tres` ("Breaking a roadblock"), `data/districts.tres` ("Look").
+- Try it: hover buildings; mark one with the sky sign, then use the debug panel to raise heat until the street closes; throw a taxi at the barrier.
+
+## 2026-10-27: Police roadblocks and a hidden building code
+- **Police**: crews working a marked building add to its hidden `Heat` (fighters most of all, more when exposure is high). When `Heat` calls the police they close the street in front of it (barriers, a patrol car, "POLICE LINE"), the crew goes home and the campaign waits about 45 seconds. Poor districts are soft, rich ones hard. A district that is yours is left alone. The HUD shows "Police: quiet / N streets closed".
+- **Hidden building code**: City Hall no longer reacts to divine signs. It quietly watches your buildings: more than 2 floor decrees, luxury on top of that, and a Combat Training use all count as breaches. A breach adds heat once, and suspicion builds until an inspector visits. Over-optimizing is what eventually brings the bulldozer.
+- **District core building**: every district has a hard central building (the one nearest its middle). It needs 75% of its residents to believe instead of 50%. Once it is yours, City Hall and the police leave that whole district alone. The exact share is `core_capture_share` in `data/districts.tres`, for Eilam to review.
+- Numbers: `data/police.tres`, `data/government.tres` ("Building code").
+- Try it: mark a building with the skull and let the crew work until the street closes, or stack floors on one of your buildings and wait for the inspector.
+
+## 2026-10-27: Risky believers, Block Party, Rain of Frogs
+- Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
+  - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.
+  - **Rain of Frogs**, the chaotic one: frogs fall and hop about, people run or get knocked flat, any building under them (yours too) may be overrun and emptied, and the city reads it as a blessing or a curse, at random.
+- **Accidents**: every 40 seconds or so, believers may set one of your buildings on fire by accident (candles, incense, a very moving sermon), likelier in a Prayer House or Course Center and near zealots. "Water, quick!" floats over it.
+- **Saving a building**: water that puts out a burning building before it is lost saves it ("Saved!"), and everyone who lives there is won over a step. A fire left burning for its full time burns the building down and empties it.
+- **Who just came to believe**: "+ Believer", "Zealot!" or "Lost a believer" floats over people on the street when their belief stage changes.
+- **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
+- Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
+- Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
 
 ## 2026-10-27: Miracles and decrees touch the people's mood
 - Fire and Roaches frighten the residents of the building (`Population.scare`), Luxury makes them more satisfied (`Population.add_comfort`), and an accidental fire raises police heat (`Heat.raise`, reason ACCIDENT).
@@ -36,8 +132,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - One resident in 25 walks the streets (`residents_per_body` in `data/people.tres`), and at least one from every lived-in home. Out of your view, a person goes home and a housemate comes out, so each building keeps its people on its corner.
 - Try it: press F5. The belief pool no longer grows until a building becomes a prayer house.
 
-
-
 ## 2026-10-27: Miracles prove, priests convert
 - Eilam's economy round: a miracle no longer converts anyone. It leaves **proof** where it lands, fading over a minute, and priests preaching there persuade better (up to about twice as well after a strong one). Witnesses still react (staring, "It's a hoax", filming, exposure).
 - Each miracle has a job: **gather** a crowd (Block Party; Rain of Frogs now draws gawkers instead of scattering everyone), **save** a burning building (Water: the strongest proof), **clear** a building (Fire, Roaches), or bring **money**.
@@ -50,21 +144,12 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - A building given the Prayer House use (Change Use decree) joins the group `prayer_houses`, and leaves it when its use changes again. Only believers there pray belief into the pool (people thread, `Population.prayer`).
 - Try it: press F5, change one of your buildings to Prayer House and watch belief start to rise.
 
+
+
 ## 2026-10-27: The building you look at stays solid
 - The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
 - Number: `data/hand_settings.tres`, `fade_keep_radius`.
 - Try it: press F5, double-click a building to fly to it, and orbit around it: it stays solid while the ones in front of it fade.
-
-## 2026-10-27: Risky believers, Block Party, Rain of Frogs
-- Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
-  - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.
-  - **Rain of Frogs**, the chaotic one: frogs fall and hop about, people run or get knocked flat, any building under them (yours too) may be overrun and emptied, and the city reads it as a blessing or a curse, at random.
-- **Accidents**: every 40 seconds or so, believers may set one of your buildings on fire by accident (candles, incense, a very moving sermon), likelier in a Prayer House or Course Center and near zealots. "Water, quick!" floats over it.
-- **Saving a building**: water that puts out a burning building before it is lost saves it ("Saved!"), and everyone who lives there is won over a step. A fire left burning for its full time burns the building down and empties it.
-- **Who just came to believe**: "+ Believer", "Zealot!" or "Lost a believer" floats over people on the street when their belief stage changes.
-- **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
-- Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
-- Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
 
 ## 2026-10-27: Every building has residents; belief grows in stages, slower
 - Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.
@@ -90,6 +175,10 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/decrees.tres` (the `..._money` values).
 - Try it: press F5, hold the left button still on a building that isn't yours and pick a mark; then on one of yours, pick a decree and watch the money card drop.
 
+## 2026-10-27: City Hall's bulldozer without shields and lightning
+- With the shield and lightning miracles gone, only believers standing at the building (or the hand picking the bulldozer up) stop City Hall's crew.
+- Try it: press F5, raise exposure from the debug panel (F1) until a notice goes up, then gather believers at that building.
+
 ## 2026-10-27: Buildings earn or cost money; a poor start district
 - Every building of yours now earns or costs money each second, and the bottom-left panel shows it ("yours, earns $0.4/s").
   - **No use:** it brings rent in.
@@ -100,6 +189,15 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - **District wealth:** each district has a wealth that scales rent, shop takings and the price of buying people out. The start district by the river is poor (0.4), downtown is rich (2.0), and the panel says "(poor)" or "(rich)".
 - Numbers: `data/treasury.tres` (Rent, Uses, Luxury, Floors) and `wealth` in `data/districts.tres`.
 - Try it: press F5, click "Take 10 buildings here" on the debug panel (F1), and look at the "Building" line as you give one of them decrees.
+
+## 2026-10-27: Meshy props in the city
+- The first models made with Meshy are in the game (`assets/models/meshy/`, about 0.5 MB each). Window air conditioners (four kinds) hang under windows of the brick and stone buildings; water tanks and big cooling units stand on roofs. They are drawn as MultiMeshes, one per kind and chunk of town, and disappear past 260 m.
+- The sidewalks have trash cans, heaps of trash bags, hydrants, benches, newspaper boxes, mailboxes and the odd hot-dog cart. The hand can pick all of them up and throw them, like the taxis.
+- Trash bags give way: a bag squashes under whatever lies on it and dents when it lands hard, then slowly puffs back up (a "squash" blend shape on the model).
+- The taxis are now the Meshy cab, a little short and tall like a toy.
+- Roof props follow a building that grows new floors by decree, and make way for a luxury penthouse.
+- Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
+- Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
 
 ## 2026-10-27: Take buildings by force, money or missionaries; a money meter
 - The claim meter and its roof colours are gone. Eilam's rule instead: a building is yours once most of the people who live there believe. An empty one is yours while a believer lives in it or sits in on it.
@@ -153,8 +251,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Fixed editor warnings in the hand's files: names that shadowed built-ins (`sign`, `size`, `to_local`).
 - The hand test checks that trees can't be picked up.
 - Try it: press F5 and try to drag a tree: the city moves instead.
-
-
 
 ## 2026-10-26: Taking over buildings, made clear
 - Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.

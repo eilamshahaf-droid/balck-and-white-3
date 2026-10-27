@@ -42,6 +42,8 @@ const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets 
 @export var population: Population
 ## Where money from the sky goes. Optional until the money system is in the scene.
 @export var treasury: Treasury
+@export var districts: Districts
+@export var police: Police
 
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
@@ -247,7 +249,10 @@ func _money(ground: Vector3, power: float, size: float, length: float) -> Node3D
 	notes.start(ground, size, length)
 	# Your believers pick the notes up and hand them in; strangers keep theirs.
 	if treasury:
-		treasury.add_money(M.money_amount * lerpf(M.money_weak_share, 1.0, power))
+		var amount := M.money_amount * lerpf(M.money_weak_share, 1.0, power)
+		if districts and _buildings_near(ground, M.money_radius * size).any(districts.owns):
+			amount *= M.money_own_multiplier
+		treasury.add_money(amount)
 	faith.report(notes, &"see_money", M.money_intensity, M.money_situation, M.money_time * length, true,
 			M.money_deniability, _people_near(ground, M.money_radius * size), M.money_seen_from)
 	return notes
@@ -297,6 +302,8 @@ func _frogs(ground: Vector3, size: float, length: float) -> Node3D:
 		if randf() < M.frog_overrun_chance:
 			FloatingNote.pop(city, _roof(b), "Overrun by frogs!", Color(0.5, 0.9, 0.35))
 			_abandon(b)
+	if police and randf() < M.frog_roadblock_chance:
+		police.break_near(ground, radius)
 	var luck := randf()
 	var situation := lerpf(M.frog_situation_min, M.frog_situation_max, luck)
 	_proof.leave(ground, M.proof_radius * size, lerpf(M.frog_proof_min, M.frog_proof_max, luck))

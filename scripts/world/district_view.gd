@@ -13,6 +13,7 @@ const BORDER_LIFT := 0.03   # just above the asphalt
 
 var _roofs := MultiMesh.new()
 var _borders := MultiMesh.new()
+var _cores := MultiMesh.new()
 var _hidden := Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO)
 
 @onready var districts: Districts = get_node("../Districts")
@@ -22,6 +23,7 @@ func _ready() -> void:
 	districts.layout_ready.connect(_build)
 	districts.building_changed.connect(_on_building_changed)
 	districts.district_controlled.connect(_on_district_controlled)
+	districts.core_changed.connect(_place_core)
 	get_node("../Decrees").decree_issued.connect(_on_decree_issued)
 
 
@@ -47,8 +49,35 @@ func _build() -> void:
 		_outline(d)
 	_add_instance(_borders)
 
+	var beacon := BoxMesh.new()
+	beacon.size = Vector3.ONE
+	beacon.material = _unshaded(Color.WHITE, true)
+	_cores.transform_format = MultiMesh.TRANSFORM_3D
+	_cores.use_colors = true
+	_cores.mesh = beacon
+	_cores.instance_count = districts.district_count()
+	for d in districts.district_count():
+		_place_core(d)
+	_add_instance(_cores)
+
+
+## A purple beacon over each district's core building, gold once it is yours.
+func _place_core(d: int) -> void:
+	var core := districts.core_of(d)
+	var b: Node3D = districts.buildings[core] if core >= 0 else null
+	if b == null:
+		_cores.set_instance_transform(d, _hidden)
+		return
+	var size := DivineSign.building_size(b)
+	var at := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT + S.core_beacon.y / 2.0)
+	_cores.set_instance_transform(d, Transform3D(Basis.from_scale(S.core_beacon), at))
+	_cores.set_instance_color(d, S.roof_color if districts.is_yours(core) else S.core_color)
+
 
 func _on_building_changed(index: int, yours: bool) -> void:
+	for d in districts.district_count():
+		if districts.core_of(d) == index:
+			_place_core(d)
 	var b: Node3D = districts.buildings[index]
 	if b == null or not yours:
 		_roofs.set_instance_transform(index, _hidden)

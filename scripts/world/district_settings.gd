@@ -23,6 +23,9 @@ extends Resource
 @export var tick := 0.5                     # seconds between counts
 ## Share of a building's residents who must believe for it to be yours.
 @export_range(0.0, 1.0) var capture_share := 0.5
+## A district's core building (the one nearest its middle) is harder: this share of its
+## residents must believe. Once it is yours, City Hall and the police leave the district alone.
+@export_range(0.0, 1.0) var core_capture_share := 0.75
 @export_range(0.0, 1.0) var control_share := 0.6   # share of a district's buildings that makes it yours
 
 @export_group("Start district")
@@ -32,6 +35,10 @@ extends Resource
 @export_range(0.0, 1.0) var abandoned_elsewhere := 0.04  # scattered through the rest of the city
 
 @export_group("Look")
+@export var core_color := Color(0.62, 0.3, 0.85)           # beacon on each district's core building
+@export var core_beacon := Vector3(1.2, 7.0, 1.2)          # its size, above the roof
+@export var tooltip_interval := 0.1                        # seconds between looks under the cursor
+@export var tooltip_offset := Vector2(18.0, 18.0)          # pixels from the cursor
 @export var roof_color := Color(1.0, 0.7, 0.0)              # the plate on a building of yours
 @export var border_color := Color(1.0, 1.0, 1.0, 0.85)
 @export var controlled_border_color := Color(1.0, 0.7, 0.0, 1.0)

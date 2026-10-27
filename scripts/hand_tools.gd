@@ -14,13 +14,15 @@ extends Node
 const RadialWheel = preload("res://scripts/radial_wheel.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
-enum Mode { NONE, MIRACLES, BUILDING, USES }
+enum Mode { NONE, MIRACLES, BUILDING, USES, UPGRADES, POSTS }
 
 ## The takeover marks on the wheel, by slice id.
 const MARKS := {&"force": Campaigns.Route.FORCE, &"buy": Campaigns.Route.BUY,
 		&"preach": Campaigns.Route.PREACH}
 
 @export var campaigns: Campaigns
+@export var menus: BuildingMenus
+@export var population: Population
 
 @onready var hand: Node3D = get_node("../GodHand")
 @onready var miracles: Miracles = get_node("../Miracles")
@@ -40,6 +42,7 @@ var _colors := {}   # miracle id -> colour
 
 
 func _ready() -> void:
+	hand.owned_building_double_clicked.connect(_on_double_click)
 	var layer := CanvasLayer.new()
 	layer.layer = 10  # above the HUD and the art style's screen pass
 	add_child(layer)
@@ -132,6 +135,12 @@ func _choose() -> void:
 				if building and MARKS.has(id):
 					campaigns.mark(building, MARKS[id])
 					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+				elif building and id in [&"upgrades", &"posts"]:
+					_mode = Mode.UPGRADES if id == &"upgrades" else Mode.POSTS
+					var second: Array[Dictionary] = menus.upgrade_items(building) \
+							if id == &"upgrades" else menus.post_items(building)
+					_wheel.open(_wheel.center, second)
+					return
 				elif building and id == &"use":
 					# Which use: a second wheel in the same place; the next click picks.
 					_mode = Mode.USES
@@ -139,16 +148,28 @@ func _choose() -> void:
 					return
 				elif building:
 					decrees.issue(id, building)
+			Mode.UPGRADES:
+				if building and menus.buy_upgrade(id, building):
+					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+			Mode.POSTS:
+				if building and menus.send_to_post(id, building):
+					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
 			Mode.USES:
 				if building:
 					decrees.issue(&"use", building, String(id))
 	_close()
 
 
+## A double-click on a building of yours: every believer there is let go.
+func _on_double_click(building: Node3D) -> void:
+	population.dismiss_believers(building)
+	Sfx.play(get_tree(), building.global_position, &"chime", 0.5)
+
+
 func _close() -> void:
 	_wheel.visible = false
 	_wheel.set_process(false)
-	if _mode in [Mode.BUILDING, Mode.USES] and is_instance_valid(_target.collider):
+	if _mode in [Mode.BUILDING, Mode.USES, Mode.UPGRADES, Mode.POSTS] and is_instance_valid(_target.collider):
 		_set_outline(_target.collider, false)
 	_target = {}
 	_mode = Mode.NONE
@@ -175,7 +196,13 @@ func _charge(kind: StringName) -> void:
 ## mark a building already has reads "call off".
 func _building_items(building: Node3D) -> Array[Dictionary]:
 	if decrees.is_yours(building):
-		return decrees.wheel_items(building)
+		var yours := decrees.wheel_items(building)
+		yours.append({"id": &"upgrades", "label": "Upgrades", "color": Color(0.6, 0.85, 1.0),
+				"note": "$%d" % roundi(population.upgrade_cost(building))})
+		if menus.has_posts(building):
+			yours.append({"id": &"posts", "label": "Staff", "color": Color(0.95, 0.85, 0.6),
+					"note": "%d working" % population.staff_count(building)})
+		return yours
 	var items: Array[Dictionary] = [
 		{"id": &"force", "label": "Skull: Force", "color": Color(0.85, 0.3, 0.3)},
 		{"id": &"buy", "label": "$: Buy", "color": Color(0.4, 0.8, 0.4)},
