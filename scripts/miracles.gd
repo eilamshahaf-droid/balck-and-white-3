@@ -44,6 +44,7 @@ const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets 
 @export var treasury: Treasury
 @export var districts: Districts
 @export var police: Police
+@export var arrests: PoliceArrests
 
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
@@ -157,6 +158,8 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 		&"money": miracle = _money(ground, power, size, length)
 		&"party": miracle = _party(ground, size, length)
 		&"frogs": miracle = _frogs(ground, size, length)
+	if arrests:
+		arrests.scatter_near(ground, M.scatter_radius * size)  # any miracle throws officers clear
 	_proof.used(kind, _cooldown(kind))
 	if kind != &"frogs":  # the frogs decide their own proof
 		_proof.leave(miracle.global_position, M.proof_radius * size, _proof_strength(kind))
@@ -335,11 +338,15 @@ func _roof(building: Node3D) -> Vector3:
 
 func _on_burned(building: Node3D) -> void:
 	if is_instance_valid(building):
-		_abandon(building)
+		_abandon(building, true)
 
 
-func _abandon(building: Node3D) -> void:
-	population.evacuate(building)
+## `building` is emptied; a fire that burnt it down also kills some indoors.
+func _abandon(building: Node3D, burnt := false) -> void:
+	if burnt:
+		population.burn_down(building)
+	else:
+		population.evacuate(building)
 	building_abandoned.emit(building)
 
 

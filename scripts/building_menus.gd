@@ -1,17 +1,26 @@
 class_name BuildingMenus
 extends Node
-## The second wheels of a building of yours: housing upgrades (elevator, roof
-## garden for comfort; cameras, gate for fear) and posts for free believers in
-## prayer houses and shops. Prices and effects live in Population and
+## The second wheels of a building of yours: the upgrades for its kind (home,
+## prayer house or workplace) and posts for free believers in prayer houses and
+## shops. Prices and effects live in Population and
 ## Treasury; this only builds the slices and carries out the choice.
 
 const S: HandSettings = preload("res://data/hand_settings.tres")
 
-const UPGRADES := {
-	&"elevator": Population.Upgrade.ELEVATOR,
-	&"garden": Population.Upgrade.ROOF_GARDEN,
-	&"cameras": Population.Upgrade.CAMERAS,
-	&"gate": Population.Upgrade.GATE,
+## What each upgrade is called on the wheel, and what it does.
+const UPGRADE_INFO := {
+	Population.Upgrade.ELEVATOR: ["Elevator", "comfort up", Color(0.6, 0.85, 1.0)],
+	Population.Upgrade.ROOF_GARDEN: ["Roof Garden", "comfort up", Color(0.55, 0.9, 0.5)],
+	Population.Upgrade.CAMERAS: ["Cameras", "fear up", Color(0.9, 0.5, 0.45)],
+	Population.Upgrade.GATE: ["Gate", "fear up", Color(0.75, 0.45, 0.7)],
+	Population.Upgrade.LOUDSPEAKER: ["Loudspeaker", "priests reach further", Color(1.0, 0.85, 0.4)],
+	Population.Upgrade.BANNERS: ["Banners", "more places", Color(0.85, 0.5, 0.9)],
+	Population.Upgrade.LECTURE_HALL: ["Lecture Hall", "stronger preaching", Color(0.6, 0.75, 1.0)],
+	Population.Upgrade.STOREFRONT: ["Storefront", "more places", Color(0.95, 0.7, 0.35)],
+	Population.Upgrade.GYM: ["Training Hall", "more places", Color(0.9, 0.45, 0.4)],
+	Population.Upgrade.REAL_ESTATE: ["Real Estate", "more places", Color(0.5, 0.8, 0.6)],
+	Population.Upgrade.SEMINARY: ["Seminary", "trains priests", Color(0.95, 0.95, 1.0)],
+	Population.Upgrade.RESTAURANT: ["Restaurant", "comfort up", Color(1.0, 0.75, 0.5)],
 }
 const POSTS := {
 	&"pray": Resident.Job.PRAY,
@@ -28,18 +37,16 @@ func has_posts(building: Node3D) -> bool:
 	return building.is_in_group(Population.PRAYER_HOUSES) or building.is_in_group(Population.SHOPS)
 
 
+## The upgrades this kind of building can buy (a home, a prayer house, a workplace).
 func upgrade_items(building: Node3D) -> Array[Dictionary]:
 	var cost := population.upgrade_cost(building)
-	var price := "$%d" % roundi(cost)
-	var items: Array[Dictionary] = [
-		{"id": &"elevator", "label": "Elevator", "effect": "comfort up", "color": Color(0.6, 0.85, 1.0)},
-		{"id": &"garden", "label": "Roof Garden", "effect": "comfort up", "color": Color(0.55, 0.9, 0.5)},
-		{"id": &"cameras", "label": "Cameras", "effect": "fear up", "color": Color(0.9, 0.5, 0.45)},
-		{"id": &"gate", "label": "Gate", "effect": "fear up", "color": Color(0.75, 0.45, 0.7)},
-	]
-	for item in items:
-		item.note = price
-		item.enabled = treasury.can_afford(cost)
+	var items: Array[Dictionary] = []
+	for kind in population.upgrades_for(building):
+		var info: Array = UPGRADE_INFO[kind]
+		var bought := population.count_of(building, kind)
+		items.append({"id": StringName(str(kind)), "label": info[0], "effect": info[1],
+				"color": info[2], "enabled": treasury.can_afford(cost),
+				"note": "$%d%s" % [roundi(cost), " (x%d)" % bought if bought > 0 else ""]})
 	return items
 
 
@@ -57,13 +64,14 @@ func post_items(building: Node3D) -> Array[Dictionary]:
 	return items
 
 
-## Buy the upgrade `id` for `building` if there is money for it.
+## Buy the upgrade `id` (an `Upgrade` value as text) for `building` if there is money for it.
 func buy_upgrade(id: StringName, building: Node3D) -> bool:
+	var kind := int(String(id)) as Population.Upgrade
 	var cost := population.upgrade_cost(building)
-	if not UPGRADES.has(id) or not treasury.can_afford(cost):
+	if not population.upgrades_for(building).has(kind) or not treasury.can_afford(cost):
 		return false
 	treasury.spend_money(cost)
-	population.upgrade(building, UPGRADES[id])
+	population.upgrade(building, kind)
 	return true
 
 

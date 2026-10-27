@@ -22,6 +22,8 @@ func _ready() -> void:
 	var version := "%s %s" % [ProjectSettings.get_setting("application/config/release_stage"),
 			ProjectSettings.get_setting("application/config/version")]
 	DisplayServer.window_set_title("%s %s" % [ProjectSettings.get_setting("application/config/name"), version])
+	var corner_layer := CanvasLayer.new()  # this label is 0 px wide, so anchors need a layer of their own
+	add_child(corner_layer)
 	var corner := Label.new()
 	corner.text = version
 	corner.add_theme_font_size_override(&"font_size", 11)
@@ -31,7 +33,7 @@ func _ready() -> void:
 	corner.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	corner.offset_left = -8.0
 	corner.offset_top = -6.0
-	add_child(corner)
+	corner_layer.add_child(corner)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 8)
 	row.position = Vector2(0.0, -52.0)

@@ -31,6 +31,8 @@ extends Resource
 
 @export_group("Neighbourhoods")
 @export var lot_spacing := 19.0
+## Columns of lots laid out per frame while the town grows in, so startup stays short.
+@export var columns_per_frame := 6
 @export var building_reach := 1300.0
 @export var near_height := Vector2(8.0, 24.0)   # just outside the grid, min..max
 @export var far_height := Vector2(4.0, 8.0)     # at building_reach
