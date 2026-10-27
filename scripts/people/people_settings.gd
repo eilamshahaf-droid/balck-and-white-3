@@ -102,6 +102,10 @@ extends Resource
 @export_range(0.0, 1.0) var upgrade_fear := 0.15
 ## Each purchase also adds this many places to every job in the building.
 @export var slots_per_purchase := 2
+## Each believer working in a building takes this share off its next upgrade,
+## up to max_staff_discount.
+@export_range(0.0, 1.0) var staff_discount := 0.05
+@export_range(0.0, 1.0) var max_staff_discount := 0.5
 
 @export_group("Colours")
 @export var believer_color := Color(1.0, 0.78, 0.15)

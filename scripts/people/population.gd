@@ -269,9 +269,12 @@ func staffed(building: Node3D) -> float:
 	return total
 
 
-## What the next upgrade or added floor for `building` costs; it rises with each purchase.
+## What the next upgrade or added floor for `building` costs: it rises with each
+## purchase and falls with the believers working there.
 func upgrade_cost(building: Node3D) -> float:
-	return _people.upgrade_base_cost * pow(_people.upgrade_cost_growth, _purchases.get(building, 0))
+	var discount := minf(_people.staff_discount * staff_count(building), _people.max_staff_discount)
+	return _people.upgrade_base_cost * pow(_people.upgrade_cost_growth, _purchases.get(building, 0)) \
+			* (1.0 - discount)
 
 
 ## Buy `kind` for `building` (the caller has taken the money): well-being for
