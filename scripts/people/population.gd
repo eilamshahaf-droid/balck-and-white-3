@@ -33,6 +33,8 @@ signal occupant_added(building: Node3D, resident: Resident)
 signal occupant_left(building: Node3D, resident: Resident)
 ## `resident` moved from stage `old` to stage `new` (Resident.Stage).
 signal stage_changed(resident: Resident, old: int, new: int)
+## The player let every believer go from `building` (it can be settled again).
+signal believers_dismissed(building: Node3D, count: int)
 ## A priest preached to `reached` people on the street.
 signal priest_preached(priest: Resident, reached: int)
 
@@ -42,6 +44,8 @@ var _people: PeopleSettings = load("res://data/people.tres")
 const B: Balance = preload("res://data/balance.tres")
 ## Buildings whose use is prayer; whoever sets a building's use keeps this group.
 const PRAYER_HOUSES := &"prayer_houses"
+## The housing upgrades on the menu.
+enum Upgrade { ELEVATOR, ROOF_GARDEN, CAMERAS, GATE }
 ## Buildings that take shop staff; whoever sets a building's use keeps this group.
 const SHOPS := &"shops"
 
@@ -69,6 +73,7 @@ var _census: Census
 var _street := Street.new()
 var _stages: Dictionary = {}       # resident -> the stage last announced
 var _priest_timer := 0.0
+var _purchases: Dictionary = {}      # building -> upgrades and floors bought so far
 var _staff: Dictionary = {}          # building -> Array[Resident] with a post there
 var _home_comfort: Dictionary = {}   # building -> the comfort its residents drift toward
 var _rng := RandomNumberGenerator.new()
@@ -120,6 +125,43 @@ func believer_share(building: Node3D) -> float:
 	return float(n) / people.size()
 
 
+## How many people live in `building`, and how many of them believe: the
+## "X of Y" of its tooltip.
+func residents_in(building: Node3D) -> int:
+	return (_by_home.get(building, []) as Array).size()
+
+
+func believers_in(building: Node3D) -> int:
+	var n := 0
+	for r: Resident in _by_home.get(building, []):
+		if r.belief > B.believer_threshold:
+			n += 1
+	return n
+
+
+## What `building` yields now: belief per second for a prayer house, the staff
+## output for a shop, 0 for anything else. Meant for tooltips, not for every frame.
+func yield_of(building: Node3D) -> float:
+	if building.is_in_group(SHOPS):
+		return staffed(building)
+	if not building.is_in_group(PRAYER_HOUSES):
+		return 0.0
+	var seen := {}
+	var total := 0.0
+	var people: Array = []
+	people.append_array(_staff.get(building, []))
+	people.append_array(occupants(building))
+	people.append_array(_by_home.get(building, []))
+	for r: Resident in people:
+		if seen.has(r) or r.belief <= B.believer_threshold:
+			continue
+		seen[r] = true
+		# Someone posted elsewhere prays there, not here.
+		if r.post == null or r.post == building:
+			total += B.prayer_rate * r.belief * _output_of(r)
+	return total
+
+
 ## The resident whose body stands nearest `p` on the ground, within `radius`; null if none.
 func resident_near(p: Vector3, radius: float) -> Resident:
 	return _street.resident_near(p, radius)
@@ -159,6 +201,28 @@ func evict(r: Resident) -> void:
 	_set_home(r, new_home)
 	if _has_body(r):
 		r.body.move_out()
+
+
+## Reset `building`: every believer living or sitting in there is let go. The
+## sitters go home, the residents move to the nearest other home, and the staff
+## lose their posts. Unlike evacuate, the building stays a home for others.
+func dismiss_believers(building: Node3D) -> void:
+	_release_occupants(building)
+	for r: Resident in (_staff.get(building, []) as Array).duplicate():
+		unassign(r)
+	_homes.erase(building)
+	var new_home := home_near(building.global_position)
+	_homes.append(building)
+	var count := 0
+	for r: Resident in (_by_home.get(building, []) as Array).duplicate():
+		if r.belief <= B.believer_threshold:
+			continue
+		count += 1
+		if new_home:
+			_set_home(r, new_home)
+			if _has_body(r):
+				r.body.move_out()
+	believers_dismissed.emit(building, count)
 
 
 ## Someone preaches to `r` (missionaries at the door): belief rises by
@@ -217,7 +281,7 @@ func assign(r: Resident, job: Resident.Job, building: Node3D) -> bool:
 	if job == Resident.Job.FREE or r.belief <= B.believer_threshold or building == null:
 		return false
 	var group := SHOPS if job == Resident.Job.SHOP else PRAYER_HOUSES
-	if not building.is_in_group(group) or staff_count(building, job) >= _slots_of(job):
+	if not building.is_in_group(group) or staff_count(building, job) >= _slots_of(job, building):
 		return false
 	unassign(r)
 	r.job = job
@@ -264,6 +328,27 @@ func staffed(building: Node3D) -> float:
 	for r: Resident in _staff.get(building, []):
 		total += _output_of(r)
 	return total
+
+
+## What the next upgrade or added floor for `building` costs; it rises with each purchase.
+func upgrade_cost(building: Node3D) -> float:
+	return _people.upgrade_base_cost * pow(_people.upgrade_cost_growth, _purchases.get(building, 0))
+
+
+## Buy `kind` for `building` (the caller has taken the money): well-being for
+## an elevator or roof garden, fear for cameras or a gate. Adds places for staff.
+func upgrade(building: Node3D, kind: Upgrade) -> void:
+	match kind:
+		Upgrade.ELEVATOR, Upgrade.ROOF_GARDEN:
+			add_comfort(building, _people.upgrade_comfort)
+		_:
+			scare(building, _people.upgrade_fear)
+	note_floor(building)
+
+
+## A floor was added to `building` (decrees): counts toward the rising cost and adds staff places.
+func note_floor(building: Node3D) -> void:
+	_purchases[building] = _purchases.get(building, 0) + 1
 
 
 ## How much harder the believers living in `building` fight a takeover by
@@ -349,13 +434,14 @@ func _preach() -> void:
 				priest_preached.emit(r, reached)
 
 
-func _slots_of(job: Resident.Job) -> int:
+func _slots_of(job: Resident.Job, building: Node3D) -> int:
+	var extra: int = _people.slots_per_purchase * _purchases.get(building, 0)
 	match job:
 		Resident.Job.SHOP:
-			return _people.shop_slots
+			return _people.shop_slots + extra
 		Resident.Job.PRIEST:
-			return _people.priest_slots
-	return _people.prayer_slots
+			return _people.priest_slots + extra
+	return _people.prayer_slots + extra
 
 
 func _output_of(r: Resident) -> float:
@@ -424,6 +510,15 @@ func _on_set_down(c: Citizen) -> void:
 	var building := _place_at(p)
 	if building == null:
 		return
+	# Set down in a prayer house or shop: the believer starts working there.
+	if r.job == Resident.Job.FREE:
+		var job := Resident.Job.FREE
+		if building.is_in_group(SHOPS):
+			job = Resident.Job.SHOP
+		elif building.is_in_group(PRAYER_HOUSES):
+			job = Resident.Job.PRAY
+		if assign(r, job, building):
+			return
 	r.occupying = building
 	if not _occupants.has(building):
 		_occupants[building] = []
@@ -456,6 +551,7 @@ func _forget_building(building: Node3D) -> void:
 	for r: Resident in (_staff.get(building, []) as Array).duplicate():
 		unassign(r)
 	_staff.erase(building)
+	_purchases.erase(building)
 	if _homes.is_empty():
 		return
 	for r in residents:
