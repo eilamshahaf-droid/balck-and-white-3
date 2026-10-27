@@ -14,6 +14,7 @@ extends Resource
 ## The Change Use that trains fighters; you need one building with it.
 @export var training_use := "Combat Training"
 @export var fighters := 4                   # believers sent at once
+@export var max_fighters := 12              # with a gym's holy warriors added
 @export var force_interval := 6.0           # seconds between residents scared out
 @export var force_exposure := 0.03          # exposure per resident scared out: the police notice
 @export var fighter_line := "Out! This floor belongs to the Hand."
