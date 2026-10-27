@@ -412,7 +412,8 @@ func preach_reach(preacher: Resident) -> float:
 func preach_strength(preacher: Resident) -> float:
 	var strength := _people.priest_strength
 	if preacher.post:
-		strength *= 1.0 + _people.lecture_hall_strength * count_of(preacher.post, Upgrade.LECTURE_HALL) \
+		var lectures := count_of(preacher.post, Upgrade.LECTURE_HALL)
+		strength *= 1.0 + _people.lecture_hall_strength * lectures \
 				+ _people.banner_strength * count_of(preacher.post, Upgrade.BANNERS)
 	return strength
 
