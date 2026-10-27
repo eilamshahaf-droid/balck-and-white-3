@@ -16,7 +16,7 @@ const BulldozerScript = preload("res://scripts/government/bulldozer.gd")
 const NoticeScript = preload("res://scripts/government/demolition_notice.gd")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 
-const OFF_KERB := 3.5          # where people stand in front of a building: sidewalk + a step (as in sign_followers.gd)
+const OFF_KERB := 3.5          # where people stand in front of a building: sidewalk + a step
 const NOTICE_LIFT := 6.0       # above the roof, so other towers don't hide it from the sky
 const INSPECTOR_LINE := "Department of Buildings. Routine inspection."
 const INSPECTOR_COLOR := Color(0.85, 0.9, 1.0)
