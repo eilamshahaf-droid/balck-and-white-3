@@ -111,6 +111,11 @@ extends Resource
 ## and prayer houses have no residents, so converting one crowds the homes around.
 @export_range(0.0, 1.0) var crowding_penalty := 0.5
 
+## Prayer house upgrades: each loudspeaker widens the reach of its priests, each
+## lecture hall makes their preaching stronger, by this share.
+@export var loudspeaker_reach := 0.25
+@export var lecture_hall_strength := 0.25
+
 @export_group("Fire")
 ## A building burns down with its people inside: each one indoors dies with this chance.
 @export_range(0.0, 1.0) var fire_death_chance := 0.5

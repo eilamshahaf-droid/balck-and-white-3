@@ -49,7 +49,14 @@ const B: Balance = preload("res://data/balance.tres")
 ## Buildings whose use is prayer; whoever sets a building's use keeps this group.
 const PRAYER_HOUSES := &"prayer_houses"
 ## The housing upgrades on the menu.
-enum Upgrade { ELEVATOR, ROOF_GARDEN, CAMERAS, GATE }
+enum Upgrade {
+	# Housing
+	ELEVATOR, ROOF_GARDEN, CAMERAS, GATE,
+	# Prayer house
+	LOUDSPEAKER, BANNERS, LECTURE_HALL,
+	# Workplace (a building of group shops)
+	STOREFRONT, GYM, REAL_ESTATE, SEMINARY, RESTAURANT,
+}
 ## Buildings that take shop staff; whoever sets a building's use keeps this group.
 const SHOPS := &"shops"
 
@@ -317,7 +324,8 @@ func assign(r: Resident, job: Resident.Job, building: Node3D) -> bool:
 	if job == Resident.Job.FREE or r.belief <= B.believer_threshold or building == null:
 		return false
 	var group := SHOPS if job == Resident.Job.SHOP else PRAYER_HOUSES
-	if not building.is_in_group(group) or staff_count(building) >= capacity(building):
+	var is_seminary := job == Resident.Job.PRIEST and count_of(building, Upgrade.SEMINARY) > 0
+	if not (building.is_in_group(group) or is_seminary) or staff_count(building) >= capacity(building):
 		return false
 	if job == Resident.Job.PRIEST and staff_count(building, job) >= _priest_slots_of(building):
 		return false
@@ -382,9 +390,9 @@ func upgrade_cost(building: Node3D) -> float:
 ## an elevator or roof garden, fear for cameras or a gate. Adds places for staff.
 func upgrade(building: Node3D, kind: Upgrade) -> void:
 	match kind:
-		Upgrade.ELEVATOR, Upgrade.ROOF_GARDEN:
+		Upgrade.ELEVATOR, Upgrade.ROOF_GARDEN, Upgrade.RESTAURANT:
 			add_comfort(building, _people.upgrade_comfort)
-		_:
+		Upgrade.CAMERAS, Upgrade.GATE:
 			scare(building, _people.upgrade_fear)
 	note_floor(building)
 	if not _bought.has(building):
@@ -392,6 +400,21 @@ func upgrade(building: Node3D, kind: Upgrade) -> void:
 		_bought[building] = list
 	(_bought[building] as Array[Upgrade]).append(kind)
 	upgraded.emit(building, kind)
+
+
+## The upgrades `building` can buy, by what it is: a prayer house, a workplace or a home.
+func upgrades_for(building: Node3D) -> Array[Upgrade]:
+	if building.is_in_group(PRAYER_HOUSES):
+		return [Upgrade.LOUDSPEAKER, Upgrade.BANNERS, Upgrade.LECTURE_HALL]
+	if building.is_in_group(SHOPS):
+		return [Upgrade.STOREFRONT, Upgrade.GYM, Upgrade.REAL_ESTATE, Upgrade.SEMINARY,
+				Upgrade.RESTAURANT]
+	return [Upgrade.ELEVATOR, Upgrade.ROOF_GARDEN, Upgrade.CAMERAS, Upgrade.GATE]
+
+
+## How many times `kind` was bought for `building`.
+func count_of(building: Node3D, kind: Upgrade) -> int:
+	return (_bought.get(building, []) as Array).count(kind)
 
 
 ## The upgrades bought for `building`, in order (repeats allowed).
@@ -498,8 +521,12 @@ func _preach() -> void:
 	for staff: Array in _staff.values():
 		for r: Resident in staff:
 			if r.job == Resident.Job.PRIEST and _has_body(r):
-				var reached := persuade_near(
-						r.body.global_position, _people.priest_reach, _people.priest_strength)
+				var reach := _people.priest_reach
+				var strength := _people.priest_strength
+				if r.post:
+					reach *= 1.0 + _people.loudspeaker_reach * count_of(r.post, Upgrade.LOUDSPEAKER)
+					strength *= 1.0 + _people.lecture_hall_strength * count_of(r.post, Upgrade.LECTURE_HALL)
+				var reached := persuade_near(r.body.global_position, reach, strength)
 				priest_preached.emit(r, reached)
 
 
