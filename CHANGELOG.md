@@ -40,6 +40,10 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/decrees.tres` (the `..._money` values).
 - Try it: press F5, hold the left button still on a building that isn't yours and pick a mark; then on one of yours, pick a decree and watch the money card drop.
 
+## 2026-10-27: City Hall's bulldozer without shields and lightning
+- With the shield and lightning miracles gone, only believers standing at the building (or the hand picking the bulldozer up) stop City Hall's crew.
+- Try it: press F5, raise exposure from the debug panel (F1) until a notice goes up, then gather believers at that building.
+
 ## 2026-10-27: Buildings earn or cost money; a poor start district
 - Every building of yours now earns or costs money each second, and the bottom-left panel shows it ("yours, earns $0.4/s").
   - **No use:** it brings rent in.

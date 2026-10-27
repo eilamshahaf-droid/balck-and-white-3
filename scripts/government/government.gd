@@ -38,11 +38,9 @@ var _rubble := _mat(Color(0.5, 0.47, 0.42))
 @onready var city: Node3D = get_parent()
 @onready var faith: Node = get_node("../Faith")
 @onready var districts: Node = get_node("../Districts")
-@onready var miracles: Node = get_node("../Miracles")
 
 
 func _ready() -> void:
-	miracles.miracle_cast.connect(_on_miracle_cast)
 	districts.district_controlled.connect(_on_district_controlled)
 
 
@@ -223,13 +221,6 @@ func _dismiss_inspectors() -> void:
 		elif c.can_answer():
 			_leaving.remove_at(i)
 			c.queue_free()
-
-
-func _on_miracle_cast(kind: StringName, miracle: Node3D) -> void:
-	if kind != &"lightning" or miracle == null or _step != Step.BULLDOZER:
-		return
-	if miracle.global_position.distance_to(_bulldozer.global_position) < G.lightning_scare_radius:
-		_bulldozer.scare()
 
 
 ## Taking a district is exactly what City Hall notices.
