@@ -3,7 +3,8 @@ extends Node3D
 ## The takeover marks over the buildings: a skull (force), a dollar (buy) or a
 ## sky sign (missionaries) floating above the roof, with how many residents
 ## believe so far underneath ("3 / 7 believe"). Only marked buildings have one,
-## so a Sprite3D and a Label3D each are cheap.
+## so a Sprite3D and a Label3D each are cheap. They shrink as the camera comes
+## in, so a close-up isn't covered by a 12 m dollar sign.
 
 const S: CampaignSettings = preload("res://data/campaigns.tres")
 const DivineSign = preload("res://scripts/divine_sign.gd")
@@ -22,6 +23,7 @@ var _marks := {}            # building -> Label3D under its icon
 
 
 func _ready() -> void:
+	set_process(false)
 	campaigns.campaign_started.connect(_on_started)
 	campaigns.campaign_ended.connect(_on_ended)
 	districts.counted.connect(_refresh)
@@ -48,6 +50,7 @@ func _on_started(building: Node3D, route: Campaigns.Route) -> void:
 	add_child(icon)
 	_marks[building] = label
 	_place(building)
+	set_process(true)
 
 
 func _on_ended(building: Node3D, _route: Campaigns.Route, _won: bool) -> void:
@@ -55,6 +58,18 @@ func _on_ended(building: Node3D, _route: Campaigns.Route, _won: bool) -> void:
 	if label:
 		label.get_parent().queue_free()
 		_marks.erase(building)
+	set_process(not _marks.is_empty())
+
+
+func _process(_delta: float) -> void:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	for building: Node3D in _marks:
+		var icon: Node3D = _marks[building].get_parent()
+		var distance := camera.global_position.distance_to(icon.global_position)
+		var size := clampf(distance / S.mark_far_distance, S.mark_min_scale, 1.0)
+		icon.scale = Vector3.ONE * size
 
 
 func _refresh() -> void:

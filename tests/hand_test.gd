@@ -35,6 +35,7 @@ func _ready() -> void:
 	await _test_trees_stay_rooted()
 	await _test_pigeons()
 	await _test_wheel_focus_loss()
+	await _test_bag_squash()
 	print("HAND TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -272,3 +273,24 @@ func _check(ok: bool, what: String) -> void:
 	print("  %s  %s" % ["ok  " if ok else "FAIL", what])
 	if not ok:
 		_failures += 1
+
+
+## A trash bag dropped on another squashes it, and both still sit in the street.
+func _test_bag_squash() -> void:
+	var bags: Array[StreetProp] = []
+	for node in _main.get_node("CityProps").get_children():
+		if node is StreetProp and (node as StreetProp).is_squashy():
+			bags.append(node)
+		if bags.size() == 2:
+			break
+	_check(bags.size() == 2, "the sidewalks have trash bags")
+	if bags.size() < 2:
+		return
+	var below := bags[0]
+	var above := bags[1]
+	above.global_position = below.global_position + Vector3.UP * 1.5
+	above.linear_velocity = Vector3.DOWN * 4.0
+	above.sleeping = false
+	below.sleeping = false
+	await _frames(60)
+	_check(below.squash_amount() > 0.1, "a bag dropped on a bag squashes it")

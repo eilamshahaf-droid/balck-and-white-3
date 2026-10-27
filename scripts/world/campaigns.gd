@@ -34,6 +34,8 @@ class Campaign:
 	var route: Route
 	var agents: Array[Citizen] = []
 	var wait := 0.0
+	## Seconds the police still block the street in front of it.
+	var blocked := 0.0
 	## What holds it up, for the HUD ("" while it runs).
 	var stalled := ""
 
@@ -106,6 +108,48 @@ func price_in(building: Node3D) -> float:
 	return S.apartment_price * (districts.wealth_at(i) if i >= 0 else 1.0)
 
 
+## Every marked building.
+func marked() -> Array[Node3D]:
+	var out: Array[Node3D] = []
+	for c in _campaigns:
+		out.append(c.building)
+	return out
+
+
+## How many of the crew stand at `building` now.
+func crew_at(building: Node3D) -> int:
+	var c := _campaign_on(building)
+	if c == null:
+		return 0
+	return c.agents.filter(func(a: Citizen) -> bool: return is_instance_valid(a) and a.errand_arrived).size()
+
+
+## The police close the street in front of `building` for `seconds`: the crew
+## goes home and the campaign waits.
+## A roadblock was wrecked: the crews may go back to work.
+func unblock(building: Node3D) -> void:
+	var c := _campaign_on(building)
+	if c:
+		c.blocked = 0.0
+
+
+func block(building: Node3D, seconds: float) -> void:
+	var c := _campaign_on(building)
+	if c == null:
+		return
+	c.blocked = seconds
+	for a in c.agents:
+		if is_instance_valid(a):
+			a.end_errand()
+	c.agents.clear()
+
+
+## A place on the pavement in front of `building`, on the side facing the
+## nearest street corner, so the walk there doesn't run into a wall.
+func spot_outside(building: Node3D) -> Vector3:
+	return _spot_outside(building, true)
+
+
 ## What holds the campaign on `building` up, or "" while it runs.
 func stalled_on(building: Node3D) -> String:
 	var c := _campaign_on(building)
@@ -115,6 +159,10 @@ func stalled_on(building: Node3D) -> String:
 func _step(c: Campaign) -> void:
 	if not is_instance_valid(c.building) or districts.owns(c.building):
 		_end(c, is_instance_valid(c.building))
+		return
+	if c.blocked > 0.0:
+		c.blocked -= S.tick
+		c.stalled = "police roadblock"
 		return
 	_top_up(c)
 	c.wait -= S.tick
@@ -195,13 +243,13 @@ func _top_up(c: Campaign) -> void:
 	var line: String = [S.fighter_line, S.buyer_line, S.missionary_line][c.route]
 	var center := c.building.global_position
 	for a in free.slice(0, wanted - c.agents.size()):
-		a.send_on_errand(_spot_outside(c.building), center, INF, line, S.line_color)
+		a.send_on_errand(_spot_outside(c.building, false), center, INF, line, S.line_color)
 		c.agents.append(a)
 
 
-## A place on the pavement in front of `building`, on the side facing the
-## nearest street corner, so the walk there doesn't run into a wall.
-func _spot_outside(building: Node3D) -> Vector3:
+## The pavement in front of `building` facing the nearest corner; `middle`
+## gives its centre, otherwise somewhere along the wall.
+func _spot_outside(building: Node3D, middle: bool) -> Vector3:
 	var center := building.global_position
 	var half := DivineSign.building_size(building) / 2.0
 	var corner: Vector3 = districts.city.intersection(districts.city.nearest_grid(center))
@@ -209,10 +257,10 @@ func _spot_outside(building: Node3D) -> Vector3:
 	var spot := center
 	if absf(to.x) / half.x > absf(to.z) / half.z:
 		spot.x += signf(to.x) * (half.x + SIDEWALK_GAP)
-		spot.z += randf_range(-half.z, half.z) * 0.8
+		spot.z += 0.0 if middle else randf_range(-half.z, half.z) * 0.8
 	else:
 		spot.z += signf(to.z) * (half.z + SIDEWALK_GAP)
-		spot.x += randf_range(-half.x, half.x) * 0.8
+		spot.x += 0.0 if middle else randf_range(-half.x, half.x) * 0.8
 	spot.y = corner.y
 	return spot
 

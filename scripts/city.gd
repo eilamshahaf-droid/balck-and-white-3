@@ -29,6 +29,7 @@ const DoorScript := preload("res://scripts/door.gd")
 const LitterScript := preload("res://scripts/litter.gd")
 const PigeonScript := preload("res://scripts/pigeon.gd")
 const BuildingVisual := preload("res://scripts/building_visual.gd")
+const PROPS_SETTINGS := "res://data/city_props.tres"   # load() at run time: typed PropKind arrays
 
 ## Debug view: tint residents by their hidden belief.
 var show_belief := false
@@ -272,11 +273,12 @@ func _plant_tree(pos: Vector3, crown_radius: float) -> void:
 
 
 func _spawn_taxis() -> void:
+	var taxi_kind := (load(PROPS_SETTINGS) as CityPropsSettings).taxi
 	for n in TAXI_COUNT:
 		var taxi: RigidBody3D = TaxiScript.new()
 		taxi.collision_layer = LAYER_PROPS
 		taxi.collision_mask = LAYER_WORLD | LAYER_PROPS
-		taxi.build(_mat(Color(0.95, 0.75, 0.1)))
+		taxi.build(taxi_kind)
 		var avenue := intersection(Vector2i(rng.randi_range(0, AVENUES - 1), 0))
 		taxi.position = Vector3(avenue.x + rng.randf_range(-4.0, 4.0), 1.0, rng.randf_range(-half_size.y, half_size.y))
 		add_child(taxi)

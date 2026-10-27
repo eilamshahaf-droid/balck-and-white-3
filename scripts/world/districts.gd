@@ -16,6 +16,8 @@ signal district_controlled(district: int)
 signal counted
 ## Building `index` stands empty for good now (start district, fire, roaches).
 signal building_abandoned(index: int)
+## District `district` has a different core building now (the old one was demolished).
+signal core_changed(district: int)
 
 const S: DistrictSettings = preload("res://data/districts.tres")
 const B: Balance = preload("res://data/balance.tres")
@@ -34,6 +36,7 @@ var _abandoned := PackedByteArray()
 var _totals := PackedInt32Array()        # standing buildings per district
 var _owned := PackedInt32Array()         # buildings of yours per district
 var _controlled := PackedByteArray()
+var _core := PackedInt32Array()          # per district: index of its core building, -1 if none
 var _index := {}                         # building -> index
 var _residents := PackedInt32Array()     # people who live there, counted every tick
 var _believers := PackedInt32Array()     # of them, believers
@@ -98,6 +101,16 @@ func share(d: int) -> float:
 
 func is_controlled(d: int) -> bool:
 	return _controlled[d] == 1
+
+
+## The district's hard central building, as an index (-1 when it has none).
+func core_of(d: int) -> int:
+	return _core[d]
+
+
+## Once a district's core is yours, City Hall and the police leave it alone.
+func leaves_alone(d: int) -> bool:
+	return _core[d] >= 0 and _yours[_core[d]] == 1
 
 
 func is_yours(index: int) -> bool:
@@ -188,11 +201,15 @@ func remove_building(building: Node3D) -> void:
 		return
 	if _yours[i] == 1:
 		_set_side(i, false)
-	_totals[_district_of[i]] -= 1
+	var d := _district_of[i]
+	_totals[d] -= 1
 	_district_of[i] = -1
 	buildings[i] = null
 	_index.erase(building)
 	building_changed.emit(i, false)
+	if _core[d] == i:
+		_core[d] = _pick_core(d)
+		core_changed.emit(d)
 
 
 ## Testing shortcut: the `count` buildings nearest `p` become yours at once
@@ -217,7 +234,8 @@ func convert_near(p: Vector3, count: int) -> void:
 func _holds(i: int) -> bool:
 	if _residents[i] == 0:
 		return _presence[i] > 0.0
-	return float(_believers[i]) / _residents[i] > S.capture_share
+	var needed := S.core_capture_share if _core[_district_of[i]] == i else S.capture_share
+	return float(_believers[i]) / _residents[i] > needed
 
 
 func _count() -> void:
@@ -279,6 +297,7 @@ func _collect() -> void:
 		sizes.append(DivineSign.building_size(b))
 		_district_of.append(d)
 		_totals[d] += 1
+	_find_cores(count)
 	var n := buildings.size()
 	_yours.resize(n)
 	_yours.fill(0)
@@ -287,6 +306,28 @@ func _collect() -> void:
 	_residents.resize(n)
 	_believers.resize(n)
 	_presence.resize(n)
+
+
+func _find_cores(count: int) -> void:
+	_core.resize(count)
+	for d in count:
+		_core[d] = _pick_core(d)
+
+
+## The standing building nearest the middle of district `d`, or -1.
+func _pick_core(d: int) -> int:
+	var middle := district_rect(d).get_center()
+	var best := -1
+	var best_gap := INF
+	for i in buildings.size():
+		if _district_of[i] != d:
+			continue
+		var p := buildings[i].global_position
+		var gap := Vector2(p.x, p.z).distance_squared_to(middle)
+		if gap < best_gap:
+			best_gap = gap
+			best = i
+	return best
 
 
 ## Which of `parts` bands a block falls in, with band edges on road lines.

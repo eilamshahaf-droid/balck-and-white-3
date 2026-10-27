@@ -76,6 +76,8 @@ extends Resource
 @export_range(-1.0, 1.0) var money_situation := 0.7
 @export_range(0.0, 1.0) var money_deniability := 0.2   # "an armoured truck lost its doors"
 @export var money_radius := 9.0
+## Over a building that is yours the notes bring this many times the money.
+@export var money_own_multiplier := 2.0
 @export var money_time := 6.0
 @export var money_seen_from := 80.0
 @export var money_proof := 0.3
@@ -117,6 +119,8 @@ extends Resource
 @export var frog_proof_min := -0.6
 @export var frog_proof_max := 1.0
 @export var frog_cooldown := 40.0
+## Chance that the frogs wreck a police roadblock within their reach.
+@export_range(0.0, 1.0) var frog_roadblock_chance := 0.7
 
 @export_group("Accidents: believers set their own buildings on fire")
 @export var accident_interval := 40.0        # seconds between chances of an accident
@@ -133,6 +137,13 @@ extends Resource
 @export_range(0.0, 1.0) var saved_deniability := 0.2   # rain on exactly one burning building
 @export var saved_seen_from := 60.0
 @export var saved_proof := 1.2               # the strongest proof: the god saved their home
+
+@export_group("Head priest marker: so you can find him")
+@export var priest_ring_radius := 2.2        # metres, the ring on the ground around him
+@export var priest_ring_color := Color(1.0, 0.85, 0.3)
+@export var priest_label_pixel := 0.0011
+@export var priest_label_height := 4.5       # metres above his feet
+@export var priest_preach_mark_time := 4.0   # seconds "preaching..." stays after he talks
 
 @export_group("Floating notes: who just came to believe")
 @export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once
