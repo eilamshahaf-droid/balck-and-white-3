@@ -198,7 +198,6 @@ func _stage_people(building: Node3D, size: Vector3) -> void:
 	survivor.idle = true
 	survivor.belief = 0.1
 	survivor.skepticism = 0.05
-	survivor.scripted_explanation = &"god"
 	survivor._look_at_target = building.position + Vector3(0, roof, size.z)
 	fire.endangered = [survivor]
 
@@ -213,7 +212,6 @@ func _stage_people(building: Node3D, size: Vector3) -> void:
 	skeptic = crowd[0]
 	skeptic.skepticism = 0.95
 	skeptic.has_phone = true
-	skeptic.scripted_explanation = &"fraud"
 
 
 func _crowd_center() -> Vector3:

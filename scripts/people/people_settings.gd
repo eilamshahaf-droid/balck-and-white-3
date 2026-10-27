@@ -81,10 +81,11 @@ extends Resource
 @export_range(0.0, 1.0) var flee_fear := 0.85
 
 @export_group("Jobs")
-## Free believers can be given a post: how many each kind of building takes.
-@export var prayer_slots := 12
+## Free believers can be given a post. A building takes one person per this many
+## cubic metres (footprint times height), at least one, so a tower holds far
+## more than a shed; priests are limited on top of that.
+@export var staff_volume := 1500.0
 @export var priest_slots := 2
-@export var shop_slots := 6
 ## Comfortable staff do more: output is times 1 + this * comfort.
 @export var comfort_output_bonus := 0.5
 ## Frightened believers fight harder: a takeover by force is times 1 + this *
@@ -100,8 +101,24 @@ extends Resource
 ## Elevator and roof garden raise the residents' comfort; cameras and a gate scare them.
 @export_range(0.0, 1.0) var upgrade_comfort := 0.1
 @export_range(0.0, 1.0) var upgrade_fear := 0.15
-## Each purchase also adds this many places to every job in the building.
+## Each purchase also adds this many places to the building.
 @export var slots_per_purchase := 2
+
+@export_group("Housing")
+## A home holds its starting residents times this; past that it is crowded.
+@export var housing_slack := 1.3
+## Comfort lost at twice the capacity (scaled by how crowded the home is). Shops
+## and prayer houses have no residents, so converting one crowds the homes around.
+@export_range(0.0, 1.0) var crowding_penalty := 0.5
+
+## Prayer house upgrades: each loudspeaker widens the reach of its priests, each
+## lecture hall makes their preaching stronger, by this share.
+@export var loudspeaker_reach := 0.25
+@export var lecture_hall_strength := 0.25
+
+@export_group("Fire")
+## A building burns down with its people inside: each one indoors dies with this chance.
+@export_range(0.0, 1.0) var fire_death_chance := 0.5
 
 @export_group("Colours")
 @export var believer_color := Color(1.0, 0.78, 0.15)
@@ -114,10 +131,30 @@ extends Resource
 @export var priest_reach := 12.0
 @export var priest_strength := 0.15
 ## Belief per second the priest prays into the pool on his own.
-@export var priest_prayer := 0.3
+@export var priest_prayer := 0.02
 @export var priest_color := Color(1.0, 1.0, 1.0)
 ## Priests are drawn this many times larger, so the crowd can pick them out.
 @export var priest_scale := 1.5
+
+@export_group("Sermons")
+## A priest stops to preach this often (seconds apart) and for this long; a crowd
+## of up to crowd_size people within crowd_reach gathers in a ring around him.
+@export var sermon_interval := 25.0
+@export var sermon_time := 15.0
+@export var crowd_size := 12
+@export var crowd_reach := 40.0
+@export var crowd_radius := 3.0
+## A full crowd preaches this much stronger (1 + this at crowd_size).
+@export var crowd_boost := 1.0
+@export var sermon_line := "Amen!"
+@export var crowd_line_color := Color(1.0, 0.95, 0.7)
+## Hidden chance that the police step in on a sermon, on a street where nobody
+## believes and on one where everybody does; safety counts believers within safety_radius.
+@export_range(0.0, 1.0) var raid_chance_unsafe := 0.5
+@export_range(0.0, 1.0) var raid_chance_safe := 0.02
+@export var safety_radius := 60.0
+## A raid ends after this many seconds if nobody has dealt with it.
+@export var raid_time := 60.0
 
 @export_group("Dancing")
 ## People sent on an errand to dance (a block party) bob this high, this fast, and turn.

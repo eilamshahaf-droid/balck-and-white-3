@@ -5,17 +5,13 @@ extends Resource
 ## Open data/balance.tres in Godot and change values in the Inspector.
 ##
 ## Miracles don't convert: they are proof a priest preaches with. Witnesses
-## still explain what they saw (god, chance, fraud, a plot), say it and film it.
+## stop to stare, and some film it.
 
 @export_group("Miracles: situation S")
 @export_range(-1.0, 1.0) var spectacle_situation := 0.5    # watching something harmless and strange
 
-@export_group("Explanations")
-## Each witness explains the miracle: god, chance, fraud or a plot.
+@export_group("Situation of the helped")
 @export var helped_situation := 1.0          # S for someone the miracle actually helped
-@export_range(0.0, 1.0) var bystander_timing := 0.3   # how much a miracle seems "meant for me" when it wasn't
-@export var fraud_weight := 0.6              # how readily skeptics call it a hoax
-@export var plot_weight := 0.15              # how readily skeptics suspect someone's scheme
 
 @export_group("Witnesses")
 @export var witness_radius := 35.0           # how far people see miracles (needs a clear line of sight)
@@ -46,4 +42,3 @@ extends Resource
 ## cult, unless their friends or their building hold it up.
 @export var belief_decay := 0.0008
 ## Belief per second pulled up toward close friends who believe more.
-@export var contagion_rate := 0.0015

@@ -89,6 +89,6 @@ func _witness(subject: Node3D, e: Dictionary, people: Array) -> void:
 			query.exclude = see_through
 		if space.intersect_ray(query):
 			continue  # a building is in the way
-		var filmed: bool = c.witness(e, at, c.resident.friends_belief)
+		var filmed: bool = c.witness(e, at)
 		if filmed:
 			exposure = minf(exposure + B.exposure_per_video * e.intensity, 1.0)
