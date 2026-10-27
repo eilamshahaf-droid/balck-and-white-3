@@ -3,9 +3,11 @@ extends Resource
 ## One kind of Meshy prop (a trash can, a window air conditioner, a water tank)
 ## and how the city uses it. Listed in data/city_props.tres.
 
-## The prop's model, as exported from Meshy and shrunk to 1K textures
-## (assets/models/meshy/). Its largest side is already its real size in metres.
-@export var model: PackedScene
+## The prop's model, as exported from Meshy and shrunk (assets/models/meshy/).
+## Its largest side is already its real size in metres. A path, not a scene,
+## so a model loads when something first needs it: the state, use and upgrade
+## props are most of the models and many never show up in a game.
+@export_file("*.glb") var model_path := ""
 ## Turn the model about the vertical so its front faces +Z (degrees).
 @export var yaw_degrees := 0.0
 ## Stretch on top of the real size, after the turn; the taxi uses it to stay a

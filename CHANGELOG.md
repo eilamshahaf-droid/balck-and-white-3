@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Faster start for the Meshy props
+- The game started slowly because the props settings loaded all 46 Meshy models at once (6 s on a test machine). A model now loads the first time something needs it, so the models for uses, upgrades and abandoned buildings only load when they show up.
+- The textures are smaller too: 512 px instead of 1024, and the metal and roughness maps (the game ignores them) are cut to a few pixels. The Meshy folder went from 42 MB to 9.6 MB. At street scale it looks the same.
+- Numbers: `PropKind.model_path` in `data/city_props.tres` replaces the model scene.
+- Try it: press F5 and watch the time to the first frame.
+
 ## 2026-10-27: Upgrades show on the building
 - An upgrade you buy now appears on the building and stays for good. Homes: an elevator shaft up the side, a garden with deck chairs on the roof, security cameras by the door, an iron gate at the street. Prayer houses: loudspeakers on the roof, the cult banner on the front, a lecture podium with chairs at the street. Shops: a striped awning, a gym corner, a for-sale sign, a bell tower on the roof (seminary), café tables.
 - Numbers: `data/city_props.tres` ("Housing upgrades": where on the building each one goes).
