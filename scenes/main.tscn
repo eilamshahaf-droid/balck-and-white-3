@@ -22,6 +22,7 @@
 [ext_resource type="Script" path="res://scripts/world/campaigns.gd" id="19_campaigns"]
 [ext_resource type="Script" path="res://scripts/world/campaign_marks.gd" id="20_marks"]
 [ext_resource type="Script" path="res://scripts/government/police.gd" id="21_police"]
+[ext_resource type="Script" path="res://scripts/world/building_tooltip.gd" id="22_tooltip"]
 [ext_resource type="Script" path="res://scripts/accidents.gd" id="39_accidents"]
 [ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
 [ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
@@ -158,5 +159,12 @@ offset_right = 900.0
 offset_bottom = -12.0
 grow_vertical = 0
 script = ExtResource("16_district_hud")
+
+[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "treasury", "decrees", "camera")]
+script = ExtResource("22_tooltip")
+districts = NodePath("../../Districts")
+treasury = NodePath("../../Treasury")
+decrees = NodePath("../../Decrees")
+camera = NodePath("../../CameraRig/Camera3D")
 
 [connection signal="building_abandoned" from="Miracles" to="Districts" method="mark_abandoned"]

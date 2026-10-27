@@ -5,6 +5,13 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 
 
 
+## 2026-10-27: Roadblocks you can break, core beacons, building tooltips
+- **Roadblocks** have a name and a countdown ("ROADBLOCK 2, street closed, 74 s"), a red-tinted shut stretch of street, and last 90 seconds. They have hit points and show damage: barriers dent and lean as it falls. A thrown taxi or crate, a fire nearby and a crowd of believers at the building wear one down; at zero it is gone and the campaign goes on. `Police.break_near(point, radius)` lets frogs smash one (70% per landing, and the police notice); `damage_near` is for anything else.
+- **Core buildings** carry a purple beacon above the roof, gold once yours.
+- **Tooltip**: hover any building to see its kind, whether it is a district core, residents and believers, and what it earns or costs when yours.
+- Numbers: `data/police.tres` ("Breaking a roadblock"), `data/districts.tres` ("Look").
+- Try it: hover buildings; mark one with the sky sign, then use the debug panel to raise heat until the street closes; throw a taxi at the barrier.
+
 ## 2026-10-27: Police roadblocks and a hidden building code
 - **Police**: crews working a marked building add to its hidden `Heat` (fighters most of all, more when exposure is high). When `Heat` calls the police they close the street in front of it (barriers, a patrol car, "POLICE LINE"), the crew goes home and the campaign waits about 45 seconds. Poor districts are soft, rich ones hard. A district that is yours is left alone. The HUD shows "Police: quiet / N streets closed".
 - **Hidden building code**: City Hall no longer reacts to divine signs. It quietly watches your buildings: more than 2 floor decrees, luxury on top of that, and a Combat Training use all count as breaches. A breach adds heat once, and suspicion builds until an inspector visits. Over-optimizing is what eventually brings the bulldozer.
