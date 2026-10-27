@@ -36,6 +36,9 @@ float bands(float t) {
 
 void fragment() {
 	vec3 col = albedo.rgb * texture(albedo_tex, UV).rgb;
+#ifdef VERTEX_TINT
+	col *= COLOR.rgb;  // per-instance colour of a MultiMesh crowd
+#endif
 	float grey = dot(col, vec3(0.3, 0.59, 0.11));
 	col = clamp(mix(vec3(grey), col, saturation), 0.0, 1.0);
 	ALBEDO = col;
