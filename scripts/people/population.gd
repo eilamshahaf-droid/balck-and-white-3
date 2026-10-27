@@ -42,6 +42,8 @@ var _people: PeopleSettings = load("res://data/people.tres")
 const B: Balance = preload("res://data/balance.tres")
 ## Buildings whose use is prayer; whoever sets a building's use keeps this group.
 const PRAYER_HOUSES := &"prayer_houses"
+## The housing upgrades on the menu.
+enum Upgrade { ELEVATOR, ROOF_GARDEN, CAMERAS, GATE }
 ## Buildings that take shop staff; whoever sets a building's use keeps this group.
 const SHOPS := &"shops"
 
@@ -69,6 +71,7 @@ var _census: Census
 var _street := Street.new()
 var _stages: Dictionary = {}       # resident -> the stage last announced
 var _priest_timer := 0.0
+var _purchases: Dictionary = {}      # building -> upgrades and floors bought so far
 var _staff: Dictionary = {}          # building -> Array[Resident] with a post there
 var _home_comfort: Dictionary = {}   # building -> the comfort its residents drift toward
 var _rng := RandomNumberGenerator.new()
@@ -217,7 +220,7 @@ func assign(r: Resident, job: Resident.Job, building: Node3D) -> bool:
 	if job == Resident.Job.FREE or r.belief <= B.believer_threshold or building == null:
 		return false
 	var group := SHOPS if job == Resident.Job.SHOP else PRAYER_HOUSES
-	if not building.is_in_group(group) or staff_count(building, job) >= _slots_of(job):
+	if not building.is_in_group(group) or staff_count(building, job) >= _slots_of(job, building):
 		return false
 	unassign(r)
 	r.job = job
@@ -264,6 +267,27 @@ func staffed(building: Node3D) -> float:
 	for r: Resident in _staff.get(building, []):
 		total += _output_of(r)
 	return total
+
+
+## What the next upgrade or added floor for `building` costs; it rises with each purchase.
+func upgrade_cost(building: Node3D) -> float:
+	return _people.upgrade_base_cost * pow(_people.upgrade_cost_growth, _purchases.get(building, 0))
+
+
+## Buy `kind` for `building` (the caller has taken the money): well-being for
+## an elevator or roof garden, fear for cameras or a gate. Adds places for staff.
+func upgrade(building: Node3D, kind: Upgrade) -> void:
+	match kind:
+		Upgrade.ELEVATOR, Upgrade.ROOF_GARDEN:
+			add_comfort(building, _people.upgrade_comfort)
+		_:
+			scare(building, _people.upgrade_fear)
+	note_floor(building)
+
+
+## A floor was added to `building` (decrees): counts toward the rising cost and adds staff places.
+func note_floor(building: Node3D) -> void:
+	_purchases[building] = _purchases.get(building, 0) + 1
 
 
 ## How much harder the believers living in `building` fight a takeover by
@@ -349,13 +373,14 @@ func _preach() -> void:
 				priest_preached.emit(r, reached)
 
 
-func _slots_of(job: Resident.Job) -> int:
+func _slots_of(job: Resident.Job, building: Node3D) -> int:
+	var extra: int = _people.slots_per_purchase * _purchases.get(building, 0)
 	match job:
 		Resident.Job.SHOP:
-			return _people.shop_slots
+			return _people.shop_slots + extra
 		Resident.Job.PRIEST:
-			return _people.priest_slots
-	return _people.prayer_slots
+			return _people.priest_slots + extra
+	return _people.prayer_slots + extra
 
 
 func _output_of(r: Resident) -> float:
@@ -456,6 +481,7 @@ func _forget_building(building: Node3D) -> void:
 	for r: Resident in (_staff.get(building, []) as Array).duplicate():
 		unassign(r)
 	_staff.erase(building)
+	_purchases.erase(building)
 	if _homes.is_empty():
 		return
 	for r in residents:

@@ -92,6 +92,17 @@ extends Resource
 @export var fear_force_bonus := 0.5
 @export var fear_defense_bonus := 1.0
 
+@export_group("Upgrades")
+## Every upgrade or added floor bought for a building costs more than the last
+## one there: base * growth ^ purchases so far. Treasury charges it.
+@export var upgrade_base_cost := 200.0
+@export var upgrade_cost_growth := 1.5
+## Elevator and roof garden raise the residents' comfort; cameras and a gate scare them.
+@export_range(0.0, 1.0) var upgrade_comfort := 0.1
+@export_range(0.0, 1.0) var upgrade_fear := 0.15
+## Each purchase also adds this many places to every job in the building.
+@export var slots_per_purchase := 2
+
 @export_group("Colours")
 @export var believer_color := Color(1.0, 0.78, 0.15)
 @export var zealot_color := Color(1.0, 0.45, 0.1)
