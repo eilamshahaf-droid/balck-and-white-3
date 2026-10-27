@@ -131,7 +131,7 @@ extends Resource
 @export var priest_reach := 12.0
 @export var priest_strength := 0.15
 ## Belief per second the priest prays into the pool on his own.
-@export var priest_prayer := 0.3
+@export var priest_prayer := 0.02
 @export var priest_color := Color(1.0, 1.0, 1.0)
 ## Priests are drawn this many times larger, so the crowd can pick them out.
 @export var priest_scale := 1.5

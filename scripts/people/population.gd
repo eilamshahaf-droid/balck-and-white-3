@@ -169,7 +169,6 @@ func yield_of(building: Node3D) -> float:
 	var people: Array = []
 	people.append_array(_staff.get(building, []))
 	people.append_array(occupants(building))
-	people.append_array(_by_home.get(building, []))
 	for r: Resident in people:
 		if seen.has(r) or r.belief <= B.believer_threshold:
 			continue
@@ -757,9 +756,9 @@ func _refresh_presence() -> void:
 		_presence[r.home] += r.belief
 		if r.occupying and r.occupying != r.home:
 			_presence[r.occupying] += r.belief
-		# Only prayer-house staff and seats taken in one make belief.
-		var at := r.occupying if r.occupying else r.home
-		if r.job == Resident.Job.PRAY or at.is_in_group(PRAYER_HOUSES):
+		# Only prayer-house staff and believers sitting in one make belief; living
+		# next to the altar doesn't, so the player has to staff the house.
+		if r.job == Resident.Job.PRAY or (r.occupying and r.occupying.is_in_group(PRAYER_HOUSES)):
 			prayer += B.prayer_rate * r.belief * _output_of(r)
 	if priest:
 		prayer += _people.priest_prayer
