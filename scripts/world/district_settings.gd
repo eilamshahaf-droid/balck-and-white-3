@@ -14,6 +14,11 @@ extends Resource
 	"Chelsea Docks", "Park Edge", "Canal Street",
 ]
 
+## How well off each district is, in the same order: scales rent and shop
+## income and what it costs to buy people out. The start district by the river
+## is poor; downtown (Garment Row) is rich.
+@export var wealth := PackedFloat32Array([1.2, 2.0, 0.4, 1.0, 1.5, 0.9, 0.8, 1.0, 0.7])
+
 @export_group("Who holds a building")
 @export var tick := 0.5                     # seconds between counts
 ## Share of a building's residents who must believe for it to be yours.

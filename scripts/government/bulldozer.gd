@@ -1,7 +1,7 @@
 extends RigidBody3D
 ## The demolition crew's bulldozer. It drives up the avenue to the building on
-## the notice and slowly pushes it into the ground, unless something stops it:
-## a shield over it, believers standing at the building, or lightning nearby.
+## the notice and slowly pushes it into the ground, unless believers standing
+## at the building stop it.
 ## The hand can also just pick it up, and after that the crew won't get back in.
 ## Either way it stays behind as one more thing to throw around.
 
@@ -14,7 +14,6 @@ const B = preload("res://data/balance.tres")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 const RIDE_HEIGHT := 1.1
 const LINES := {
-	&"shield": ["Is that... weather?", "Nobody said anything about a force field."],
 	&"believers": ["Folks, please step away from the building.", "I just drive the thing, lady."],
 }
 
@@ -41,7 +40,7 @@ func build(route: Array[Vector3], building: Node3D, body_mat: Material, dark_mat
 	mass = G.bulldozer_mass
 	set_meta("surface", &"metal")
 	freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
-	freeze = true  # driven by script until the hand or lightning sets it loose
+	freeze = true  # driven by script until the hand sets it loose
 	_route = route
 	_building = building
 	position = route[0] + Vector3.UP * RIDE_HEIGHT
@@ -77,21 +76,10 @@ func status_text() -> String:
 		Mode.DRIVING:
 			return "a bulldozer is on its way"
 		Mode.WORKING:
-			if _blocker == &"shield":
-				return "the bulldozer is stuck at a shield"
 			if _blocker == &"believers":
 				return "believers are blocking the bulldozer"
 			return "demolishing (%d%%)" % roundi(_progress * 100.0)
 	return "the crew went home"
-
-
-## Lightning nearby: the crew bails out and the bulldozer jumps.
-func scare() -> void:
-	if _mode == Mode.DONE:
-		return
-	freeze = false
-	apply_central_impulse(Vector3.UP * mass * G.scare_hop)
-	_give_up("The crew remembered a dentist appointment.")
 
 
 func on_grabbed() -> void:
@@ -160,9 +148,6 @@ func _work(delta: float) -> void:
 
 ## Why the crew can't work right now, or &"" if nothing stops them.
 func _what_blocks() -> StringName:
-	for shield in get_tree().get_nodes_in_group("shields"):
-		if shield.covers(global_position):
-			return &"shield"
 	var guards := 0
 	for c in get_tree().get_nodes_in_group("citizens"):
 		if c.errand_arrived and c.belief > B.believer_threshold \

@@ -3,6 +3,28 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+
+
+## 2026-10-27: Risky believers, Block Party, Rain of Frogs
+- Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
+  - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.
+  - **Rain of Frogs**, the chaotic one: frogs fall and hop about, people run or get knocked flat, any building under them (yours too) may be overrun and emptied, and the city reads it as a blessing or a curse, at random.
+- **Accidents**: every 40 seconds or so, believers may set one of your buildings on fire by accident (candles, incense, a very moving sermon), likelier in a Prayer House or Course Center and near zealots. "Water, quick!" floats over it.
+- **Saving a building**: water that puts out a burning building before it is lost saves it ("Saved!"), and everyone who lives there is won over a step. A fire left burning for its full time burns the building down and empties it.
+- **Who just came to believe**: "+ Believer", "Zealot!" or "Lost a believer" floats over people on the street when their belief stage changes.
+- **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
+- Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
+- Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
+
+## 2026-10-27: Every building has residents; belief grows in stages, slower
+- Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.
+- Belief now has five stages: skeptic, curious, sympathizer, believer, zealot. A single miracle (or visit, or offer) moves a person at most one stage, so winning someone over takes several.
+- Belief slowly slides back to what a person believed before the cult, unless friends who believe or a home full of believers hold it up. Friends who believe more slowly pull people up.
+- Each social group answers the four routes differently: students and artists fall for miracles, retirees for a visit from missionaries, shopkeepers and bankers for money, police for force.
+- Numbers: `data/balance.tres` ("Stages of belief", "Drift": `persuasion_scale` is the one knob for how fast the cult grows) and `data/people.tres` (groups' responses, `min_residents_per_home`, `street_people`).
+- Try it: press F5, press B and hover a person: the card shows their stage.
+- People can be sent to dance (for the block party): they bob and turn on the spot (`data/people.tres`, "Dancing").
+
 ## 2026-10-27: Catch editor warnings before pushing
 - `CLAUDE.md` now runs the headless checks with `--debug`, which prints the same GDScript warnings the editor shows (they were silent before, so warnings reached Eilam's editor unnoticed).
 - Try it: `godot --headless --path . --debug --quit-after 600` prints nothing but the banner.
@@ -10,6 +32,8 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 ## 2026-10-27: Last editor warnings fixed
 - `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), and the planning scripts no longer divide whole numbers by whole numbers ("Integer division"), so the editor's warning list is empty.
 - Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.
+
+
 
 ## 2026-10-27: Alpha (refreshed)
 - The combined build with everything every thread has so far: main (the cloth glove, 500 people in one crowd, the error fixes), the world branch (takeover by force / buy / missionaries, money and the new meters, PR #11), the Meshy props (PR #17) and the hand round (roaches, money from the sky, dearer miracles, decrees that cost money, the takeover marks in the building wheel, no tree lifting).
@@ -22,6 +46,21 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - The three divine signs (beam, storm, halo) are off the wheel; the marks replace them.
 - Numbers: `data/decrees.tres` (the `..._money` values).
 - Try it: press F5, hold the left button still on a building that isn't yours and pick a mark; then on one of yours, pick a decree and watch the money card drop.
+
+## 2026-10-27: City Hall's bulldozer without shields and lightning
+- With the shield and lightning miracles gone, only believers standing at the building (or the hand picking the bulldozer up) stop City Hall's crew.
+- Try it: press F5, raise exposure from the debug panel (F1) until a notice goes up, then gather believers at that building.
+
+## 2026-10-27: Buildings earn or cost money; a poor start district
+- Every building of yours now earns or costs money each second, and the bottom-left panel shows it ("yours, earns $0.4/s").
+  - **No use:** it brings rent in.
+  - **A use** (Prayer House, Course Center, Free Personality Test, Combat Training): it costs upkeep instead. A shop earns (the hand thread adds the Shop use).
+  - **Luxury:** the building does its job 1.6 times faster (rent, shop takings, training fighters), but its upkeep goes up.
+  - **Floors:** each floor level makes the building yield more, by less every time (+36%, then +20%, +11%, ...), while upkeep grows with the square of the levels. The first floors pay; after two or three they stop paying off.
+- Shops no longer come from Facade.
+- **District wealth:** each district has a wealth that scales rent, shop takings and the price of buying people out. The start district by the river is poor (0.4), downtown is rich (2.0), and the panel says "(poor)" or "(rich)".
+- Numbers: `data/treasury.tres` (Rent, Uses, Luxury, Floors) and `wealth` in `data/districts.tres`.
+- Try it: press F5, click "Take 10 buildings here" on the debug panel (F1), and look at the "Building" line as you give one of them decrees.
 
 ## 2026-10-27: Meshy props in the city
 - The first models made with Meshy are in the game (`assets/models/meshy/`, about 0.5 MB each). Window air conditioners (four kinds) hang under windows of the brick and stone buildings; water tanks and big cooling units stand on roofs. They are drawn as MultiMeshes, one per kind and chunk of town, and disappear past 260 m.

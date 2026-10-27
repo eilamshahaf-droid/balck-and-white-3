@@ -90,14 +90,20 @@ func why_not(building: Node3D, route: Route) -> String:
 			if _training() == null:
 				return "needs a %s building" % S.training_use
 		Route.BUY:
-			if not treasury.can_afford(S.apartment_price):
-				return "needs $%d" % roundi(S.apartment_price)
+			if not treasury.can_afford(price_in(building)):
+				return "needs $%d" % roundi(price_in(building))
 		Route.PREACH:
 			if districts.residents_in(i) == 0:
 				return "nobody lives there"
 			if faith.belief_pool < S.preach_cost:
 				return "needs %d belief" % roundi(S.preach_cost)
 	return ""
+
+
+## What buying one resident out of `building` costs: dearer in rich districts.
+func price_in(building: Node3D) -> float:
+	var i := districts.index_of(building)
+	return S.apartment_price * (districts.wealth_at(i) if i >= 0 else 1.0)
 
 
 ## What holds the campaign on `building` up, or "" while it runs.
@@ -120,10 +126,12 @@ func _step(c: Campaign) -> void:
 	match c.route:
 		Route.FORCE:
 			c.stalled = "" if _drive_out(c) else "nobody left to scare"
-			c.wait = S.force_interval
+			# A luxurious training building trains faster.
+			var training := _training()
+			c.wait = S.force_interval / (treasury.speed_of(training) if training else 1.0)
 		Route.BUY:
-			if not treasury.can_afford(S.apartment_price):
-				c.stalled = "needs $%d" % roundi(S.apartment_price)
+			if not treasury.can_afford(price_in(c.building)):
+				c.stalled = "needs $%d" % roundi(price_in(c.building))
 				return
 			if _buy_out(c):
 				c.stalled = ""
@@ -134,7 +142,7 @@ func _step(c: Campaign) -> void:
 				return
 			var r := _doubter_in(c.building)
 			if r and faith.spend(S.preach_cost):
-				population.preach_to(r, S.preach_strength)
+				population.persuade(r, SocialGroup.Route.PREACH, S.preach_strength)
 				c.stalled = ""
 			c.wait = S.preach_interval
 
@@ -156,7 +164,7 @@ func _buy_out(c: Campaign) -> bool:
 	var mover := _mover_for(c.building)
 	if r == null and mover == null:
 		return false
-	treasury.spend_money(S.apartment_price)
+	treasury.spend_money(price_in(c.building))
 	if r:
 		population.evict(r)
 	if mover:

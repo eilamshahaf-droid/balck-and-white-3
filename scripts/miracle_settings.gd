@@ -1,6 +1,6 @@
 class_name MiracleSettings
 extends Resource
-## Every tunable number for the miracles and the divine signs.
+## Every tunable number for the miracles, accidents and the divine signs.
 ## Open data/miracles.tres in Godot and change values in the Inspector.
 ##
 ## Each miracle has the belief formula's inputs (see balance.gd): intensity I,
@@ -33,36 +33,9 @@ extends Resource
 @export var fire_intensity := 0.7
 @export_range(-1.0, 1.0) var fire_situation := -0.5     # watching a building burn
 @export_range(0.0, 1.0) var fire_deniability := 0.6     # buildings do catch fire
-@export var fire_burn_time := 60.0           # seconds until a miracle fire burns out by itself
+@export var fire_burn_time := 60.0           # seconds until a burning building is lost (water saves it before)
 @export var street_fire_size := 3.0          # metres across, for a fire on the street
 @export var fire_seen_from := 80.0
-
-@export_group("Lightning: a bolt from a clear sky")
-@export var lightning_cost := 80.0
-@export var lightning_intensity := 0.9
-@export_range(-1.0, 1.0) var lightning_situation := -0.3   # frightening, even for those it misses
-@export_range(0.0, 1.0) var lightning_deniability := 0.3
-@export var lightning_radius := 6.0          # people this close are knocked off their feet
-@export var lightning_push := 9.0            # how far they fly (m/s)
-@export var lightning_seen_from := 150.0
-
-@export_group("Shield: a dome nothing harmful gets through")
-@export var shield_cost := 100.0
-@export var shield_intensity := 0.6
-@export_range(-1.0, 1.0) var shield_situation := 0.4
-@export_range(0.0, 1.0) var shield_deniability := 0.1   # a glowing dome is hard to explain
-@export var shield_radius := 14.0
-@export var shield_time := 20.0
-@export var shield_seen_from := 70.0
-
-@export_group("Heal: golden light that mends")
-@export var heal_cost := 60.0
-@export var heal_intensity := 0.7
-@export_range(-1.0, 1.0) var heal_situation := 0.6
-@export_range(0.0, 1.0) var heal_deniability := 0.4     # "they were fine all along"
-@export var heal_radius := 12.0              # knocked-down people get up, burnt buildings are rebuilt
-@export var heal_time := 3.0
-@export var heal_seen_from := 60.0
 
 @export_group("Roaches: a building's residents flee")
 @export var roach_cost := 70.0
@@ -83,6 +56,52 @@ extends Resource
 @export var money_radius := 9.0
 @export var money_time := 6.0
 @export var money_seen_from := 80.0
+
+@export_group("Block Party: a disco ball, and the street dances")
+@export var party_cost := 70.0
+@export var party_intensity := 0.7
+@export_range(-1.0, 1.0) var party_situation := 0.7     # who doesn't like a party
+@export_range(0.0, 1.0) var party_deniability := 0.5   # "just a flash mob"
+@export var party_radius := 24.0             # people this close drop everything and dance
+@export var party_time := 14.0               # seconds the party lasts
+@export var party_dancers := 30              # most people who join, at full size
+@export var party_lines: Array[String] = ["Woo!", "This is my song!",
+		"Is this a cult? Who cares!", "Who brought the disco ball?", "I have work tomorrow!"]
+@export var party_seen_from := 70.0
+
+@export_group("Rain of Frogs: chaos, and nobody knows what it means")
+@export var frog_cost := 60.0
+@export var frog_intensity := 0.9
+@export_range(-1.0, 1.0) var frog_situation_min := -0.7  # each onlooker takes it somewhere in here:
+@export_range(-1.0, 1.0) var frog_situation_max := 0.8   # a sign, or a reason to leave town
+@export_range(0.0, 1.0) var frog_deniability := 0.25    # "a tornado picked them up from a lake"
+@export var frog_radius := 16.0
+@export var frog_time := 9.0
+@export var frog_count := 220
+@export_range(0.0, 1.0) var frog_knock_chance := 0.3    # people hit by a frog and knocked down
+@export var frog_push := 5.0                 # how hard a frog knocks someone over (m/s)
+## Every building under the frogs, yours too, may be overrun and emptied.
+@export_range(0.0, 1.0) var frog_overrun_chance := 0.3
+@export var frog_seen_from := 90.0
+
+@export_group("Accidents: believers set their own buildings on fire")
+@export var accident_interval := 40.0        # seconds between chances of an accident
+@export_range(0.0, 1.0) var accident_chance := 0.5
+@export var accident_use_weight := 3.0       # how much likelier a Prayer House or Course Center burns
+@export var accident_zealot_radius := 20.0   # each zealot this close makes a building likelier to burn
+@export var accident_burn_time := 35.0       # seconds to put it out before the building is lost
+@export var accident_lines: Array[String] = ["Who left the candles on?",
+		"The incense! THE INCENSE!", "It was a very moving sermon.", "Fire is a sign, right? RIGHT?"]
+
+@export_group("Saved from the fire: water puts out a burning building")
+@export var saved_intensity := 1.0
+@export_range(-1.0, 1.0) var saved_situation := 0.8     # the god saved our home
+@export_range(0.0, 1.0) var saved_deniability := 0.2   # rain on exactly one burning building
+@export var saved_seen_from := 60.0
+@export var saved_awe := 1.0                 # strength of the awe for the building's residents
+
+@export_group("Floating notes: who just came to believe")
+@export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once
 
 @export_group("Divine signs on buildings")
 @export var sign_reach := 220.0              # believers this close to a signed building answer it

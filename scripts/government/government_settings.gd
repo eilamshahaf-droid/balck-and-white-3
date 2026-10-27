@@ -23,5 +23,3 @@ extends Resource
 @export var give_up_time := 15.0            # blocked this long, the crew goes home
 @export var guards_to_block := 3            # believers standing at the building that stop the bulldozer
 @export var guard_radius := 25.0
-@export var lightning_scare_radius := 18.0  # lightning this close sends the crew running
-@export var scare_hop := 4.0                # upward kick from that lightning, per unit of mass

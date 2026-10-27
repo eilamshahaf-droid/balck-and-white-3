@@ -1,11 +1,15 @@
 extends Node3D
 ## A building on fire: flames from the windows and roof, smoke, a flickering
-## orange light. Rain puts it out; a building that burned stays charred until
-## a healing miracle rebuilds it. A fire can also burn on a spot in the street.
+## orange light. Rain puts it out and the building is saved; left burning for
+## burn_time, the building is lost and stays charred. A fire can also burn on
+## a spot in the street.
 
 const Sfx = preload("res://scripts/sfx.gd")
 
-signal extinguished
+## Rain put the fire out in time.
+signal put_out
+## The fire burned for its whole burn_time: the building is lost.
+signal burned_down
 
 ## 1 = blazing, 0 = out.
 var heat := 1.0
@@ -13,8 +17,12 @@ var heat := 1.0
 ## it out has helped them.
 var endangered: Array = []
 var building: Node3D
-## Seconds until the fire burns out by itself (INF: until someone puts it out).
+## Seconds until the fire has burned the building down (INF: never).
 var burn_time := INF
+## 0..1: how much of the building has burned so far.
+var damage := 0.0
+## The building burned down once already: putting a new fire out won't save it.
+var lost := false
 
 var _flames: CPUParticles3D
 var _smoke: CPUParticles3D
@@ -23,7 +31,6 @@ var _t := 0.0
 var _crackle := 0.0
 var _smolder := 10.0      # seconds of smoke after the fire is out
 var _window_flames: Array[CPUParticles3D] = []
-var _original_materials := {}   # mesh -> its material before it was charred
 
 
 ## Set `building` alight. `size` is its box (width, height, depth).
@@ -137,16 +144,14 @@ func douse(amount: float) -> void:
 		return
 	heat = maxf(heat - amount, 0.0)
 	if heat == 0.0:
-		_flames.emitting = false
-		for w in _window_flames:
-			w.emitting = false
-		_char()
-		extinguished.emit()
+		_go_out()
+		put_out.emit()
 
 
-## Set a burnt-out fire going again (the building stays charred).
+## Set a fire that went out going again; a building already lost stays charred.
 func rekindle() -> void:
 	heat = 1.0
+	damage = 0.0
 	_smolder = 10.0
 	_flames.emitting = true
 	_smoke.emitting = true
@@ -158,31 +163,32 @@ func is_burning() -> bool:
 	return heat > 0.0
 
 
+func _go_out() -> void:
+	heat = 0.0
+	_flames.emitting = false
+	for w in _window_flames:
+		w.emitting = false
+
+
 func _char() -> void:
 	if building == null:
 		return
 	var burnt := StandardMaterial3D.new()
 	burnt.albedo_color = Color(0.18, 0.16, 0.15)
 	for mesh in building.find_children("*", "MeshInstance3D", false, false):
-		_original_materials[mesh] = mesh.material_override
 		mesh.material_override = burnt
 		ArtStyle.restyle(mesh)
 
 
-## Put the fire out and give the building back its old look.
-func restore() -> void:
-	douse(heat)
-	for mesh in _original_materials:
-		if is_instance_valid(mesh):
-			mesh.material_override = _original_materials[mesh]
-			ArtStyle.restyle(mesh)
-	queue_free()
-
-
 func _process(delta: float) -> void:
 	_t += delta
-	if burn_time < INF:
-		douse(delta / burn_time)
+	if heat > 0.0 and burn_time < INF:
+		damage += delta / burn_time
+		if damage >= 1.0:
+			_go_out()
+			_char()
+			lost = true
+			burned_down.emit()
 	# Flames shrink as the fire dies.
 	for p in [_flames] + _window_flames:
 		p.scale_amount_min = 0.6 * heat
