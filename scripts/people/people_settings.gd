@@ -80,6 +80,22 @@ extends Resource
 ## Above this fear a resident moves to another home; their fear halves.
 @export_range(0.0, 1.0) var flee_fear := 0.85
 
+@export_group("Jobs")
+## Free believers can be given a post: how many each kind of building takes.
+@export var prayer_slots := 12
+@export var priest_slots := 2
+@export var shop_slots := 6
+## Comfortable staff do more: output is times 1 + this * comfort.
+@export var comfort_output_bonus := 0.5
+## Frightened believers fight harder: a takeover by force is times 1 + this *
+## the fear of the believers there, and the police need that much more heat.
+@export var fear_force_bonus := 0.5
+@export var fear_defense_bonus := 1.0
+
+@export_group("Colours")
+@export var believer_color := Color(1.0, 0.78, 0.15)
+@export var zealot_color := Color(1.0, 0.45, 0.1)
+
 @export_group("Priest")
 ## The cult's head priest, a believer from the starting congregation, walks
 ## the streets and preaches to everyone within reach every few seconds.
@@ -89,6 +105,8 @@ extends Resource
 ## Belief per second the priest prays into the pool on his own.
 @export var priest_prayer := 0.3
 @export var priest_color := Color(1.0, 1.0, 1.0)
+## Priests are drawn this many times larger, so the crowd can pick them out.
+@export var priest_scale := 1.5
 
 @export_group("Dancing")
 ## People sent on an errand to dance (a block party) bob this high, this fast, and turn.

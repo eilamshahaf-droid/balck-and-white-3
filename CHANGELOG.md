@@ -3,10 +3,42 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Spin Cycle: money over your own building, frogs wreck roadblocks
+- The game is now called "Spin Cycle" (temporary name).
+- Money from the sky over a building you own brings double (`money_own_multiplier`); elsewhere it is unchanged.
+- The Rain of Frogs wrecks a police roadblock in its reach, 70% of the time (`frog_roadblock_chance`). The world thread's `Police.break_near` smashes the barrier, raises crowd heat and lets the campaign resume.
+- Buildings near the camera's pivot no longer fade out, the fade tube is narrower, and campaign marks shrink as you zoom out.
+- Fixed `heat.gd` failing to compile on Godot 4.3 (untyped `base`).
+- Try it: park the police at a building (see "Police"), then cast frogs over the roadblock; cast money over a gold-plated building and watch the money meter.
 
+## 2026-10-27: The head priest stands out
+- A golden ring on the ground around the head priest and a label with his name ("Head Priest, Name") over him, with "preaching..." for a few seconds whenever he talks to the street. The people thread made his body bigger.
+- A PRIESTS card on the HUD.
+- A building changed to the Shop use joins the group `shops` (like Prayer Houses join `prayer_houses`), so free believers can be assigned to work there.
+- Numbers: `data/miracles.tres`, group "Head priest marker".
+- Try it: press F5 and look for the white priest with the gold ring.
+
+## 2026-10-27: Give believers jobs, colours and fear bonuses
+- Believers are gold on the map, zealots orange, priests white and larger. Free believers can be given a post with `Population.assign`: pray or train as a priest in a prayer house, or work in a shop (building group `shops`). Each building takes only so many; a building with no staff has zero output (`staffed`).
+- Comfortable staff pray and earn more. Frightened believers are better at forcing a takeover (`force_power_of`) and make the police wait for more heat (`defense_of`).
+- `Population.priest_preached(priest, reached)` and `priest_count` are new; every priest preaches, not only the head priest.
+- Numbers: `data/people.tres`, groups "Jobs", "Colours" and `priest_scale`.
+- Try it: press F5 and look for gold believers in the street; the assignment menu is not wired to the hand yet.
+
+## 2026-10-27: The game is called Spin Cycle (for now)
+- A temporary name until Eilam picks the real one: the project name and window title in `project.godot`, and the README title. The repository keeps its name.
+
+## 2026-10-27: Calmer marks and a narrower see-through tube
+- The takeover marks (skull, dollar, sky sign and their count) shrink as the camera comes in, down to a quarter of their size, so a close-up isn't covered by them. Numbers: `data/campaigns.tres` (`mark_far_distance`, `mark_min_scale`).
+- The camera's see-through tube is narrower (1.4 m instead of 3), so only buildings that really block the centre of the view fade, not their neighbours. The building at the centre stays solid within 6 m. Numbers: `data/hand_settings.tres` (`fade_radius`, `fade_keep_radius`).
+- Try it: press F5, zoom in on a marked building: the mark is small; orbit around: only the building in the way fades.
+
+## 2026-10-27: Remove the old divine signs' followers and the healing leftovers
+- Believers no longer answer the old blessed / cursed / protected signs (the three takeover marks replaced them on the wheel). `sign_followers.gd`, its node and its settings are gone, and so is the leftover `Citizen.heal()` from the removed Heal miracle.
+- Try it: press F5; nothing changes in play.
 
 ## 2026-10-27: Roadblocks you can break, core beacons, building tooltips
-- **Roadblocks** have a name and a countdown ("ROADBLOCK 2, street closed, 74 s"), a red-tinted shut stretch of street, and last 90 seconds. They have hit points and show damage: barriers dent and lean as it falls. A thrown taxi or crate, a fire nearby and a crowd of believers at the building wear one down; at zero it is gone and the campaign goes on. `Police.break_near(point, radius)` lets frogs smash one (70% per landing, and the police notice); `damage_near` is for anything else.
+- **Roadblocks** have a name and a countdown ("ROADBLOCK 2, street closed, 74 s"), a red-tinted shut stretch of street, and last 90 seconds. They have hit points and show damage: barriers dent and lean as it falls. A thrown taxi or crate, a fire nearby and a crowd of believers at the building wear one down; at zero it is gone and the campaign goes on. `Police.break_near(point, radius)` lets frogs smash one (Miracles rolls 70% per landing; the police notice); `damage_near` is for anything else.
 - **Core buildings** carry a purple beacon above the roof, gold once yours.
 - **Tooltip**: hover any building to see its kind, whether it is a district core, residents and believers, and what it earns or costs when yours.
 - Numbers: `data/police.tres` ("Breaking a roadblock"), `data/districts.tres` ("Look").
@@ -29,6 +61,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
 - Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
 - Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
+
 ## 2026-10-27: Miracles and decrees touch the people's mood
 - Fire and Roaches frighten the residents of the building (`Population.scare`), Luxury makes them more satisfied (`Population.add_comfort`), and an accidental fire raises police heat (`Heat.raise`, reason ACCIDENT).
 - Numbers: `data/miracles.tres` (`roach_scare`, `fire_scare`), `data/decrees.tres` (`luxury_comfort`).
@@ -37,6 +70,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Miracles no longer convert anyone. Witnesses still stare, explain what they saw and film it, but belief now comes from the cult's people: the head priest (dressed in white) walks the streets and preaches to everyone around him every few seconds, and prays a little belief into the pool on his own. The congregation's home is the first prayer house (the headquarters).
 - Every resident has hidden wealth, comfort and fear. Preaching only reaches people who are comfortable and not afraid; force works on the frightened; money works on the poor. A miracle that hurts people scares them, and someone too afraid moves to another home. Two ways to play: keep people comfortable, or keep them afraid.
 - The police's hidden criteria: every building quietly collects heat from sit-ins, crowds, broken building rules and accidents, which fades over time. When it passes a threshold (higher in a hard district), the police are called. Nothing is random. Numbers: `data/heat.tres`.
+- A miracle seen where the priest preaches is proof: it multiplies his strength by 1 plus the proof, and a botched miracle (a bad Rain of Frogs) can make him useless there for a while.
 - Numbers: `data/people.tres`, groups "Comfort and fear" and "Priest"; each social group has a wealth range.
 - Try it: press F5, press B and hover the person in white near the starting corner: the card shows everyone's stage, wealth, comfort and fear.
 
@@ -44,8 +78,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Believers no longer fill the belief pool wherever they are. Only believers who live or sit in a prayer house pray (buildings in the `prayer_houses` group), so prayer houses are now the precious resource.
 - One resident in 25 walks the streets (`residents_per_body` in `data/people.tres`), and at least one from every lived-in home. Out of your view, a person goes home and a housemate comes out, so each building keeps its people on its corner.
 - Try it: press F5. The belief pool no longer grows until a building becomes a prayer house.
-
-
 
 ## 2026-10-27: Miracles prove, priests convert
 - Eilam's economy round: a miracle no longer converts anyone. It leaves **proof** where it lands, fading over a minute, and priests preaching there persuade better (up to about twice as well after a strong one). Witnesses still react (staring, "It's a hoax", filming, exposure).
@@ -63,17 +95,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
 - Number: `data/hand_settings.tres`, `fade_keep_radius`.
 - Try it: press F5, double-click a building to fly to it, and orbit around it: it stays solid while the ones in front of it fade.
-
-## 2026-10-27: Risky believers, Block Party, Rain of Frogs
-- Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
-  - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.
-  - **Rain of Frogs**, the chaotic one: frogs fall and hop about, people run or get knocked flat, any building under them (yours too) may be overrun and emptied, and the city reads it as a blessing or a curse, at random.
-- **Accidents**: every 40 seconds or so, believers may set one of your buildings on fire by accident (candles, incense, a very moving sermon), likelier in a Prayer House or Course Center and near zealots. "Water, quick!" floats over it.
-- **Saving a building**: water that puts out a burning building before it is lost saves it ("Saved!"), and everyone who lives there is won over a step. A fire left burning for its full time burns the building down and empties it.
-- **Who just came to believe**: "+ Believer", "Zealot!" or "Lost a believer" floats over people on the street when their belief stage changes.
-- **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
-- Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
-- Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
 
 ## 2026-10-27: Every building has residents; belief grows in stages, slower
 - Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.
@@ -166,8 +187,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Fixed editor warnings in the hand's files: names that shadowed built-ins (`sign`, `size`, `to_local`).
 - The hand test checks that trees can't be picked up.
 - Try it: press F5 and try to drag a tree: the city moves instead.
-
-
 
 ## 2026-10-26: Taking over buildings, made clear
 - Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.

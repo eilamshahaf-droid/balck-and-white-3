@@ -25,6 +25,5 @@ extends Resource
 @export var crowd_size := 4                 # believers at the building that push through
 @export var crowd_damage := 1.5             # per believer, per second
 @export var wreck_tilt := 18.0              # degrees the barriers lean per damage stage
-@export var break_chance := 0.7             # per frog landing inside the radius
 @export var break_heat := 2.0               # heat (times a crowd's) a smashed roadblock raises
 @export var label_size := 0.008             # world size of one label pixel

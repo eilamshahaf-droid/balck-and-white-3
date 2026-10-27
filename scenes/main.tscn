@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3]
+[gd_scene load_steps=26 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -8,7 +8,6 @@
 [ext_resource type="Script" path="res://scripts/opening.gd" id="6_opening"]
 [ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
 [ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
-[ext_resource type="Script" path="res://scripts/sign_followers.gd" id="9_signs"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
 [ext_resource type="Script" path="res://scripts/people/population.gd" id="11_population"]
 [ext_resource type="Script" path="res://scripts/people/resident_card.gd" id="12_card"]
@@ -25,6 +24,7 @@
 [ext_resource type="Script" path="res://scripts/world/building_tooltip.gd" id="22_tooltip"]
 [ext_resource type="Script" path="res://scripts/accidents.gd" id="39_accidents"]
 [ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
+[ext_resource type="Script" path="res://scripts/priest_marker.gd" id="41_priest"]
 [ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
 
 [node name="Main" type="Node3D"]
@@ -39,7 +39,8 @@ far = 3000.0
 [node name="Surroundings" type="Node3D" parent="."]
 script = ExtResource("17_surroundings")
 
-[node name="Population" type="Node" parent="."]
+[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles")]
+miracles = NodePath("../Miracles")
 script = ExtResource("11_population")
 
 [node name="Faith" type="Node" parent="." node_paths=PackedStringArray("population")]
@@ -53,10 +54,12 @@ population = NodePath("../Population")
 [node name="GodHand" type="Node3D" parent="."]
 script = ExtResource("3_hand")
 
-[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury")]
+[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury", "districts", "police")]
 script = ExtResource("7_miracles")
 population = NodePath("../Population")
 treasury = NodePath("../Treasury")
+districts = NodePath("../Districts")
+police = NodePath("../Police")
 
 [node name="Accidents" type="Node" parent="." node_paths=PackedStringArray("miracles", "districts", "decrees", "population", "heat")]
 script = ExtResource("39_accidents")
@@ -65,6 +68,10 @@ districts = NodePath("../Districts")
 decrees = NodePath("../Decrees")
 population = NodePath("../Population")
 heat = NodePath("../Heat")
+
+[node name="PriestMarker" type="Node3D" parent="." node_paths=PackedStringArray("population")]
+script = ExtResource("41_priest")
+population = NodePath("../Population")
 
 [node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("40_notes")
@@ -81,9 +88,6 @@ population = NodePath("../Population")
 [node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns")]
 script = ExtResource("8_tools")
 campaigns = NodePath("../Campaigns")
-
-[node name="SignFollowers" type="Node" parent="."]
-script = ExtResource("9_signs")
 
 [node name="ResidentCard" type="CanvasLayer" parent="."]
 script = ExtResource("12_card")

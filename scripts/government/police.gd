@@ -90,15 +90,13 @@ func _hardness_of(building: Node3D) -> float:
 	return clampf(districts.wealth_at(districts.index_of(building)) / S.hardest_wealth, 0.0, 1.0)
 
 
-## A frog lands at `point`: with `break_chance` a roadblock within `radius` is
+## A frog lands at `point` (Miracles rolls the chance): a roadblock within `radius` is
 ## smashed and its campaign goes on, and the police notice. True when one broke.
 func break_near(point: Vector3, radius: float) -> bool:
 	for b: Node3D in _blocks.keys():
 		var roadblock: Roadblock = _blocks[b]
 		if roadblock.node.global_position.distance_to(point) > radius:
 			continue
-		if randf() >= S.break_chance:
-			return false
 		_remove(b)
 		campaigns.block(b, 0.0)
 		heat.raise(b, Heat.Reason.CROWD, S.break_heat)
