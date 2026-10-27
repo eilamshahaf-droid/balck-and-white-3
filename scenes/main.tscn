@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=32 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -30,6 +30,7 @@
 [ext_resource type="Script" path="res://scripts/priest_marker.gd" id="41_priest"]
 [ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
 [ext_resource type="Script" path="res://scripts/building_menus.gd" id="50_menus"]
+[ext_resource type="Script" path="res://scripts/sermon_alerts.gd" id="51_alerts"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -94,6 +95,11 @@ heat = NodePath("../Heat")
 [node name="PriestMarker" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("41_priest")
 population = NodePath("../Population")
+
+[node name="SermonAlerts" type="Node" parent="." node_paths=PackedStringArray("population", "camera")]
+script = ExtResource("51_alerts")
+population = NodePath("../Population")
+camera = NodePath("../CameraRig")
 
 [node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("40_notes")

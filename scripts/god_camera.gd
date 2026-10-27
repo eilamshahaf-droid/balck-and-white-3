@@ -1,3 +1,4 @@
+class_name GodCamera
 extends Node3D
 ## God camera in the spirit of Black & White. The hand grabs the city and drags
 ## it, double-click flies to a point, middle-drag orbits around the point under

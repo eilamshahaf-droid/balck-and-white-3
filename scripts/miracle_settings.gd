@@ -143,6 +143,9 @@ extends Resource
 @export var priest_ring_color := Color(1.0, 0.85, 0.3)
 @export var priest_label_pixel := 0.0011
 @export var priest_label_height := 4.5       # metres above his feet
+@export var sermon_ring_radius := 5.0        # metres, the ring around a preaching priest
+@export var sermon_calm_color := Color(1.0, 0.85, 0.3)
+@export var sermon_raid_color := Color(0.95, 0.25, 0.25)   # the ring once the police move in
 @export var priest_preach_mark_time := 4.0   # seconds "preaching..." stays after he talks
 
 @export_group("Floating notes: who just came to believe")
