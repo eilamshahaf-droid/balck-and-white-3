@@ -126,8 +126,8 @@ func set_zone(b: int, zone: String) -> void:
 	_update_mixed()
 
 
-func change_density(b: int, step: int) -> void:
-	blocks[b].density = clampi(blocks[b].density + step, 1, 3)
+func change_density(b: int, change: int) -> void:
+	blocks[b].density = clampi(blocks[b].density + change, 1, 3)
 
 
 ## Where a landmark of `kind` would stand if placed at `pos`: along the
