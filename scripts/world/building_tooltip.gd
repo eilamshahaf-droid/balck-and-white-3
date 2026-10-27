@@ -1,7 +1,8 @@
 class_name BuildingTooltip
 extends Label
 ## Follows the cursor and says what the building under it is: its kind, how many
-## people live there and how many believe, and what it earns when it is yours.
+## people live there and how many of them believe ("X of Y", from Population), its staff,
+## what it yields and what it earns when it is yours.
 ## A district's core building says so.
 
 const S: DistrictSettings = preload("res://data/districts.tres")
@@ -10,6 +11,7 @@ const RAY_LENGTH := 2000.0
 @export var districts: Districts
 @export var treasury: Treasury
 @export var decrees: Decrees
+@export var population: Population
 @export var camera: Camera3D
 
 var _timer := 0.0
@@ -56,7 +58,13 @@ func _describe(building: Node3D) -> String:
 	var d := districts.district_at(building.global_position)
 	var lines := PackedStringArray()
 	lines.append("%s%s" % [kind, "  (core of %s)" % districts.district_name(d) if districts.core_of(d) == i else ""])
-	lines.append("%d residents, %d believe" % [districts.residents_in(i), districts.believers_at(i)])
+	var of := "%d of %d" % [population.believers_in(building), population.residents_in(building)]
+	lines.append("%s believe" % of)
+	var staff := population.staff_count(building)
+	if staff > 0:
+		lines.append("Staff %d, yields %.1f" % [staff, population.yield_of(building)])
+	elif building.is_in_group(Decrees.PRAYER_HOUSES):
+		lines.append("Yields %.1f belief/s" % population.yield_of(building))
 	if districts.is_yours(i):
 		var net := treasury.net_of(building)
 		lines.append("Yours: %s $%.1f/s" % ["earns" if net >= 0.0 else "costs", absf(net)])

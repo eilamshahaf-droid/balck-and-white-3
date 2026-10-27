@@ -192,11 +192,12 @@ offset_bottom = -12.0
 grow_vertical = 0
 script = ExtResource("16_district_hud")
 
-[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "treasury", "decrees", "camera")]
+[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "treasury", "decrees", "population", "camera")]
 script = ExtResource("22_tooltip")
 districts = NodePath("../../Districts")
 treasury = NodePath("../../Treasury")
 decrees = NodePath("../../Decrees")
+population = NodePath("../../Population")
 camera = NodePath("../../CameraRig/Camera3D")
 
 [connection signal="building_abandoned" from="Miracles" to="Districts" method="mark_abandoned"]
