@@ -40,8 +40,9 @@ script = ExtResource("4_faith")
 [node name="GodHand" type="Node3D" parent="."]
 script = ExtResource("3_hand")
 
-[node name="Miracles" type="Node" parent="."]
+[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("7_miracles")
+population = NodePath("../Population")
 
 [node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "districts")]
 script = ExtResource("13_decrees")
