@@ -48,14 +48,16 @@ script = ExtResource("7_miracles")
 population = NodePath("../Population")
 treasury = NodePath("../Treasury")
 
-[node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "districts")]
+[node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "districts", "treasury")]
 script = ExtResource("13_decrees")
 faith = NodePath("../Faith")
 miracles = NodePath("../Miracles")
 districts = NodePath("../Districts")
+treasury = NodePath("../Treasury")
 
-[node name="HandTools" type="Node" parent="."]
+[node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns")]
 script = ExtResource("8_tools")
+campaigns = NodePath("../Campaigns")
 
 [node name="SignFollowers" type="Node" parent="."]
 script = ExtResource("9_signs")

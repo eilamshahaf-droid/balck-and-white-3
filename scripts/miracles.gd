@@ -36,7 +36,7 @@ const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets 
 
 @export var population: Node
 ## Where money from the sky goes. Optional until the money system is in the scene.
-@export var treasury: Node
+@export var treasury: Treasury
 
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")

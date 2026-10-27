@@ -3,12 +3,13 @@ extends Node
 ## Divine decrees: the god signs, and a building of his changes overnight.
 ## Add floors, luxury, facade, change of use, preservation (design doc,
 ## "Divine decrees"). Only on his own buildings, as Districts counts them.
-## Paid in belief for now, cheaper among believers like the miracles; money
-## and influence come later. Every decree draws a little attention.
+## Paid in belief (cheaper among believers, like the miracles) and in money
+## from the Treasury. Every decree draws a little attention.
 
 ## A decree was carried out on `building`.
 signal decree_issued(kind: StringName, building: Node3D)
-## A decree could not be issued: &"not_yours", &"no_belief" or &"done".
+## A decree could not be issued: &"not_yours", &"no_belief", &"no_money" or
+## &"done".
 signal decree_failed(reason: StringName)
 
 const D: DecreeSettings = preload("res://data/decrees.tres")
@@ -22,6 +23,7 @@ const PRESERVED := &"preserved"
 @export var faith: Node
 @export var miracles: Node
 @export var districts: Node
+@export var treasury: Treasury
 
 
 ## The decree slices of the building wheel for `building`, in order.
@@ -41,8 +43,8 @@ func wheel_items(building: Node3D) -> Array[Dictionary]:
 		elif is_done(kind, building):
 			item.note = "done"
 		else:
-			item.note = "%d belief" % roundi(cost(kind, building))
-		item.enabled = yours and not is_done(kind, building) and faith.belief_pool >= cost(kind, building)
+			item.note = _price(kind, building)
+		item.enabled = yours and not is_done(kind, building) and can_afford(kind, building)
 	return items
 
 
@@ -50,13 +52,14 @@ func wheel_items(building: Node3D) -> Array[Dictionary]:
 func use_items(building: Node3D) -> Array[Dictionary]:
 	var items: Array[Dictionary] = []
 	var current := use_of(building)
-	var price := cost(&"use", building)
+	var price := _price(&"use", building)
+	var affordable := can_afford(&"use", building)
 	for i in D.uses.size():
 		var use_name: String = D.uses[i]
 		items.append({"id": StringName(use_name), "label": use_name,
 				"color": Color.from_hsv(0.3 + 0.12 * i, 0.45, 0.9),
-				"note": "now" if use_name == current else "%d belief" % roundi(price),
-				"enabled": use_name != current and faith.belief_pool >= price})
+				"note": "now" if use_name == current else price,
+				"enabled": use_name != current and affordable})
 	return items
 
 
@@ -78,7 +81,23 @@ func is_done(kind: StringName, building: Node3D) -> bool:
 	return false  # a building can change its use again and again
 
 
-## What `kind` costs on `building`: cheaper among believers.
+## Are there belief and money enough for `kind` on `building`?
+func can_afford(kind: StringName, building: Node3D) -> bool:
+	return faith.belief_pool >= cost(kind, building) and treasury.can_afford(money_cost(kind))
+
+
+## The money `kind` costs: the same everywhere.
+func money_cost(kind: StringName) -> float:
+	match kind:
+		&"floors": return D.floors_money
+		&"luxury": return D.luxury_money
+		&"facade": return D.facade_money
+		&"use": return D.use_money
+		&"preserve": return D.preserve_money
+	return 0.0
+
+
+## The belief `kind` costs on `building`: cheaper among believers.
 func cost(kind: StringName, building: Node3D) -> float:
 	var base := 0.0
 	match kind:
@@ -98,9 +117,13 @@ func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 	if is_done(kind, building):
 		decree_failed.emit(&"done")
 		return
+	if not treasury.can_afford(money_cost(kind)):
+		decree_failed.emit(&"no_money")
+		return
 	if not faith.spend(cost(kind, building)):
 		decree_failed.emit(&"no_belief")
 		return
+	treasury.spend_money(money_cost(kind))
 	match kind:
 		&"floors":
 			building.set_meta(&"decree_floors", building.get_meta(&"decree_floors", 0) + 1)
@@ -116,6 +139,10 @@ func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 	faith.exposure = minf(faith.exposure + _exposure(kind), 1.0)
 	Sfx.play(get_tree(), building.global_position, &"chime", 0.7)
 	decree_issued.emit(kind, building)
+
+
+func _price(kind: StringName, building: Node3D) -> String:
+	return "%d belief + $%d" % [roundi(cost(kind, building)), roundi(money_cost(kind))]
 
 
 func _exposure(kind: StringName) -> float:

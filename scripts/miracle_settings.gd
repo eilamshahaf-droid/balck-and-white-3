@@ -85,8 +85,6 @@ extends Resource
 @export var money_seen_from := 80.0
 
 @export_group("Divine signs on buildings")
-@export var sign_cost := 3.0                 # belief; clearing a sign is free
-@export var sign_exposure := 0.01            # everyone sees the sky
 @export var sign_reach := 220.0              # believers this close to a signed building answer it
 @export var followers_per_sign := 6
 @export var errand_time := 30.0              # seconds a believer stays at the building before going home
