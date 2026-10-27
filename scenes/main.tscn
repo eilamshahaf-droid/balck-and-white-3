@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -29,6 +29,7 @@
 [ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
 [ext_resource type="Script" path="res://scripts/priest_marker.gd" id="41_priest"]
 [ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
+[ext_resource type="Script" path="res://scripts/building_menus.gd" id="50_menus"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -70,8 +71,9 @@ population = NodePath("../Population")
 script = ExtResource("14_heat")
 population = NodePath("../Population")
 
-[node name="GodHand" type="Node3D" parent="."]
+[node name="GodHand" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
 script = ExtResource("3_hand")
+districts = NodePath("../Districts")
 
 [node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury", "districts", "police")]
 script = ExtResource("7_miracles")
@@ -104,9 +106,16 @@ districts = NodePath("../Districts")
 treasury = NodePath("../Treasury")
 population = NodePath("../Population")
 
-[node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns")]
+[node name="BuildingMenus" type="Node" parent="." node_paths=PackedStringArray("population", "treasury")]
+script = ExtResource("50_menus")
+population = NodePath("../Population")
+treasury = NodePath("../Treasury")
+
+[node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns", "menus", "population")]
 script = ExtResource("8_tools")
 campaigns = NodePath("../Campaigns")
+menus = NodePath("../BuildingMenus")
+population = NodePath("../Population")
 
 [node name="ResidentCard" type="CanvasLayer" parent="."]
 script = ExtResource("12_card")

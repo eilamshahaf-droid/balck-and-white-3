@@ -41,6 +41,14 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
 - Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
 
+## 2026-10-27: Pre-Alpha 0.5.0: Building wheel upgrades, staff and double-click reset
+- The wheel on a building of yours has two more slices. **Upgrades** opens a second wheel: Elevator and Roof Garden (more comfort), Cameras and Gate (more fear). Each costs money, and every upgrade or floor makes the next one dearer (`Population.upgrade_cost`).
+- **Staff** (prayer houses and shops only) sends a free believer from the street nearby to pray, train as a priest, or work in the shop. Nobody working means no output.
+- A double-click on a building of yours lets every believer there go (`Population.dismiss_believers`); on any other building it still flies the camera there.
+- Numbers: `staff_reach` in `data/hand_settings.tres`; prices in `data/people.tres`.
+- Versioning starts here: Pre-Alpha 0.5.0, shown in the corner of the screen and in the window title (`config/version` and `config/release_stage` in `project.godot`).
+- Try it: hold the button still on a building of yours and pick Upgrades or Staff; double-click a building of yours.
+
 ## 2026-10-27: Spin Cycle: money over your own building, frogs wreck roadblocks
 - The game is now called "Spin Cycle" (temporary name).
 - Money from the sky over a building you own brings double (`money_own_multiplier`); elsewhere it is unchanged.

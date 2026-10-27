@@ -54,6 +54,7 @@ The scene is small; most nodes are built in code at startup.
 | `Accidents` | `accidents.gd` | Now and then believers set one of your buildings on fire (likelier with zealots near, in a Prayer House or Course Center). Tunables in `data/miracles.tres`. |
 | `ConversionNotes` | `conversion_notes.gd` (+ `floating_note.gd`) | Floats "+ Believer" / "Zealot!" / "Lost a believer" over people from `Population.stage_changed`; `FloatingNote.pop` is the shared pop-up text |
 | `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (`Districts.owns()`): add floors, luxury, facade, change use, preserve; paid in belief and `Treasury` money. Preserved buildings are in group `preserved`. |
+| `BuildingMenus` | `building_menus.gd` | The second wheels of a building of yours: housing upgrades (paid from `Treasury`, applied with `Population.upgrade`) and posts for free believers in prayer houses and shops. |
 | `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees on your building, the three `Campaigns` takeover marks on anyone else's, miracles elsewhere. A chosen miracle sits in the hand until cast. |
 | `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
 | `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts and keeps who holds every building: yours once most of its residents believe (an empty one, while a believer sits in); abandoned buildings; the cult starts from its headquarters; a district is yours at 60%. `DistrictView` puts a gold plate on yours. Tunables `data/districts.tres`. |
@@ -190,6 +191,13 @@ Target: a steady **60 fps on a mid-range PC**, and the game must also run on the
   visibility ranges). Avoid O(n²) loops over all citizens; use a spatial grid.
 - Turn off `_process` (`set_process(false)`) on objects with nothing to do.
 - Measure with the Godot profiler and the Monitors tab (draw calls, primitives, script time).
+
+### Versions
+
+The build is "<stage> <major.minor.patch>", set in `project.godot` (`config/release_stage`,
+`config/version`) and shown in the HUD corner and the window title. Bump the minor for a new
+feature round and the patch for a fix-only build; tag the commit `vX.Y.Z`; head the CHANGELOG
+section of the release with the version. Stages in order: Pre-Alpha, Alpha, Beta.
 
 ### Before pushing
 

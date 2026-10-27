@@ -26,6 +26,9 @@ extends Resource
 @export var fade_near_camera := 6.0         # buildings this close to the camera fade too
 @export var fade_keep_radius := 6.0         # buildings this close to the centre of the view never fade
 
+@export_group("Building menus")
+@export var staff_reach := 60.0              # free believers this close can be sent to a building
+
 @export_group("Hand")
 @export var hover_height := 1.5
 @export var hold_height := 5.0

@@ -19,6 +19,19 @@ var _values: Array[Label] = []
 
 
 func _ready() -> void:
+	var version := "%s %s" % [ProjectSettings.get_setting("application/config/release_stage"),
+			ProjectSettings.get_setting("application/config/version")]
+	DisplayServer.window_set_title("%s %s" % [ProjectSettings.get_setting("application/config/name"), version])
+	var corner := Label.new()
+	corner.text = version
+	corner.add_theme_font_size_override(&"font_size", 11)
+	corner.modulate = Color(1, 1, 1, 0.5)
+	corner.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	corner.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	corner.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	corner.offset_left = -8.0
+	corner.offset_top = -6.0
+	add_child(corner)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 8)
 	row.position = Vector2(0.0, -52.0)
