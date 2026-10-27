@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Give believers jobs, colours and fear bonuses
+- Believers are gold on the map, zealots orange, priests white and larger. Free believers can be given a post with `Population.assign`: pray or train as a priest in a prayer house, or work in a shop (building group `shops`). Each building takes only so many; a building with no staff has zero output (`staffed`).
+- Comfortable staff pray and earn more. Frightened believers are better at forcing a takeover (`force_power_of`) and make the police wait for more heat (`defense_of`).
+- `Population.priest_preached(priest, reached)` and `priest_count` are new; every priest preaches, not only the head priest.
+- Numbers: `data/people.tres`, groups "Jobs", "Colours" and `priest_scale`.
+- Try it: press F5 and look for gold believers in the street; the assignment menu is not wired to the hand yet.
+
 ## 2026-10-27: The game is called Spin Cycle (for now)
 - A temporary name until Eilam picks the real one: the project name and window title in `project.godot`, and the README title. The repository keeps its name.
 
