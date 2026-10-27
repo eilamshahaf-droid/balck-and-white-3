@@ -3,6 +3,9 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Models for the core building and housing upgrades
+- Four more Meshy models in `assets/models/meshy/`, not in the game yet: a large blank signboard in a gold frame for the core building (the text goes on top, in code, so it stays readable and editable), a glass elevator shaft, security cameras and an iron security gate for housing upgrades. They are overlays for buildings, like the others, and wait for the building-type and upgrade fields from the economy round. The core building's portico is `portico.glb` from the 16 type models.
+
 ## 2026-10-27: 16 new models for the kinds of building
 - Sixteen more Meshy models, each a marker for a kind of building: a gold hand statue and a stained-glass entrance (Prayer House), a fruit awning (shop), a washing-machine storefront (laundromat), a chalkboard easel (Course Center), a promotion booth (Free Personality Test), a boxing ring (Combat Training), a bell tower (seminary), a fire escape and a roof garden (homes), an antenna cluster and a revolving door (offices), a loading dock (workshop), café tables (restaurant), a columned portico (City Hall) and a vault entrance (bank).
 - Four are in the game already, shown by **Change Use**: Prayer House gets the hand statue on the roof and the entrance by the street, Course Center an easel, Free Personality Test the booth, Combat Training a boxing ring on the roof. The others wait for the building-type field the economy round will add.
