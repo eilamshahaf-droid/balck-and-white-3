@@ -311,7 +311,9 @@ func assign(r: Resident, job: Resident.Job, building: Node3D) -> bool:
 	if job == Resident.Job.FREE or r.belief <= B.believer_threshold or building == null:
 		return false
 	var group := SHOPS if job == Resident.Job.SHOP else PRAYER_HOUSES
-	if not building.is_in_group(group) or staff_count(building, job) >= _slots_of(job, building):
+	if not building.is_in_group(group) or staff_count(building) >= capacity(building):
+		return false
+	if job == Resident.Job.PRIEST and staff_count(building, job) >= _priest_slots_of(building):
 		return false
 	unassign(r)
 	r.job = job
@@ -340,6 +342,11 @@ func unassign(r: Resident) -> void:
 	r.post = null
 	if _has_body(r):
 		r.body.move_out()
+
+
+## How many people `building` can staff: by its size, plus a few per upgrade or floor bought.
+func capacity(building: Node3D) -> int:
+	return maxi(1, floori(_volume_of(building) / _people.staff_volume)) + _extra_places(building)
 
 
 ## How many people work in `building` (only those with `job`, unless FREE).
@@ -489,14 +496,21 @@ func _preach() -> void:
 				priest_preached.emit(r, reached)
 
 
-func _slots_of(job: Resident.Job, building: Node3D) -> int:
-	var extra: int = _people.slots_per_purchase * _purchases.get(building, 0)
-	match job:
-		Resident.Job.SHOP:
-			return _people.shop_slots + extra
-		Resident.Job.PRIEST:
-			return _people.priest_slots + extra
-	return _people.prayer_slots + extra
+func _priest_slots_of(building: Node3D) -> int:
+	return _people.priest_slots + _extra_places(building)
+
+
+func _extra_places(building: Node3D) -> int:
+	return _people.slots_per_purchase * _purchases.get(building, 0)
+
+
+## Footprint times height of the building's collision box, in cubic metres.
+func _volume_of(building: Node3D) -> float:
+	for child in building.get_children():
+		if child is CollisionShape3D and child.shape is BoxShape3D:
+			var size := (child.shape as BoxShape3D).size
+			return size.x * size.y * size.z
+	return 0.0
 
 
 func _output_of(r: Resident) -> float:

@@ -81,10 +81,11 @@ extends Resource
 @export_range(0.0, 1.0) var flee_fear := 0.85
 
 @export_group("Jobs")
-## Free believers can be given a post: how many each kind of building takes.
-@export var prayer_slots := 12
+## Free believers can be given a post. A building takes one person per this many
+## cubic metres (footprint times height), at least one, so a tower holds far
+## more than a shed; priests are limited on top of that.
+@export var staff_volume := 1500.0
 @export var priest_slots := 2
-@export var shop_slots := 6
 ## Comfortable staff do more: output is times 1 + this * comfort.
 @export var comfort_output_bonus := 0.5
 ## Frightened believers fight harder: a takeover by force is times 1 + this *
@@ -100,7 +101,7 @@ extends Resource
 ## Elevator and roof garden raise the residents' comfort; cameras and a gate scare them.
 @export_range(0.0, 1.0) var upgrade_comfort := 0.1
 @export_range(0.0, 1.0) var upgrade_fear := 0.15
-## Each purchase also adds this many places to every job in the building.
+## Each purchase also adds this many places to the building.
 @export var slots_per_purchase := 2
 
 @export_group("Fire")
