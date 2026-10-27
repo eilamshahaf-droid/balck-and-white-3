@@ -3,6 +3,16 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Roaches, money from the sky, and dearer miracles
+- New miracle **Roaches**: a swarm pours out of a building's walls. Its residents run out, move elsewhere for good, and the building is abandoned.
+- New miracle **Money**: banknotes flutter down on a spot. Your believers pick them up and hand the money in (more with believers nearby).
+- **Fire** now leaves a building abandoned once it has burned: the residents leave and don't come back.
+- Miracles cost about four times as much (water 60, fire 50, lightning 80, shield 100, heal 60, roaches 70, money 90 belief), and up to 1.6x that far from your believers, so each one is a choice.
+- **Change Use** opens a second wheel to pick the use: Prayer House, Course Center, Free Personality Test or Combat Training (the force route trains believers there).
+- Shield blocks roaches like fire and lightning. `Miracles.building_abandoned` tells the districts when a place is emptied.
+- Numbers: `data/miracles.tres`, groups "Roaches" and "Money from the sky"; uses in `data/decrees.tres`.
+- Try it: press F5, hold the left button still on a street, pick Roaches, then click a building with people in it.
+
 ## 2026-10-27: Many more people in the city
 - The city now has 500 residents instead of 60 (`data/people.tres`, "Resident Count").
 - To keep 60 fps, all the people are drawn together in one go (a MultiMesh) instead of one by one, and walking on the flat streets no longer goes through the physics engine. Speech bubbles and phones are made only for the people who speak or film.
