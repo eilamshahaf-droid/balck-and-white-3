@@ -61,6 +61,10 @@ extends Resource
 ## Metres from the roof down to the banner's top.
 @export var banner_drop := 0.8
 
+@export_group("Building uses")
+## What a building's Change Use shows (TypeMarkers).
+@export var use_markers: Array[UseMarker] = []
+
 @export_group("Squashy props (trash bags)")
 ## How much each thing lying on top presses a bag flat (1 = fully flat).
 @export var squash_per_load := 0.45

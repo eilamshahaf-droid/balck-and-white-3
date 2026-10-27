@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: 16 new models for the kinds of building
+- Sixteen more Meshy models, each a marker for a kind of building: a gold hand statue and a stained-glass entrance (Prayer House), a fruit awning (shop), a washing-machine storefront (laundromat), a chalkboard easel (Course Center), a promotion booth (Free Personality Test), a boxing ring (Combat Training), a bell tower (seminary), a fire escape and a roof garden (homes), an antenna cluster and a revolving door (offices), a loading dock (workshop), café tables (restaurant), a columned portico (City Hall) and a vault entrance (bank).
+- Four are in the game already, shown by **Change Use**: Prayer House gets the hand statue on the roof and the entrance by the street, Course Center an easel, Free Personality Test the booth, Combat Training a boxing ring on the roof. The others wait for the building-type field the economy round will add.
+- Numbers: `data/city_props.tres` ("Building uses"). Models in `assets/models/meshy/`.
+- Try it: press F5, take a building (debug panel, "Take 10 buildings here"), hold on it and choose Change Use, then a use.
+
 ## 2026-10-27: You can tell a building's state at a glance
 - Eight new Meshy models show who holds a building, on top of the building and changing live:
   - **Yours**: the cult's purple banner with the white glove down both fronts, and its flag on a roof corner.
