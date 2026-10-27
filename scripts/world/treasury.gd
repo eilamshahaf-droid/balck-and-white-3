@@ -12,6 +12,7 @@ const S: TreasurySettings = preload("res://data/treasury.tres")
 @export var faith: Node
 @export var districts: Districts
 @export var decrees: Decrees
+@export var police: Police
 
 var money := S.start_money
 ## Money per second right now, for the HUD.
@@ -94,6 +95,8 @@ func _net(building: Node3D, use: String, luxury: bool, levels: int) -> float:
 	if luxury:
 		gain *= S.luxury_speed
 		upkeep += S.luxury_upkeep
+	if police.is_blockaded(building):
+		gain = 0.0
 	return gain * _efficiency(levels) * districts.wealth_at(i) - upkeep
 
 

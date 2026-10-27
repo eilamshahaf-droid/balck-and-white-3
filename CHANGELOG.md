@@ -6,6 +6,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 ## 2026-10-27: The police try to arrest the priest
 - When a sermon draws the police, `PoliceArrests.arrest(priest)` sends a squad of four officers who surround him; he stands still and "ARREST!" floats over him. A banner at the top of the screen says the priest is being arrested, with the seconds left.
 - Free him by getting the officers away: pick them up with the hand and throw them off, or have a miracle call `PoliceArrests.scatter_near(point, radius)`. If a squad is still around him when the time runs out (40 s), he is taken (`arrest_ended(priest, false)`).
+- **Blockades stop output**: while a roadblock stands at a building, it earns no money (its upkeep still runs). `Police.is_blockaded(building)` is there for the belief side too. The length is `roadblock_time` in `data/police.tres`.
 - Numbers: `data/police.tres`, group "Arresting the priest".
 - Try it: no automatic trigger yet; it fires from the priest's sermon (people thread).
 

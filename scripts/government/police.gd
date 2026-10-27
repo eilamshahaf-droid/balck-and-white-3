@@ -90,6 +90,11 @@ func _hardness_of(building: Node3D) -> float:
 	return clampf(districts.wealth_at(districts.index_of(building)) / S.hardest_wealth, 0.0, 1.0)
 
 
+## Does a roadblock stand at `building`? Its output (money, belief) stops meanwhile.
+func is_blockaded(building: Node3D) -> bool:
+	return _blocks.has(building)
+
+
 ## Is the street at `point` shut by a roadblock? Commuters ask this before they cross.
 func is_closed_at(point: Vector3) -> bool:
 	for b: Node3D in _blocks.keys():
