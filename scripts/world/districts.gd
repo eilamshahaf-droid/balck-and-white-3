@@ -16,6 +16,8 @@ signal district_controlled(district: int)
 signal counted
 ## Building `index` stands empty for good now (start district, fire, roaches).
 signal building_abandoned(index: int)
+## District `district` has a different core building now (the old one was demolished).
+signal core_changed(district: int)
 
 const S: DistrictSettings = preload("res://data/districts.tres")
 const B: Balance = preload("res://data/balance.tres")
@@ -199,11 +201,15 @@ func remove_building(building: Node3D) -> void:
 		return
 	if _yours[i] == 1:
 		_set_side(i, false)
-	_totals[_district_of[i]] -= 1
+	var d := _district_of[i]
+	_totals[d] -= 1
 	_district_of[i] = -1
 	buildings[i] = null
 	_index.erase(building)
 	building_changed.emit(i, false)
+	if _core[d] == i:
+		_core[d] = _pick_core(d)
+		core_changed.emit(d)
 
 
 ## Testing shortcut: the `count` buildings nearest `p` become yours at once
@@ -304,18 +310,24 @@ func _collect() -> void:
 
 func _find_cores(count: int) -> void:
 	_core.resize(count)
-	_core.fill(-1)
-	var best := PackedFloat32Array()
-	best.resize(count)
-	best.fill(INF)
+	for d in count:
+		_core[d] = _pick_core(d)
+
+
+## The standing building nearest the middle of district `d`, or -1.
+func _pick_core(d: int) -> int:
+	var middle := district_rect(d).get_center()
+	var best := -1
+	var best_gap := INF
 	for i in buildings.size():
-		var d := _district_of[i]
-		var rect := district_rect(d)
+		if _district_of[i] != d:
+			continue
 		var p := buildings[i].global_position
-		var gap := Vector2(p.x, p.z).distance_squared_to(rect.get_center())
-		if gap < best[d]:
-			best[d] = gap
-			_core[d] = i
+		var gap := Vector2(p.x, p.z).distance_squared_to(middle)
+		if gap < best_gap:
+			best_gap = gap
+			best = i
+	return best
 
 
 ## Which of `parts` bands a block falls in, with band edges on road lines.

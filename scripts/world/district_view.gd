@@ -23,6 +23,7 @@ func _ready() -> void:
 	districts.layout_ready.connect(_build)
 	districts.building_changed.connect(_on_building_changed)
 	districts.district_controlled.connect(_on_district_controlled)
+	districts.core_changed.connect(_place_core)
 	get_node("../Decrees").decree_issued.connect(_on_decree_issued)
 
 
@@ -62,14 +63,15 @@ func _build() -> void:
 
 ## A purple beacon over each district's core building, gold once it is yours.
 func _place_core(d: int) -> void:
-	var b: Node3D = districts.buildings[districts.core_of(d)]
+	var core := districts.core_of(d)
+	var b: Node3D = districts.buildings[core] if core >= 0 else null
 	if b == null:
 		_cores.set_instance_transform(d, _hidden)
 		return
 	var size := DivineSign.building_size(b)
 	var at := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT + S.core_beacon.y / 2.0)
 	_cores.set_instance_transform(d, Transform3D(Basis.from_scale(S.core_beacon), at))
-	_cores.set_instance_color(d, S.roof_color if districts.is_yours(districts.core_of(d)) else S.core_color)
+	_cores.set_instance_color(d, S.roof_color if districts.is_yours(core) else S.core_color)
 
 
 func _on_building_changed(index: int, yours: bool) -> void:
