@@ -33,6 +33,8 @@ signal occupant_added(building: Node3D, resident: Resident)
 signal occupant_left(building: Node3D, resident: Resident)
 ## `resident` moved from stage `old` to stage `new` (Resident.Stage).
 signal stage_changed(resident: Resident, old: int, new: int)
+## The player let every believer go from `building` (it can be settled again).
+signal believers_dismissed(building: Node3D, count: int)
 ## A priest preached to `reached` people on the street.
 signal priest_preached(priest: Resident, reached: int)
 
@@ -162,6 +164,28 @@ func evict(r: Resident) -> void:
 	_set_home(r, new_home)
 	if _has_body(r):
 		r.body.move_out()
+
+
+## Reset `building`: every believer living or sitting in there is let go. The
+## sitters go home, the residents move to the nearest other home, and the staff
+## lose their posts. Unlike evacuate, the building stays a home for others.
+func dismiss_believers(building: Node3D) -> void:
+	_release_occupants(building)
+	for r: Resident in (_staff.get(building, []) as Array).duplicate():
+		unassign(r)
+	_homes.erase(building)
+	var new_home := home_near(building.global_position)
+	_homes.append(building)
+	var count := 0
+	for r: Resident in (_by_home.get(building, []) as Array).duplicate():
+		if r.belief <= B.believer_threshold:
+			continue
+		count += 1
+		if new_home:
+			_set_home(r, new_home)
+			if _has_body(r):
+				r.body.move_out()
+	believers_dismissed.emit(building, count)
 
 
 ## Someone preaches to `r` (missionaries at the door): belief rises by
