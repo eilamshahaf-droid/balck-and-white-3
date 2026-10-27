@@ -142,7 +142,7 @@ func _step(c: Campaign) -> void:
 				return
 			var r := _doubter_in(c.building)
 			if r and faith.spend(S.preach_cost):
-				population.preach_to(r, S.preach_strength)
+				population.persuade(r, SocialGroup.Route.PREACH, S.preach_strength)
 				c.stalled = ""
 			c.wait = S.preach_interval
 

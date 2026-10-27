@@ -3,6 +3,8 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+
+
 ## 2026-10-27: Risky believers, Block Party, Rain of Frogs
 - Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
   - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.
