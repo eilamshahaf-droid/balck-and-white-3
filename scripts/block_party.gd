@@ -6,7 +6,7 @@ extends Node3D
 const M: MiracleSettings = preload("res://data/miracles.tres")
 const Sfx := preload("res://scripts/sfx.gd")
 
-const HANG := 9.0          # metres above the street the ball hangs
+const HANG := 12.0         # metres above the street the ball hangs
 const DROP_FROM := 40.0    # metres above the street it comes down from
 const DROP_SPEED := 18.0   # metres per second
 const SPIN := 1.5          # radians per second, the ball
@@ -35,8 +35,8 @@ func start(ground: Vector3, size := 1.0, length := 1.0) -> void:
 		mat.metallic = 1.0
 		mat.roughness = 0.15
 		_ball_mesh = SphereMesh.new()
-		_ball_mesh.radius = 1.2
-		_ball_mesh.height = 2.4
+		_ball_mesh.radius = 2.2
+		_ball_mesh.height = 4.4
 		_ball_mesh.radial_segments = 12
 		_ball_mesh.rings = 6
 		_ball_mesh.material = mat
@@ -45,7 +45,7 @@ func start(ground: Vector3, size := 1.0, length := 1.0) -> void:
 		paper.cull_mode = BaseMaterial3D.CULL_DISABLED
 		paper.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		_confetti_mesh = QuadMesh.new()
-		_confetti_mesh.size = Vector2(0.25, 0.15)
+		_confetti_mesh.size = Vector2(0.5, 0.3)
 		_confetti_mesh.material = paper
 	_ball = MeshInstance3D.new()
 	_ball.mesh = _ball_mesh

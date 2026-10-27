@@ -23,7 +23,7 @@ func start(ground: Vector3, size := 1.0, length := 1.0) -> void:
 		var mat := StandardMaterial3D.new()
 		mat.albedo_color = Color(0.35, 0.75, 0.25)
 		_mesh = BoxMesh.new()
-		_mesh.size = Vector3(0.45, 0.3, 0.55)
+		_mesh.size = Vector3(0.8, 0.55, 1.0)   # toy-sized: readable from the god's height
 		_mesh.material = mat
 	var radius := M.frog_radius * size
 	var count := roundi(M.frog_count * size)
