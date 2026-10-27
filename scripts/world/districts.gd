@@ -14,6 +14,8 @@ signal building_changed(index: int, yours: bool)
 signal district_controlled(district: int)
 ## Every building was counted again (a few times a second).
 signal counted
+## Building `index` stands empty for good now (start district, fire, roaches).
+signal building_abandoned(index: int)
 
 const S: DistrictSettings = preload("res://data/districts.tres")
 const B: Balance = preload("res://data/balance.tres")
@@ -112,6 +114,15 @@ func index_of(building: Node3D) -> int:
 	return _index.get(building, -1)
 
 
+## How well off district `d` is (1 = average; the start district is poor).
+func wealth_of(d: int) -> float:
+	return S.wealth[d] if d < S.wealth.size() else 1.0
+
+
+func wealth_at(index: int) -> float:
+	return wealth_of(_district_of[index]) if _district_of[index] >= 0 else 1.0
+
+
 func is_abandoned(index: int) -> bool:
 	return _abandoned[index] == 1
 
@@ -158,6 +169,7 @@ func mark_abandoned(building: Node3D) -> bool:
 	if i < 0 or _abandoned[i] == 1:
 		return false
 	_abandoned[i] = 1
+	building_abandoned.emit(i)
 	return true
 
 

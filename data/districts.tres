@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_settings")
+wealth = PackedFloat32Array(1.2, 2, 0.4, 1, 1.5, 0.9, 0.8, 1, 0.7)

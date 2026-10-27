@@ -77,11 +77,11 @@ script = ExtResource("13_districts")
 [node name="DistrictView" type="Node3D" parent="."]
 script = ExtResource("14_district_view")
 
-[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "population")]
+[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "decrees")]
 script = ExtResource("18_treasury")
 faith = NodePath("../Faith")
 districts = NodePath("../Districts")
-population = NodePath("../Population")
+decrees = NodePath("../Decrees")
 
 [node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "treasury", "decrees")]
 script = ExtResource("19_campaigns")
