@@ -14,6 +14,8 @@ signal stopped_occupying(c: Citizen)
 const B: Balance = preload("res://data/balance.tres")
 
 var bodies: Array[Citizen] = []
+## Bodies avoid streets this has shut with a roadblock.
+var police: Police
 
 # Loaded at run time: a parse-time preload would load social_group.gd before
 # its class_name is registered and break the typed groups array.
@@ -89,6 +91,7 @@ func zealots_near(p: Vector3, radius: float) -> Array[Citizen]:
 func _spawn(r: Resident) -> void:
 	var c := Citizen.new()
 	c.city = _city
+	c.police = police
 	c.resident = r
 	c.collision_layer = _city.LAYER_CITIZENS
 	c.collision_mask = _city.LAYER_WORLD

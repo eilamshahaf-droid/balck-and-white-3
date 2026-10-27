@@ -37,9 +37,6 @@ var baseline := 0.0
 ## Hidden personal coefficient k: 0 believes easily, 1 always finds a rational explanation.
 var skepticism := 0.5
 var has_phone := false
-## Average belief of this person's close friends, refreshed by Population:
-## what they hear over dinner pulls their own belief.
-var friends_belief := 0.0
 ## Hidden meters, 0..1. Comfort and fear are the two ways to play: a priest
 ## only reaches people who are comfortable and not afraid, force works on the
 ## frightened, and too much fear makes people move away.
@@ -48,6 +45,8 @@ var comfort := 0.5
 var fear := 0.0
 var color := Color.WHITE
 var job := Job.FREE
+## False once the person died (a building burned down around them).
+var alive := true
 ## The building this person works in (null while FREE); their body stays around it.
 var post: Node3D
 ## Null while indoors.
