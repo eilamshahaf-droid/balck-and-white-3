@@ -77,14 +77,12 @@ var occupying := false
 var _body: MeshInstance3D
 static var _phone_screen: StandardMaterial3D
 
-var _color := Color.WHITE
 var _own_mat: StandardMaterial3D
 var _fall_speed := 0.0
 var _pause := 0.0
 var _spin := Vector3.ZERO      # tumble while flying, radians per second around this axis
 var _down_timer := 0.0
 var _lying := Quaternion.IDENTITY
-var _seen := {}             # miracle kind -> times seen
 var _events_seen := {}     # ids of miracle events already reacted to
 var _phone: MeshInstance3D
 var _phone_timer := 0.0
@@ -119,7 +117,6 @@ func _ready() -> void:
 	_body.position.y = 0.9
 	_body.visible = false
 	add_child(_body)
-	_color = Color.from_hsv(randf(), 0.45, 0.85)
 	Crowd.join(self)
 	# The phone and the speech bubble are made the first time they are needed:
 	# most of the crowd never films or speaks.
@@ -129,6 +126,7 @@ func _ready() -> void:
 	if resident.id < 0:
 		skepticism = randf()
 		has_phone = randf() < B.phone_chance
+		resident.color = Color.from_hsv(randf(), 0.45, 0.85)
 	if resident.home:
 		grid = city.nearest_grid(resident.home.global_position)
 	home = grid
@@ -226,7 +224,7 @@ func body_transform() -> Transform3D:
 ## undecided, gold = believer.
 func body_color() -> Color:
 	if not city.show_belief:
-		return _color
+		return resident.color
 	if belief < 0:
 		return Color.WHITE.lerp(Color(0.9, 0.15, 0.1), -belief)
 	return Color.WHITE.lerp(Color(1.0, 0.8, 0.1), belief)
@@ -235,14 +233,14 @@ func body_color() -> Color:
 ## Shift belief after witnessing or experiencing a miracle, by the formula in
 ## balance.gd. situation: + it helped this person, - it hurt them.
 func react_to_miracle(kind: StringName, intensity: float, situation: float, friends_belief := 0.0) -> void:
-	var times: int = _seen.get(kind, 0)
-	_seen[kind] = times + 1
+	var times: int = resident.seen_miracles.get(kind, 0)
+	resident.seen_miracles[kind] = times + 1
 	var novelty := maxf(1.0 - B.novelty_step * times, B.novelty_floor)
 	var change := intensity * situation * (1.0 - skepticism) * novelty
 	# A repeat that reads as a trick turns people away, believers or not.
 	if novelty < 0.0:
 		change = intensity * absf(situation) * novelty
-	belief = clampf(belief + change + B.friends_weight * friends_belief, -1.0, 1.0)
+	resident.persuade(SocialGroup.Route.MIRACLE, change + B.friends_weight * friends_belief)
 
 
 func has_seen_event(id: int) -> bool:
@@ -264,9 +262,9 @@ func witness(e: Dictionary, at: Vector3, friends_belief: float) -> bool:
 		&"god":
 			react_to_miracle(e.kind, e.intensity, situation, friends_belief)
 		&"fraud":
-			belief = clampf(belief - e.intensity * B.fraud_penalty, -1.0, 1.0)
+			resident.shift(-e.intensity * B.fraud_penalty)
 		&"plot":
-			belief = clampf(belief - e.intensity * B.plot_penalty, -1.0, 1.0)
+			resident.shift(-e.intensity * B.plot_penalty)
 	# Big miracles hold people longer, and they keep talking about them.
 	var hold: float = B.look_time * (1.0 + e.intensity * 3.0)
 	_say(explanation, hold * 1.4)
@@ -591,6 +589,22 @@ func settle_at_home() -> void:
 	grid = home
 	global_position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
 	resume_walking()
+
+
+## Become `r`, who just stepped out of their home: the body is reused for
+## someone else instead of making a new one (Population keeps a fixed number
+## of people on the street).
+func become(r: Resident) -> void:
+	resident = r
+	speed = randf_range(_people.walk_speed_min, _people.walk_speed_max)
+	end_errand()
+	idle = false
+	_pause = 0.0
+	_flee_time = 0.0
+	_look_at_target = Vector3.INF
+	scripted_explanation = &""
+	_events_seen.clear()
+	settle_at_home()
 
 
 ## Run from `danger` (a roach attack) to a corner down the street, shouting.
