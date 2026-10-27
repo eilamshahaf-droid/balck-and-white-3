@@ -191,30 +191,25 @@ func evacuate(building: Node3D) -> void:
 	_by_home.erase(building)
 
 
-## Skip the story: whole families move into the homes nearest one corner and
-## become a small congregation of believers.
+## Skip the story: the families in the homes nearest one corner become a
+## small congregation of believers.
 func found_congregation() -> void:
 	var corner: Vector3 = city.intersection(_people.congregation_corner)
 	var near := _homes.duplicate()
 	near.sort_custom(func(a: Node3D, b: Node3D) -> bool:
 		return a.global_position.distance_squared_to(corner) < b.global_position.distance_squared_to(corner))
-	var moved := 0
-	var family_home := 0
-	for r in residents:
-		if moved >= _people.congregation_size:
-			break
-		# Families are created together, so their ids sit side by side; a new
-		# surname means a new family and the next building.
-		if moved > 0 and r.last_name != residents[r.id - 1].last_name:
-			family_home += 1
-		move_home(r, near[family_home % near.size()])
-		r.belief = _rng.randf_range(_people.congregation_belief_min, _people.congregation_belief_max)
-		r.baseline = r.belief
-		r.skepticism = _rng.randf_range(0.0, _people.congregation_skepticism_max)
-		_stages[r] = r.stage()
-		if r.body == null:
-			_bring_out(r)
-		moved += 1
+	var converted := 0
+	for home: Node3D in near:
+		for r: Resident in _by_home.get(home, []):
+			if converted >= _people.congregation_size:
+				return
+			r.belief = _rng.randf_range(_people.congregation_belief_min, _people.congregation_belief_max)
+			r.baseline = r.belief
+			r.skepticism = _rng.randf_range(0.0, _people.congregation_skepticism_max)
+			_stages[r] = r.stage()
+			if r.body == null:
+				_bring_out(r)
+			converted += 1
 
 
 func _populate() -> void:
