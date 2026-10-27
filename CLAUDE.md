@@ -64,7 +64,7 @@ World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `
 `shared_meshes.gd` (`SharedMeshes`) hands out low-poly primitive meshes shared by every instance.
 `sfx.gd` makes placeholder sounds in code.
 
-Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`,
+Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `prayer_houses`,
 `wind_reactive`, `no_toon`, `preserved`.
 
 Physics layers (bit values in code): 1 = world (ground, buildings), 2 = citizens,

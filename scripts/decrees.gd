@@ -19,6 +19,9 @@ const Sfx := preload("res://scripts/sfx.gd")
 
 ## Group of preserved buildings: no demolition, no buying them from under you.
 const PRESERVED := &"preserved"
+## Group of buildings used as a Prayer House: only their believers pray belief
+## into the pool (Population.prayer).
+const PRAYER_HOUSES := &"prayer_houses"
 
 @export var faith: Node
 @export var miracles: Node
@@ -137,6 +140,10 @@ func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 			DecreeLooks.grow(building, D.floors_per_decree)
 		&"use":
 			building.set_meta(&"decree_use", use_name)
+			if use_name == D.prayer_use:
+				building.add_to_group(PRAYER_HOUSES)
+			elif building.is_in_group(PRAYER_HOUSES):
+				building.remove_from_group(PRAYER_HOUSES)
 		_:
 			building.set_meta(&"decree_" + kind, true)
 	if kind == &"preserve":

@@ -5,6 +5,10 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 
 
 
+## 2026-10-27: Prayer Houses join the prayer_houses group
+- A building given the Prayer House use (Change Use decree) joins the group `prayer_houses`, and leaves it when its use changes again. Only believers there pray belief into the pool (people thread, `Population.prayer`).
+- Try it: press F5, change one of your buildings to Prayer House and watch belief start to rise.
+
 ## 2026-10-27: The building you look at stays solid
 - The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
 - Number: `data/hand_settings.tres`, `fade_keep_radius`.
