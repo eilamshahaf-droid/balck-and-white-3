@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: The toon look for MultiMesh crowds
+- ArtStyle now also styles `MultiMeshInstance3D` nodes, not only `MeshInstance3D`. A material that takes its colour from the vertices (`vertex_color_use_as_albedo`, as a MultiMesh with per-instance colours does) gets a toon variant (`shaders/toon_tinted.gdshader`) that multiplies the toon colour by each instance's colour. This is for the crowd of people being drawn as one MultiMesh.
+- `ArtStyle.restyle()` accepts either kind of mesh.
+- Try it: once the crowd is in the game, press F5 and press V to compare: the people are cel-shaded like the buildings.
+
 ## 2026-10-27: The god's hand is now the white cloth glove
 - The box placeholder is gone. The hand is the cloth glove from the hand page: the WebXR generic hand (MIT) turned into a glove in Blender, with seams around every finger, a stitched wrist hem, three stitched lines on the back and creases at the joints, all baked into its maps. Above the wrist the glove runs on up the arm and crumbles away in holes.
 - Same behaviour as before: the poses (open, pointing, grabbing, tapping) now curl the glove's real finger bones, and believers nearby make it brighter with a warm glow. Only `scripts/hand_visual.gd` changed; the model and its maps are in `assets/models/god_hand/`.
