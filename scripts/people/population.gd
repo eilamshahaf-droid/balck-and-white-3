@@ -402,18 +402,18 @@ func _raw_staffed(building: Node3D) -> float:
 
 ## How far a priest's preaching reaches and how strong it is: his prayer house's
 ## loudspeakers widen it, lecture halls and banners strengthen it.
-func preach_reach(priest: Resident) -> float:
+func preach_reach(preacher: Resident) -> float:
 	var reach := _people.priest_reach
-	if priest.post:
-		reach *= 1.0 + _people.loudspeaker_reach * count_of(priest.post, Upgrade.LOUDSPEAKER)
+	if preacher.post:
+		reach *= 1.0 + _people.loudspeaker_reach * count_of(preacher.post, Upgrade.LOUDSPEAKER)
 	return reach
 
 
-func preach_strength(priest: Resident) -> float:
+func preach_strength(preacher: Resident) -> float:
 	var strength := _people.priest_strength
-	if priest.post:
-		strength *= 1.0 + _people.lecture_hall_strength * count_of(priest.post, Upgrade.LECTURE_HALL) \
-				+ _people.banner_strength * count_of(priest.post, Upgrade.BANNERS)
+	if preacher.post:
+		strength *= 1.0 + _people.lecture_hall_strength * count_of(preacher.post, Upgrade.LECTURE_HALL) \
+				+ _people.banner_strength * count_of(preacher.post, Upgrade.BANNERS)
 	return strength
 
 
