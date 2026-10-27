@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Alpha (refreshed, round 3)
+- The combined build again: main, the world branch (building economy, poor start district, City Hall without shields), the people round (at least 5 residents per building, belief in stages), the hand round 3 (Block Party, Rain of Frogs, accidental fires and saving buildings with water, "+ Believer" notes, Shop use, pricier floors) and the Meshy props showing each building's state.
+- Headless run (with --debug), planning scene and hand test pass with no errors or warnings; the Compatibility renderer starts.
+- Try it: press F5. F1 shows the debug panel.
+
 ## 2026-10-27: You can tell a building's state at a glance
 - Eight new Meshy models show who holds a building, on top of the building and changing live:
   - **Yours**: the cult's purple banner with the white glove down both fronts, and its flag on a roof corner.
@@ -12,8 +17,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
   - **Poor districts** (Spin Cycle Flats, where you start): laundry lines under the windows, and dumpsters and heaps of trash bags on the sidewalks. The dumpsters can be picked up and thrown.
 - Numbers: `data/city_props.tres`, groups "Poor districts" and "Building states".
 - Try it: press F5. Your headquarters' district has laundry, boarded-up empty buildings and dumpsters. Take a building (debug panel, "Take 10 buildings here") and watch the banners and flags go up; give one of yours the Luxury decree.
-
-
 
 ## 2026-10-27: Risky believers, Block Party, Rain of Frogs
 - Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
@@ -42,13 +45,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 ## 2026-10-27: Last editor warnings fixed
 - `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), and the planning scripts no longer divide whole numbers by whole numbers ("Integer division"), so the editor's warning list is empty.
 - Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.
-
-
-
-## 2026-10-27: Alpha (refreshed)
-- The combined build with everything every thread has so far: main (the cloth glove, 500 people in one crowd, the error fixes), the world branch (takeover by force / buy / missionaries, money and the new meters, PR #11), the Meshy props (PR #17) and the hand round (roaches, money from the sky, dearer miracles, decrees that cost money, the takeover marks in the building wheel, no tree lifting).
-- Headless run, planning scene and hand test pass with no errors; the Compatibility renderer starts.
-- Try it: press F5. F1 shows the debug panel.
 
 ## 2026-10-27: Decrees cost money; the building wheel marks buildings for takeover
 - Every decree now costs money as well as belief: +3 floors $120, luxury $150, facade $60, change use $80, preserve $40. The slice shows both ("30 belief + $120").
@@ -80,25 +76,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Roof props follow a building that grows new floors by decree, and make way for a luxury penthouse.
 - Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
 - Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
-
-## 2026-10-27: Decrees cost money; the building wheel marks buildings for takeover
-- Every decree now costs money as well as belief: +3 floors $120, luxury $150, facade $60, change use $80, preserve $40. The slice shows both ("30 belief + $120").
-- The building wheel depends on whose building it is. Yours: the five decrees. Anyone else's: the three takeover marks, **Skull: Force**, **$: Buy** and **Sky Sign: Missionaries**. A slice that can't be chosen says why ("needs a Combat Training building", "needs $80"); the mark already on the building reads "call off".
-- The three divine signs (beam, storm, halo) are off the wheel; the marks replace them.
-- Numbers: `data/decrees.tres` (the `..._money` values).
-- Try it: press F5, hold the left button still on a building that isn't yours and pick a mark; then on one of yours, pick a decree and watch the money card drop.
-
-## 2026-10-27: Buildings earn or cost money; a poor start district
-- Every building of yours now earns or costs money each second, and the bottom-left panel shows it ("yours, earns $0.4/s").
-  - **No use:** it brings rent in.
-  - **A use** (Prayer House, Course Center, Free Personality Test, Combat Training): it costs upkeep instead. A shop earns (the hand thread adds the Shop use).
-  - **Luxury:** the building does its job 1.6 times faster (rent, shop takings, training fighters), but its upkeep goes up.
-  - **Floors:** each floor level makes the building yield more, by less every time (+36%, then +20%, +11%, ...), while each level adds upkeep. Pumping floors stops paying off.
-- Shops no longer come from Facade.
-- **District wealth:** each district has a wealth that scales rent, shop takings and the price of buying people out. The start district by the river is poor (0.4), downtown is rich (2.0), and the panel says "(poor)" or "(rich)".
-- Numbers: `data/treasury.tres` (Rent, Uses, Luxury, Floors) and `wealth` in `data/districts.tres`.
-- Try it: press F5, click "Take 10 buildings here" on the debug panel (F1), and look at the "Building" line as you give one of them decrees.
-
 
 ## 2026-10-27: Take buildings by force, money or missionaries; a money meter
 - The claim meter and its roof colours are gone. Eilam's rule instead: a building is yours once most of the people who live there believe. An empty one is yours while a believer lives in it or sits in on it.
@@ -152,8 +129,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Fixed editor warnings in the hand's files: names that shadowed built-ins (`sign`, `size`, `to_local`).
 - The hand test checks that trees can't be picked up.
 - Try it: press F5 and try to drag a tree: the city moves instead.
-
-
 
 ## 2026-10-26: Taking over buildings, made clear
 - Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.
