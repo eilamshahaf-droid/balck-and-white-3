@@ -46,6 +46,25 @@ func wheel_items(building: Node3D) -> Array[Dictionary]:
 	return items
 
 
+## The second wheel of "Change Use": one slice per use.
+func use_items(building: Node3D) -> Array[Dictionary]:
+	var items: Array[Dictionary] = []
+	var current := use_of(building)
+	var price := cost(&"use", building)
+	for i in D.uses.size():
+		var use_name: String = D.uses[i]
+		items.append({"id": StringName(use_name), "label": use_name,
+				"color": Color.from_hsv(0.3 + 0.12 * i, 0.45, 0.9),
+				"note": "now" if use_name == current else "%d belief" % roundi(price),
+				"enabled": use_name != current and faith.belief_pool >= price})
+	return items
+
+
+## What `building` is used for since a Change Use decree ("" if none).
+func use_of(building: Node3D) -> String:
+	return building.get_meta(&"decree_use", "")
+
+
 ## Is `building` the god's? Districts is the one place that decides.
 func is_yours(building: Node3D) -> bool:
 	return districts.owns(building)
@@ -71,7 +90,8 @@ func cost(kind: StringName, building: Node3D) -> float:
 	return base * lerpf(M.weak_cost, M.strong_cost, miracles.power_at(building.global_position))
 
 
-func issue(kind: StringName, building: Node3D) -> void:
+## Sign decree `kind` for `building`; a Change Use names the new use.
+func issue(kind: StringName, building: Node3D, use_name := "") -> void:
 	if not is_yours(building):
 		decree_failed.emit(&"not_yours")
 		return
@@ -86,7 +106,7 @@ func issue(kind: StringName, building: Node3D) -> void:
 			building.set_meta(&"decree_floors", building.get_meta(&"decree_floors", 0) + 1)
 			DecreeLooks.grow(building, D.floors_per_decree)
 		&"use":
-			building.set_meta(&"decree_use", building.get_meta(&"decree_use", 0) + 1)
+			building.set_meta(&"decree_use", use_name)
 		_:
 			building.set_meta(&"decree_" + kind, true)
 	if kind == &"preserve":

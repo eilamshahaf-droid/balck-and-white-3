@@ -26,8 +26,7 @@ extends Resource
 @export var witness_interval := 0.25         # seconds between witness checks
 @export_range(0.0, 1.0) var novelty_step := 0.5   # novelty lost each time the same kind is seen again; the third time looks like a trick
 @export var novelty_floor := -0.5            # past that, repeats read as a trick and breed skepticism
-@export_range(0.0, 1.0) var friends_weight := 0.05   # sigma: pull of the people around you
-@export var friends_radius := 10.0
+@export_range(0.0, 1.0) var friends_weight := 0.05   # sigma: pull of a person's close friends
 @export var look_time := 2.5                 # seconds a witness stops and stares
 @export_range(0.0, 1.0) var phone_chance := 0.75     # share of people who film what they see
 

@@ -15,12 +15,12 @@ extends Resource
 @export var strong_size := 1.6               # ...and at full power
 @export var weak_time := 0.7                 # how long it lasts, the same way
 @export var strong_time := 1.5
-@export var weak_cost := 1.3                 # cost multiplier: dearer among skeptics...
-@export var strong_cost := 0.6               # ...cheaper among your own
+@export var weak_cost := 1.6                 # cost multiplier: dearer among skeptics...
+@export var strong_cost := 0.7               # ...cheaper among your own
 @export var power_update := 0.25             # seconds between updates of the power under the hand
 
 @export_group("Water: a cloud rains on one spot")
-@export var water_cost := 15.0               # belief
+@export var water_cost := 60.0               # belief; miracles are dear, to be used deliberately
 @export var water_intensity := 0.8
 @export_range(0.0, 1.0) var water_deniability := 0.35   # rain from a clear sky: odd, but people try
 @export var rain_time := 6.0
@@ -29,7 +29,7 @@ extends Resource
 @export var douse_rate := 0.35               # fire heat put out per second under the rain
 
 @export_group("Fire: a building, or the street, catches fire")
-@export var fire_cost := 10.0
+@export var fire_cost := 50.0
 @export var fire_intensity := 0.7
 @export_range(-1.0, 1.0) var fire_situation := -0.5     # watching a building burn
 @export_range(0.0, 1.0) var fire_deniability := 0.6     # buildings do catch fire
@@ -38,7 +38,7 @@ extends Resource
 @export var fire_seen_from := 80.0
 
 @export_group("Lightning: a bolt from a clear sky")
-@export var lightning_cost := 20.0
+@export var lightning_cost := 80.0
 @export var lightning_intensity := 0.9
 @export_range(-1.0, 1.0) var lightning_situation := -0.3   # frightening, even for those it misses
 @export_range(0.0, 1.0) var lightning_deniability := 0.3
@@ -47,7 +47,7 @@ extends Resource
 @export var lightning_seen_from := 150.0
 
 @export_group("Shield: a dome nothing harmful gets through")
-@export var shield_cost := 25.0
+@export var shield_cost := 100.0
 @export var shield_intensity := 0.6
 @export_range(-1.0, 1.0) var shield_situation := 0.4
 @export_range(0.0, 1.0) var shield_deniability := 0.1   # a glowing dome is hard to explain
@@ -56,13 +56,33 @@ extends Resource
 @export var shield_seen_from := 70.0
 
 @export_group("Heal: golden light that mends")
-@export var heal_cost := 15.0
+@export var heal_cost := 60.0
 @export var heal_intensity := 0.7
 @export_range(-1.0, 1.0) var heal_situation := 0.6
 @export_range(0.0, 1.0) var heal_deniability := 0.4     # "they were fine all along"
 @export var heal_radius := 12.0              # knocked-down people get up, burnt buildings are rebuilt
 @export var heal_time := 3.0
 @export var heal_seen_from := 60.0
+
+@export_group("Roaches: a building's residents flee")
+@export var roach_cost := 70.0
+@export var roach_intensity := 0.6
+@export_range(-1.0, 1.0) var roach_situation := -0.4   # disgusting, even to watch
+@export_range(0.0, 1.0) var roach_deniability := 0.7   # old buildings do have roaches
+@export var roach_time := 8.0                # seconds the swarm crawls over the walls
+@export var roach_count := 300
+@export var roach_seen_from := 40.0
+
+@export_group("Money from the sky: banknotes rain on one spot")
+@export var money_cost := 90.0
+@export var money_amount := 150.0            # money your believers pick up and hand in, at full power
+@export var money_weak_share := 0.3          # share of it they hand in with no believers near
+@export var money_intensity := 0.8
+@export_range(-1.0, 1.0) var money_situation := 0.7
+@export_range(0.0, 1.0) var money_deniability := 0.2   # "an armoured truck lost its doors"
+@export var money_radius := 9.0
+@export var money_time := 6.0
+@export var money_seen_from := 80.0
 
 @export_group("Divine signs on buildings")
 @export var sign_cost := 3.0                 # belief; clearing a sign is free

@@ -1,32 +1,22 @@
 class_name Districts
 extends Node
-## Splits the city into districts and keeps the claim meter of every building
-## (design doc: "איך משתלטים על מקום"). A meter fills from 0 to full and the
-## building is yours; it slips back below a threshold. Only the power route
-## fills it so far: believers who live there or sit in on it (the people's
-## power_presence) and your buildings next door. Outside your influence zone (next to one of
-## your buildings) only an abandoned place takes a claim. The cult starts from
-## its headquarters, where most believers live, in a neglected district full of
-## abandoned places. Neighbours are buildings across a narrow street; a wide
-## avenue stops the zone. A district is yours once enough of its buildings are.
-## Decrees ask owns(), so there is one answer.
+## Splits the city into districts and keeps who holds every building. Eilam's
+## rule: a building is yours once most of the people who live there believe
+## (Population's residents); an empty one is yours while a believer sits in on
+## it. Campaigns (campaigns.gd) are how the player tips a building: force, buying
+## or missionaries. The cult starts from its headquarters, where most believers
+## live, in a neglected district with empty, abandoned buildings. A district is
+## yours once enough of its buildings are. Decrees ask owns(), so there is one
+## answer.
 
 signal layout_ready
 signal building_changed(index: int, yours: bool)
 signal district_controlled(district: int)
-## Every claim meter was updated (twice a second).
-signal claims_updated
+## Every building was counted again (a few times a second).
+signal counted
 
-## How a building stands for the cult: what the player can do with it.
-enum Reach {
-	YOURS,      ## yours
-	TAKE,       ## abandoned: take it over by bringing believers
-	CONVERT,    ## next to yours: convert it with believers who live or stand there
-	LOCKED,     ## out of reach until you hold something next to it
-}
-
-const S = preload("res://data/districts.tres")
-const B = preload("res://data/balance.tres")
+const S: DistrictSettings = preload("res://data/districts.tres")
+const B: Balance = preload("res://data/balance.tres")
 const DivineSign = preload("res://scripts/divine_sign.gd")
 
 ## Every building, by index. A demolished one stays in the list as null.
@@ -38,15 +28,14 @@ var headquarters := -1
 
 var _district_of := PackedInt32Array()   # -1 once demolished
 var _yours := PackedByteArray()
-var _claim := PackedFloat32Array()       # 0..claim_full; full = yours
 var _abandoned := PackedByteArray()
-var _neighbors: Array[PackedInt32Array] = []
-var _zone := PackedInt32Array()          # neighbours of yours, per building, counted every tick
 var _totals := PackedInt32Array()        # standing buildings per district
 var _owned := PackedInt32Array()         # buildings of yours per district
 var _controlled := PackedByteArray()
 var _index := {}                         # building -> index
-var _presence := PackedFloat32Array()    # believing presence per building, read every tick
+var _residents := PackedInt32Array()     # people who live there, counted every tick
+var _believers := PackedInt32Array()     # of them, believers
+var _presence := PackedFloat32Array()    # believing presence (residents and sit-ins)
 var _timer := 0.0
 
 @onready var city: Node3D = get_parent()
@@ -59,6 +48,23 @@ func _ready() -> void:
 	_collect()
 	set_physics_process(true)
 	layout_ready.emit()
+
+
+func _physics_process(delta: float) -> void:
+	_timer -= delta
+	if _timer > 0.0:
+		return
+	_timer = S.tick
+	_count()
+	if headquarters < 0:
+		_found_headquarters()
+	for i in buildings.size():
+		if _district_of[i] < 0:
+			continue
+		var mine := _holds(i)
+		if mine != (_yours[i] == 1):
+			_set_side(i, mine)
+	counted.emit()
 
 
 func district_count() -> int:
@@ -102,23 +108,25 @@ func owns(building: Node3D) -> bool:
 	return i >= 0 and _yours[i] == 1
 
 
-## The claim meter of a building, 0..1.
-func claim_of(index: int) -> float:
-	return _claim[index] / S.claim_full
+func index_of(building: Node3D) -> int:
+	return _index.get(building, -1)
 
 
 func is_abandoned(index: int) -> bool:
 	return _abandoned[index] == 1
 
 
-func reach_of(index: int) -> Reach:
-	if _yours[index] == 1:
-		return Reach.YOURS
-	if _abandoned[index] == 1:
-		return Reach.TAKE
-	if _zone[index] > 0:
-		return Reach.CONVERT
-	return Reach.LOCKED
+func residents_in(index: int) -> int:
+	return _residents[index]
+
+
+func believers_in(building: Node3D) -> int:
+	var i: int = _index.get(building, -1)
+	return _believers[i] if i >= 0 else 0
+
+
+func believers_at(index: int) -> int:
+	return _believers[index]
 
 
 ## The standing building nearest `p` on the ground, or -1.
@@ -136,14 +144,21 @@ func building_near(p: Vector3) -> int:
 	return best
 
 
-## A rival knocks the meter back (City Hall's inspection, the police).
-func lower_claim(building: Node3D, amount: float) -> void:
+## Everyone leaves `building` for good: it becomes an abandoned place anyone
+## can move into.
+func abandon(building: Node3D) -> void:
+	if mark_abandoned(building):
+		population.evacuate(building)
+
+
+## `building` was emptied already (a miracle fire burnt it out, roaches):
+## Miracles.building_abandoned is connected here. True if it was not before.
+func mark_abandoned(building: Node3D) -> bool:
 	var i: int = _index.get(building, -1)
-	if i < 0:
-		return
-	_claim[i] = maxf(_claim[i] - amount, 0.0)
-	if _yours[i] == 1 and _claim[i] < S.lose_below:
-		_set_side(i, false)
+	if i < 0 or _abandoned[i] == 1:
+		return false
+	_abandoned[i] = 1
+	return true
 
 
 func converted_buildings() -> Array[Node3D]:
@@ -163,14 +178,13 @@ func remove_building(building: Node3D) -> void:
 		_set_side(i, false)
 	_totals[_district_of[i]] -= 1
 	_district_of[i] = -1
-	_claim[i] = 0.0
 	buildings[i] = null
 	_index.erase(building)
 	building_changed.emit(i, false)
 
 
 ## Testing shortcut: the `count` buildings nearest `p` become yours at once
-## (their residents start believing, so the next tick agrees).
+## (their residents start believing, so the next count agrees).
 func convert_near(p: Vector3, count: int) -> void:
 	var order: Array[int] = []
 	for i in buildings.size():
@@ -181,53 +195,39 @@ func convert_near(p: Vector3, count: int) -> void:
 	var chosen := {}
 	for i in order.slice(0, count):
 		chosen[buildings[i]] = true
-		_claim[i] = S.claim_full
 		_set_side(i, true)
 	for r: Resident in population.residents:
 		if chosen.has(r.home):
 			r.belief = maxf(r.belief, B.believer_threshold + 0.2)
 
 
-func _physics_process(delta: float) -> void:
-	_timer -= delta
-	if _timer > 0.0:
-		return
-	_timer = S.tick
-	_read_presence()
-	if headquarters < 0:
-		_found_headquarters()
-	for i in buildings.size():
-		if _district_of[i] < 0:
+## Most residents believe; an empty building, a believer sits in on it.
+func _holds(i: int) -> bool:
+	if _residents[i] == 0:
+		return _presence[i] > 0.0
+	return float(_believers[i]) / _residents[i] > S.capture_share
+
+
+func _count() -> void:
+	_residents.fill(0)
+	_believers.fill(0)
+	for r: Resident in population.residents:
+		var i: int = _index.get(r.home, -1)
+		if i < 0:
 			continue
-		var zone := 0
-		for j in _neighbors[i]:
-			zone += _yours[j]
-		_zone[i] = zone
-		var gain := 0.0
-		# The beachhead rule: outside your zone only an abandoned place can be claimed.
-		if _yours[i] == 1 or zone > 0 or _abandoned[i] == 1:
-			gain = S.presence_rate * _presence[i] + S.zone_rate * zone
-		if gain == 0.0:
-			gain = -S.decay
-		_claim[i] = clampf(_claim[i] + gain * S.tick, 0.0, S.claim_full)
-		if _yours[i] == 0 and _claim[i] >= S.claim_full:
-			_set_side(i, true)
-		elif _yours[i] == 1 and _claim[i] < S.lose_below:
-			_set_side(i, false)
-	claims_updated.emit()
-
-
-func _read_presence() -> void:
+		_residents[i] += 1
+		if r.belief > B.believer_threshold:
+			_believers[i] += 1
 	for i in buildings.size():
 		_presence[i] = population.power_presence(buildings[i]) if buildings[i] else 0.0
 
 
-## The building where believers are strongest becomes the cult's first; its
-## district is the neglected start district, full of abandoned places.
+## The building where most believers live becomes the cult's first; its
+## district is the neglected start district, where some buildings stand empty.
 func _found_headquarters() -> void:
 	var best := -1
 	for i in buildings.size():
-		if _presence[i] > 0.0 and (best < 0 or _presence[i] > _presence[best]):
+		if _believers[i] > 0 and (best < 0 or _believers[i] > _believers[best]):
 			best = i
 	if best < 0:
 		return
@@ -237,11 +237,8 @@ func _found_headquarters() -> void:
 	rng.seed = 17
 	for i in buildings.size():
 		var odds := S.abandoned_start if _district_of[i] == start else S.abandoned_elsewhere
-		if i != best and rng.randf() < odds:
-			_abandoned[i] = 1
-			building_changed.emit(i, false)
-	_claim[best] = S.claim_full
-	_set_side(best, true)
+		if i != best and _believers[i] == 0 and rng.randf() < odds:
+			abandon(buildings[i])
 
 
 func _set_side(i: int, mine: bool) -> void:
@@ -273,28 +270,11 @@ func _collect() -> void:
 	var n := buildings.size()
 	_yours.resize(n)
 	_yours.fill(0)
-	_claim.resize(n)
-	_claim.fill(0.0)
 	_abandoned.resize(n)
 	_abandoned.fill(0)
+	_residents.resize(n)
+	_believers.resize(n)
 	_presence.resize(n)
-	_zone.resize(n)
-	_zone.fill(0)
-	for i in n:
-		var near := PackedInt32Array()
-		for j in n:
-			if i != j and _gap(i, j) < S.neighbor_gap:
-				near.append(j)
-		_neighbors.append(near)
-
-
-## Ground distance between two buildings' footprints (0 if they touch).
-func _gap(i: int, j: int) -> float:
-	var a := buildings[i].global_position
-	var b := buildings[j].global_position
-	var dx := absf(a.x - b.x) - (sizes[i].x + sizes[j].x) / 2.0
-	var dz := absf(a.z - b.z) - (sizes[i].z + sizes[j].z) / 2.0
-	return maxf(maxf(dx, dz), 0.0)
 
 
 ## Which of `parts` bands a block falls in, with band edges on road lines.

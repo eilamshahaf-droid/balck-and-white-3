@@ -16,7 +16,7 @@ const DivineSign = preload("res://scripts/divine_sign.gd")
 const RadialWheel = preload("res://scripts/radial_wheel.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
-enum Mode { NONE, MIRACLES, BUILDING }
+enum Mode { NONE, MIRACLES, BUILDING, USES }
 
 @onready var hand: Node3D = get_node("../GodHand")
 @onready var miracles: Node = get_node("../Miracles")
@@ -88,6 +88,8 @@ func _input(event: InputEvent) -> void:
 		_wheel.point_at(event.position)  # where the button came up, not where the mouse is a frame later
 		_choose()
 		get_viewport().set_input_as_handled()
+	elif event.button_index == MOUSE_BUTTON_LEFT:
+		get_viewport().set_input_as_handled()  # the click that picks from a second wheel
 	elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		_close()  # never mind
 		get_viewport().set_input_as_handled()
@@ -123,15 +125,23 @@ func _choose() -> void:
 			Mode.BUILDING:
 				if building and id in DivineSign.KINDS:
 					_give_sign(building, id)
+				elif building and id == &"use":
+					# Which use: a second wheel in the same place; the next click picks.
+					_mode = Mode.USES
+					_wheel.open(_wheel.center, decrees.use_items(building))
+					return
 				elif building:
 					decrees.issue(id, building)
+			Mode.USES:
+				if building:
+					decrees.issue(&"use", building, String(id))
 	_close()
 
 
 func _close() -> void:
 	_wheel.visible = false
 	_wheel.set_process(false)
-	if _mode == Mode.BUILDING and is_instance_valid(_target.collider):
+	if _mode in [Mode.BUILDING, Mode.USES] and is_instance_valid(_target.collider):
 		_set_outline(_target.collider, false)
 	_target = {}
 	_mode = Mode.NONE

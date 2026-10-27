@@ -4,7 +4,7 @@ extends Resource
 ## Open data/people.tres in Godot and change values in the Inspector.
 
 @export_group("Population")
-@export var resident_count := 60
+@export var resident_count := 500
 @export var groups: Array[SocialGroup] = []
 @export var family_size_min := 1
 @export var family_size_max := 4
@@ -52,6 +52,14 @@ extends Resource
 @export var occupy_time := 0.0
 ## Seconds between refreshes of each building's cached believing presence.
 @export var presence_refresh := 0.5
+
+@export_group("Fleeing")
+## When a building is evacuated (roaches), its residents this close to it run out.
+@export var flee_reach := 60.0
+## How far they run before calming down, in metres, and for how long they hurry.
+@export var flee_distance := 50.0
+@export var flee_time := 6.0
+@export var flee_speed_factor := 2.2
 
 @export_group("Falling")
 @export var gravity := 20.0

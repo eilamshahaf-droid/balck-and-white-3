@@ -32,6 +32,7 @@ func _ready() -> void:
 	await _test_knock()
 	await _test_wind()
 	await _test_wind_target_freed()
+	await _test_trees_stay_rooted()
 	await _test_pigeons()
 	await _test_wheel_focus_loss()
 	await _test_bag_squash()
@@ -102,10 +103,8 @@ func _test_knock() -> void:
 
 
 func _test_wind() -> void:
-	var trees := get_tree().get_nodes_in_group("wind_reactive").filter(
-			func(n: Node) -> bool: return n.has_method("hand_pull"))
-	var tree := await _hover_one_of(trees)
-	_check(tree != null, "hover a tree")
+	var tree := await _point_at_a_tree()
+	_check(tree != null, "a tree on screen")
 	if tree == null:
 		return
 	# The wind comes from a moving hand: wave it around the crown.
@@ -122,11 +121,9 @@ func _test_wind() -> void:
 	_check(tree.get("_push") == Vector2.ZERO, "the tree stops bending once the hand is gone")
 
 
-## A tree in the wind can be freed (uprooted, replaced) between two ticks.
+## A tree in the wind can be freed (demolished with its block) between two ticks.
 func _test_wind_target_freed() -> void:
-	var trees := get_tree().get_nodes_in_group("wind_reactive").filter(
-			func(n: Node) -> bool: return n.has_method("hand_pull"))
-	var tree := await _hover_one_of(trees)
+	var tree := await _point_at_a_tree()
 	if tree == null:
 		_check(false, "hover a tree to free")
 		return
@@ -158,13 +155,19 @@ func _test_pigeons() -> void:
 
 
 func _test_wheel_focus_loss() -> void:
-	_move(get_viewport().get_visible_rect().size * 0.5)
-	await _physics(3)
-	if _hand.hovered != null:
-		_move(get_viewport().get_visible_rect().size * Vector2(0.5, 0.95))
+	# A busy street: a taxi or a person can pass under the hand as it presses,
+	# so try spots until the press lands on bare ground or a wall.
+	for spot: Vector2 in [Vector2(0.5, 0.5), Vector2(0.5, 0.95), Vector2(0.3, 0.8),
+			Vector2(0.7, 0.8), Vector2(0.2, 0.5), Vector2(0.8, 0.5)]:
+		_move(get_viewport().get_visible_rect().size * spot)
 		await _physics(3)
-	await _press()
-	await get_tree().create_timer(S.wheel_hold_time + 0.3).timeout
+		if _hand.hovered != null:
+			continue
+		await _press()
+		await get_tree().create_timer(S.wheel_hold_time + 0.3).timeout
+		if _hand.held == null:
+			break
+		await _release()
 	_check(_hand.get("_point_anchor") != Vector3.INF, "holding still opens a wheel")
 	get_tree().root.propagate_notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	await _frames(2)
@@ -172,7 +175,30 @@ func _test_wheel_focus_loss() -> void:
 	await _release()
 
 
+func _test_trees_stay_rooted() -> void:
+	var tree := await _point_at_a_tree()
+	if tree == null:
+		_check(false, "a tree on screen to grab")
+		return
+	await _press()
+	await _drag(Vector2(0, -60), 6)
+	_check(_hand.held != tree, "the hand doesn't pick up trees")
+	await _release()
+
+
 # --- Helpers ---
+
+## Points the mouse at a tree the hand can get close to (not one behind a
+## building). Trees aren't hovered: the hand doesn't lift them.
+func _point_at_a_tree() -> SwayingTree:
+	for n in get_tree().get_nodes_in_group("wind_reactive"):
+		if n is SwayingTree and _on_screen(n.aim_point()):
+			_move(_camera.unproject_position(n.aim_point()))
+			await _physics(3)
+			if _hand.global_position.distance_to(n.aim_point()) < 6.0:
+				return n
+	return null
+
 
 ## Points the mouse at each candidate in turn; returns the first one the hand highlights.
 func _hover_one_of(candidates: Array) -> Node3D:

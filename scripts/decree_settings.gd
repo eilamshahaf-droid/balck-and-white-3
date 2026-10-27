@@ -26,7 +26,7 @@ extends Resource
 @export_group("Change use: the building does something else for you")
 @export var use_cost := 25.0
 @export var use_exposure := 0.02
-@export var uses: Array[String] = ["Prayer House", "Course Center", "Free Personality Test"]
+@export var uses: Array[String] = ["Prayer House", "Course Center", "Free Personality Test", "Combat Training"]   # Combat Training: the force route trains believers there
 
 @export_group("Preserve: no demolition, no buying it from under you")
 @export var preserve_cost := 20.0

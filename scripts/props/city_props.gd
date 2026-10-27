@@ -5,7 +5,7 @@ extends Node3D
 ## cooling units on roofs (both drawn as MultiMeshes, a chunk of town each),
 ## and trash cans, bags, hydrants and benches on the sidewalks that the hand
 ## can pick up. Roof props follow a building that grows new floors and make
-## way for a penthouse.
+## way for a penthouse, and go with a building that is torn down.
 
 const SETTINGS_PATH := "res://data/city_props.tres"
 const D: DecreeSettings = preload("res://data/decrees.tres")
@@ -17,6 +17,7 @@ const LAYER_PROPS := 4
 const BLOCKER_CELL := 4.0      # metres per cell of the door-and-tree lookup
 const DOOR_CLEARANCE := 1.6    # keep the doorway free
 const TREE_CLEARANCE := 0.9    # trunk radius plus a little air
+const HIDDEN := Transform3D(Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO), Vector3.ZERO)
 
 ## The city to dress. Props are placed when it is ready.
 @export var city: Node3D
@@ -27,11 +28,13 @@ var _s: CityPropsSettings
 var _rng := RandomNumberGenerator.new()
 var _placements: Array[Placement] = []
 var _roofs := {}        # building (Node3D) -> Array[Placement] on its roof
+var _on_building := {}  # building (Node3D) -> Array[Placement] on its facades and roof
 var _blockers := {}     # Vector2i cell -> PackedVector4Array (x, y, z, clearance)
 
 
 ## One facade or roof prop: where it goes and, once drawn, where it lives.
 class Placement:
+	var building: Node3D
 	var kind: PropKind
 	var transform: Transform3D
 	var on_facade: bool
@@ -57,6 +60,7 @@ func _dress() -> void:
 		_dress_facades(building, size)
 		_dress_roof(building, size)
 		_line_sidewalk(building, size)
+		building.tree_exiting.connect(_on_building_gone.bind(building))
 	_draw_placements()
 
 
@@ -81,6 +85,7 @@ func _dress_facades(building: Node3D, size: Vector3) -> void:
 				var x := -size.x / 2.0 + (c + 0.5) * bay
 				var at := base + Vector3(x, f * storey + _s.sill_height, side * size.z / 2.0)
 				var p := Placement.new()
+				p.building = building
 				p.kind = kind
 				p.on_facade = true
 				p.transform = Transform3D(facing, at) * PropModel.of(kind).against_wall()
@@ -104,6 +109,7 @@ func _dress_roof(building: Node3D, size: Vector3) -> void:
 	var room := (free - footprint) / 2.0
 	var spot := Vector3(_rng.randf_range(-room.x, room.x), 0.0, _rng.randf_range(-room.y, room.y))
 	var p := Placement.new()
+	p.building = building
 	p.kind = kind
 	p.local = Transform3D(Basis(Vector3.UP, turn), spot) * model.offset
 	p.transform = _roof_frame(building, size) * p.local
@@ -126,10 +132,15 @@ func _on_decree_issued(kind: StringName, building: Node3D) -> void:
 	var size := DivineSign.building_size(building)
 	var penthouse: bool = building.get_meta(&"decree_luxury", false)
 	for p: Placement in _roofs[building]:
-		var t := _roof_frame(building, size) * p.local
-		if penthouse:
-			t.basis = Basis.from_scale(Vector3.ZERO)
+		var t := HIDDEN if penthouse else _roof_frame(building, size) * p.local
 		p.multimesh.set_instance_transform(p.index, t)
+
+
+func _on_building_gone(building: Node3D) -> void:
+	for p: Placement in _on_building.get(building, []):
+		p.multimesh.set_instance_transform(p.index, HIDDEN)
+	_on_building.erase(building)
+	_roofs.erase(building)
 
 
 # --- Sidewalks ---
@@ -212,6 +223,9 @@ func _draw_placements() -> void:
 			mm.set_instance_transform(i, p.transform)
 			p.multimesh = mm
 			p.index = i
+			if not _on_building.has(p.building):
+				_on_building[p.building] = []
+			(_on_building[p.building] as Array).append(p)
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
 		mmi.material_override = PropModel.of(kind).material

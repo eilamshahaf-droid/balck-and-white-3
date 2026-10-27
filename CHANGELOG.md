@@ -11,6 +11,50 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Roof props follow a building that grows new floors by decree, and make way for a luxury penthouse.
 - Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
 - Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
+## 2026-10-27: Take buildings by force, money or missionaries; a money meter
+- The claim meter and its roof colours are gone. Eilam's rule instead: a building is yours once most of the people who live there believe. An empty one is yours while a believer lives in it or sits in on it.
+- Three takeover marks float over a marked building, with "3 / 7 believe" underneath:
+  - **Skull: force.** Fighters from your Combat Training building scare non-believers out one by one, and believers move in. Exposure rises with every resident scared out.
+  - **Dollar: buy.** A believer with a cash offer buys out non-believers ($80 each), and believers move in.
+  - **Sky sign: missionaries.** Believers preach at the door. Each sermon costs belief and moves one resident's belief (less if they are skeptical).
+- The mark comes off when the building is yours, and the mark's line says what holds it up ("needs $80", "on the way").
+- **Money**: every believer gives a little, and your buildings with the Facade decree open shops that bring money in. Decrees, buying and the money miracle use it.
+- **Meters**: belief, money (with income per second), believers, buildings and exposure are now cards along the top.
+- A burnt-out or roach-infested building becomes abandoned, and anyone who moves in holds it.
+- Numbers: `data/campaigns.tres`, `data/treasury.tres`, `data/districts.tres` ("Who holds a building").
+- Try it: press F5 and open the debug panel (F1). Look at a building near the gold roofs, click "Mark: sky sign (preach)" or "Mark: dollar (buy)", and watch the count over it. Force needs a building of yours set to Combat Training (Change Use).
+
+## 2026-10-27: Roaches, money from the sky, and dearer miracles
+- New miracle **Roaches**: a swarm pours out of a building's walls. Its residents run out, move elsewhere for good, and the building is abandoned.
+- New miracle **Money**: banknotes flutter down on a spot. Your believers pick them up and hand the money in (more with believers nearby).
+- **Fire** now leaves a building abandoned once it has burned: the residents leave and don't come back.
+- Miracles cost about four times as much (water 60, fire 50, lightning 80, shield 100, heal 60, roaches 70, money 90 belief), and up to 1.6x that far from your believers, so each one is a choice.
+- **Change Use** opens a second wheel to pick the use: Prayer House, Course Center, Free Personality Test or Combat Training (the force route trains believers there).
+- Shield blocks roaches like fire and lightning. `Miracles.building_abandoned` tells the districts when a place is emptied.
+- Numbers: `data/miracles.tres`, groups "Roaches" and "Money from the sky"; uses in `data/decrees.tres`.
+- Try it: press F5, hold the left button still on a street, pick Roaches, then click a building with people in it.
+
+## 2026-10-27: Many more people in the city
+- The city now has 500 residents instead of 60 (`data/people.tres`, "Resident Count").
+- To keep 60 fps, all the people are drawn together in one go (a MultiMesh) instead of one by one, and walking on the flat streets no longer goes through the physics engine. Speech bubbles and phones are made only for the people who speak or film.
+- A person the hand hovers shows their own body, so the outline still works.
+- A miracle's witnesses are now pulled by their close friends' belief (the friends from the resident card) instead of by whoever stands nearby.
+- Try it: press F5 and look at the streets; press B and hover a person to see their card.
+
+## 2026-10-27: Fix: error after City Hall demolishes a building; residents can flee
+- The red error "_refresh_presence: Trying to assign invalid previously freed instance" came from a building City Hall's bulldozer removed while the residents still lived, worked or sat in there. Its people now move to the nearest other home and find other work.
+- New for the takeover routes and the roach miracle: `Population.evacuate(building)` (everyone moves out for good and those nearby run into the street shouting "ROACHES!"), `evict(resident)` (one person moves elsewhere) and `preach_to(resident, strength)` (belief rises, less for skeptics).
+- Numbers: `data/people.tres`, group "Fleeing".
+- Two editor warnings in `citizen.gd` and `sign_followers.gd` are gone.
+- Try it: play until City Hall demolishes a building; the error no longer appears.
+
+## 2026-10-27: The hand no longer lifts trees; editor warnings fixed
+- Trees stay rooted: the hand can't grab or uproot them any more (they still bend in its wind). The uprooted tree and its settings (`uproot_effort`, `hand_strength`, ...) are gone.
+- Fixed editor warnings in the hand's files: names that shadowed built-ins (`sign`, `size`, `to_local`).
+- The hand test checks that trees can't be picked up.
+- Try it: press F5 and try to drag a tree: the city moves instead.
+
+
 
 ## 2026-10-26: Taking over buildings, made clear
 - Every building now shows what you can do with it. Gold roof: yours. Red roof: abandoned, take it over. Green roof: next to one of yours, convert it. No marker: out of reach for now. As a claim grows, gold spreads over the roof until it is yours.

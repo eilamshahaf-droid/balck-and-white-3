@@ -65,15 +65,15 @@ static func redecorate(building: Node3D) -> void:
 				var x := (i + 0.5) / count * size.x - size.x / 2.0
 				_box(building, Vector3(1.4, size.y * 0.55, 0.1), Vector3(x, foot + size.y * 0.55, face + side * 0.1), _mat(D.facade_color, false))
 			_box(building, Vector3(size.x, 0.35, 0.2), Vector3(0, -foot - 0.4, face + side * 0.1), _mat(Color(1.0, 0.9, 0.6), true))
-		var use: int = building.get_meta(&"decree_use", 0)
-		if use > 0:
+		var use: String = building.get_meta(&"decree_use", "")
+		if use != "":
 			# A rooftop sign, so the god can read it from up high.
-			var name := D.uses[(use - 1) % D.uses.size()].to_upper()
+			var name := use.to_upper()
 			var fit := clampi(roundi(size.x * 0.9 / (name.length() * 0.6 * LABEL_PIXEL)), 40, 160)
 			_label(building, name, Vector3(0, -foot + 3.0, size.z * 0.4 + side * 0.2), yaw, fit, GOLD)
 		if building.get_meta(&"decree_preserve", false):
 			_label(building, "PRESERVED\nForm 12-B", Vector3(size.x * 0.3, foot + 2.0, face + side * 0.05), yaw, 40, BRONZE)
-	if building.get_meta(&"decree_use", 0) > 0:
+	if building.get_meta(&"decree_use", "") != "":
 		_box(building, Vector3(size.x * 0.9, 4.0, 0.3), Vector3(0, -foot + 3.0, size.z * 0.4), _mat(Color(0.2, 0.15, 0.25), false))
 	if building.get_meta(&"decree_luxury", false):
 		var top := -foot
