@@ -136,6 +136,26 @@ extends Resource
 ## Priests are drawn this many times larger, so the crowd can pick them out.
 @export var priest_scale := 1.5
 
+@export_group("Sermons")
+## A priest stops to preach this often (seconds apart) and for this long; a crowd
+## of up to crowd_size people within crowd_reach gathers in a ring around him.
+@export var sermon_interval := 25.0
+@export var sermon_time := 15.0
+@export var crowd_size := 12
+@export var crowd_reach := 40.0
+@export var crowd_radius := 3.0
+## A full crowd preaches this much stronger (1 + this at crowd_size).
+@export var crowd_boost := 1.0
+@export var sermon_line := "Amen!"
+@export var crowd_line_color := Color(1.0, 0.95, 0.7)
+## Hidden chance that the police step in on a sermon, on a street where nobody
+## believes and on one where everybody does; safety counts believers within safety_radius.
+@export_range(0.0, 1.0) var raid_chance_unsafe := 0.5
+@export_range(0.0, 1.0) var raid_chance_safe := 0.02
+@export var safety_radius := 60.0
+## A raid ends after this many seconds if nobody has dealt with it.
+@export var raid_time := 60.0
+
 @export_group("Dancing")
 ## People sent on an errand to dance (a block party) bob this high, this fast, and turn.
 @export var dance_bob_height := 0.35

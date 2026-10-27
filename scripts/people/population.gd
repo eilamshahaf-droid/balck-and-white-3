@@ -86,6 +86,8 @@ var _footprints: Dictionary = {}  # building -> Rect2 on the ground (x, z)
 var _presence_timer := 0.0
 var _census: Census
 var _street := Street.new()
+## The sermons priests give; its signals tell the player where one is and whether the police step in.
+var sermons := Sermons.new()
 var _stages: Dictionary = {}       # resident -> the stage last announced
 var _priest_timer := 0.0
 var _bought: Dictionary = {}          # building -> Array[Upgrade] bought for it
@@ -102,6 +104,8 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.seed = 7
 	add_child(Crowd.new())
+	sermons.setup(self)
+	add_child(sermons)
 	_street.set_down.connect(_on_set_down)
 	_street.stopped_occupying.connect(_on_stopped_occupying)
 	add_child(_street)
@@ -516,10 +520,28 @@ func _kill(r: Resident) -> void:
 		r.body = null
 
 
+## Every priest, the head priest first.
+func priests() -> Array[Resident]:
+	var out: Array[Resident] = []
+	for staff: Array in _staff.values():
+		for r: Resident in staff:
+			if r.job == Resident.Job.PRIEST:
+				out.append(r)
+	return out
+
+
+func street_bodies() -> Array[Citizen]:
+	return _street.bodies
+
+
+func has_body(r: Resident) -> bool:
+	return _has_body(r)
+
+
 func _preach() -> void:
 	for staff: Array in _staff.values():
 		for r: Resident in staff:
-			if r.job == Resident.Job.PRIEST and _has_body(r):
+			if r.job == Resident.Job.PRIEST and _has_body(r) and not sermons.is_preaching(r):
 				var reach := _people.priest_reach
 				var strength := _people.priest_strength
 				if r.post:
