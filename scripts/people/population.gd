@@ -33,6 +33,8 @@ signal occupant_added(building: Node3D, resident: Resident)
 signal occupant_left(building: Node3D, resident: Resident)
 ## `resident` moved from stage `old` to stage `new` (Resident.Stage).
 signal stage_changed(resident: Resident, old: int, new: int)
+## `kind` was bought for `building` (see upgrades_of).
+signal upgraded(building: Node3D, kind: Upgrade)
 ## The player let every believer go from `building` (it can be settled again).
 signal believers_dismissed(building: Node3D, count: int)
 ## A priest preached to `reached` people on the street.
@@ -73,6 +75,7 @@ var _census: Census
 var _street := Street.new()
 var _stages: Dictionary = {}       # resident -> the stage last announced
 var _priest_timer := 0.0
+var _bought: Dictionary = {}          # building -> Array[Upgrade] bought for it
 var _purchases: Dictionary = {}      # building -> upgrades and floors bought so far
 var _staff: Dictionary = {}          # building -> Array[Resident] with a post there
 var _home_comfort: Dictionary = {}   # building -> the comfort its residents drift toward
@@ -344,6 +347,18 @@ func upgrade(building: Node3D, kind: Upgrade) -> void:
 		_:
 			scare(building, _people.upgrade_fear)
 	note_floor(building)
+	if not _bought.has(building):
+		var list: Array[Upgrade] = []
+		_bought[building] = list
+	(_bought[building] as Array[Upgrade]).append(kind)
+	upgraded.emit(building, kind)
+
+
+## The upgrades bought for `building`, in order (repeats allowed).
+func upgrades_of(building: Node3D) -> Array[Upgrade]:
+	var out: Array[Upgrade] = []
+	out.append_array(_bought.get(building, []))
+	return out
 
 
 ## A floor was added to `building` (decrees): counts toward the rising cost and adds staff places.
@@ -552,6 +567,7 @@ func _forget_building(building: Node3D) -> void:
 		unassign(r)
 	_staff.erase(building)
 	_purchases.erase(building)
+	_bought.erase(building)
 	if _homes.is_empty():
 		return
 	for r in residents:
