@@ -8,9 +8,10 @@ extends Resource
 ## resident_count, whichever is more.
 @export var min_residents_per_home := 5
 @export var resident_count := 500
-## Residents walking the streets at once; the rest are indoors. Each one on the
-## street costs frame time, so this is the knob for slower computers.
-@export var street_people := 500
+## One resident in this many walks the streets at a time (at least one from
+## every lived-in home); the rest are indoors. Each body on the street costs
+## frame time, so this is the knob for slower computers.
+@export var residents_per_body := 25
 ## Seconds between one person going indoors and another coming out (out of view).
 @export var swap_interval := 0.5
 @export var groups: Array[SocialGroup] = []

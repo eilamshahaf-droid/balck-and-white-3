@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Only prayer houses make belief; fewer bodies on the street
+- Believers no longer fill the belief pool wherever they are. Only believers who live or sit in a prayer house pray (buildings in the `prayer_houses` group), so prayer houses are now the precious resource.
+- One resident in 25 walks the streets (`residents_per_body` in `data/people.tres`), and at least one from every lived-in home. Out of your view, a person goes home and a housemate comes out, so each building keeps its people on its corner.
+- Try it: press F5. The belief pool no longer grows until a building becomes a prayer house.
+
 ## 2026-10-27: Every building has residents; belief grows in stages, slower
 - Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.
 - Belief now has five stages: skeptic, curious, sympathizer, believer, zealot. A single miracle (or visit, or offer) moves a person at most one stage, so winning someone over takes several.

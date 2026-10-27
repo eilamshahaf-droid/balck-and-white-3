@@ -5,9 +5,13 @@ extends Node
 ## family and close friends. Other systems ask Population about people (who
 ## lives where, who believes) instead of scanning the scene tree.
 ##
-## Most residents are indoors at any moment: only street_people of them have a
-## body walking the city. Out of the god's view, a body now and then goes in
-## and someone else comes out, so everyone gets their turn on the street.
+## Most residents are indoors at any moment: about one in residents_per_body
+## has a body walking the city, and every lived-in home has at least one out.
+## Out of the god's view, a body now and then goes in and a housemate comes
+## out, so everyone gets their turn on the street.
+##
+## Belief for the pool comes only from prayer houses (buildings in the
+## prayer_houses group): the believers living or sitting in one pray.
 ##
 ## Belief drifts slowly: back toward what a person believed before the cult,
 ## unless friends who believe or a building of believers hold it up. A change
@@ -28,6 +32,8 @@ signal stage_changed(resident: Resident, old: int, new: int)
 # its class_name is registered and break the typed groups array.
 var _people: PeopleSettings = load("res://data/people.tres")
 const B: Balance = preload("res://data/balance.tres")
+## Buildings whose use is prayer; whoever sets a building's use keeps this group.
+const PRAYER_HOUSES := &"prayer_houses"
 
 var residents: Array[Resident] = []
 ## Refreshed with the presence: how many residents believe, and the belief per
@@ -45,7 +51,6 @@ var _presence_timer := 0.0
 var _census: Census
 var _stages: Dictionary = {}       # resident -> the stage last announced
 var _bodies: Array[Citizen] = []
-var _indoors: Array[Resident] = []
 var _swap_timer := 0.0
 var _rng := RandomNumberGenerator.new()
 
@@ -221,14 +226,19 @@ func _populate() -> void:
 	_offices = _census.offices
 	for r in residents:
 		_stages[r] = r.stage()
-	# A random sample walks the streets, so they aren't all from one corner.
+	# One out of every lived-in home, then a random sample up to the ratio.
+	for home: Node3D in _by_home:
+		var people: Array = _by_home[home]
+		if not people.is_empty():
+			_spawn_body(people[_rng.randi() % people.size()])
+	var wanted := ceili(float(residents.size()) / _people.residents_per_body)
 	var order := residents.duplicate()
 	order.shuffle()
 	for r: Resident in order:
-		if _bodies.size() < _people.street_people:
+		if _bodies.size() >= wanted:
+			break
+		if r.body == null:
 			_spawn_body(r)
-		else:
-			_indoors.append(r)
 	for b in _homes + _offices:
 		_footprints[b] = _footprint(b)
 		_presence[b] = 0.0
@@ -250,33 +260,50 @@ func _spawn_body(r: Resident) -> void:
 	c.tree_exiting.connect(func() -> void: _bodies.erase(c), CONNECT_ONE_SHOT)
 
 
-## Out of the god's view, a skeptic walking the street goes indoors and an
-## indoor resident comes out in their body. Believers stay out.
+## Out of the god's view, a skeptic walking the street goes home and a
+## housemate who is indoors comes out in their body. Believers stay out.
 func _swap_someone() -> void:
-	if _indoors.is_empty() or _bodies.is_empty():
+	if _bodies.is_empty():
 		return
 	var camera := get_viewport().get_camera_3d()
 	for _attempt in 8:
 		var c := _bodies[_rng.randi() % _bodies.size()]
 		if not c.can_answer() or c.belief > B.believer_threshold or _seen_by(camera, c.global_position):
 			continue
-		var i := _rng.randi() % _indoors.size()
-		var r := _indoors[i]
-		if _seen_by(camera, city.intersection(city.nearest_grid(r.home.global_position))):
+		var home := c.resident.home
+		if _seen_by(camera, city.intersection(city.nearest_grid(home.global_position))):
 			continue
-		_indoors[i] = c.resident
-		_give_body(r, c)
-		return
+		var r := _indoors_at(home)
+		if r:
+			_give_body(r, c)
+			return
 
 
-## Bring `r` out onto the street now, in a skeptic's body.
+## Bring `r` out onto the street now, in a skeptic's body: a housemate's if
+## one is out, else anyone's.
 func _bring_out(r: Resident) -> void:
+	for c in _bodies:
+		if c.resident.home == r.home and c.can_answer() and c.belief <= B.believer_threshold:
+			_give_body(r, c)
+			return
 	for _attempt in 32:
 		var c := _bodies[_rng.randi() % _bodies.size()]
 		if c.can_answer() and c.belief <= B.believer_threshold:
-			_indoors[_indoors.find(r)] = c.resident
 			_give_body(r, c)
 			return
+
+
+## A random resident of `home` who is indoors, or null.
+func _indoors_at(home: Node3D) -> Resident:
+	var people: Array = _by_home.get(home, [])
+	if people.is_empty():
+		return null
+	var start := _rng.randi() % people.size()
+	for k in people.size():
+		var r: Resident = people[(start + k) % people.size()]
+		if r.body == null:
+			return r
+	return null
 
 
 func _give_body(r: Resident, c: Citizen) -> void:
@@ -388,10 +415,13 @@ func _refresh_presence() -> void:
 		if r.belief <= B.believer_threshold:
 			continue
 		believer_count += 1
-		prayer += B.prayer_rate * r.belief
 		_presence[r.home] += r.belief
 		if r.occupying and r.occupying != r.home:
 			_presence[r.occupying] += r.belief
+		# Only seats taken in a prayer house make belief.
+		var at := r.occupying if r.occupying else r.home
+		if at.is_in_group(PRAYER_HOUSES):
+			prayer += B.prayer_rate * r.belief
 	var dt := _people.presence_refresh
 	for r in residents:
 		var total := 0.0
