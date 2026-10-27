@@ -13,6 +13,13 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 
 ## 2026-10-27: Last editor warning fixed
 - `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), so the editor's warning list is empty.
+
+## 2026-10-27: Catch editor warnings before pushing
+- `CLAUDE.md` now runs the headless checks with `--debug`, which prints the same GDScript warnings the editor shows (they were silent before, so warnings reached Eilam's editor unnoticed).
+- Try it: `godot --headless --path . --debug --quit-after 600` prints nothing but the banner.
+
+## 2026-10-27: Last editor warnings fixed
+- `city_model.gd` no longer names a parameter `sign` (it hid Godot's built-in `sign()`), and the planning scripts no longer divide whole numbers by whole numbers ("Integer division"), so the editor's warning list is empty.
 - Try it: open the project in Godot; the Debugger's Errors tab shows no warnings.
 
 ## 2026-10-27: Many more people in the city
