@@ -32,6 +32,7 @@ func _ready() -> void:
 	await _test_knock()
 	await _test_wind()
 	await _test_wind_target_freed()
+	await _test_trees_stay_rooted()
 	await _test_pigeons()
 	await _test_wheel_focus_loss()
 	print("HAND TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
@@ -101,10 +102,8 @@ func _test_knock() -> void:
 
 
 func _test_wind() -> void:
-	var trees := get_tree().get_nodes_in_group("wind_reactive").filter(
-			func(n: Node) -> bool: return n.has_method("hand_pull"))
-	var tree := await _hover_one_of(trees)
-	_check(tree != null, "hover a tree")
+	var tree := await _point_at_a_tree()
+	_check(tree != null, "a tree on screen")
 	if tree == null:
 		return
 	# The wind comes from a moving hand: wave it around the crown.
@@ -118,11 +117,9 @@ func _test_wind() -> void:
 	_check(tree.get("_push") == Vector2.ZERO, "the tree stops bending once the hand is gone")
 
 
-## A tree in the wind can be freed (uprooted, replaced) between two ticks.
+## A tree in the wind can be freed (demolished with its block) between two ticks.
 func _test_wind_target_freed() -> void:
-	var trees := get_tree().get_nodes_in_group("wind_reactive").filter(
-			func(n: Node) -> bool: return n.has_method("hand_pull"))
-	var tree := await _hover_one_of(trees)
+	var tree := await _point_at_a_tree()
 	if tree == null:
 		_check(false, "hover a tree to free")
 		return
@@ -168,7 +165,30 @@ func _test_wheel_focus_loss() -> void:
 	await _release()
 
 
+func _test_trees_stay_rooted() -> void:
+	var tree := await _point_at_a_tree()
+	if tree == null:
+		_check(false, "a tree on screen to grab")
+		return
+	await _press()
+	await _drag(Vector2(0, -60), 6)
+	_check(_hand.held != tree, "the hand doesn't pick up trees")
+	await _release()
+
+
 # --- Helpers ---
+
+## Points the mouse at a tree the hand can get close to (not one behind a
+## building). Trees aren't hovered: the hand doesn't lift them.
+func _point_at_a_tree() -> SwayingTree:
+	for n in get_tree().get_nodes_in_group("wind_reactive"):
+		if n is SwayingTree and _on_screen(n.aim_point()):
+			_move(_camera.unproject_position(n.aim_point()))
+			await _physics(3)
+			if _hand.global_position.distance_to(n.aim_point()) < 6.0:
+				return n
+	return null
+
 
 ## Points the mouse at each candidate in turn; returns the first one the hand highlights.
 func _hover_one_of(candidates: Array) -> Node3D:

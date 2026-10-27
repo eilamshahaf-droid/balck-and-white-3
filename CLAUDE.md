@@ -51,8 +51,8 @@ The scene is small; most nodes are built in code at startup.
 | `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Off for now (`enabled = false` in `main.tscn`), so the game starts in free play with a ready congregation. |
 | `HUD` | `hud.gd` | The numbers the player may see. |
 
-World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`
-/ `uprooted_tree.gd`, `door.gd`, `litter.gd`, `pigeon.gd`.
+World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`,
+`door.gd`, `litter.gd`, `pigeon.gd`.
 `building_visual.gd` merges Kenney facade modules into one mesh per building.
 `shared_meshes.gd` (`SharedMeshes`) hands out low-poly primitive meshes shared by every instance.
 `sfx.gd` makes placeholder sounds in code.

@@ -91,7 +91,7 @@ func _draw() -> void:
 			_text(at + Vector2(0, 16), item.note, 12, Color(1, 1, 1, 0.8 if enabled else 0.4))
 
 
-func _text(at: Vector2, text: String, size: int, col: Color) -> void:
-	var width := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, size).x
-	draw_string_outline(_font, at - Vector2(width / 2.0, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, 4, Color(0, 0, 0, 0.6))
-	draw_string(_font, at - Vector2(width / 2.0, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, col)
+func _text(at: Vector2, text: String, font_size: int, col: Color) -> void:
+	var width := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size).x
+	draw_string_outline(_font, at - Vector2(width / 2.0, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, Color(0, 0, 0, 0.6))
+	draw_string(_font, at - Vector2(width / 2.0, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, col)

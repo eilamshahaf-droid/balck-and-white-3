@@ -36,11 +36,11 @@ static func mark(building: Node3D, p_kind: StringName) -> void:
 	if not p_kind in KINDS:
 		return
 	var script: GDScript = load("res://scripts/divine_sign.gd")
-	var sign: Node3D = script.new()
-	sign.kind = p_kind
-	sign._size = building_size(building)
-	building.add_child(sign)
-	building.set_meta(META, sign)
+	var mark_node: Node3D = script.new()
+	mark_node.kind = p_kind
+	mark_node._size = building_size(building)
+	building.add_child(mark_node)
+	building.set_meta(META, mark_node)
 
 
 ## A building's box (width, height, depth), from its collision shape.
