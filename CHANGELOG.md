@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Upgrades show on the building
+- An upgrade you buy now appears on the building and stays for good. Homes: an elevator shaft up the side, a garden with deck chairs on the roof, security cameras by the door, an iron gate at the street. Prayer houses: loudspeakers on the roof, the cult banner on the front, a lecture podium with chairs at the street. Shops: a striped awning, a gym corner, a for-sale sign, a bell tower on the roof (seminary), café tables.
+- Numbers: `data/city_props.tres` ("Housing upgrades": where on the building each one goes).
+- Try it: press F5, take a building, hold on it, open its upgrade wheel and buy one.
+
+## 2026-10-27: Each district's core building gets a portico and a name sign
+- The core building of every district (the one nearest its middle, set by the world thread) now has a columned portico in front and a big gold-framed signboard on its roof with the district's name on it. When the core is demolished, both move to the next building that takes over.
+- Numbers: `data/city_props.tres` ("Core buildings": text size, colour, how far it shows).
+- Try it: press F5 and fly to the purple beacon over a district's centre.
 ## 2026-10-27: Faster start
 - The scenery past the grid (land, roads, outer neighbourhoods) now builds one step per frame, with the town of outer houses growing in over a few frames. The game window comes up about 1.4 s sooner on the test machine (5.4 s to about 3.9 s).
 - Number: `columns_per_frame` in `data/surroundings.tres`.

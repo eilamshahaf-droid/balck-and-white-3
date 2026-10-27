@@ -65,6 +65,23 @@ extends Resource
 ## What a building's Change Use shows (TypeMarkers).
 @export var use_markers: Array[UseMarker] = []
 
+@export_group("Housing upgrades")
+## What each housing upgrade shows on the building (UpgradeMarkers).
+@export var upgrade_markers: Array[UpgradeMarker] = []
+
+@export_group("Core buildings")
+## Each district's core building (CoreMarkers): a portico in front and a
+## signboard on the roof with the district's name.
+@export var core_portico: PropKind
+@export var core_sign: PropKind
+@export var core_label_font_size := 96
+@export var core_label_pixel_size := 0.012
+@export var core_label_color := Color(1.0, 0.92, 0.55)
+## Where the name sits on the board (share of its height).
+@export_range(0.0, 1.0) var core_label_height := 0.5
+## They are big; seen from farther than the other props.
+@export var core_visible_distance := 600.0
+
 @export_group("Squashy props (trash bags)")
 ## How much each thing lying on top presses a bag flat (1 = fully flat).
 @export var squash_per_load := 0.45
