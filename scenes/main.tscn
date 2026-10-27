@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -20,6 +20,7 @@
 [ext_resource type="Script" path="res://scripts/decrees.gd" id="13_decrees"]
 [ext_resource type="Script" path="res://scripts/props/city_props.gd" id="18_city_props"]
 [ext_resource type="Script" path="res://scripts/props/state_props.gd" id="21_state_props"]
+[ext_resource type="Script" path="res://scripts/props/type_markers.gd" id="22_type_markers"]
 [ext_resource type="Script" path="res://scripts/world/treasury.gd" id="18_treasury"]
 [ext_resource type="Script" path="res://scripts/world/campaigns.gd" id="19_campaigns"]
 [ext_resource type="Script" path="res://scripts/world/campaign_marks.gd" id="20_marks"]
@@ -47,6 +48,10 @@ districts = NodePath("../Districts")
 script = ExtResource("21_state_props")
 city_props = NodePath("../CityProps")
 districts = NodePath("../Districts")
+decrees = NodePath("../Decrees")
+
+[node name="TypeMarkers" type="Node3D" parent="." node_paths=PackedStringArray("decrees")]
+script = ExtResource("22_type_markers")
 decrees = NodePath("../Decrees")
 
 [node name="Surroundings" type="Node3D" parent="."]

@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: 16 new models for the kinds of building
+- Sixteen more Meshy models, each a marker for a kind of building: a gold hand statue and a stained-glass entrance (Prayer House), a fruit awning (shop), a washing-machine storefront (laundromat), a chalkboard easel (Course Center), a promotion booth (Free Personality Test), a boxing ring (Combat Training), a bell tower (seminary), a fire escape and a roof garden (homes), an antenna cluster and a revolving door (offices), a loading dock (workshop), café tables (restaurant), a columned portico (City Hall) and a vault entrance (bank).
+- Four are in the game already, shown by **Change Use**: Prayer House gets the hand statue on the roof and the entrance by the street, Course Center an easel, Free Personality Test the booth, Combat Training a boxing ring on the roof. The others wait for the building-type field the economy round will add.
+- Numbers: `data/city_props.tres` ("Building uses"). Models in `assets/models/meshy/`.
+- Try it: press F5, take a building (debug panel, "Take 10 buildings here"), hold on it and choose Change Use, then a use.
+
 ## 2026-10-27: Alpha (refreshed, round 3)
 - The combined build again: main, the world branch (building economy, poor start district, City Hall without shields), the people round (at least 5 residents per building, belief in stages), the hand round 3 (Block Party, Rain of Frogs, accidental fires and saving buildings with water, "+ Believer" notes, Shop use, pricier floors) and the Meshy props showing each building's state.
 - Headless run (with --debug), planning scene and hand test pass with no errors or warnings; the Compatibility renderer starts.
@@ -39,6 +45,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
 - Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
 - Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
+
 ## 2026-10-27: Miracles and decrees touch the people's mood
 - Fire and Roaches frighten the residents of the building (`Population.scare`), Luxury makes them more satisfied (`Population.add_comfort`), and an accidental fire raises police heat (`Heat.raise`, reason ACCIDENT).
 - Numbers: `data/miracles.tres` (`roach_scare`, `fire_scare`), `data/decrees.tres` (`luxury_comfort`).
@@ -55,8 +62,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - One resident in 25 walks the streets (`residents_per_body` in `data/people.tres`), and at least one from every lived-in home. Out of your view, a person goes home and a housemate comes out, so each building keeps its people on its corner.
 - Try it: press F5. The belief pool no longer grows until a building becomes a prayer house.
 
-
-
 ## 2026-10-27: Miracles prove, priests convert
 - Eilam's economy round: a miracle no longer converts anyone. It leaves **proof** where it lands, fading over a minute, and priests preaching there persuade better (up to about twice as well after a strong one). Witnesses still react (staring, "It's a hoax", filming, exposure).
 - Each miracle has a job: **gather** a crowd (Block Party; Rain of Frogs now draws gawkers instead of scattering everyone), **save** a burning building (Water: the strongest proof), **clear** a building (Fire, Roaches), or bring **money**.
@@ -68,22 +73,6 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 ## 2026-10-27: Prayer Houses join the prayer_houses group
 - A building given the Prayer House use (Change Use decree) joins the group `prayer_houses`, and leaves it when its use changes again. Only believers there pray belief into the pool (people thread, `Population.prayer`).
 - Try it: press F5, change one of your buildings to Prayer House and watch belief start to rise.
-
-## 2026-10-27: The building you look at stays solid
-- The camera fades buildings that hide the view, and it sometimes faded the very building it was centred on (when the view's centre sat on its roof or at its foot). Buildings within 4 m of the centre of the view now never fade.
-- Number: `data/hand_settings.tres`, `fade_keep_radius`.
-- Try it: press F5, double-click a building to fly to it, and orbit around it: it stays solid while the ones in front of it fade.
-
-## 2026-10-27: Risky believers, Block Party, Rain of Frogs
-- Lightning, Heal and Shield are gone (Eilam's call). Two new miracles take their place:
-  - **Block Party**: a disco ball comes down over the street, coloured lights and confetti, and everyone near comes to dance. People love it.
-  - **Rain of Frogs**, the chaotic one: frogs fall and hop about, people run or get knocked flat, any building under them (yours too) may be overrun and emptied, and the city reads it as a blessing or a curse, at random.
-- **Accidents**: every 40 seconds or so, believers may set one of your buildings on fire by accident (candles, incense, a very moving sermon), likelier in a Prayer House or Course Center and near zealots. "Water, quick!" floats over it.
-- **Saving a building**: water that puts out a burning building before it is lost saves it ("Saved!"), and everyone who lives there is won over a step. A fire left burning for its full time burns the building down and empties it.
-- **Who just came to believe**: "+ Believer", "Zealot!" or "Lost a believer" floats over people on the street when their belief stage changes.
-- **Decrees**: a new use, Shop (the only use that earns money; the others cost upkeep). Each floor decree costs 1.8 times the last, up to 8. The wheel shows a third line with what the decree does to the building's money per second.
-- Numbers: `data/miracles.tres`, groups "Block Party", "Rain of Frogs", "Accidents", "Saved from the fire", "Floating notes"; `data/decrees.tres`.
-- Try it: press F5, hold the left button still on a street and pick Block Party or Rain of Frogs. Wait for an accident (or put Prayer Houses in your buildings) and cast water on the fire.
 
 ## 2026-10-27: Every building has residents; belief grows in stages, slower
 - Every home now has at least 5 residents (about 1,800 people in the city). About 500 of them walk the streets at a time; the rest are indoors, and out of your view people go in and come out, so everyone gets a turn. Believers stay out.

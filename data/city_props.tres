@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=47 format=3]
+[gd_resource type="Resource" script_class="CityPropsSettings" load_steps=85 format=3]
 
 [ext_resource type="Script" path="res://scripts/props/city_props_settings.gd" id="1_settings"]
 [ext_resource type="Script" path="res://scripts/props/prop_kind.gd" id="2_kind"]
@@ -16,6 +16,23 @@
 [ext_resource type="PackedScene" path="res://assets/models/meshy/mailbox.glb" id="14_mailbox"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/hot_dog_cart.glb" id="15_hot_dog_cart"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/taxi.glb" id="16_taxi"]
+[ext_resource type="Script" path="res://scripts/props/use_marker.gd" id="40_marker"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/hand_statue.glb" id="41_hand_statue"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/prayer_entrance.glb" id="42_prayer_entrance"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/shop_awning.glb" id="43_shop_awning"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/laundromat_front.glb" id="44_laundromat_front"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/course_easel.glb" id="45_course_easel"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/test_booth.glb" id="46_test_booth"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/boxing_ring.glb" id="47_boxing_ring"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/bell_tower.glb" id="48_bell_tower"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/fire_escape.glb" id="49_fire_escape"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/roof_garden.glb" id="410_roof_garden"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/antenna_cluster.glb" id="411_antenna_cluster"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/revolving_door.glb" id="412_revolving_door"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/loading_dock.glb" id="413_loading_dock"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/cafe_tables.glb" id="414_cafe_tables"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/portico.glb" id="415_portico"]
+[ext_resource type="PackedScene" path="res://assets/models/meshy/bank_entrance.glb" id="416_bank_entrance"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/boarded_window.glb" id="17_boarded"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/rubble.glb" id="18_rubble"]
 [ext_resource type="PackedScene" path="res://assets/models/meshy/dumpster.glb" id="19_dumpster"]
@@ -175,6 +192,116 @@ surface = &"cloth"
 script = ExtResource("2_kind")
 model = ExtResource("24_flag")
 
+[sub_resource type="Resource" id="Kind_hand_statue"]
+script = ExtResource("2_kind")
+model = ExtResource("41_hand_statue")
+surface = &"metal"
+
+[sub_resource type="Resource" id="Kind_prayer_entrance"]
+script = ExtResource("2_kind")
+model = ExtResource("42_prayer_entrance")
+surface = &"concrete"
+
+[sub_resource type="Resource" id="Kind_shop_awning"]
+script = ExtResource("2_kind")
+model = ExtResource("43_shop_awning")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_laundromat_front"]
+script = ExtResource("2_kind")
+model = ExtResource("44_laundromat_front")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_course_easel"]
+script = ExtResource("2_kind")
+model = ExtResource("45_course_easel")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_test_booth"]
+script = ExtResource("2_kind")
+model = ExtResource("46_test_booth")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_boxing_ring"]
+script = ExtResource("2_kind")
+model = ExtResource("47_boxing_ring")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_bell_tower"]
+script = ExtResource("2_kind")
+model = ExtResource("48_bell_tower")
+surface = &"concrete"
+
+[sub_resource type="Resource" id="Kind_fire_escape"]
+script = ExtResource("2_kind")
+model = ExtResource("49_fire_escape")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_roof_garden"]
+script = ExtResource("2_kind")
+model = ExtResource("410_roof_garden")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_antenna_cluster"]
+script = ExtResource("2_kind")
+model = ExtResource("411_antenna_cluster")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_revolving_door"]
+script = ExtResource("2_kind")
+model = ExtResource("412_revolving_door")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_loading_dock"]
+script = ExtResource("2_kind")
+model = ExtResource("413_loading_dock")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_cafe_tables"]
+script = ExtResource("2_kind")
+model = ExtResource("414_cafe_tables")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Kind_portico"]
+script = ExtResource("2_kind")
+model = ExtResource("415_portico")
+surface = &"concrete"
+
+[sub_resource type="Resource" id="Kind_bank_entrance"]
+script = ExtResource("2_kind")
+model = ExtResource("416_bank_entrance")
+surface = &"wood"
+
+[sub_resource type="Resource" id="Mark_0"]
+script = ExtResource("40_marker")
+use_name = "Prayer House"
+kind = SubResource("Kind_hand_statue")
+on_roof = true
+
+[sub_resource type="Resource" id="Mark_1"]
+script = ExtResource("40_marker")
+use_name = "Prayer House"
+kind = SubResource("Kind_prayer_entrance")
+on_roof = false
+
+[sub_resource type="Resource" id="Mark_2"]
+script = ExtResource("40_marker")
+use_name = "Course Center"
+kind = SubResource("Kind_course_easel")
+on_roof = false
+
+[sub_resource type="Resource" id="Mark_3"]
+script = ExtResource("40_marker")
+use_name = "Free Personality Test"
+kind = SubResource("Kind_test_booth")
+on_roof = false
+
+[sub_resource type="Resource" id="Mark_4"]
+script = ExtResource("40_marker")
+use_name = "Combat Training"
+kind = SubResource("Kind_boxing_ring")
+on_roof = true
+
 [resource]
 script = ExtResource("1_settings")
 facade_kinds = Array[ExtResource("2_kind")]([SubResource("Kind_ac_window"), SubResource("Kind_ac_vintage"), SubResource("Kind_ac_modern"), SubResource("Kind_ac_split")])
@@ -188,4 +315,5 @@ boarded_window = SubResource("Kind_boarded_window")
 rubble = SubResource("Kind_rubble")
 banner = SubResource("Kind_banner")
 flag = SubResource("Kind_flag")
+use_markers = Array[ExtResource("40_marker")]([SubResource("Mark_0"), SubResource("Mark_1"), SubResource("Mark_2"), SubResource("Mark_3"), SubResource("Mark_4")])
 taxi = SubResource("Kind_taxi")
