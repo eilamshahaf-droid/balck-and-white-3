@@ -61,6 +61,12 @@ extends Resource
 ## Seconds between refreshes of each building's cached believing presence.
 @export var presence_refresh := 0.5
 
+@export_group("Dancing")
+## People sent on an errand to dance (a block party) bob this high, this fast, and turn.
+@export var dance_bob_height := 0.35
+@export var dance_bob_rate := 7.0
+@export var dance_spin := 2.5
+
 @export_group("Fleeing")
 ## When a building is evacuated (roaches), its residents this close to it run out.
 @export var flee_reach := 60.0
