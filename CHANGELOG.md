@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-27: Decrees cost money; the building wheel marks buildings for takeover
+- Every decree now costs money as well as belief: +3 floors $120, luxury $150, facade $60, change use $80, preserve $40. The slice shows both ("30 belief + $120").
+- The building wheel depends on whose building it is. Yours: the five decrees. Anyone else's: the three takeover marks, **Skull: Force**, **$: Buy** and **Sky Sign: Missionaries**. A slice that can't be chosen says why ("needs a Combat Training building", "needs $80"); the mark already on the building reads "call off".
+- The three divine signs (beam, storm, halo) are off the wheel; the marks replace them.
+- Numbers: `data/decrees.tres` (the `..._money` values).
+- Try it: press F5, hold the left button still on a building that isn't yours and pick a mark; then on one of yours, pick a decree and watch the money card drop.
+
 ## 2026-10-27: Meshy props in the city
 - The first models made with Meshy are in the game (`assets/models/meshy/`, about 0.5 MB each). Window air conditioners (four kinds) hang under windows of the brick and stone buildings; water tanks and big cooling units stand on roofs. They are drawn as MultiMeshes, one per kind and chunk of town, and disappear past 260 m.
 - The sidewalks have trash cans, heaps of trash bags, hydrants, benches, newspaper boxes, mailboxes and the odd hot-dog cart. The hand can pick all of them up and throw them, like the taxis.
@@ -11,6 +18,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - Roof props follow a building that grows new floors by decree, and make way for a luxury penthouse.
 - Numbers: `data/city_props.tres` (how often, how far apart, sizes, how bags squash). The hand test checks the bag squash.
 - Try it: press F5, zoom into a street: pick up a trash bag and drop it on another one. Look up at the windows and roofs for the air conditioners and water tanks.
+
 ## 2026-10-27: Take buildings by force, money or missionaries; a money meter
 - The claim meter and its roof colours are gone. Eilam's rule instead: a building is yours once most of the people who live there believe. An empty one is yours while a believer lives in it or sits in on it.
 - Three takeover marks float over a marked building, with "3 / 7 believe" underneath:
