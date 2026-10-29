@@ -1,7 +1,7 @@
 extends Node2D
 ## Top-down view of a generated map, for looking at layouts without starting the
 ## game. R: a new random seed. Left / Right: the previous / next seed.
-## O: switch between the district grid and the organic streets.
+## O: switch between the district grid and the organic streets. S: next street style.
 
 const SETTINGS_PATH := "res://data/mapgen.tres"   # load() at run time: typed Archetype array
 const SCALE := 2.0            # pixels per metre
@@ -16,6 +16,7 @@ var _spec := MapSpec.new()
 var _layout: MapLayout
 var _streets: OrganicStreets
 var _organic := false
+var _style := 0
 var _title := Label.new()
 
 
@@ -31,6 +32,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	match (event as InputEventKey).keycode:
 		KEY_R:
 			_spec.map_seed = randi()
+		KEY_S:
+			_style = (_style + 1) % _settings.street_styles.size()
+			_organic = true
 		KEY_O:
 			_organic = not _organic
 		KEY_LEFT:
@@ -67,8 +71,9 @@ func _draw() -> void:
 
 func _regenerate() -> void:
 	_layout = MapGenerator.generate(_spec, _settings)
-	_streets = OrganicStreets.generate(_spec)
-	_title.text = "seed %d   R: random   Left / Right: next seed   O: organic streets" % _spec.map_seed
+	var style := _settings.street_styles[_style]
+	_streets = OrganicStreets.generate(_spec.styled(style))
+	_title.text = "seed %d   %s (%d of 100 cities: %s)   R: random   Left / Right: seed   O: grid / organic   S: style" % [_spec.map_seed, style.title, style.city_count, style.examples]
 	queue_redraw()
 
 

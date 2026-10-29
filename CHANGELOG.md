@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-29: Street styles from 100 real cities
+- Why: OpenStreetMap is blocked in this environment, so the styles come from the published numbers for 100 cities on five continents (Boeing, "Urban Spatial Order", 2019), kept in `data/mapgen/city_stats.csv`: how grid-like the streets are, how winding, how long the blocks, the share of four-way crossings and dead ends. They are not our own measurement of 200 cities; when the map servers are opened, replace the CSV with real measurements and run `python3 tools/cluster_city_styles.py` to regroup.
+- The cities fall into four street styles (`StreetStyle`, in `data/mapgen.tres`): planned grid (18 cities: Chicago, Manhattan, Buenos Aires), wide grid sprawl (14: Atlanta, Houston, Beijing), compact organic (33: Paris, Tokyo, Barcelona) and winding old town (35: London, Rome, Mumbai). `MapSpec.styled(style)` applies one to the organic street generator: how many direction patches and fans, how much wobble, block length, and how many side streets stop short.
+- Try it: `scenes/map_preview.tscn`, F6, press S to cycle the styles (it shows how many of the 100 cities each covers).
+
 ## 2026-10-29: Organic streets
 - The map generator can now lay out streets that bend and fan out instead of a straight grid. `OrganicStreets.generate(MapSpec)` blends a few patches of straight streets and fans around a centre into one direction field (`TensorField`), with noise on top, then `StreetTracer` follows it to draw main streets first and side streets across them. It uses the published tensor-field method (Chen et al. 2008), written fresh for this project, so the licence of the tool that inspired it does not apply. The game's city is still the straight grid; this is data for the sandbox and later levels.
 - New `MapSpec` numbers under "Organic streets": field size, number of patches and fans, how far each reaches, wobble, main and side street spacing.
