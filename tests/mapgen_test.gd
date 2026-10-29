@@ -47,6 +47,17 @@ func _ready() -> void:
 	spec.map_seed = 2
 	spec.archetypes = PackedStringArray(["", "", "", "", "civic"])
 	_check("a named archetype is kept", MapGenerator.generate(spec, settings).district_archetype[4].id == &"civic")
+	spec.map_seed = 9
+	var s1 := OrganicStreets.generate(spec)
+	var s2 := OrganicStreets.generate(spec)
+	_check("organic streets are made", s1.major.size() > 10 and s1.minor.size() > 30)
+	_check("same seed, same organic streets", s1.major == s2.major and s1.minor == s2.minor)
+	var inside := true
+	for line in s1.major + s1.minor:
+		for p in line:
+			inside = inside and absf(p.x) <= spec.field_size.x / 2.0 + 0.01
+			inside = inside and absf(p.y) <= spec.field_size.y / 2.0 + 0.01
+	_check("organic streets stay on the map", inside)
 	var parks := 0
 	for k in a.blocks:
 		parks += int(k == MapLayout.Block.PARK)
