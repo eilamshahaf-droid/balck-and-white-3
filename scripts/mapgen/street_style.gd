@@ -2,7 +2,7 @@ class_name StreetStyle
 extends Resource
 ## A way real cities lay out their streets, found by grouping 100 cities by how
 ## grid-like, winding, long-blocked and dead-end-ridden their streets are
-## (data/mapgen/city_stats.csv, tools/cluster_city_styles.py). Distances are real
+## (tools/city_stats.csv, tools/cluster_city_styles.py). Distances are real
 ## metres; MapSpec.metres_scale shrinks them to the game's toy-town size.
 
 @export var id := &""

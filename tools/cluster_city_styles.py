@@ -1,4 +1,4 @@
-"""Groups the cities in data/mapgen/city_stats.csv into street styles.
+"""Groups the cities in tools/city_stats.csv into street styles.
 
 Prints each group's average numbers and its cities, to copy into the
 StreetStyle entries of data/mapgen.tres. Run it again whenever the CSV is
@@ -14,7 +14,7 @@ FEATURES = ["orientation_order", "avg_circuity", "median_segment_m",
 
 def main() -> None:
     groups = int(sys.argv[1]) if len(sys.argv) > 1 else 4
-    rows = list(csv.DictReader(open("data/mapgen/city_stats.csv")))
+    rows = list(csv.DictReader(open("tools/city_stats.csv")))
     raw = [[float(r[f]) for f in FEATURES] for r in rows]
     means = [sum(c) / len(c) for c in zip(*raw)]
     spreads = [(sum((v - m) ** 2 for v in c) / len(c)) ** 0.5 for c, m in zip(zip(*raw), means)]
