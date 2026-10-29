@@ -1,0 +1,86 @@
+extends Node2D
+## Top-down view of a generated map, for looking at layouts without starting the
+## game. R: a new random seed. Left / Right: the previous / next seed.
+
+const SETTINGS_PATH := "res://data/mapgen.tres"   # load() at run time: typed Archetype array
+const SCALE := 2.0            # pixels per metre
+const ROAD_WIDTH := 6.0       # pixels
+const BLOCK_COLOURS := {
+	MapLayout.Block.PARK: Color(0.35, 0.65, 0.35),
+	MapLayout.Block.PLAZA: Color(0.85, 0.82, 0.7),
+}
+
+var _settings: MapGenSettings = load(SETTINGS_PATH)
+var _spec := MapSpec.new()
+var _layout: MapLayout
+var _title := Label.new()
+
+
+func _ready() -> void:
+	add_child(_title)
+	_title.position = Vector2(12.0, 8.0)
+	_regenerate()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	match (event as InputEventKey).keycode:
+		KEY_R:
+			_spec.map_seed = randi()
+		KEY_LEFT:
+			_spec.map_seed -= 1
+		KEY_RIGHT:
+			_spec.map_seed += 1
+		_:
+			return
+	_regenerate()
+
+
+func _draw() -> void:
+	if _layout == null:
+		return
+	var origin := get_viewport_rect().size / 2.0
+	for j in _layout.blocks_z():
+		for i in _layout.blocks_x():
+			var rect := _block_rect(i, j, origin)
+			var kind := _layout.block_at(i, j)
+			var colour: Color = BLOCK_COLOURS.get(kind, _layout.district_archetype[_layout.district_of(i, j)].tint)
+			if kind == MapLayout.Block.BUILT:
+				colour = colour.darkened(0.45 - 0.45 * _layout.skyline_at(i, j))
+			draw_rect(rect, colour)
+	for d in _layout.district_count():
+		var cell := _district_cell(d, origin)
+		draw_rect(cell, Color(1, 1, 1, 0.9 if d == _layout.start_district else 0.25), false, 3.0 if d == _layout.start_district else 1.0)
+		var archetype := _layout.district_archetype[d]
+		draw_string(ThemeDB.fallback_font, cell.position + Vector2(6.0, 18.0), archetype.title, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14)
+
+
+func _regenerate() -> void:
+	_layout = MapGenerator.generate(_spec, _settings)
+	_title.text = "seed %d   R: random   Left / Right: next seed   white box: where the cult starts" % _spec.map_seed
+	queue_redraw()
+
+
+func _block_rect(i: int, j: int, origin: Vector2) -> Rect2:
+	var a := _to_screen(Vector2(_layout.avenue_x[i], _layout.street_z[j]), origin)
+	var b := _to_screen(Vector2(_layout.avenue_x[i + 1], _layout.street_z[j + 1]), origin)
+	var low := Vector2(minf(a.x, b.x), minf(a.y, b.y)) + Vector2.ONE * ROAD_WIDTH / 2.0
+	var high := Vector2(maxf(a.x, b.x), maxf(a.y, b.y)) - Vector2.ONE * ROAD_WIDTH / 2.0
+	return Rect2(low, high - low)
+
+
+func _district_cell(d: int, origin: Vector2) -> Rect2:
+	var low := Vector2(INF, INF)
+	var high := Vector2(-INF, -INF)
+	for j in _layout.blocks_z():
+		for i in _layout.blocks_x():
+			if _layout.district_of(i, j) == d:
+				var rect := _block_rect(i, j, origin)
+				low = low.min(rect.position)
+				high = high.max(rect.end)
+	return Rect2(low, high - low)
+
+
+func _to_screen(p: Vector2, origin: Vector2) -> Vector2:
+	return origin + Vector2(p.x, -p.y) * SCALE

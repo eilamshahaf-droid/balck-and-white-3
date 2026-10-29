@@ -98,6 +98,16 @@ overlay) calls `ArtStyle.restyle(mesh)`. Colour changes on a plain material are 
 automatically. `V` toggles the style. The god's hand and anything in group `no_toon` are left
 alone. Tunables: `data/art_style.tres`.
 
+### Map generator (`scripts/mapgen/`)
+
+Makes the layout of a city, with no nodes: `MapGenerator.generate(spec, settings)` turns a
+`MapSpec` (seed, streets, plazas, park, district grid, optional fixed archetypes) into a
+`MapLayout` (road lines, block kinds, skyline, district per block, an `Archetype` per district,
+the start district). Deterministic by seed, so the sandbox can roll fresh maps and levels can
+be saved specs in `data/maps/`. `map_preview.gd` (`scenes/map_preview.tscn`) draws one. Archetypes
+live in `data/mapgen.tres` (`MapGenSettings`); load it with `load()`, as its array is typed.
+Test: `tests/mapgen_test.tscn`.
+
 ### City-planning sandbox (`scenes/city_planning.tscn`)
 
 A separate scene with no god and no people; may become a spin-off game.
@@ -124,6 +134,7 @@ Tunables: `data/planning.tres`.
 | `data/treasury.tres` | `TreasurySettings` | money: tithes, rent, use upkeep, shops, luxury, floors |
 | `data/campaigns.tres` | `CampaignSettings` | takeover marks: crews, prices, sermons |
 | `data/police.tres` | `PoliceSettings` | roadblocks: crew heat, force and exposure multipliers, closing time |
+| `data/mapgen.tres` | `MapGenSettings` (+ `Archetype`s) | the neighbourhood kinds the map generator places |
 
 ### Who owns what
 
