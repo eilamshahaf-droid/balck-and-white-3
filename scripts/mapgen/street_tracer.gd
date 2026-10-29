@@ -42,6 +42,8 @@ func _trace_kind(is_major: bool) -> void:
 	for s in seeds:
 		if _inside(s) and not _taken.has(_key(s)):
 			var line := _trace(s, is_major)
+			if not is_major and _rng.randf() < _spec.dead_end_share:
+				line = _cut_short(line)
 			if line.size() >= 4:
 				_claim(line)
 				out.append(line)
@@ -55,6 +57,14 @@ func _trace(start: Vector2, is_major: bool) -> PackedVector2Array:
 	line.append(start)
 	line.append_array(forward)
 	return line
+
+
+## A side street that stops partway, as real ones do (cul-de-sacs, lanes).
+func _cut_short(line: PackedVector2Array) -> PackedVector2Array:
+	var keep := int(line.size() * _rng.randf_range(0.3, 0.7))
+	if _rng.randf() < 0.5:
+		return line.slice(0, keep)
+	return line.slice(line.size() - keep)
 
 
 func _walk(start: Vector2, way: float, is_major: bool) -> PackedVector2Array:

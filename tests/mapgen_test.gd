@@ -58,6 +58,13 @@ func _ready() -> void:
 			inside = inside and absf(p.x) <= spec.field_size.x / 2.0 + 0.01
 			inside = inside and absf(p.y) <= spec.field_size.y / 2.0 + 0.01
 	_check("organic streets stay on the map", inside)
+	var styles_ok := settings.street_styles.size() == 4
+	var cities := 0
+	for style in settings.street_styles:
+		cities += style.city_count
+		var streets := OrganicStreets.generate(spec.styled(style))
+		styles_ok = styles_ok and streets.major.size() > 5 and streets.minor.size() > 20
+	_check("four street styles cover the 100 cities and each makes streets", styles_ok and cities == 100)
 	var parks := 0
 	for k in a.blocks:
 		parks += int(k == MapLayout.Block.PARK)

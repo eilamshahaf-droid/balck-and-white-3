@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="MapGenSettings" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="MapGenSettings" load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/mapgen/mapgen_settings.gd" id="1_s"]
 [ext_resource type="Script" path="res://scripts/mapgen/archetype.gd" id="2_a"]
+[ext_resource type="Script" path="res://scripts/mapgen/street_style.gd" id="3_s"]
 
 [sub_resource type="Resource" id="A_forgotten"]
 script = ExtResource("2_a")
@@ -113,6 +114,63 @@ skyline = Vector2(0.3, 0.5)
 abandoned = 0.0
 tint = Color(0.55, 0.4, 0.75, 1)
 
+[sub_resource type="Resource" id="S_planned_grid"]
+script = ExtResource("3_s")
+id = &"planned_grid"
+title = "Planned grid"
+examples = "Chicago, Manhattan, Denver, Buenos Aires, Seattle"
+city_count = 18
+grid_fields = 1
+radial_fields = 0
+field_reach = 600.0
+field_wobble = 0.05
+minor_spacing = 80.0
+major_spacing = 200.0
+dead_end_share = 0.07
+
+[sub_resource type="Resource" id="S_grid_sprawl"]
+script = ExtResource("3_s")
+id = &"grid_sprawl"
+title = "Wide grid sprawl"
+examples = "Atlanta, Houston, Los Angeles, Beijing, Moscow"
+city_count = 14
+grid_fields = 1
+radial_fields = 0
+field_reach = 350.0
+field_wobble = 0.15
+minor_spacing = 120.0
+major_spacing = 300.0
+dead_end_share = 0.145
+
+[sub_resource type="Resource" id="S_compact_organic"]
+script = ExtResource("3_s")
+id = &"compact_organic"
+title = "Compact organic"
+examples = "Paris, Barcelona, Tokyo, Berlin, Istanbul"
+city_count = 33
+grid_fields = 3
+radial_fields = 1
+field_reach = 250.0
+field_wobble = 0.4
+minor_spacing = 70.0
+major_spacing = 170.0
+dead_end_share = 0.1
+
+[sub_resource type="Resource" id="S_winding_old"]
+script = ExtResource("3_s")
+id = &"winding_old"
+title = "Winding old town"
+examples = "London, Rome, Stockholm, Mumbai, Jerusalem"
+city_count = 35
+grid_fields = 3
+radial_fields = 3
+field_reach = 200.0
+field_wobble = 0.7
+minor_spacing = 70.0
+major_spacing = 150.0
+dead_end_share = 0.23
+
 [resource]
 script = ExtResource("1_s")
 archetypes = Array[ExtResource("2_a")]([SubResource("A_forgotten"), SubResource("A_immigrant"), SubResource("A_public_housing"), SubResource("A_industrial"), SubResource("A_workers"), SubResource("A_gentrifying"), SubResource("A_university"), SubResource("A_nightlife"), SubResource("A_financial"), SubResource("A_luxury"), SubResource("A_civic")])
+street_styles = Array[ExtResource("3_s")]([SubResource("S_planned_grid"), SubResource("S_grid_sprawl"), SubResource("S_compact_organic"), SubResource("S_winding_old")])
