@@ -21,6 +21,10 @@ extends Resource
 ## Where the cult starts, a district index; -1 picks a corner.
 @export var start_district := -1
 @export_group("Organic streets")
+## A StreetStyle id; the style's numbers replace the ones below. Empty keeps them.
+@export var street_style := &""
+## Real metres to game metres, so a real block fits the toy-town city.
+@export var metres_scale := 0.3
 ## Size of the area the organic street generator fills, centred on the origin.
 @export var field_size := Vector2(480.0, 400.0)
 @export var grid_fields := 3          # straight-street patches, each at its own angle
@@ -31,3 +35,17 @@ extends Resource
 @export var minor_spacing := 22.0     # distance between side streets
 @export var trace_step := 3.0
 @export var max_line_length := 700.0
+@export_range(0.0, 1.0) var dead_end_share := 0.1   # side streets cut short
+
+
+## A copy of this spec with a street style's numbers applied.
+func styled(style: StreetStyle) -> MapSpec:
+	var out := duplicate() as MapSpec
+	out.grid_fields = style.grid_fields
+	out.radial_fields = style.radial_fields
+	out.field_reach = style.field_reach * metres_scale
+	out.field_wobble = style.field_wobble
+	out.minor_spacing = style.minor_spacing * metres_scale
+	out.major_spacing = style.major_spacing * metres_scale
+	out.dead_end_share = style.dead_end_share
+	return out

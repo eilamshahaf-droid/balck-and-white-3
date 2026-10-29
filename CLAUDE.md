@@ -107,7 +107,9 @@ the start district). Deterministic by seed, so the sandbox can roll fresh maps a
 be saved specs in `data/maps/`. `map_preview.gd` (`scenes/map_preview.tscn`) draws one. Archetypes
 live in `data/mapgen.tres` (`MapGenSettings`); load it with `load()`, as its array is typed.
 `organic_streets.gd` (`OrganicStreets`, with `tensor_field.gd` and `street_tracer.gd`) makes bending
-streets from a direction field, as street lines only; the 3D city does not use it yet.
+streets from a direction field, as street lines only; the 3D city does not use it yet. A `StreetStyle`
+(four of them in `data/mapgen.tres`, grouped from `tools/city_stats.csv` by `tools/cluster_city_styles.py`)
+sets how grid-like or winding they are.
 Test: `tests/mapgen_test.tscn`.
 
 ### City-planning sandbox (`scenes/city_planning.tscn`)
