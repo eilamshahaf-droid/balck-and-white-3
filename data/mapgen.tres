@@ -1,0 +1,118 @@
+[gd_resource type="Resource" script_class="MapGenSettings" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/mapgen/mapgen_settings.gd" id="1_s"]
+[ext_resource type="Script" path="res://scripts/mapgen/archetype.gd" id="2_a"]
+
+[sub_resource type="Resource" id="A_forgotten"]
+script = ExtResource("2_a")
+id = &"forgotten"
+title = "Forgotten edge"
+wealth = 0.4
+ring_weights = Vector3(1, 0.2, 0)
+skyline = Vector2(0.0, 0.15)
+abandoned = 0.3
+tint = Color(0.55, 0.45, 0.35, 1)
+
+[sub_resource type="Resource" id="A_immigrant"]
+script = ExtResource("2_a")
+id = &"immigrant"
+title = "Immigrant flats"
+wealth = 0.7
+ring_weights = Vector3(0.8, 0.6, 0.1)
+skyline = Vector2(0.1, 0.3)
+abandoned = 0.06
+tint = Color(0.8, 0.55, 0.35, 1)
+
+[sub_resource type="Resource" id="A_public_housing"]
+script = ExtResource("2_a")
+id = &"public_housing"
+title = "Public housing towers"
+wealth = 0.6
+ring_weights = Vector3(0.7, 0.5, 0.1)
+skyline = Vector2(0.3, 0.55)
+abandoned = 0.05
+tint = Color(0.6, 0.6, 0.7, 1)
+
+[sub_resource type="Resource" id="A_industrial"]
+script = ExtResource("2_a")
+id = &"industrial"
+title = "Industrial yards"
+wealth = 0.8
+ring_weights = Vector3(1.0, 0.3, 0)
+skyline = Vector2(0.05, 0.2)
+abandoned = 0.1
+tint = Color(0.45, 0.45, 0.4, 1)
+
+[sub_resource type="Resource" id="A_workers"]
+script = ExtResource("2_a")
+id = &"workers"
+title = "Workers' quarter"
+wealth = 0.9
+ring_weights = Vector3(0.8, 0.8, 0.2)
+skyline = Vector2(0.1, 0.3)
+abandoned = 0.03
+tint = Color(0.7, 0.4, 0.35, 1)
+
+[sub_resource type="Resource" id="A_gentrifying"]
+script = ExtResource("2_a")
+id = &"gentrifying"
+title = "Gentrifying front"
+wealth = 1.0
+ring_weights = Vector3(0.2, 1.0, 0.3)
+skyline = Vector2(0.15, 0.4)
+abandoned = 0.04
+tint = Color(0.85, 0.7, 0.35, 1)
+
+[sub_resource type="Resource" id="A_university"]
+script = ExtResource("2_a")
+id = &"university"
+title = "University quarter"
+wealth = 0.9
+ring_weights = Vector3(0.1, 1.0, 0.2)
+skyline = Vector2(0.15, 0.35)
+abandoned = 0.02
+tint = Color(0.4, 0.65, 0.45, 1)
+
+[sub_resource type="Resource" id="A_nightlife"]
+script = ExtResource("2_a")
+id = &"nightlife"
+title = "Nightlife strip"
+wealth = 1.3
+ring_weights = Vector3(0.1, 0.8, 0.5)
+skyline = Vector2(0.2, 0.5)
+abandoned = 0.03
+tint = Color(0.75, 0.35, 0.7, 1)
+
+[sub_resource type="Resource" id="A_financial"]
+script = ExtResource("2_a")
+id = &"financial"
+title = "Financial district"
+wealth = 2.0
+ring_weights = Vector3(0.0, 0.3, 1.0)
+skyline = Vector2(0.7, 1.0)
+abandoned = 0.0
+tint = Color(0.4, 0.55, 0.8, 1)
+
+[sub_resource type="Resource" id="A_luxury"]
+script = ExtResource("2_a")
+id = &"luxury"
+title = "Luxury enclave"
+wealth = 1.8
+ring_weights = Vector3(0.1, 0.5, 0.9)
+skyline = Vector2(0.5, 0.8)
+abandoned = 0.0
+tint = Color(0.8, 0.75, 0.45, 1)
+
+[sub_resource type="Resource" id="A_civic"]
+script = ExtResource("2_a")
+id = &"civic"
+title = "Civic centre"
+wealth = 1.5
+ring_weights = Vector3(0.0, 0.1, 1.0)
+skyline = Vector2(0.3, 0.5)
+abandoned = 0.0
+tint = Color(0.55, 0.4, 0.75, 1)
+
+[resource]
+script = ExtResource("1_s")
+archetypes = Array[ExtResource("2_a")]([SubResource("A_forgotten"), SubResource("A_immigrant"), SubResource("A_public_housing"), SubResource("A_industrial"), SubResource("A_workers"), SubResource("A_gentrifying"), SubResource("A_university"), SubResource("A_nightlife"), SubResource("A_financial"), SubResource("A_luxury"), SubResource("A_civic")])

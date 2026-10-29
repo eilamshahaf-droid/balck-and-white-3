@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-29: Map generator core
+- New `scripts/mapgen/`: `MapGenerator.generate(MapSpec, MapGenSettings) -> MapLayout`. A `MapSpec` says what to make (seed, number of avenues and streets, gaps, plazas, park, district grid, optional fixed archetypes and start district); a `MapLayout` is pure data (road lines, block kinds, skyline per block, district per block, an archetype per district, the start district). The same spec and seed always give the same map.
+- Eleven neighbourhood archetypes from the research (forgotten edge, immigrant flats, public housing, industrial, workers, gentrifying, university, nightlife, financial, luxury, civic centre) in `data/mapgen.tres`, with wealth, skyline, empty-building share and where each likes to sit: poor and industrial at the corners, the financial, luxury and civic kinds at the centre. The start district is always a forgotten corner.
+- The sandbox makes a spec with a fresh seed; a level is a spec saved under `data/maps/`.
+- Try it: open `scenes/map_preview.tscn` and press F6; R gives a new random map, Left / Right step the seed. Test: `godot --headless --path . res://tests/mapgen_test.tscn` prints `MAPGEN TEST: PASS`.
+- Not wired into the 3D city yet: `city.gd` still builds its own grid.
+
 ## 2026-10-27: Faster start for the Meshy props
 - The game started slowly because the props settings loaded all 46 Meshy models at once (6 s on a test machine). A model now loads the first time something needs it, so the models for uses, upgrades and abandoned buildings only load when they show up.
 - The textures are smaller too: 512 px instead of 1024, and the metal and roughness maps (the game ignores them) are cut to a few pixels. The Meshy folder went from 42 MB to 9.6 MB. At street scale it looks the same.
