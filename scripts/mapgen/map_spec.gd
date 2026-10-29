@@ -20,3 +20,14 @@ extends Resource
 @export var archetypes: PackedStringArray = []
 ## Where the cult starts, a district index; -1 picks a corner.
 @export var start_district := -1
+@export_group("Organic streets")
+## Size of the area the organic street generator fills, centred on the origin.
+@export var field_size := Vector2(480.0, 400.0)
+@export var grid_fields := 3          # straight-street patches, each at its own angle
+@export var radial_fields := 2        # streets that fan out from a centre
+@export var field_reach := 160.0      # how far a patch dominates before the next takes over
+@export var field_wobble := 0.35      # radians of noise on the street direction
+@export var major_spacing := 46.0     # distance between main streets
+@export var minor_spacing := 22.0     # distance between side streets
+@export var trace_step := 3.0
+@export var max_line_length := 700.0

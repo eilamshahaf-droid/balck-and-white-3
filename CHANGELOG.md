@@ -3,6 +3,11 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-29: Organic streets
+- The map generator can now lay out streets that bend and fan out instead of a straight grid. `OrganicStreets.generate(MapSpec)` blends a few patches of straight streets and fans around a centre into one direction field (`TensorField`), with noise on top, then `StreetTracer` follows it to draw main streets first and side streets across them. It uses the published tensor-field method (Chen et al. 2008), written fresh for this project, so the licence of the tool that inspired it does not apply. The game's city is still the straight grid; this is data for the sandbox and later levels.
+- New `MapSpec` numbers under "Organic streets": field size, number of patches and fans, how far each reaches, wobble, main and side street spacing.
+- Try it: `scenes/map_preview.tscn`, F6, press O to switch between the district grid and the organic streets.
+
 ## 2026-10-29: Map generator core
 - New `scripts/mapgen/`: `MapGenerator.generate(MapSpec, MapGenSettings) -> MapLayout`. A `MapSpec` says what to make (seed, number of avenues and streets, gaps, plazas, park, district grid, optional fixed archetypes and start district); a `MapLayout` is pure data (road lines, block kinds, skyline per block, district per block, an archetype per district, the start district). The same spec and seed always give the same map.
 - Eleven neighbourhood archetypes from the research (forgotten edge, immigrant flats, public housing, industrial, workers, gentrifying, university, nightlife, financial, luxury, civic centre) in `data/mapgen.tres`, with wealth, skyline, empty-building share and where each likes to sit: poor and industrial at the corners, the financial, luxury and civic kinds at the centre. The start district is always a forgotten corner.

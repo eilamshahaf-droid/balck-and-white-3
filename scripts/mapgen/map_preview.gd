@@ -1,6 +1,7 @@
 extends Node2D
 ## Top-down view of a generated map, for looking at layouts without starting the
 ## game. R: a new random seed. Left / Right: the previous / next seed.
+## O: switch between the district grid and the organic streets.
 
 const SETTINGS_PATH := "res://data/mapgen.tres"   # load() at run time: typed Archetype array
 const SCALE := 2.0            # pixels per metre
@@ -13,6 +14,8 @@ const BLOCK_COLOURS := {
 var _settings: MapGenSettings = load(SETTINGS_PATH)
 var _spec := MapSpec.new()
 var _layout: MapLayout
+var _streets: OrganicStreets
+var _organic := false
 var _title := Label.new()
 
 
@@ -28,6 +31,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	match (event as InputEventKey).keycode:
 		KEY_R:
 			_spec.map_seed = randi()
+		KEY_O:
+			_organic = not _organic
 		KEY_LEFT:
 			_spec.map_seed -= 1
 		KEY_RIGHT:
@@ -41,6 +46,10 @@ func _draw() -> void:
 	if _layout == null:
 		return
 	var origin := get_viewport_rect().size / 2.0
+	if _organic:
+		_draw_streets(_streets.minor, origin, Color(0.55, 0.55, 0.6), 2.0)
+		_draw_streets(_streets.major, origin, Color(0.95, 0.85, 0.5), 4.0)
+		return
 	for j in _layout.blocks_z():
 		for i in _layout.blocks_x():
 			var rect := _block_rect(i, j, origin)
@@ -58,7 +67,8 @@ func _draw() -> void:
 
 func _regenerate() -> void:
 	_layout = MapGenerator.generate(_spec, _settings)
-	_title.text = "seed %d   R: random   Left / Right: next seed   white box: where the cult starts" % _spec.map_seed
+	_streets = OrganicStreets.generate(_spec)
+	_title.text = "seed %d   R: random   Left / Right: next seed   O: organic streets" % _spec.map_seed
 	queue_redraw()
 
 
@@ -84,3 +94,11 @@ func _district_cell(d: int, origin: Vector2) -> Rect2:
 
 func _to_screen(p: Vector2, origin: Vector2) -> Vector2:
 	return origin + Vector2(p.x, -p.y) * SCALE
+
+
+func _draw_streets(lines: Array[PackedVector2Array], origin: Vector2, colour: Color, width: float) -> void:
+	for line in lines:
+		var screen := PackedVector2Array()
+		for p in line:
+			screen.append(_to_screen(p, origin))
+		draw_polyline(screen, colour, width)
