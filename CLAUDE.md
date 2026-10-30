@@ -20,11 +20,12 @@ the 4.3 feature level; do not use APIs newer than that without updating `project
 
 ```
 project.godot        main scene, autoloads, window settings
-scenes/              main.tscn (the game), city_planning.tscn (planning sandbox)
+scenes/              main.tscn (the game), city_planning.tscn (planning sandbox), map_lab.tscn (2D map generator playground)
 scripts/             gameplay scripts for main.tscn
 scripts/people/      residents: Population, Resident records, social groups, debug card
 scripts/props/       Meshy props: facade and roof dressing, sidewalk props, building-state props, their models
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
+scripts/maplab/      the map lab: districts' street styles, blocks, land use, menu
 data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
 assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT), with their licence files
@@ -112,6 +113,16 @@ streets from a direction field, as street lines only; the 3D city does not use i
 sets how grid-like or winding they are.
 Test: `tests/mapgen_test.tscn`.
 
+### Map lab (`scenes/map_lab.tscn`)
+
+A 2D playground for the map generator. `LabMap.build(LabParams, MapLabSettings, MapGenSettings)`
+makes districts with `MapGenerator`, streets with `StreetTracer` over a `DistrictField` (a
+`TensorField` in which each district lays out its streets in the `StreetStyle` its archetype's
+`LandUseMix` names), joins ends that stop short (`EndJoiner`), finds blocks by painting the streets
+on a grid (`CityBlocks`) and gives each a `LandUse.Use` (`LandUsePlanner`). `map_lab.gd` draws it,
+`LabPanel` is the menu (sliders listed as `LabSlider`s), `LabCamera` zooms and pans. Pure data up to
+the view, so `tests/map_lab_test.tscn` checks the same maps. Tunables: `data/map_lab.tres`.
+
 ### City-planning sandbox (`scenes/city_planning.tscn`)
 
 A separate scene with no god and no people; may become a spin-off game.
@@ -139,6 +150,7 @@ Tunables: `data/planning.tres`.
 | `data/campaigns.tres` | `CampaignSettings` | takeover marks: crews, prices, sermons |
 | `data/police.tres` | `PoliceSettings` | roadblocks: crew heat, force and exposure multipliers, closing time |
 | `data/mapgen.tres` | `MapGenSettings` (+ `Archetype`s) | the neighbourhood kinds the map generator places |
+| `data/map_lab.tres` | `MapLabSettings` (+ `LabParams`, `LabSlider`s, `LandUseMix`es) | map lab menu, land use per archetype, block finding, colours |
 
 ### Who owns what
 
@@ -152,6 +164,7 @@ Several threads push to `main`. Message the owning thread before changing its fi
 | Building models | `building_visual.gd`, `assets/models/kenney_modular/` | model-library |
 | Meshy props | `scripts/props/`, `assets/models/meshy/`, `data/city_props.tres` | "Test the Meshy connection" |
 | World: districts, City Hall, surroundings | `scripts/world/`, `scripts/government/` | "World and stages" |
+| Map lab | `scripts/maplab/`, `scenes/map_lab.tscn`, `data/map_lab.tres` | "Design the city map generator" |
 | Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
 
 ### The Alpha build

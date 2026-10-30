@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-10-30: Map Lab, a 2D playground for the map generator
+- New scene `scenes/map_lab.tscn`: a top-down map of a generated city, coloured by what each block is used for: homes, offices and shops, industry, public buildings, parks and squares. A menu on the left changes the numbers and the map is made again a moment later.
+- Every district lays out its streets in the style of its kind (`DistrictField`): the financial, luxury and civic districts in a planned grid, industry and public housing in a wide grid, the old and poor quarters winding. The menu can also give the whole city one of the four real-city styles.
+- Streets that stop just short of another street are carried on to meet it (`EndJoiner`), as real streets do; the "Dead ends" slider keeps some open.
+- Blocks are found by painting the streets on a grid and filling what they enclose (`CityBlocks`). Each district draws its uses from its archetype's mix (`data/map_lab.tres`), bent by a few rules: offices crowd onto main streets, public buildings gather at the centre, big blocks become parks, industry sits at the edge, small leftovers are squares.
+- The menu: street style, seed and "New map", main and side street spacing, dead ends, curviness, and a weight for each use. Below it: the share of land each use takes, the number of blocks, the mean block size and the street length, in real metres.
+- Try it: open `scenes/map_lab.tscn` in the FileSystem panel and press F6. Mouse wheel zooms, right drag moves. Test: `godot --headless --path . res://tests/map_lab_test.tscn` prints `MAP LAB TEST: PASS`.
+- Not in the 3D game yet; that comes after the road graph (see the map generator plan).
+
 ## 2026-10-29: Street styles from 100 real cities
 - Why: OpenStreetMap is blocked in this environment, so the styles come from the published numbers for 100 cities on five continents (Boeing, "Urban Spatial Order", 2019), kept in `tools/city_stats.csv`: how grid-like the streets are, how winding, how long the blocks, the share of four-way crossings and dead ends. They are not our own measurement of 200 cities; when the map servers are opened, replace the CSV with real measurements and run `python3 tools/cluster_city_styles.py` to regroup.
 - The cities fall into four street styles (`StreetStyle`, in `data/mapgen.tres`): planned grid (18 cities: Chicago, Manhattan, Buenos Aires), wide grid sprawl (14: Atlanta, Houston, Beijing), compact organic (33: Paris, Tokyo, Barcelona) and winding old town (35: London, Rome, Mumbai). `MapSpec.styled(style)` applies one to the organic street generator: how many direction patches and fans, how much wobble, block length, and how many side streets stop short.
