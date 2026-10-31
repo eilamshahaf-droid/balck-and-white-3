@@ -494,7 +494,9 @@ const LAB = { slideStep: 3000, oneWayPasses: 3, townReach: 0.85, metroDensity: 0
   // A bridge that joins a piece spans at most this many river widths.
   bridgeSpan: 1.6,
   // Near its two ends (m) a joining street may pass close to the roads at the junctions it meets.
-  pieceEnds: 22, pieceStagger: 40, pieceMeet: 55 };
+  pieceEnds: 22, pieceStagger: 40, pieceMeet: 55,
+  // The shortest joining street (m); a bridge's road on land, both banks together (m).
+  pieceShort: 10, bridgeLanding: 90, piecePasses: 3 };
 // Dense districts build to the property line, so the buildings make a continuous street wall.
 // How deep a building in a dense core may run back from the street (m): real cores cover 82 to 91%
 // of each block inside the pavement line (Paris, Barcelona, Manhattan), Tel Aviv about 65%.
@@ -2027,8 +2029,10 @@ function connectPieces(lines, graph, water, sideType, mainType) {
     if (!loose.length) break;
     const half = ROADS[sideType].total / 2, hash = segHash(lines, 20);
     // Not just beside a junction on the road it meets, which would stagger the two.
-    const skew = (u, v) => Math.abs(u[0] * v[0] + u[1] * v[1]) / (Math.hypot(...u) * Math.hypot(...v) || 1) > Math.cos(LAB.pieceMeet * Math.PI / 180);
-    const nearJunction = (n, s) => graph.lineNodes[n].some(v => Math.abs(v.s - s) < LAB.pieceStagger);
+    const skew = (u, v, deg = LAB.pieceMeet) => Math.abs(u[0] * v[0] + u[1] * v[1]) / (Math.hypot(...u) * Math.hypot(...v) || 1) > Math.cos(deg * Math.PI / 180);
+    const nearJunction = (n, s) => graph.lineNodes[n].some(v => Math.abs(v.s - s) < LAB.pieceStagger && Math.abs(v.s - s) > 3);
+    // A junction itself is a good place to meet: the new street makes a crossing of it.
+    const atNodes = n => graph.lineNodes[n].map(v => { const q = pointAt(lines[n], graph.cums[n], v.s), N = graph.nodes[v.node]; return [[N.x, N.y], v.s, [q[2], q[3]]]; });
     const targets = [];
     lines.forEach((l, n) => { if (of(n) === main && !GRADE_SEPARATED.has(l.tier)) targets.push(n); });
     const crossing = (a, b, c, d) => {
@@ -2040,14 +2044,21 @@ function connectPieces(lines, graph, water, sideType, mainType) {
     // Clear of water and of every road but the two it joins; the expressway only crossed squarely.
     const clear = (a, b, from, to, bridge) => {
       const len = Math.hypot(b[0] - a[0], b[1] - a[1]), steps = Math.ceil(len / 10);
-      let wet = 0;
+      let wet = 0, wx = 0, wy = 0;
       for (let i = 0; i <= steps; i++) {
         const x = a[0] + (b[0] - a[0]) * i / steps, y = a[1] + (b[1] - a[1]) * i / steps;
         if (!insideField(x, y) || !water.built(x, y)) return false;
         if (bridge ? water.isSea(x, y) : water.near(x, y, 4)) return false;
-        if (water.isRiver(x, y)) wet += len / steps;
+        if (water.isRiver(x, y)) { wet += len / steps; wx = x; wy = y; }
       }
-      if (bridge && (!wet || wet > water.riverWidth * LAB.bridgeSpan)) return false;
+      if (bridge) {
+        // Straight across: no longer than the river is wide allows, and square to its flow.
+        if (!wet || wet > water.riverWidth * LAB.bridgeSpan || len > wet + LAB.bridgeLanding) return false;
+        const R = water.river; let k = 0, kd = Infinity;
+        R.forEach((q, i) => { const d = (q[0] - wx) ** 2 + (q[1] - wy) ** 2; if (d < kd) { kd = d; k = i; } });
+        const u = R[Math.min(R.length - 1, k + 1)], v = R[Math.max(0, k - 1)];
+        if (skew([b[0] - a[0], b[1] - a[1]], [u[0] - v[0], u[1] - v[1]]) || !skew([b[0] - a[0], b[1] - a[1]], [-(u[1] - v[1]), u[0] - v[0]], LAB.bridgeAngle)) return false;
+      }
       let byFast = 0;
       for (let i = 1; i < steps; i++) {
         const s = i / steps * len, x = a[0] + (b[0] - a[0]) * i / steps, y = a[1] + (b[1] - a[1]) * i / steps; let ok = true, fast = false;
@@ -2075,25 +2086,28 @@ function connectPieces(lines, graph, water, sideType, mainType) {
         for (let i = 0; i < l.pts.length; i += 4) if (!nearJunction(n, graph.cums[n][i])) {
           const a = l.pts[Math.max(0, i - 1)], c = l.pts[Math.min(l.pts.length - 1, i + 1)];
           from.push([l.pts[i], n, LAB.pieceMid, [c[0] - a[0], c[1] - a[1]]]);
-        } });
+        }
+        for (const [p, , dir] of atNodes(n)) from.push([p, n, LAB.pieceMid, dir]); });
       let best = null;
       for (const bridge of [false, true]) {
         const reach = bridge ? water.riverWidth * LAB.bridgeSpan + LAB.pieceReach : LAB.pieceReach;
         if (bridge && (best || !water.river)) break;
         for (const [q, n, extra, along] of from) for (const m of targets) {
           const o = lines[m];
-          // The nearest point on each stretch, and its corners: a longer way may cross squarely.
+          // The nearest point on each stretch, its corners and its junctions: a longer way may cross squarely.
+          const spots = [];
           for (let j = 0; j < o.pts.length - 1; j++) {
             const [, t] = segDistT(q[0], q[1], o.pts[j], o.pts[j + 1]), a = o.pts[j], c = o.pts[j + 1];
-            const at = graph.cums[m][j], seg = graph.cums[m][j + 1] - at;
-            for (const [p, sp] of [[[a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t], at + seg * t], [a, at]]) {
-              const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
-              if (d < 30 || d > reach || (best && d + extra >= best.cost) || nearJunction(m, sp)) continue;
-              // It meets each road it joins squarely enough, never in a shallow merge.
-              const dir = [p[0] - q[0], p[1] - q[1]];
-              if (skew(dir, [c[0] - a[0], c[1] - a[1]]) || (along && skew(dir, along))) continue;
-              if (clear(q, p, n, m, bridge)) best = { cost: d + extra, a: q.slice(), b: p.slice(), bridge };
-            }
+            const at = graph.cums[m][j], seg = graph.cums[m][j + 1] - at, dir = [c[0] - a[0], c[1] - a[1]];
+            spots.push([[a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t], at + seg * t, dir], [a, at, dir]);
+          }
+          for (const [p, sp, dirM] of spots.concat(atNodes(m))) {
+            const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+            if (d < LAB.pieceShort || d > reach || (best && d + extra >= best.cost) || nearJunction(m, sp)) continue;
+            // It meets each road it joins squarely enough, never in a shallow merge.
+            const dir = [p[0] - q[0], p[1] - q[1]];
+            if (skew(dir, dirM) || (along && skew(dir, along))) continue;
+            if (clear(q, p, n, m, bridge)) best = { cost: d + extra, a: q.slice(), b: p.slice(), bridge };
           }
         }
       }
@@ -2719,8 +2733,12 @@ function buildRoads(p) {
     if (third.cut) settleDeadEnds(lines, water);
     graph = roadGraph(lines); snapEnds(lines, graph); graph = roadGraph(lines);
   }
-  const linked = connectPieces(lines, graph, water, p.sideType, p.mainType);
-  if (linked) { settleDeadEnds(lines, water); graph = roadGraph(lines); snapEnds(lines, graph); graph = roadGraph(lines); }
+  // Tidying the ends can pull a joining street off its road again, so join, tidy and look again.
+  let linked = 0;
+  for (let pass = 0; pass < LAB.piecePasses; pass++) {
+    const added = connectPieces(lines, graph, water, p.sideType, p.mainType); if (!added) break;
+    linked += added; settleDeadEnds(lines, water); graph = roadGraph(lines); snapEnds(lines, graph); graph = roadGraph(lines);
+  }
   const upgraded = classifyByTraffic(lines, graph, p.mainType, rng);
   return { water, districts, lines, staggers, squared, upgraded, interchange, split, linked };
 }
@@ -3521,8 +3539,10 @@ function headingOf(m, L, p) {
 // The kind of turn from one link into the next, or null where it is not allowed.
 function turnOf(net, a, b) {
   const N = net.nodes[a.to];
-  // A U-turn only at a dead end, or where turning back is the only way on.
-  if (b.twin === a.k || (b.line === a.line && b.dir !== a.dir)) return N.end || N.out.every(o => o === b.k) ? "uturn" : null;
+  // A U-turn only at a dead end, where turning back is the only way on, or through the median
+  // opening of a main road where side streets turn right in and out (a "Michigan left").
+  if (b.twin === a.k || (b.line === a.line && b.dir !== a.dir))
+    return N.end || N.out.every(o => o === b.k) || (N.control === "riro" && a.rank > 0) ? "uturn" : null;
   const cross = a.h1[0] * b.h0[1] - a.h1[1] * b.h0[0], dot = a.h1[0] * b.h0[0] + a.h1[1] * b.h0[1];
   const kind = dot > 0.85 ? "straight" : cross < 0 ? "right" : "left";
   // Right in, right out: a side street at a boulevard turns right only, both ways.
