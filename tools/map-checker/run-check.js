@@ -201,11 +201,13 @@ async function main() {
     const browser = await launch();
     const counter = { n: done.size };
     await Promise.all(Array.from({ length: PAGES }, () => worker(browser, queue, total, counter)));
-    await browser.close();
+    // Edge sometimes never answers a close: give it a moment, then move on to the summary.
+    await withTimeout(browser.close(), 15000).catch(() => log("The browser did not close; carrying on."));
   }
   const rows = [...readDone().values()];
   summarise(rows, targets);
   log(`Done. Summary in SUMMARY_map_check.md and summary.json (${rows.length} maps).`);
 }
 
-main().catch(e => { log("Stopped: " + (e.stack || e)); process.exitCode = 1; });
+main().catch(e => { log("Stopped: " + (e.stack || e)); process.exitCode = 1; })
+  .finally(() => process.exit()); // a browser left hanging must not keep the window open
