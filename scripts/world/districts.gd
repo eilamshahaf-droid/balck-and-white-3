@@ -4,9 +4,10 @@ extends Node
 ## rule: a building is yours once most of the people who live there believe
 ## (Population's residents); an empty one is yours while a believer sits in on
 ## it. Campaigns (campaigns.gd) are how the player tips a building: force, buying
-## or missionaries. The cult starts from the start district's core building (its
-## headquarters, always yours), in a neglected district with empty, abandoned
-## buildings. A district is yours once its core and enough of its buildings are. Decrees ask owns(), so there is one answer.
+## or missionaries. The cult starts from its base (`headquarters`, always yours) at the
+## edge of the start district, a neglected place with empty, abandoned buildings, and
+## works in toward the core in the middle. A district is yours once its core and
+## enough of its buildings are. Decrees ask owns(), so there is one answer.
 ## A building can only become yours if it borders one you already hold (can_claim),
 ## so the city is taken outwards from the headquarters; abandoned places too. A core
 ## also needs most of the buildings around it first.
@@ -93,6 +94,16 @@ func kind_at(p: Vector3) -> String:
 ## The cult's first building, or null.
 func start_building() -> Node3D:
 	return buildings[headquarters] if headquarters >= 0 else null
+
+
+## The district the cult starts in (the Slums).
+func start_district() -> int:
+	return S.start_district
+
+
+## `building` is the cult's base (where the high priest starts and agents train).
+func is_base(building: Node3D) -> bool:
+	return headquarters >= 0 and buildings[headquarters] == building
 
 
 ## Can the player work in district `d` yet? Only the start district for now:
@@ -252,9 +263,10 @@ func building_near(p: Vector3) -> int:
 
 ## Everyone leaves `building` for good: it becomes an abandoned place anyone
 ## can move into.
-func abandon(building: Node3D) -> void:
+## `quiet`: nobody runs off shouting (the start district's empty buildings).
+func abandon(building: Node3D, quiet := false) -> void:
 	if mark_abandoned(building):
-		population.evacuate(building)
+		population.evacuate(building, quiet)
 
 
 ## `building` was emptied already (a miracle fire burnt it out, roaches):
@@ -340,14 +352,30 @@ func _count() -> void:
 ## district's other buildings stand empty.
 func _found_headquarters() -> void:
 	var start := S.start_district
-	headquarters = _core[start]
+	headquarters = _edge_building(start)
 	_unlocked[start] = 1
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 17
 	for i in buildings.size():
 		var odds := S.abandoned_start if _district_of[i] == start else S.abandoned_elsewhere
 		if i != headquarters and i != _core[_district_of[i]] and rng.randf() < odds:
-			abandon(buildings[i])
+			abandon(buildings[i], true)
+
+
+## The base: the standing building of district `d` farthest from its core, so the cult
+## starts at the edge and works its way in to the heart.
+func _edge_building(d: int) -> int:
+	var middle := buildings[_core[d]].global_position
+	var best := _core[d]
+	var best_d := -1.0
+	for i in buildings.size():
+		if _district_of[i] != d:
+			continue
+		var far := buildings[i].global_position.distance_squared_to(middle)
+		if far > best_d:
+			best_d = far
+			best = i
+	return best
 
 
 func _set_side(i: int, mine: bool) -> void:

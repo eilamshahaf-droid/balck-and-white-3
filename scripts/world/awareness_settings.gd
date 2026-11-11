@@ -83,6 +83,10 @@ extends Resource
 @export var answer_arrest := PackedFloat32Array([0.0, 0.15, 0.15])
 @export var fine := 50.0
 @export var camera_color := Color(0.15, 0.15, 0.18)
+## A camera adds this to the arrest chance of murals and marks within camera_steps
+## borders of it.
+@export var camera_arrest := 0.1
+@export var camera_steps := 2
 
 @export_group("Arrest and martyr")
 ## Three ways out of an arrest: throw the squad off him with the hand (costs
