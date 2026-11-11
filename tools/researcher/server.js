@@ -7,7 +7,9 @@ const path = require("path");
 const PORT = 5177;
 const ROOT = __dirname;
 const CONFIG_FILE = path.join(ROOT, "config.json");
-const UA = "SpinCycleResearcher/1.0 (local tool)";
+const UA = "SpinCycleResearcher/1.1 (https://github.com/eilamshahaf-droid/balck-and-white-3)";
+// Wikimedia answers 429 to bursts of full-size originals; 1920 px is plenty for references.
+const WM_MAX_WIDTH = 1920;
 const DEFAULTS = {
   outputDir: path.join(ROOT, "downloads"),
   pexelsKey: "",
@@ -49,7 +51,9 @@ const providers = {
         const m = i.extmetadata || {};
         return {
           id: "wm" + pg.pageid, provider: "Wikimedia Commons",
-          title: pg.title.replace(/^File:/, ""), thumb: i.thumburl, full: i.url,
+          title: pg.title.replace(/^File:/, ""), thumb: i.thumburl,
+          full: i.width > WM_MAX_WIDTH
+            ? i.thumburl.replace(/\/\d+px-/, `/${WM_MAX_WIDTH}px-`) : i.url,
           author: (m.Artist?.value || "").replace(/<[^>]+>/g, ""),
           license: m.LicenseShortName?.value || "see page", page: i.descriptionurl,
         };
