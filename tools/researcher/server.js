@@ -105,21 +105,31 @@ async function save({ items, folder }, cfg) {
   if (path.relative(cfg.outputDir, dir).startsWith("..")) throw new Error("Folder escapes output dir");
   fs.mkdirSync(dir, { recursive: true });
   const saved = [];
+  const failed = [];
   for (const it of items) {
-    if (it.download) {
-      fetch(it.download, { headers: { Authorization: "Client-ID " + cfg.unsplashKey } })
-        .catch(() => {}); // Unsplash API rule: report each download
+    try {
+      if (it.download) {
+        fetch(it.download, { headers: { Authorization: "Client-ID " + cfg.unsplashKey } })
+          .catch(() => {}); // Unsplash API rule: report each download
+      }
+      let r;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        r = await fetch(it.full, { headers: { "User-Agent": UA } });
+        if (r.status !== 429 && r.status < 500) break;
+        await new Promise((ok) => setTimeout(ok, 1500 * (attempt + 1))); // rate limited: back off
+      }
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const ext = (r.headers.get("content-type") || "").includes("png") ? "png" : "jpg";
+      const name = `${it.id}_${slug(it.title)}.${ext}`;
+      fs.writeFileSync(path.join(dir, name), Buffer.from(await r.arrayBuffer()));
+      fs.appendFileSync(path.join(dir, "CREDITS.txt"),
+        `${name} | ${it.provider} | ${it.author} | ${it.license} | ${it.page}\n`);
+      saved.push(name);
+    } catch (e) {
+      failed.push(`${it.title.slice(0, 40)}: ${e.message}`);
     }
-    const r = await fetch(it.full, { headers: { "User-Agent": UA } });
-    if (!r.ok) throw new Error(`${it.title}: HTTP ${r.status}`);
-    const ext = (r.headers.get("content-type") || "").includes("png") ? "png" : "jpg";
-    const name = `${it.id}_${slug(it.title)}.${ext}`;
-    fs.writeFileSync(path.join(dir, name), Buffer.from(await r.arrayBuffer()));
-    fs.appendFileSync(path.join(dir, "CREDITS.txt"),
-      `${name} | ${it.provider} | ${it.author} | ${it.license} | ${it.page}\n`);
-    saved.push(name);
   }
-  return { dir, saved };
+  return { dir, saved, failed };
 }
 
 
