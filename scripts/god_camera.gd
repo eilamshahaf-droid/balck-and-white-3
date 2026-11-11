@@ -136,6 +136,13 @@ func fly_to(point: Vector3, close: bool, to_distance := -1.0) -> void:
 		_fly_to_distance = to_distance
 
 
+## Start the game looking at `building` (the cult's first one), with no flight.
+func start_at(building: Node3D) -> void:
+	target_pivot = Vector3(building.global_position.x, 0.0, building.global_position.z)
+	pivot = target_pivot
+	_place_camera()
+
+
 ## Zoom by ratio while keeping `point` fixed on screen.
 func zoom_toward(point: Vector3, ratio: float) -> void:
 	var new_distance := clampf(target_distance * ratio, S.distance_min, S.distance_max)

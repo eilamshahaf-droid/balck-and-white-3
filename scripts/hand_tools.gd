@@ -198,10 +198,10 @@ func _building_items(building: Node3D) -> Array[Dictionary]:
 	if decrees.is_yours(building):
 		var yours := decrees.wheel_items(building)
 		yours.append({"id": &"upgrades", "label": "Upgrades", "color": Color(0.6, 0.85, 1.0),
-				"note": "$%d" % roundi(population.upgrade_cost(building))})
+				"note": "$%d" % roundi(population.upgrades.cost(building))})
 		if menus.has_posts(building):
 			yours.append({"id": &"posts", "label": "Staff", "color": Color(0.95, 0.85, 0.6),
-					"note": "%d working" % population.staff_count(building)})
+					"note": "%d working" % population.staffing.staff_count(building)})
 		return yours
 	var items: Array[Dictionary] = [
 		{"id": &"force", "label": "Skull: Force", "color": Color(0.85, 0.3, 0.3)},

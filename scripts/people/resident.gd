@@ -1,26 +1,25 @@
 class_name Resident
 extends RefCounted
-## Who a resident is, apart from the body walking the street: name, group,
-## home, work, family, friends and the hidden values. The body (citizen.gd)
+## Who a resident is, apart from the body walking the street: name, archetype,
+## home, work, family, friends, rank and the hidden values. The body (citizen.gd)
 ## reads and writes these, so the person survives when the body changes, and
 ## most residents are indoors with no body at all.
 ##
-## Belief moves in stages (skeptic, curious, sympathizer, believer, zealot).
-## One push can move a person at most one stage, so winning someone over takes
-## several visits or offers.
+## A resident is won over in one step (Population.attempt): they become a
+## believer, who can then be trained into a missionary and a priest.
 
-enum Stage { SKEPTIC, CURIOUS, SYMPATHIZER, BELIEVER, ZEALOT }
+## Ordered: everything from BELIEVER up counts as a believer.
+enum Rank { RESIDENT, BELIEVER, MISSIONARY, PRIEST, AGENT, HIGH_PRIEST }
 ## What a believer does for the cult: FREE believers have no post. PRAY and
-## PRIEST staff a prayer house, SHOP staffs a shop.
-enum Job { FREE, PRAY, SHOP, PRIEST }
-
-const B: Balance = preload("res://data/balance.tres")
+## PRIEST staff a sermon house, SHOP staffs a shop, TRAIN is training in a sermon house.
+enum Job { FREE, PRAY, SHOP, PRIEST, TRAIN }
 
 ## Index in Population.residents; -1 for a passer-by the city doesn't count.
 var id := -1
 var first_name := ""
 var last_name := ""
-var group: SocialGroup
+var archetype: ResidentArchetype
+var rank := Rank.RESIDENT
 ## Buildings from the city's "buildings" group. work is null for those who don't work.
 var home: Node3D
 var work: Node3D
@@ -30,21 +29,34 @@ var occupying: Node3D
 ## ties don't form reference cycles that would never be freed.
 var family: Array[int] = []
 var friends: Array[int] = []
-## Hidden: -1 = total skeptic, +1 = devoted believer.
-var belief := 0.0
-## What this person believed before the cult reached them; belief drifts back to it.
-var baseline := 0.0
-## Hidden personal coefficient k: 0 believes easily, 1 always finds a rational explanation.
-var skepticism := 0.5
 var has_phone := false
-## Hidden meters, 0..1. Comfort and fear are the two ways to play: a priest
-## only reaches people who are comfortable and not afraid, force works on the
-## frightened, and too much fear makes people move away.
+
+## Traits and assets, 0..1, from the archetype's levels.
+var anxiety := 0.5
+var sociability := 0.5
+var curiosity := 0.5
+var skepticism := 0.5
 var wealth := 0.5
+var connections := 0.5
+var faith := 0.5
+## Scales converting; set by rank.
+var charisma := 0.0
+
+## The four needs, 0..1: how much of each this person has now (Needs reads them).
+var livelihood := 0.5
+var security := 0.5
+var pleasure := 0.5
+var meaning := 0.5
+
+## Hidden meters, 0..1. Comfort follows the home (livelihood); fear is what
+## force works on, and too much of it makes people move away.
 var comfort := 0.5
 var fear := 0.0
 var color := Color.WHITE
 var job := Job.FREE
+## While training: the rank they will have, and the seconds left.
+var training_for := Rank.RESIDENT
+var training_left := 0.0
 ## False once the person died (a building burned down around them).
 var alive := true
 ## The building this person works in (null while FREE); their body stays around it.
@@ -57,51 +69,15 @@ func full_name() -> String:
 	return "%s %s" % [first_name, last_name]
 
 
-func stage() -> Stage:
-	return stage_of(belief)
+func is_believer() -> bool:
+	return rank >= Rank.BELIEVER
 
 
-static func stage_of(value: float) -> Stage:
-	if value >= B.zealot_from:
-		return Stage.ZEALOT
-	if value >= B.believer_threshold:
-		return Stage.BELIEVER
-	if value >= B.sympathizer_from:
-		return Stage.SYMPATHIZER
-	if value >= B.curious_from:
-		return Stage.CURIOUS
-	return Stage.SKEPTIC
+## Missionaries and the high priest win people over.
+func preaches() -> bool:
+	return rank == Rank.MISSIONARY or rank == Rank.HIGH_PRIEST
 
 
-## A push toward belief by `route`, weighted by how this person's group
-## answers that route. Pushes away from belief are not weighted.
-func persuade(route: SocialGroup.Route, amount: float) -> void:
-	if amount > 0.0:
-		amount *= B.persuasion_scale * (group.response(route) if group else 1.0)
-	shift(amount)
-
-
-## Move belief by `amount`, but at most into the next stage up or down.
-func shift(amount: float) -> void:
-	var s := stage()
-	var limit := 1.0
-	if amount > 0.0:
-		if s + 2 <= Stage.ZEALOT:
-			limit = _stage_start(s + 2) - 0.001
-		belief = minf(belief + amount, limit)
-	else:
-		limit = _stage_start(maxi(s - 1, 0))
-		belief = maxf(belief + amount, limit)
-
-
-static func _stage_start(s: int) -> float:
-	match s:
-		Stage.CURIOUS:
-			return B.curious_from
-		Stage.SYMPATHIZER:
-			return B.sympathizer_from
-		Stage.BELIEVER:
-			return B.believer_threshold
-		Stage.ZEALOT:
-			return B.zealot_from
-	return -1.0
+## Priests and the high priest serve in a sermon house, drawn larger.
+func is_priest() -> bool:
+	return rank == Rank.PRIEST or rank == Rank.HIGH_PRIEST

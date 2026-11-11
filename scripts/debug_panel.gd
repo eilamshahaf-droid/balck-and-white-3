@@ -4,7 +4,6 @@ extends CanvasLayer
 ## exposure (to call City Hall), take buildings, add money and mark the building in the middle of the screen
 ## (until the building wheel has the marks). Not part of the game; there to make testing quick.
 
-const B = preload("res://data/balance.tres")
 const STEP := 5
 const BELIEF_GIFT := 100.0
 const EXPOSURE_GIFT := 0.2
@@ -13,7 +12,7 @@ const MONEY_GIFT := 200.0
 
 @onready var faith: Node = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
-@onready var population: Node = get_node("../Population")
+@onready var population: Population = get_node("../Population")
 @onready var districts: Districts = get_node("../Districts")
 @onready var treasury: Treasury = get_node("../Treasury")
 @onready var campaigns: Campaigns = get_node("../Campaigns")
@@ -63,8 +62,8 @@ func _button(box: VBoxContainer, text: String, action: Callable) -> void:
 func _convert(count: int) -> void:
 	var people := _people_by_distance(false)
 	for c in people.slice(0, count):
-		c.belief = randf_range(0.7, 0.95)
-		c.skepticism = randf_range(0.0, 0.3)
+		if c.resident.id >= 0:
+			population.convert_to(c.resident, Resident.Rank.BELIEVER)
 
 
 ## Turn the `count` believers farthest from where the camera looks into doubters.
@@ -72,7 +71,8 @@ func _unconvert(count: int) -> void:
 	var people := _people_by_distance(true)
 	people.reverse()
 	for c in people.slice(0, count):
-		c.belief = randf_range(-0.2, 0.2)
+		if c.resident.rank == Resident.Rank.BELIEVER:
+			population.convert_to(c.resident, Resident.Rank.RESIDENT)
 
 
 ## Every believer moves into the home nearest the camera's centre.
@@ -86,7 +86,7 @@ func _gather_here() -> void:
 func _people_by_distance(believers: bool) -> Array:
 	var p: Vector3 = rig.target_pivot
 	var out := get_tree().get_nodes_in_group("citizens").filter(
-			func(c): return (c.belief > B.believer_threshold) == believers)
+			func(c): return c.resident.is_believer() == believers)
 	out.sort_custom(func(a, b): return a.global_position.distance_to(p) < b.global_position.distance_to(p))
 	return out
 

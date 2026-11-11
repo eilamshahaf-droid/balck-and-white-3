@@ -4,8 +4,8 @@ extends Node
 ##
 ## Every miracle spends belief from the pool and is reported to the witnesses
 ## (faith.gd), who react to it. A miracle converts nobody by itself: it leaves
-## proof on the spot (miracle_proof.gd) that makes priests there persuade
-## better. Each has a job: gather a crowd (Block Party, Rain of Frogs), save a
+## proof on the spot (miracle_proof.gd) that makes preachers there convert
+## more often. Each has a job: gather a crowd (Block Party, Rain of Frogs), save a
 ## burning building (Water), clear a building (Fire, Roaches), or bring money.
 ## Casting one again soon costs more, and each needs a moment before the next.
 ##
@@ -87,14 +87,14 @@ func cost(kind: StringName, power := -1.0) -> float:
 func power_at(p: Vector3) -> float:
 	var sum := 0.0
 	for c in get_tree().get_nodes_in_group("citizens"):
-		if c.belief > B.believer_threshold \
+		if c.resident.is_believer() \
 				and Vector2(c.global_position.x - p.x, c.global_position.z - p.z).length() < M.power_radius:
-			sum += c.belief
+			sum += 1.0
 	return clampf(sum / M.full_power_belief, 0.0, 1.0)
 
 
-## The proof miracles left at `p`: priests there persuade (1 + this) times as
-## well. Can be negative where a miracle went badly.
+## The proof miracles left at `p`: a preacher's chance there is (1 + this) times
+## as high. Can be negative where a miracle went badly.
 func proof_at(p: Vector3) -> float:
 	return _proof.proof_at(p)
 

@@ -1,0 +1,185 @@
+[gd_resource type="Resource" script_class="ArchetypeSettings" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/people/archetype_settings.gd" id="1_settings"]
+[ext_resource type="Script" path="res://scripts/people/resident_archetype.gd" id="2_archetype"]
+
+[sub_resource type="Resource" id="archetype_0"]
+script = ExtResource("2_archetype")
+title = "Homeless"
+lives_in = PackedStringArray("Slums")
+shares = PackedFloat32Array(0.4)
+workplace = 0
+anxiety = 1
+sociability = 3
+curiosity = 3
+skepticism = 1
+wealth = 1
+connections = 3
+faith = 3
+livelihood_influence = 3
+security_influence = 0
+pleasure_influence = 3
+meaning_influence = 3
+livelihood_desire = 1
+security_desire = 1
+pleasure_desire = 1
+meaning_desire = 1
+
+[sub_resource type="Resource" id="archetype_1"]
+script = ExtResource("2_archetype")
+title = "Blue collar"
+lives_in = PackedStringArray("Slums", "Workers")
+shares = PackedFloat32Array(0.6, 1.0)
+workplace = 2
+anxiety = 1
+sociability = 3
+curiosity = 2
+skepticism = 2
+wealth = 1
+connections = 3
+faith = 2
+livelihood_influence = 3
+security_influence = 2
+pleasure_influence = 2
+meaning_influence = 3
+livelihood_desire = 2
+security_desire = 1
+pleasure_desire = 2
+meaning_desire = 1
+
+[sub_resource type="Resource" id="archetype_2"]
+script = ExtResource("2_archetype")
+title = "Student"
+lives_in = PackedStringArray("Students", "Gentrification")
+shares = PackedFloat32Array(1.0, 0.5)
+workplace = 2
+anxiety = 1
+sociability = 3
+curiosity = 2
+skepticism = 3
+wealth = 1
+connections = 3
+faith = 1
+livelihood_influence = 3
+security_influence = 2
+pleasure_influence = 2
+meaning_influence = 2
+livelihood_desire = 2
+security_desire = 1
+pleasure_desire = 2
+meaning_desire = 2
+
+[sub_resource type="Resource" id="archetype_3"]
+script = ExtResource("2_archetype")
+title = "Bohemian"
+lives_in = PackedStringArray("Gentrification", "Nightlife")
+shares = PackedFloat32Array(0.5, 0.3)
+workplace = 2
+anxiety = 2
+sociability = 2
+curiosity = 2
+skepticism = 2
+wealth = 2
+connections = 2
+faith = 3
+livelihood_influence = 2
+security_influence = 2
+pleasure_influence = 2
+meaning_influence = 2
+livelihood_desire = 2
+security_desire = 2
+pleasure_desire = 2
+meaning_desire = 2
+
+[sub_resource type="Resource" id="archetype_4"]
+script = ExtResource("2_archetype")
+title = "Pink collar"
+lives_in = PackedStringArray("Nightlife", "Financial")
+shares = PackedFloat32Array(0.3, 0.3)
+workplace = 1
+anxiety = 1
+sociability = 2
+curiosity = 1
+skepticism = 2
+wealth = 2
+connections = 2
+faith = 2
+livelihood_influence = 2
+security_influence = 1
+pleasure_influence = 2
+meaning_influence = 2
+livelihood_desire = 2
+security_desire = 2
+pleasure_desire = 2
+meaning_desire = 2
+
+[sub_resource type="Resource" id="archetype_5"]
+script = ExtResource("2_archetype")
+title = "Clubber"
+lives_in = PackedStringArray("Nightlife")
+shares = PackedFloat32Array(0.4)
+workplace = 2
+anxiety = 2
+sociability = 1
+curiosity = 1
+skepticism = 2
+wealth = 2
+connections = 2
+faith = 1
+livelihood_influence = 2
+security_influence = 1
+pleasure_influence = 2
+meaning_influence = 1
+livelihood_desire = 3
+security_desire = 2
+pleasure_desire = 2
+meaning_desire = 3
+
+[sub_resource type="Resource" id="archetype_6"]
+script = ExtResource("2_archetype")
+title = "Pensioner"
+lives_in = PackedStringArray("Financial", "Old civic")
+shares = PackedFloat32Array(0.3, 0.5)
+workplace = 0
+anxiety = 2
+sociability = 1
+curiosity = 1
+skepticism = 3
+wealth = 3
+connections = 2
+faith = 1
+livelihood_influence = 1
+security_influence = 1
+pleasure_influence = 2
+meaning_influence = 1
+livelihood_desire = 3
+security_desire = 2
+pleasure_desire = 3
+meaning_desire = 3
+
+[sub_resource type="Resource" id="archetype_7"]
+script = ExtResource("2_archetype")
+title = "White collar"
+lives_in = PackedStringArray("Financial", "Old civic")
+shares = PackedFloat32Array(0.4, 0.5)
+workplace = 1
+anxiety = 3
+sociability = 1
+curiosity = 1
+skepticism = 3
+wealth = 3
+connections = 1
+faith = 1
+livelihood_influence = 1
+security_influence = 1
+pleasure_influence = 1
+meaning_influence = 1
+livelihood_desire = 3
+security_desire = 3
+pleasure_desire = 3
+meaning_desire = 3
+
+[resource]
+script = ExtResource("1_settings")
+level_values = PackedFloat32Array(0, 0.2, 0.5, 0.8)
+archetypes = Array[ExtResource("2_archetype")]([SubResource("archetype_0"), SubResource("archetype_1"), SubResource("archetype_2"), SubResource("archetype_3"), SubResource("archetype_4"), SubResource("archetype_5"), SubResource("archetype_6"), SubResource("archetype_7")])

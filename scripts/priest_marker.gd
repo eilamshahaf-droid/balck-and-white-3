@@ -1,11 +1,12 @@
 class_name PriestMarker
 extends Node3D
-## Makes the head priest easy to find: a golden ring on the ground around his
+## Makes the high priest easy to find: a golden ring on the ground around his
 ## feet and a label with his name above him, which says "preaching..." for a
 ## moment whenever he talks to the street. It follows his body, which comes and
 ## goes as the street swaps people in and out.
 
 const M: MiracleSettings = preload("res://data/miracles.tres")
+const U: UnitSettings = preload("res://data/units.tres")
 
 @export var population: Population
 
@@ -41,12 +42,13 @@ func _ready() -> void:
 	_label.modulate = M.priest_ring_color
 	_label.position = Vector3.UP * M.priest_label_height
 	add_child(_label)
-	population.priest_preached.connect(_on_preached)
+	population.preaching.preached.connect(_on_preached)
 
 
-## The priest preached to the street: say so for a few seconds.
-func _on_preached(_priest: Resident, _reached: int) -> void:
-	_preach_left = M.priest_preach_mark_time
+## The high priest preached to someone: say so for a few seconds.
+func _on_preached(preacher: Resident, _target: Resident, _converted: bool) -> void:
+	if preacher == population.priest:
+		_preach_left = M.priest_preach_mark_time
 
 
 func _process(delta: float) -> void:
@@ -57,7 +59,7 @@ func _process(delta: float) -> void:
 		return
 	global_position = body.global_position
 	_preach_left = maxf(_preach_left - delta, 0.0)
-	var title := "Head Priest\n%s" % priest.full_name()
+	var title := "%s\n%s" % [U.title(Resident.Rank.HIGH_PRIEST), priest.full_name()]
 	if _preach_left > 0.0:
 		title += "\npreaching..."
 	if title != _title:
