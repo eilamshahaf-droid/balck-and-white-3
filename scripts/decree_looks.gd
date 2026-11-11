@@ -6,7 +6,6 @@ extends RefCounted
 
 const D: DecreeSettings = preload("res://data/decrees.tres")
 const BuildingVisual := preload("res://scripts/building_visual.gd")
-const DivineSign := preload("res://scripts/divine_sign.gd")
 
 const FLOOR_HEIGHT := BuildingVisual.BAY * BuildingVisual.MODULE_HEIGHT
 const DECOR := &"decree_decor"
@@ -26,7 +25,7 @@ static var _materials := {}
 static func grow(building: Node3D, floors: int) -> void:
 	if not building.has_meta(SEED):
 		building.set_meta(SEED, hash(building.position))  # the city's own seed, before the move
-	var old := DivineSign.building_size(building)
+	var old := BuildingBox.size_of(building)
 	var size := old + Vector3.UP * floors * FLOOR_HEIGHT
 	_shape(building).size = size
 	building.position.y += (size.y - old.y) / 2.0
@@ -42,8 +41,6 @@ static func grow(building: Node3D, floors: int) -> void:
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	building.set_meta(GROWTH, tween)
 	redecorate(building)
-	if building.has_meta(DivineSign.META) and is_instance_valid(building.get_meta(DivineSign.META)):
-		DivineSign.mark(building, building.get_meta(DivineSign.META).kind)  # back on the new roof
 
 
 ## Rebuild every decree's look on `building` from its metas.
@@ -51,7 +48,7 @@ static func redecorate(building: Node3D) -> void:
 	for child in building.get_children():
 		if child.is_in_group(DECOR):
 			child.free()
-	var size := DivineSign.building_size(building)
+	var size := BuildingBox.size_of(building)
 	var foot := -size.y / 2.0
 	for side: float in [1.0, -1.0]:
 		var face := side * (size.z / 2.0 + 0.05)

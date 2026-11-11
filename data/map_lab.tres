@@ -1,0 +1,200 @@
+[gd_resource type="Resource" script_class="MapLabSettings" load_steps=27 format=3]
+
+[ext_resource type="Script" path="res://scripts/maplab/map_lab_settings.gd" id="1_s"]
+[ext_resource type="Script" path="res://scripts/maplab/lab_params.gd" id="2_p"]
+[ext_resource type="Script" path="res://scripts/maplab/lab_slider.gd" id="3_sl"]
+[ext_resource type="Script" path="res://scripts/maplab/land_use_mix.gd" id="4_m"]
+
+[sub_resource type="Resource" id="P_defaults"]
+script = ExtResource("2_p")
+map_seed = 7
+
+[sub_resource type="Resource" id="S_major_spacing"]
+script = ExtResource("3_sl")
+label = "Main street spacing (m)"
+property = &"major_spacing"
+min_value = 80.0
+max_value = 400.0
+step = 5.0
+
+[sub_resource type="Resource" id="S_minor_spacing"]
+script = ExtResource("3_sl")
+label = "Side street spacing (m)"
+property = &"minor_spacing"
+min_value = 40.0
+max_value = 200.0
+step = 5.0
+
+[sub_resource type="Resource" id="S_dead_end_share"]
+script = ExtResource("3_sl")
+label = "Dead ends"
+property = &"dead_end_share"
+min_value = 0.0
+max_value = 0.5
+step = 0.01
+
+[sub_resource type="Resource" id="S_curviness"]
+script = ExtResource("3_sl")
+label = "Curviness"
+property = &"curviness"
+min_value = 0.0
+max_value = 3.0
+step = 0.05
+
+[sub_resource type="Resource" id="S_homes"]
+script = ExtResource("3_sl")
+label = "Homes"
+property = &"homes"
+min_value = 0.0
+max_value = 3.0
+step = 0.05
+
+[sub_resource type="Resource" id="S_offices"]
+script = ExtResource("3_sl")
+label = "Offices and shops"
+property = &"offices"
+min_value = 0.0
+max_value = 3.0
+step = 0.05
+
+[sub_resource type="Resource" id="S_industry"]
+script = ExtResource("3_sl")
+label = "Industry"
+property = &"industry"
+min_value = 0.0
+max_value = 3.0
+step = 0.05
+
+[sub_resource type="Resource" id="S_public_buildings"]
+script = ExtResource("3_sl")
+label = "Public buildings"
+property = &"public_buildings"
+min_value = 0.0
+max_value = 3.0
+step = 0.05
+
+[sub_resource type="Resource" id="S_parks"]
+script = ExtResource("3_sl")
+label = "Parks"
+property = &"parks"
+min_value = 0.0
+max_value = 3.0
+step = 0.05
+
+[sub_resource type="Resource" id="M_forgotten"]
+script = ExtResource("4_m")
+archetype = &"forgotten"
+street_style = &"winding_old"
+homes = 0.6
+offices = 0.1
+industry = 0.2
+public_buildings = 0.05
+parks = 0.05
+
+[sub_resource type="Resource" id="M_immigrant"]
+script = ExtResource("4_m")
+archetype = &"immigrant"
+street_style = &"compact_organic"
+homes = 0.7
+offices = 0.2
+industry = 0.03
+public_buildings = 0.05
+parks = 0.02
+
+[sub_resource type="Resource" id="M_public_housing"]
+script = ExtResource("4_m")
+archetype = &"public_housing"
+street_style = &"grid_sprawl"
+homes = 0.75
+offices = 0.05
+industry = 0.0
+public_buildings = 0.1
+parks = 0.1
+
+[sub_resource type="Resource" id="M_industrial"]
+script = ExtResource("4_m")
+archetype = &"industrial"
+street_style = &"grid_sprawl"
+homes = 0.1
+offices = 0.1
+industry = 0.75
+public_buildings = 0.02
+parks = 0.03
+
+[sub_resource type="Resource" id="M_workers"]
+script = ExtResource("4_m")
+archetype = &"workers"
+street_style = &"compact_organic"
+homes = 0.65
+offices = 0.1
+industry = 0.15
+public_buildings = 0.05
+parks = 0.05
+
+[sub_resource type="Resource" id="M_gentrifying"]
+script = ExtResource("4_m")
+archetype = &"gentrifying"
+street_style = &"compact_organic"
+homes = 0.6
+offices = 0.25
+industry = 0.05
+public_buildings = 0.05
+parks = 0.05
+
+[sub_resource type="Resource" id="M_university"]
+script = ExtResource("4_m")
+archetype = &"university"
+street_style = &"compact_organic"
+homes = 0.35
+offices = 0.15
+industry = 0.0
+public_buildings = 0.4
+parks = 0.1
+
+[sub_resource type="Resource" id="M_nightlife"]
+script = ExtResource("4_m")
+archetype = &"nightlife"
+street_style = &"winding_old"
+homes = 0.35
+offices = 0.55
+industry = 0.0
+public_buildings = 0.05
+parks = 0.05
+
+[sub_resource type="Resource" id="M_financial"]
+script = ExtResource("4_m")
+archetype = &"financial"
+street_style = &"planned_grid"
+homes = 0.1
+offices = 0.8
+industry = 0.0
+public_buildings = 0.07
+parks = 0.03
+
+[sub_resource type="Resource" id="M_luxury"]
+script = ExtResource("4_m")
+archetype = &"luxury"
+street_style = &"planned_grid"
+homes = 0.7
+offices = 0.15
+industry = 0.0
+public_buildings = 0.05
+parks = 0.1
+
+[sub_resource type="Resource" id="M_civic"]
+script = ExtResource("4_m")
+archetype = &"civic"
+street_style = &"planned_grid"
+homes = 0.15
+offices = 0.3
+industry = 0.0
+public_buildings = 0.45
+parks = 0.1
+
+[resource]
+script = ExtResource("1_s")
+defaults = SubResource("P_defaults")
+sliders = Array[ExtResource("3_sl")]([SubResource("S_major_spacing"), SubResource("S_minor_spacing"), SubResource("S_dead_end_share"), SubResource("S_curviness"), SubResource("S_homes"), SubResource("S_offices"), SubResource("S_industry"), SubResource("S_public_buildings"), SubResource("S_parks")])
+mixes = Array[ExtResource("4_m")]([SubResource("M_forgotten"), SubResource("M_immigrant"), SubResource("M_public_housing"), SubResource("M_industrial"), SubResource("M_workers"), SubResource("M_gentrifying"), SubResource("M_university"), SubResource("M_nightlife"), SubResource("M_financial"), SubResource("M_luxury"), SubResource("M_civic")])
+use_names = PackedStringArray("Homes", "Offices and shops", "Industry", "Public buildings", "Parks", "Squares")
+use_colours = PackedColorArray(0.96, 0.82, 0.47, 1, 0.36, 0.56, 0.9, 1, 0.62, 0.46, 0.72, 1, 0.88, 0.36, 0.36, 1, 0.38, 0.72, 0.38, 1, 0.86, 0.8, 0.66, 1)

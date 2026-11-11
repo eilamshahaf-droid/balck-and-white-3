@@ -6,7 +6,6 @@ extends Node3D
 ## is a Label3D on the blank Meshy sign, because the model can't spell.
 
 const SETTINGS_PATH := "res://data/city_props.tres"
-const DivineSign := preload("res://scripts/divine_sign.gd")
 
 ## Says which building is each district's core.
 @export var districts: Districts
@@ -34,7 +33,7 @@ func _dress(d: int) -> void:
 	if index < 0 or districts.buildings[index] == null:
 		return
 	var building := districts.buildings[index]
-	var size := DivineSign.building_size(building)
+	var size := BuildingBox.size_of(building)
 	var at := building.global_position
 	var made: Array[Node3D] = []
 	var portico := PropModel.of(_s.core_portico)

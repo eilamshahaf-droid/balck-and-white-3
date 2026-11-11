@@ -1,7 +1,45 @@
 # Changelog
 
 One entry per update, newest first. Each entry says what changed and how to try it.
-Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
+Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
+
+## Pre-Alpha 0.6.4 (2026-11-11): Play the Alpha in the browser, and a clean-up
+- Every Alpha now opens in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/ . A GitHub workflow (`.github/workflows/alpha-web.yml`) builds the web version on every push to `alpha` and puts it on GitHub Pages. The ZIP download stays as a fallback.
+- Fixed a crash in exported builds: when Godot turned `data/people.tres` into a binary file on export, the residents lost their names and the game froze at start. Text resources now stay text in the export.
+- Removed what the design no longer has: the burning-building opening with the Keepers of the Hand (`opening.gd`, already switched off) and the divine signs on buildings (`divine_sign.gd`, replaced by the takeover marks). Its one useful helper, a building's size, is now `BuildingBox.size_of`.
+- The help line no longer says that only miracles change belief: priests win people over, miracles help them.
+- `CLAUDE.md` now points to `docs/GDD.md` and `docs/ART.md`, lists the three studio roles as owners, and explains the web build.
+- Try it: open the link above in Chrome or Edge.
+
+## 2026-11-11: Art bible
+- New `docs/ART.md`: the decided look, palette, camera readability rules, the 7 districts' art direction, the 8 resident archetype colours, the Slums asset list and the Cratial kit pipeline. Docs only; nothing changes in the game.
+- Try it: read `docs/ART.md`.
+
+## 2026-10-30: Map Lab, a 2D playground for the map generator
+- New scene `scenes/map_lab.tscn`: a top-down map of a generated city, coloured by what each block is used for: homes, offices and shops, industry, public buildings, parks and squares. A menu on the left changes the numbers and the map is made again a moment later.
+- Every district lays out its streets in the style of its kind (`DistrictField`): the financial, luxury and civic districts in a planned grid, industry and public housing in a wide grid, the old and poor quarters winding. The menu can also give the whole city one of the four real-city styles.
+- Streets that stop just short of another street are carried on to meet it (`EndJoiner`), as real streets do; the "Dead ends" slider keeps some open.
+- Blocks are found by painting the streets on a grid and filling what they enclose (`CityBlocks`). Each district draws its uses from its archetype's mix (`data/map_lab.tres`), bent by a few rules: offices crowd onto main streets, public buildings gather at the centre, big blocks become parks, industry sits at the edge, small leftovers are squares.
+- The menu: street style, seed and "New map", main and side street spacing, dead ends, curviness, and a weight for each use. Below it: the share of land each use takes, the number of blocks, the mean block size and the street length, in real metres.
+- Try it: open `scenes/map_lab.tscn` in the FileSystem panel and press F6. Mouse wheel zooms, right drag moves. Test: `godot --headless --path . res://tests/map_lab_test.tscn` prints `MAP LAB TEST: PASS`.
+- Not in the 3D game yet; that comes after the road graph (see the map generator plan).
+
+## 2026-10-29: Street styles from 100 real cities
+- Why: OpenStreetMap is blocked in this environment, so the styles come from the published numbers for 100 cities on five continents (Boeing, "Urban Spatial Order", 2019), kept in `tools/city_stats.csv`: how grid-like the streets are, how winding, how long the blocks, the share of four-way crossings and dead ends. They are not our own measurement of 200 cities; when the map servers are opened, replace the CSV with real measurements and run `python3 tools/cluster_city_styles.py` to regroup.
+- The cities fall into four street styles (`StreetStyle`, in `data/mapgen.tres`): planned grid (18 cities: Chicago, Manhattan, Buenos Aires), wide grid sprawl (14: Atlanta, Houston, Beijing), compact organic (33: Paris, Tokyo, Barcelona) and winding old town (35: London, Rome, Mumbai). `MapSpec.styled(style)` applies one to the organic street generator: how many direction patches and fans, how much wobble, block length, and how many side streets stop short.
+- Try it: `scenes/map_preview.tscn`, F6, press S to cycle the styles (it shows how many of the 100 cities each covers).
+
+## 2026-10-29: Organic streets
+- The map generator can now lay out streets that bend and fan out instead of a straight grid. `OrganicStreets.generate(MapSpec)` blends a few patches of straight streets and fans around a centre into one direction field (`TensorField`), with noise on top, then `StreetTracer` follows it to draw main streets first and side streets across them. It uses the published tensor-field method (Chen et al. 2008), written fresh for this project, so the licence of the tool that inspired it does not apply. The game's city is still the straight grid; this is data for the sandbox and later levels.
+- New `MapSpec` numbers under "Organic streets": field size, number of patches and fans, how far each reaches, wobble, main and side street spacing.
+- Try it: `scenes/map_preview.tscn`, F6, press O to switch between the district grid and the organic streets.
+
+## 2026-10-29: Map generator core
+- New `scripts/mapgen/`: `MapGenerator.generate(MapSpec, MapGenSettings) -> MapLayout`. A `MapSpec` says what to make (seed, number of avenues and streets, gaps, plazas, park, district grid, optional fixed archetypes and start district); a `MapLayout` is pure data (road lines, block kinds, skyline per block, district per block, an archetype per district, the start district). The same spec and seed always give the same map.
+- Eleven neighbourhood archetypes from the research (forgotten edge, immigrant flats, public housing, industrial, workers, gentrifying, university, nightlife, financial, luxury, civic centre) in `data/mapgen.tres`, with wealth, skyline, empty-building share and where each likes to sit: poor and industrial at the corners, the financial, luxury and civic kinds at the centre. The start district is always a forgotten corner.
+- The sandbox makes a spec with a fresh seed; a level is a spec saved under `data/maps/`.
+- Try it: open `scenes/map_preview.tscn` and press F6; R gives a new random map, Left / Right step the seed. Test: `godot --headless --path . res://tests/mapgen_test.tscn` prints `MAPGEN TEST: PASS`.
+- Not wired into the 3D city yet: `city.gd` still builds its own grid.
 
 ## 2026-10-27: Pre-Alpha 0.6.3
 - Alpha refresh: Meshy models load lazily, so the game starts much faster, with smaller textures.

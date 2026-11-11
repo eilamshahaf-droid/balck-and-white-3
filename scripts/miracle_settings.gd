@@ -1,6 +1,6 @@
 class_name MiracleSettings
 extends Resource
-## Every tunable number for the miracles, accidents and the divine signs.
+## Every tunable number for the miracles and accidents.
 ## Open data/miracles.tres in Godot and change values in the Inspector.
 ##
 ## Each miracle has the belief formula's inputs (see balance.gd): intensity I,
@@ -153,7 +153,3 @@ extends Resource
 @export_group("Floating notes: who just came to believe")
 @export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once
 
-@export_group("Divine signs on buildings")
-@export var beam_height := 160.0             # metres of the beam of light above the roof
-@export var cloud_flash_interval := 3.0      # seconds between flashes in the storm cloud (on average)
-@export var ring_spin := 0.6                 # radians per second

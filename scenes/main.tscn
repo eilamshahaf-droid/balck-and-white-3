@@ -5,7 +5,6 @@
 [ext_resource type="Script" path="res://scripts/god_hand.gd" id="3_hand"]
 [ext_resource type="Script" path="res://scripts/faith.gd" id="4_faith"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5_hud"]
-[ext_resource type="Script" path="res://scripts/opening.gd" id="6_opening"]
 [ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
 [ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
@@ -183,10 +182,6 @@ script = ExtResource("15_government")
 [node name="DebugPanel" type="CanvasLayer" parent="."]
 script = ExtResource("10_debug")
 
-[node name="Opening" type="Node" parent="."]
-script = ExtResource("6_opening")
-enabled = false
-
 [node name="HUD" type="CanvasLayer" parent="."]
 
 [node name="Help" type="Label" parent="HUD"]
@@ -197,7 +192,7 @@ offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
 Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
-The hand lifts people and things (not trees). Only miracles change what people believe."
+The hand lifts people and things (not trees). Only priests win people over; miracles help them."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
