@@ -60,6 +60,17 @@ const providers = {
       })
       .filter(Boolean);
   },
+  async openverse(q, n) {
+    // Anonymous use is allowed (rate limited); aggregates Flickr and other open-licence sources.
+    const j = await getJson(
+      `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&page_size=${n}` +
+      "&license_type=all-cc&extension=jpg");
+    return j.results.map((p) => ({
+      id: "ov" + p.id.slice(0, 8), provider: "Openverse", title: p.title || "Openverse image",
+      thumb: p.thumbnail, full: p.url, author: p.creator || "",
+      license: `CC ${p.license} ${p.license_version || ""}`.trim(), page: p.foreign_landing_url,
+    }));
+  },
   async pexels(q, n, cfg) {
     if (!cfg.pexelsKey) throw new Error("Pexels: no key (Settings)");
     const j = await getJson(

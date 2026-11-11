@@ -12,6 +12,7 @@
 
 ## מקורות
 - **Wikimedia Commons**: בלי מפתח בכלל. הכי טוב לתמונות של מבנים אמיתיים. הרישיון מופיע על כל תמונה (חלקם דורשים לתת קרדיט, וזה נשמר ב-CREDITS.txt).
+- **Openverse**: בלי מפתח. מאגד תמונות פתוחות מ-Flickr ועוד, הרבה צילומי רחוב ובניינים אמיתיים. הרישיון מסומן על כל תמונה.
 - **Pexels**: מפתח חינמי, דקה אחת: https://www.pexels.com/api/ (הרשמה, ו"Your API Key").
 - **Unsplash**: מפתח חינמי: https://unsplash.com/developers (New Application, ומעתיקים את ה-Access Key).
 
