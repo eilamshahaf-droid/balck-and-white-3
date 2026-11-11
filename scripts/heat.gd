@@ -1,7 +1,7 @@
 class_name Heat
 extends Node
 ## The police's hidden criteria. Each building quietly collects heat from what
-## the cult does there (sit-ins, crowds, broken building rules, accidents),
+## the cult does there (sit-ins, crowds, broken building rules),
 ## and loses it slowly. When a building's heat passes its threshold, which is
 ## higher in a hard district, the police step in: nothing is random, so the
 ## player can learn what draws attention. The player never sees the numbers.
@@ -9,7 +9,7 @@ extends Node
 ## The police should step in at `building`; `reason` raised it over the line last.
 signal police_called(building: Node3D, reason: Reason)
 
-enum Reason { SIT_IN, CROWD, CODE_BREACH, ACCIDENT }
+enum Reason { SIT_IN, CROWD, CODE_BREACH }
 
 const S: HeatSettings = preload("res://data/heat.tres")
 
@@ -72,8 +72,6 @@ func _amount(reason: Reason) -> float:
 			return S.crowd
 		Reason.CODE_BREACH:
 			return S.code_breach
-		Reason.ACCIDENT:
-			return S.accident
 	return S.sit_in
 
 

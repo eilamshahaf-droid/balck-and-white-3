@@ -11,14 +11,13 @@ signal set_down(c: Citizen)
 ## A body stopped sitting in on a building.
 signal stopped_occupying(c: Citizen)
 
-const B: Balance = preload("res://data/balance.tres")
 
 var bodies: Array[Citizen] = []
 ## Bodies avoid streets this has shut with a roadblock.
 var police: Police
 
-# Loaded at run time: a parse-time preload would load social_group.gd before
-# its class_name is registered and break the typed groups array.
+# Loaded at run time: a parse-time preload would load the element scripts before
+# their class_name is registered and break the typed arrays.
 var _people: PeopleSettings = load("res://data/people.tres")
 var _city: Node3D
 var _by_home: Dictionary = {}   # building -> Array[Resident], shared with Population
@@ -57,12 +56,12 @@ func fill(city: Node3D, by_home: Dictionary, residents: Array[Resident]) -> void
 ## one is out, else anyone's.
 func bring_out(r: Resident) -> void:
 	for c in bodies:
-		if c.resident.home == r.home and c.can_answer() and c.belief <= B.believer_threshold:
+		if c.resident.home == r.home and c.can_answer() and not c.resident.is_believer():
 			_give_body(r, c)
 			return
 	for _attempt in 32:
 		var c := bodies[_rng.randi() % bodies.size()]
-		if c.can_answer() and c.belief <= B.believer_threshold:
+		if c.can_answer() and not c.resident.is_believer():
 			_give_body(r, c)
 			return
 
@@ -77,15 +76,6 @@ func resident_near(p: Vector3, radius: float) -> Resident:
 			best_d = d
 			best = c.resident
 	return best
-
-
-## Zealots on the street within `radius` of `p`: the ones who might overdo it.
-func zealots_near(p: Vector3, radius: float) -> Array[Citizen]:
-	var out: Array[Citizen] = []
-	for c in bodies:
-		if c.resident.stage() == Resident.Stage.ZEALOT and c.global_position.distance_to(p) < radius:
-			out.append(c)
-	return out
 
 
 func _spawn(r: Resident) -> void:
@@ -109,7 +99,7 @@ func _swap_someone() -> void:
 	var camera := get_viewport().get_camera_3d()
 	for _attempt in 8:
 		var c := bodies[_rng.randi() % bodies.size()]
-		if not c.can_answer() or c.belief > B.believer_threshold or _seen_by(camera, c.global_position):
+		if not c.can_answer() or c.resident.is_believer() or _seen_by(camera, c.global_position):
 			continue
 		var home := c.resident.home
 		if _seen_by(camera, _city.intersection(_city.nearest_grid(home.global_position))):

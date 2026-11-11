@@ -1,8 +1,8 @@
 class_name MiracleProof
 extends RefCounted
 ## What miracles leave behind. A miracle doesn't convert anyone by itself: it
-## leaves proof on the spot for a while, and priests preaching there persuade
-## better (Population reads Miracles.proof_at()). Proof is weaker where many
+## leaves proof on the spot for a while, and preachers there convert more often
+## (Preaching reads Miracles.proof_at()). Proof is weaker where many
 ## miracles landed lately, and every miracle costs more for a while after it
 ## is cast and needs a moment before it can be cast again.
 

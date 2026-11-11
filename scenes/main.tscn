@@ -28,12 +28,12 @@
 [ext_resource type="Script" path="res://scripts/world/building_tooltip.gd" id="22_tooltip"]
 [ext_resource type="Script" path="res://scripts/government/police_arrests.gd" id="23_arrests"]
 [ext_resource type="Script" path="res://scripts/government/arrest_alert.gd" id="24_alert"]
-[ext_resource type="Script" path="res://scripts/accidents.gd" id="39_accidents"]
 [ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
 [ext_resource type="Script" path="res://scripts/priest_marker.gd" id="41_priest"]
 [ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
 [ext_resource type="Script" path="res://scripts/building_menus.gd" id="50_menus"]
 [ext_resource type="Script" path="res://scripts/sermon_alerts.gd" id="51_alerts"]
+[ext_resource type="Script" path="res://scripts/world/district_won.gd" id="60_won"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -71,10 +71,11 @@ decrees = NodePath("../Decrees")
 [node name="Surroundings" type="Node3D" parent="."]
 script = ExtResource("17_surroundings")
 
-[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles", "police")]
+[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles", "police", "districts")]
 miracles = NodePath("../Miracles")
 police = NodePath("../Police")
 script = ExtResource("11_population")
+districts = NodePath("../Districts")
 
 [node name="Faith" type="Node" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("4_faith")
@@ -95,14 +96,6 @@ treasury = NodePath("../Treasury")
 districts = NodePath("../Districts")
 police = NodePath("../Police")
 arrests = NodePath("../Arrests")
-
-[node name="Accidents" type="Node" parent="." node_paths=PackedStringArray("miracles", "districts", "decrees", "population", "heat")]
-script = ExtResource("39_accidents")
-miracles = NodePath("../Miracles")
-districts = NodePath("../Districts")
-decrees = NodePath("../Decrees")
-population = NodePath("../Population")
-heat = NodePath("../Heat")
 
 [node name="PriestMarker" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("41_priest")
@@ -145,12 +138,13 @@ script = ExtResource("13_districts")
 [node name="DistrictView" type="Node3D" parent="."]
 script = ExtResource("14_district_view")
 
-[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "decrees", "police")]
+[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "population", "districts", "decrees", "police")]
 script = ExtResource("18_treasury")
 faith = NodePath("../Faith")
 districts = NodePath("../Districts")
 decrees = NodePath("../Decrees")
 police = NodePath("../Police")
+population = NodePath("../Population")
 
 [node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "treasury", "decrees")]
 script = ExtResource("19_campaigns")
@@ -192,7 +186,7 @@ offset_bottom = 120.0
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
 Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
-The hand lifts people and things (not trees). Only priests win people over; miracles help them."
+The hand lifts people and things (not trees). Only missionaries and the high priest win people over; miracles help them."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
@@ -233,4 +227,10 @@ decrees = NodePath("../../Decrees")
 population = NodePath("../../Population")
 camera = NodePath("../../CameraRig/Camera3D")
 
+[node name="DistrictWon" type="CanvasLayer" parent="." node_paths=PackedStringArray("districts")]
+layer = 5
+script = ExtResource("60_won")
+districts = NodePath("../Districts")
+
 [connection signal="building_abandoned" from="Miracles" to="Districts" method="mark_abandoned"]
+[connection signal="cult_founded" from="Population" to="CameraRig" method="start_at"]

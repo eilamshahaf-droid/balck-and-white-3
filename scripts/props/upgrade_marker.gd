@@ -1,12 +1,12 @@
 class_name UpgradeMarker
 extends Resource
 ## One prop that shows an upgrade a building has bought (an elevator shaft on
-## its side, cameras by its door, a gym corner). One per `Population.Upgrade`.
+## its side, cameras by its door, a gym corner). One per `BuildingUpgrades.Kind`.
 
 ## Where on the building the prop goes.
 enum Place { ROOF, WALL, STREET }
 
-@export var upgrade := Population.Upgrade.ELEVATOR
+@export var upgrade := BuildingUpgrades.Kind.ELEVATOR
 @export var kind: PropKind
 @export var place := Place.WALL
 ## Across the front, from the left edge (0) to the right edge (1).

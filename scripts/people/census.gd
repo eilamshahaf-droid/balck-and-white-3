@@ -1,10 +1,12 @@
 class_name Census
 extends RefCounted
 ## Builds the city's residents once, when the city is ready: families with
-## unique names in every home (at least min_residents_per_home each), jobs,
-## and close friends. Population takes the result and runs the city with it.
+## unique names in every home (at least min_residents_per_home each), an
+## archetype by the kind of district they live in, jobs, and close friends.
+## Population takes the result and runs the city with it.
 
 const B: Balance = preload("res://data/balance.tres")
+const U: UnitSettings = preload("res://data/units.tres")
 
 var residents: Array[Resident] = []
 var by_home: Dictionary = {}   # building -> Array[Resident]
@@ -12,14 +14,19 @@ var homes: Array[Node3D] = []
 var offices: Array[Node3D] = []
 
 var _people: PeopleSettings
+var _archetypes: ArchetypeSettings
 var _rng: RandomNumberGenerator
+var _kind_at: Callable   # Vector3 -> the kind of district there (String)
 var _used_names: Dictionary = {}   # full name -> true, so nobody shares a name
 var _staff: Dictionary = {}        # office -> number of people working there
 
 
-func _init(people: PeopleSettings, rng: RandomNumberGenerator) -> void:
+func _init(people: PeopleSettings, archetypes: ArchetypeSettings,
+		rng: RandomNumberGenerator, kind_at: Callable) -> void:
 	_people = people
+	_archetypes = archetypes
 	_rng = rng
+	_kind_at = kind_at
 
 
 ## Sort `buildings` into homes and office towers, then fill them with people.
@@ -49,18 +56,15 @@ func _add_family(home: Node3D, max_size: int) -> void:
 	var last: String = _people.last_names[_rng.randi() % _people.last_names.size()]
 	var size := mini(_rng.randi_range(_people.family_size_min, _people.family_size_max), max_size)
 	var ids: Array[int] = []
+	var kind: String = _kind_at.call(home.global_position)
 	for n in size:
 		var r := Resident.new()
 		r.id = residents.size()
 		r.last_name = last
 		r.first_name = _unused_first_name(last)
-		r.group = _pick_group()
-		r.work = pick_work(r.group)
-		r.belief = _rng.randf_range(_people.belief_min, _people.belief_max)
-		r.baseline = r.belief
+		_give_archetype(r, kind)
+		r.work = pick_work(r.archetype)
 		r.color = Color.from_hsv(_rng.randf(), 0.45, 0.85)
-		r.skepticism = _rng.randf_range(r.group.skepticism_min, r.group.skepticism_max)
-		r.wealth = _rng.randf_range(r.group.wealth_min, r.group.wealth_max)
 		r.comfort = r.wealth
 		r.has_phone = _rng.randf() < B.phone_chance
 		residents.append(r)
@@ -119,23 +123,26 @@ func _add_friends() -> void:
 			f.friends.append(r.id)
 
 
-func _pick_group() -> SocialGroup:
-	var total := 0.0
-	for g in _people.groups:
-		total += g.share
-	var roll := _rng.randf() * total
-	for g in _people.groups:
-		roll -= g.share
-		if roll <= 0.0:
-			return g
-	return _people.groups[-1]
+func _give_archetype(r: Resident, kind: String) -> void:
+	var t := _archetypes.pick(kind, _rng)
+	if t == null:
+		t = _archetypes.archetypes[_rng.randi() % _archetypes.archetypes.size()]
+	r.archetype = t
+	r.anxiety = _archetypes.value(t.anxiety)
+	r.sociability = _archetypes.value(t.sociability)
+	r.curiosity = _archetypes.value(t.curiosity)
+	r.skepticism = _archetypes.value(t.skepticism)
+	r.wealth = _archetypes.value(t.wealth)
+	r.connections = _archetypes.value(t.connections)
+	r.faith = _archetypes.value(t.faith)
+	r.charisma = U.charisma(Resident.Rank.RESIDENT)
 
 
-## Where someone of group `g` works: an office tower (the least staffed one,
+## Where someone of archetype `t` works: an office tower (the least staffed one,
 ## so every tower gets its people), a low building on the street, or nowhere.
-func pick_work(g: SocialGroup) -> Node3D:
-	match g.workplace:
-		SocialGroup.Workplace.OFFICE:
+func pick_work(t: ResidentArchetype) -> Node3D:
+	match t.workplace:
+		ResidentArchetype.Workplace.OFFICE:
 			if offices.is_empty():
 				return homes[_rng.randi() % homes.size()]
 			var best := offices[0]
@@ -144,7 +151,7 @@ func pick_work(g: SocialGroup) -> Node3D:
 					best = o
 			_staff[best] = _staff.get(best, 0) + 1
 			return best
-		SocialGroup.Workplace.STREET:
+		ResidentArchetype.Workplace.STREET:
 			return homes[_rng.randi() % homes.size()]
 	return null
 

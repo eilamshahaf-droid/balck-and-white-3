@@ -17,13 +17,13 @@ var _props := {}   # building (Node3D) -> Array[MeshInstance3D]
 
 func _ready() -> void:
 	_s = load(SETTINGS_PATH)
-	population.upgraded.connect(_on_upgraded)
+	population.upgrades.upgraded.connect(_on_upgraded)
 
 
-func _on_upgraded(building: Node3D, _kind: Population.Upgrade) -> void:
+func _on_upgraded(building: Node3D, _kind: BuildingUpgrades.Kind) -> void:
 	_clear(building)
 	var size := BuildingBox.size_of(building)
-	var bought := population.upgrades_of(building)
+	var bought := population.upgrades.bought_in(building)
 	for marker in _s.upgrade_markers:
 		if marker.upgrade in bought:
 			_place(building, size, marker)
