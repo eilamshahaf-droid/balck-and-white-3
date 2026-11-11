@@ -28,6 +28,14 @@ The first district of the core loop, built from the designer's brief (`docs/GDD.
 - `CLAUDE.md` now points to `docs/GDD.md` and `docs/ART.md`, lists the three studio roles as owners, and explains the web build.
 - Try it: open the link above in Chrome or Edge.
 
+## 2026-11-11: Cratial kit inventory
+- `docs/ART.md`: the kit now comes from a Google Drive link instead of Remote Control; inventory of its modules, materials and polycounts, and the import plan. Docs only.
+- Try it: read the "Cratial kit pipeline" section of `docs/ART.md`.
+
+## 2026-11-11: Grey-to-colour plan
+- `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.
+- Try it: read the "Grey to colour" section of `docs/ART.md`.
+
 ## 2026-11-11: Grey-to-colour plan
 - `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.
 - Try it: read the "Grey to colour" section of `docs/ART.md`.

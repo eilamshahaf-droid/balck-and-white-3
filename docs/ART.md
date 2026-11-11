@@ -121,20 +121,44 @@ a fine notice are small props. The district systems place them.
 6. Cult headquarters: the multi-purpose core building with a hand statue and banner. *Mostly have it.*
 7. Street clutter: puddles, cracked sidewalk decals, stray cats (new).
 
-## Cratial kit pipeline (planned)
+## Cratial kit pipeline
 
-The kit is on Eilam's PC (desktop folder `claude`), too large to upload, so it is processed
-there over Remote Control and only the trimmed result is committed.
+Source (Eilam's Google Drive folder, link-shared, not committed to the repo because of size):
+https://drive.google.com/drive/folders/1NP4JkBa8uaWG2b9tQObL27SoMHdWWg22
+Remote Control on his PC is no longer needed: the files download straight from Drive.
 
-1. Inventory the pack: list modules, formats, polycount, texture sizes.
-2. Import into a scratch Godot project; fix scale to metres (1 floor = 3 m, ground at y = 0).
-3. Materials: swap to the shared matte material set; textures cut to 512-1024 px JPEG;
-   atlas where possible so a building is one draw call.
-4. Keep only the modules the 7 districts need; drop the rest (always prune).
-5. Export `.glb` into `assets/models/cratial/` with its licence file.
-6. LOD: a low version per module (merged box with the facade colour) for far chunks.
-7. Hand the programmer a module list and a build recipe per district (what goes where).
-8. Show Eilam a rendered turntable and a district screenshot for his verdict before it replaces Kenney.
+Inventory (checked 2026-11-11, Blender 3.6 file):
+
+- `Modular_Apartment_Kit.blend` (519 MB) and `Textures_Modular_Apartment.zip` (917 MB, TGA at
+  1024, 2048 and 4096 px). A third file, `blender-geometry-nodes_procedural-buildings.zip`,
+  is an unrelated 2021 free Blender procedural-buildings demo (blend and video); ignore it.
+- 71 modules, 4 m wide and 3 m per floor (1 floor = 3 m, so no rescale needed): flat, curved and
+  rectangular window walls, corner and accent corners, outcrop (bay) walls left, right and centre,
+  main and maintenance doors, roof straights, corners and outcrops, trim pieces, fire stairs
+  (platform and stairway), window accents. Most modules come in two detail levels (`_01` simple,
+  `_02` detailed). Modules are 15 to 2300 faces each.
+- 6 ready-made apartment buildings (about 21 x 10 x 9.5 m). They cost 37k to 126k faces each:
+  far too heavy to repeat in a city, so we never use them as-is.
+- 20 materials in 6 texture sets (Accessories, Brick, Entrances, Roof, Trim, Windows) with
+  colour variants (brick dark, red, tan; trim brown, green, white; roofs beige, blue, charcoal).
+  Full PBR maps (base colour, normal, roughness, metallic and more).
+
+Plan:
+
+1. Use only the `_01` (low) modules plus a few `_02` for the district core buildings; skip the six
+   ready-made apartments.
+2. Build each building from modules in code, as now with Kenney (`building_visual.gd` merges to one
+   mesh per building); colour variants by material swap.
+3. Textures: use the 1024 px set, converted to JPEG, one atlas per set; drop normal, metallic and
+   roughness maps (the toon shader makes everything matte). The repo stays small.
+4. Export as `.glb` to `assets/models/cratial/` with the licence file, only the modules in use.
+5. Far buildings use a plain merged box in the facade colour (LOD).
+6. Compare a Slums street built from Cratial with the Kenney one and show Eilam both before
+   anything is replaced.
+
+Risks (honest): the kit is realistic, so the toon shader and a matte material do the toy look;
+the free Kenney set may already be close enough for a clear Slums readout, so step 6 is a real
+decision, not a formality. The licence must be checked for redistributing models in a shipped game.
 
 ## Open questions for Eilam
 
