@@ -154,6 +154,84 @@ async function save({ items, folder }, cfg) {
   return { dir, saved };
 }
 
+
+// Chat: Haiku turns a natural request (Hebrew is fine) into searches and saves, by tool calls.
+const known = new Map(); // id -> item, so the model can only save what a search returned
+const TOOLS = [
+  {
+    name: "search_images",
+    description: "Search free open-licence photo sources. Use English queries. Returns id, title, " +
+      "licence for each result. Call several times with different queries if needed.",
+    input_schema: { type: "object", properties: {
+      query: { type: "string" },
+      sources: { type: "array", items: { type: "string", enum: ["wikimedia", "pexels", "unsplash"] } },
+      count: { type: "integer", description: "results per source, default 10, max 30" },
+    }, required: ["query"] },
+  },
+  {
+    name: "save_images",
+    description: "Save images (ids from search_images) into a subfolder of the output folder.",
+    input_schema: { type: "object", properties: {
+      ids: { type: "array", items: { type: "string" } },
+      folder: { type: "string", description: "short English subfolder name" },
+    }, required: ["ids", "folder"] },
+  },
+];
+const SYSTEM = "You are a small research assistant inside a local tool for a game studio. The user " +
+  "(chatting in Hebrew) asks for reference images. Turn the request into English searches with " +
+  "search_images (default source wikimedia, add others only if the user has keys or asks), pick " +
+  "the results whose titles fit best, and save them with save_images when the user asked to " +
+  "save or collect them. Answer briefly in Hebrew: what you searched, how many you saved and " +
+  "where. Wikimedia titles are descriptive; skip diagrams, maps and logos.";
+
+async function runTool(name, input, cfg, state) {
+  if (name === "search_images") {
+    const { results, errors } = await search({
+      query: input.query, sources: input.sources?.length ? input.sources : ["wikimedia"],
+      count: Math.min(input.count || 10, 30) }, cfg);
+    results.forEach((r) => known.set(r.id, r));
+    state.shown.push(...results);
+    return JSON.stringify({ errors, results: results.map((r) =>
+      ({ id: r.id, title: r.title.slice(0, 90), license: r.license })) });
+  }
+  const picks = (input.ids || []).map((id) => known.get(id)).filter(Boolean);
+  const out = await save({ items: picks, folder: input.folder || "misc" }, cfg);
+  state.saved.push(...out.saved);
+  return JSON.stringify({ saved: out.saved.length, dir: out.dir });
+}
+
+async function chat({ messages }, cfg) {
+  if (!cfg.anthropicKey) throw new Error("NO_KEY");
+  const state = { shown: [], saved: [] };
+  const convo = messages.map((m) => ({ role: m.role, content: m.content }));
+  for (let turn = 0; turn < 8; turn++) {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": cfg.anthropicKey, "anthropic-version": "2023-06-01",
+        "content-type": "application/json" },
+      body: JSON.stringify({ model: HAIKU_MODEL, max_tokens: 1000, system: SYSTEM,
+        tools: TOOLS, messages: convo }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error?.message || "Anthropic HTTP " + r.status);
+    convo.push({ role: "assistant", content: j.content });
+    const calls = j.content.filter((b) => b.type === "tool_use");
+    if (!calls.length) {
+      const reply = j.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
+      return { reply, shown: state.shown, saved: state.saved };
+    }
+    const resultsBlocks = [];
+    for (const c of calls) {
+      let content;
+      try { content = await runTool(c.name, c.input, cfg, state); }
+      catch (e) { content = "Error: " + e.message; }
+      resultsBlocks.push({ type: "tool_result", tool_use_id: c.id, content });
+    }
+    convo.push({ role: "user", content: resultsBlocks });
+  }
+  return { reply: "(stopped after too many steps)", shown: state.shown, saved: state.saved };
+}
+
 const readBody = (req) => new Promise((res) => {
   let b = "";
   req.on("data", (c) => (b += c));
@@ -189,6 +267,9 @@ http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && req.url === "/api/search") {
       return send(res, 200, await search(await readBody(req), cfg));
+    }
+    if (req.method === "POST" && req.url === "/api/chat") {
+      return send(res, 200, await chat(await readBody(req), cfg));
     }
     if (req.method === "POST" && req.url === "/api/filter") {
       const b = await readBody(req);
