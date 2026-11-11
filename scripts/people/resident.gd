@@ -59,6 +59,8 @@ var training_for := Rank.RESIDENT
 var training_left := 0.0
 ## False once the person died (a building burned down around them).
 var alive := true
+## Seconds left in jail (an arrested special agent); off the street meanwhile.
+var jailed_left := 0.0
 ## The building this person works in (null while FREE); their body stays around it.
 var post: Node3D
 ## Null while indoors.

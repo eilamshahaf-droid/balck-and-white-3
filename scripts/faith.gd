@@ -1,3 +1,4 @@
+class_name Faith
 extends Node
 ## Belief, witnesses and exposure for the whole city.
 ##

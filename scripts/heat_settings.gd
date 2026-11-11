@@ -4,8 +4,10 @@ extends Resource
 ## Open data/heat.tres in Godot and change values in the Inspector.
 
 @export_group("When the police step in")
-## Heat a building can take before the police step in.
-@export var police_threshold := 10.0
+## Heat a building can take before the police step in, before hardness: 23 makes it
+## 30 in the Slums (hardness 0.2), so an ordinary missionary crew of 3 stays under it
+## and a FORCE crew or one of 6+ goes over (Balance Tester).
+@export var police_threshold := 23.0
 ## How much tougher a hard district is: the threshold is multiplied by
 ## 1 + hardness_scale * hardness (hardness 0 .. 1, set per building).
 @export var hardness_scale := 1.5

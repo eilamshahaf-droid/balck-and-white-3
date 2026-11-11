@@ -3,9 +3,9 @@ extends Node
 ## A preacher (a missionary or the high priest) now and then stops and
 ## preaches: they stand still, a crowd gathers around them, and while it lasts
 ## they try to win someone over more often the bigger the crowd. Each sermon has a hidden chance that the police step in, higher on a
-## street where few people believe. A raid stops the sermon and leaves the
-## priest surrounded until the world (the police) calls end_sermon, or
-## raid_time passes. The player sees the sermon and the raid through the signals.
+## street where few people believe. A raid breaks the sermon up at once (nobody is
+## arrested), and the same preacher is left alone for raid_cooldown. The player sees
+## the sermon and the raid through the signals.
 ##
 ## Only preachers start sermons, and not while the homes are full: there is
 ## nobody to convert without a home for them. (The `priest` names below mean
@@ -15,7 +15,7 @@ extends Node
 signal sermon_started(priest: Resident, at: Vector3, risk: float)
 ## The sermon of `priest` is over (it ran out, or the raid was dealt with).
 signal sermon_ended(priest: Resident)
-## The police moved in on the sermon of `priest` at `at`: the priest stands surrounded.
+## The police broke up the sermon of `priest` at `at`.
 signal police_moved_in(priest: Resident, at: Vector3)
 
 class Sermon extends RefCounted:
@@ -24,7 +24,6 @@ class Sermon extends RefCounted:
 	var time_left := 0.0
 	var preach_timer := 0.0
 	var crowd := 0
-	var raided := false
 
 const U: UnitSettings = preload("res://data/units.tres")
 const CHECK_INTERVAL := 1.0
@@ -32,6 +31,7 @@ const CHECK_INTERVAL := 1.0
 var _population: Population
 var _active: Array[Sermon] = []
 var _rest: Dictionary = {}   # priest -> seconds until their next sermon
+var _raided: Dictionary = {}   # priest -> seconds before the police bother them again
 var _check_timer := 0.0
 var _rng := RandomNumberGenerator.new()
 # Loaded at run time: a parse-time preload would load the element scripts before
@@ -52,6 +52,10 @@ func _physics_process(delta: float) -> void:
 	if _check_timer > 0.0:
 		return
 	_check_timer = CHECK_INTERVAL
+	for priest: Resident in _raided.keys():
+		_raided[priest] -= CHECK_INTERVAL
+		if _raided[priest] <= 0.0:
+			_raided.erase(priest)
 	for priest in _population.preaching.preachers():
 		if _sermon_of(priest) == null and _population.has_body(priest):
 			_rest[priest] = _rest.get(priest, _people.sermon_interval) - CHECK_INTERVAL
@@ -95,15 +99,15 @@ func _begin(priest: Resident) -> void:
 	s.time_left = _people.sermon_time
 	_active.append(s)
 	# He stands where he is for the whole sermon.
-	priest.body.send_on_errand(s.at, s.at, _people.sermon_time + _people.raid_time, "",
+	priest.body.send_on_errand(s.at, s.at, _people.sermon_time, "",
 			U.color(priest.rank))
 	_gather_crowd(s)
-	var risk := risk_at(s.at)
+	var risk := 0.0 if _raided.has(priest) else risk_at(s.at)
 	sermon_started.emit(priest, s.at, risk)
 	if _rng.randf() < risk:
-		s.raided = true
-		s.time_left = _people.raid_time
+		_raided[priest] = _people.raid_cooldown
 		police_moved_in.emit(priest, s.at)
+		_finish(s)
 
 
 func _gather_crowd(s: Sermon) -> void:
@@ -126,8 +130,6 @@ func _tick(s: Sermon, delta: float) -> void:
 	s.time_left -= delta
 	if s.time_left <= 0.0 or not _population.has_body(s.priest):
 		_finish(s)
-		return
-	if s.raided:
 		return
 	s.preach_timer -= delta
 	if s.preach_timer <= 0.0:
