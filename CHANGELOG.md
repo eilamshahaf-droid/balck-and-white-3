@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Facade rules and wildness meter (2026-11-11)
+- `docs/ART.md` has a new "Facade rules" section: dominant window per building, window pairs, air conditioners and curtains per apartment column, renovated columns, and a wildness meter.
+- Try it in the Facade Lab (link in the section): move the "Wildness" slider.
+
 ## Researcher tool (2026-11-11)
 - New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. No paid API: it runs on the PC alone. No dependencies, no subscription, no game code touched.
 - Try it: double-click `tools/researcher/run_researcher.cmd`; the Hebrew guide is `tools/researcher/README.md`.

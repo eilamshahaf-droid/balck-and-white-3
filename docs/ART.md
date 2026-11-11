@@ -144,6 +144,14 @@ air conditioners, signs) does as much for the look as the wall itself.
 Projects are laid out at block level (free-standing in a superblock with lawns and paths), unlike
 the other three, which sit on the street line in rows; that is a layout rule, not a building rule.
 
+## Facade rules (from the reference photos, tested in the Facade Lab)
+Windows follow rules, not dice. Lab: https://claude.ai/artifact/Vn8t5saorTDnzZgoErVpwM (source `/mnt/project-files/art/tools/facade-lab.html`).
+- **One dominant window per building** (tenement: plain or tall; brownstone: tall, taller on the parlor floor; prewar: plain or square). The top floor may switch to arched.
+- **Column groups = apartments.** Tenement windows come in pairs. Air conditioners and curtains belong to a column group and repeat up its floors, never per single window.
+- **Renovation by column.** One or two whole columns get a large modern window with a dark frame and no sill.
+- **Wildness (0-1), one meter per scene.** Raises renovated columns, boarded windows, graffiti on shop shutters and grime streaks; also widens the per-building floor-height scale (up to 12%), so neighbours' floor lines do not line up.
+- **Still to add:** continuous sill bands (brownstone, prewar), a fixed fire-escape column, roofs that differ between neighbours, side walls and courtyards, signs.
+
 ## Assets in use (and rules)
 
 - Kenney modular buildings (CC0) for facades, merged per building by `building_visual.gd`.
