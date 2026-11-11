@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.6.5 (2026-11-11): The congregation is back
+- Fix: since 0.6.4 the game started with no believers and no head priest, because the removed opening used to found the congregation. Population now founds it itself once the residents move in.
+- Try it: start the game; the HUD shows believers and one priest.
+
 ## Pre-Alpha 0.6.4 (2026-11-11): Play the Alpha in the browser, and a clean-up
 - Every Alpha now opens in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/ . A GitHub workflow (`.github/workflows/alpha-web.yml`) builds the web version on every push to `alpha` and puts it on GitHub Pages. The ZIP download stays as a fallback.
 - Fixed a crash in exported builds: when Godot turned `data/people.tres` into a binary file on export, the residents lost their names and the game froze at start. Text resources now stay text in the export.
