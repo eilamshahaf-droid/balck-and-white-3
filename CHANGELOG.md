@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-11-11: Art bible
+- New `docs/ART.md`: the decided look, palette, camera readability rules, the 7 districts' art direction, the 8 resident archetype colours, the Slums asset list and the Cratial kit pipeline. Docs only; nothing changes in the game.
+- Try it: read `docs/ART.md`.
+
 ## 2026-10-30: Map Lab, a 2D playground for the map generator
 - New scene `scenes/map_lab.tscn`: a top-down map of a generated city, coloured by what each block is used for: homes, offices and shops, industry, public buildings, parks and squares. A menu on the left changes the numbers and the map is made again a moment later.
 - Every district lays out its streets in the style of its kind (`DistrictField`): the financial, luxury and civic districts in a planned grid, industry and public housing in a wide grid, the old and poor quarters winding. The menu can also give the whole city one of the four real-city styles.
