@@ -150,6 +150,8 @@ Windows follow rules, not dice. Lab: https://claude.ai/artifact/Vn8t5saorTDnzZgo
 - **Column groups = apartments.** Tenement windows come in pairs. Air conditioners and curtains belong to a column group and repeat up its floors, never per single window.
 - **Renovation by column.** One or two whole columns get a large modern window with a dark frame and no sill.
 - **Wildness (0-1), one meter per scene.** Raises renovated columns, boarded windows, graffiti on shop shutters and grime streaks; also widens the per-building floor-height scale (up to 12%), so neighbours' floor lines do not line up.
+- **Seen in 3D (Google Earth, 12 shots, reference only, on Eilam's PC under `claude\refs\3d`):** tenement: jagged roofline with water tanks, bare brick side walls with an air-shaft notch, a shop on almost every ground floor. Brownstone: front depth from stoop and yard, rear extensions with gardens. Prewar: E, H and U plans around courtyards, setbacks, busy rooftops. Projects: cross and Y towers turned off the street grid, no street wall, no shops.
+- **In the lab so far:** shop awnings, air-shaft strip on tenement side walls, roof clutter when wildness is high.
 - **Still to add:** continuous sill bands (brownstone, prewar), a fixed fire-escape column, roofs that differ between neighbours, side walls and courtyards, signs.
 
 ## Assets in use (and rules)
