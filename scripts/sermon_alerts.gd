@@ -2,7 +2,7 @@ class_name SermonAlerts
 extends Node
 ## Shows the player where a sermon is going on: a ring on the ground around the
 ## preaching priest and a button on the screen that flies the camera there. When
-## the police move in the ring turns red and the button says so. The hidden
+## the police break a sermon up a note says so where it happened. The hidden
 ## raid chance is never shown. A sermon that ends takes its ring and button away.
 
 const M: MiracleSettings = preload("res://data/miracles.tres")
@@ -14,7 +14,6 @@ var _rings := {}     # Resident -> ring node on the ground
 var _buttons := {}   # Resident -> Button on the screen
 var _box: VBoxContainer
 var _calm: StandardMaterial3D
-var _raid: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -26,7 +25,6 @@ func _ready() -> void:
 	_box.offset_top = 64.0
 	layer.add_child(_box)
 	_calm = _material(M.sermon_calm_color)
-	_raid = _material(M.sermon_raid_color)
 	population.sermons.sermon_started.connect(_on_started)
 	population.sermons.sermon_ended.connect(_on_ended)
 	population.sermons.police_moved_in.connect(_on_police)
@@ -50,10 +48,8 @@ func _on_started(priest: Resident, at: Vector3, _risk: float) -> void:
 
 
 func _on_police(priest: Resident, at: Vector3) -> void:
-	var ring: MeshInstance3D = _rings.get(priest)
-	if ring:
-		ring.material_override = _raid
-	_alert(priest, "POLICE are arresting %s!" % priest.full_name(), at)
+	FloatingNote.pop(self, at + Vector3.UP * 3.0,
+			"Police broke up %s's sermon" % priest.full_name(), M.sermon_raid_color)
 
 
 func _on_ended(priest: Resident) -> void:

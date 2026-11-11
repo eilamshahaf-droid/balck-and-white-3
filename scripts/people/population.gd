@@ -36,6 +36,8 @@ signal people_died(building: Node3D, count: int)
 signal cult_founded(building: Node3D)
 ## The player let every believer go from `building` (it can be settled again).
 signal believers_dismissed(building: Node3D, count: int)
+## The hand set a special agent (the Vandalist) down near `building`.
+signal agent_set_down(agent: Resident, building: Node3D)
 
 ## Buildings whose use is prayer (sermon houses); whoever sets a building's use keeps this group.
 const PRAYER_HOUSES := &"prayer_houses"
@@ -49,6 +51,8 @@ const U: UnitSettings = preload("res://data/units.tres")
 @export var police: Police
 ## Which district (and so which kind of people) each home is in, and where the cult starts.
 @export var districts: Districts
+## Makes converting harder where the city has noticed the cult (Preaching asks it).
+@export var awareness: Awareness
 
 var residents: Array[Resident] = []
 ## The cult's high priest (a Resident with a body), once the cult is founded.
@@ -64,6 +68,8 @@ var housing_capacity := 0
 var priest_count := 0
 ## How many missionaries the cult has.
 var missionary_count := 0
+## How many special agents (Vandalists) the cult has, jailed ones included.
+var agent_count := 0
 ## The sermons preachers give; its signals tell the player where one is and whether
 ## the police step in.
 var sermons := Sermons.new()
@@ -73,6 +79,8 @@ var preaching := Preaching.new()
 var staffing := Staffing.new(self)
 ## What has been bought for each building.
 var upgrades := BuildingUpgrades.new()
+## Extra pleasure for believers living in a building (murals nearby), set by Murals.
+var pleasure_bonus: Dictionary = {}   # building -> 0..1
 
 var _homes: Array[Node3D] = []
 var _offices: Array[Node3D] = []
@@ -255,6 +263,55 @@ func dismiss_believers(building: Node3D) -> void:
 	believers_dismissed.emit(building, count)
 
 
+## `share` of the plain believers who live in `building` stop believing (a thin line
+## gave way); anyone sitting in goes home.
+func revert_believers(building: Node3D, share: float) -> void:
+	_release_occupants(building)
+	var plain: Array[Resident] = []
+	for r: Resident in _by_home.get(building, []):
+		if r.rank == Resident.Rank.BELIEVER:
+			plain.append(r)
+	plain.shuffle()
+	for r in plain.slice(0, ceili(plain.size() * share)):
+		staffing.unassign(r)
+		convert_to(r, Resident.Rank.RESIDENT)
+
+
+## Close `building` for a while (a condemnation notice): everyone who lives, sits or
+## works there leaves for the nearest other home. Returns who lived there, for reopen.
+func close_building(building: Node3D) -> Array[Resident]:
+	_release_occupants(building)
+	staffing.forget(building)
+	_homes.erase(building)
+	var out: Array[Resident] = []
+	var new_home := home_near(building.global_position)
+	if new_home == null:
+		return out
+	for r: Resident in (_by_home.get(building, []) as Array).duplicate():
+		out.append(r)
+		_set_home(r, new_home)
+		if _has_body(r):
+			r.body.move_out()
+	return out
+
+
+## `building` reopens: whoever it held and still lives where they went moves back.
+func reopen_building(building: Node3D, people: Array[Resident]) -> void:
+	if not _homes.has(building):
+		_homes.append(building)
+	for r in people:
+		if r.alive and r.home != building:
+			_set_home(r, building)
+			if _has_body(r):
+				r.body.move_out()
+
+
+## Take `r` off the street (arrested): their body goes to someone indoors.
+func put_away(r: Resident) -> void:
+	if _has_body(r):
+		_street.put_away(r)
+
+
 ## Set `r`'s rank (a conversion, a promotion, a believer leaving) and announce it.
 func convert_to(r: Resident, rank: Resident.Rank) -> void:
 	var old := r.rank
@@ -343,7 +400,7 @@ func add_comfort(building: Node3D, amount: float) -> void:
 ## Everyone leaves `building` for good (roaches, fire): the people who live
 ## there move to the nearest other homes and those close by run out into the
 ## street. Nobody moves in again, so it stays empty.
-func evacuate(building: Node3D) -> void:
+func evacuate(building: Node3D, quiet := false) -> void:
 	_homes.erase(building)
 	_release_occupants(building)
 	var new_home := home_near(building.global_position)
@@ -355,7 +412,7 @@ func evacuate(building: Node3D) -> void:
 		if not _has_body(r):
 			continue
 		r.body.move_out()
-		if r.body.global_position.distance_to(building.global_position) < _people.flee_reach:
+		if not quiet and r.body.global_position.distance_to(building.global_position) < _people.flee_reach:
 			r.body.flee(building.global_position)
 	_by_home.erase(building)
 
@@ -450,6 +507,9 @@ func _on_set_down(c: Citizen) -> void:
 	var p := r.body.global_position
 	var building := _place_at(p)
 	if building == null:
+		return
+	if r.rank == Resident.Rank.AGENT:
+		agent_set_down.emit(r, building)
 		return
 	# Set down in a prayer house or shop: the believer starts working there.
 	if r.job == Resident.Job.FREE:
@@ -590,7 +650,7 @@ func _refresh_presence() -> void:
 		_feel(r, dt)
 		if not r.is_believer():
 			continue
-		Needs.refresh(r, U)
+		Needs.refresh(r, U, pleasure_bonus.get(r.home, 0.0))
 		if r != priest and Needs.livelihood_met(r, _archetypes) < U.leave_below \
 				and _rng.randf() < U.leave_chance_per_minute * dt / 60.0:
 			convert_to(r, Resident.Rank.RESIDENT)
@@ -612,11 +672,14 @@ func _refresh_presence() -> void:
 func _count_ranks() -> void:
 	priest_count = 0
 	missionary_count = 0
+	agent_count = 0
 	for r in residents:
 		if r.is_priest():
 			priest_count += 1
 		elif r.rank == Resident.Rank.MISSIONARY:
 			missionary_count += 1
+		elif r.rank == Resident.Rank.AGENT and r.alive:
+			agent_count += 1
 
 
 ## Comfort follows the home; fear fades, and too much of it moves people out.

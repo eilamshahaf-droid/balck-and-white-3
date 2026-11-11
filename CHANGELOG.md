@@ -3,6 +3,37 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Facade rules and wildness meter (2026-11-11)
+- Facade Lab: seed-driven massing, courtyard notch, rear extensions, projects plans (slab, cross, Y), and cornice rules with a "cornice kept" meter. Described in `docs/ART.md`.
+- Facade Lab: shop awnings, an air-shaft strip on tenement side walls, roof clutter at high wildness; ART.md notes what real 3D views show that a box misses.
+- `docs/ART.md` has a new "Facade rules" section: dominant window per building, window pairs, air conditioners and curtains per apartment column, renovated columns, and a wildness meter.
+- Try it in the Facade Lab (link in the section): move the "Wildness" slider.
+
+## Researcher tool (2026-11-11)
+- New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. No paid API: it runs on the PC alone. No dependencies, no subscription, no game code touched.
+- Try it: double-click `tools/researcher/run_researcher.cmd`; the Hebrew guide is `tools/researcher/README.md`.
+
+## Pre-Alpha 0.8.0 (2026-11-11): The Slums, a stage to play from start to finish
+Everything in 0.7.1, plus what makes the Slums a whole trial stage.
+- **A briefing to start.** The Secretary's founding minutes explain the goal; the city waits until you open the meeting.
+- **Base and core are apart.** The cult starts in its base at the edge of the Slums (the high priest, priest and Vandalist training are there). The core is a separate building in the middle that has to be won: the district grows from the edge in.
+- **Five landmarks of the status quo:** the landlord's office, the city notice board, the police booth, the inspector's office and the post office, spread on a ring around the core with signs over them. Set the Vandalist down by one and he marks it (4 minutes, $100 an attempt, 10% chance he is caught). Each standing mark makes the core's residents much easier to win (the core is 60 times harder, x0.4 per mark). City Hall may scrub a mark that has stood 5 minutes, so slow play means doing it again.
+- **Cameras** from the neighbourhood's answers add 10% to the arrest chance of murals and marks near them.
+- **Win and lose.** Win: the core and 60% of the Slums, and the "district captured" screen. Lose: once you have had 8 believers, none at all for 3 minutes dissolves the cult ("Try again" restarts).
+- The bottom-left panel shows whether the core is yours and how many landmarks are marked.
+- Try it: open https://eilamshahaf-droid.github.io/balck-and-white-3/ and play the Slums.
+
+## Pre-Alpha 0.7.1 (2026-11-11): The city notices
+The designer's 0.7.1 brief, with the Balance Tester's numbers (`data/awareness.tres` and friends; provisional until playtested).
+- **Awareness.** Each district notices the cult (0 to 1, hidden). Working one building over and over raises it; a broad, joined-up front lets it fade. It makes converting harder there (down to x0.4). The first attempt on a district's core makes it fully aware for 10 minutes; your buildings next to the core shield that attempt.
+- **Thin lines give way.** A building of yours with at most one of yours next to it can be lost (5% a minute times awareness plus heat); half its believers stop believing.
+- **Neighbours complain.** A building of yours with more than 2 believers draws complaints, which raise awareness. At 3 complaints City Hall condemns it: a notice goes up, 30 seconds later the building is closed and emptied for 5 minutes, then everyone moves back. Tear the notice off with the hand (20 belief) to reopen it at once; the Secretary has a word about it. In the Slums this replaces the inspector and the bulldozer.
+- **The Vandalist.** Train one from a believer at the core building (2 min, $150, once you have 8 believers; at most 2). Pick him up and set him down by a building: he paints a mural there (30 s). Murals give believers living within two buildings pleasure, and raise awareness a little. The neighbourhood answers every mural: painted over, a fine, or a camera, each more likely the more it has been used. A fine or a camera can get him arrested.
+- **Arrests make martyrs.** The police no longer arrest priests. When they surround the Vandalist, people near the spot are won over 30% more easily for 3 minutes, and awareness rises. Three ways out: throw the officers off him (15 belief), pay $100 bail once he is taken, or wait 3 minutes.
+- **Police.** A building's heat limit is 30 in the Slums, so an ordinary missionary crew stays under it; at most one roadblock per district every 4 minutes. A sermon raid now just breaks the sermon up (15% chance on a street with no believers, down to 2%), and the same preacher is left alone for 3 minutes.
+- **Numbers.** Conversion base 0.6. A core's residents are 60 times harder to win (landmarks will bring that down in 0.7.2).
+- Try it: open https://eilamshahaf-droid.github.io/balck-and-white-3/ , grow to 8 believers, hold the button on the core building and choose "Train Vandalist", then drop him by a wall.
+
 ## Pre-Alpha 0.7.0 (2026-11-11): The Slums, the first playable slice
 The first district of the core loop, built from the designer's brief (`docs/GDD.md`).
 - **One man and a building.** The cult starts with the high priest alone in the Slums' core building, its first sermon house. Nobody else believes yet. The other districts are locked for now.
@@ -27,6 +58,22 @@ The first district of the core loop, built from the designer's brief (`docs/GDD.
 - The help line no longer says that only miracles change belief: priests win people over, miracles help them.
 - `CLAUDE.md` now points to `docs/GDD.md` and `docs/ART.md`, lists the three studio roles as owners, and explains the web build.
 - Try it: open the link above in Chrome or Edge.
+
+## 2026-11-11: Facade style catalog
+- `docs/ART.md`: the first four New York facade styles (brownstone, tenement, prewar apartment, projects) compared in one table, what they share, and which parts the Cratial kit can and cannot build. Docs only.
+- Try it: read "Facade styles" in `docs/ART.md`.
+
+## 2026-11-11: Art decisions
+- `docs/ART.md`: how the Artist works (quick experiment, then a picture) and the decision to build with simplified Cratial modules. Docs only.
+- Try it: read "How we work" and "Decisions" in `docs/ART.md`.
+
+## 2026-11-11: Cratial kit inventory
+- `docs/ART.md`: the kit now comes from a Google Drive link instead of Remote Control; inventory of its modules, materials and polycounts, and the import plan. Docs only.
+- Try it: read the "Cratial kit pipeline" section of `docs/ART.md`.
+
+## 2026-11-11: Grey-to-colour plan
+- `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.
+- Try it: read the "Grey to colour" section of `docs/ART.md`.
 
 ## 2026-11-11: Grey-to-colour plan
 - `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.

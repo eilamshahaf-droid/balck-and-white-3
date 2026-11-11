@@ -61,24 +61,40 @@ func unassign(r: Resident) -> void:
 		r.body.move_out()
 
 
-## Start training `r` (free, or praying in `building`) in the sermon house
-## `building`: a believer into a missionary, a missionary into a priest (only
-## where the high priest serves, up to max_priests). False if `r` can't train
-## for `rank` there.
+## Start training `r` (free, or praying in `building`) in `building`: a believer into a
+## missionary, a missionary into a priest (only where the high priest serves, up to
+## max_priests), a believer into a special agent (at a core you hold, up to max_agents).
+## False if `r` can't train for `rank` there.
 func train(r: Resident, rank: Resident.Rank, building: Node3D) -> bool:
 	var praying_here := r.job == Resident.Job.PRAY and r.post == building
-	if not can_train(rank, building) or r.rank != rank - 1 \
+	if not can_train(rank, building) or r.rank != trainee_rank(rank) \
 			or not (r.job == Resident.Job.FREE or praying_here):
 		return false
 	post(r, Resident.Job.TRAIN, building)
 	r.training_for = rank
-	r.training_left = U.missionary_time if rank == Resident.Rank.MISSIONARY else U.priest_time
+	match rank:
+		Resident.Rank.MISSIONARY: r.training_left = U.missionary_time
+		Resident.Rank.AGENT: r.training_left = U.agent_time
+		_: r.training_left = U.priest_time
 	return true
+
+
+## The rank someone trains from to become `rank`.
+static func trainee_rank(rank: Resident.Rank) -> Resident.Rank:
+	if rank == Resident.Rank.AGENT:
+		return Resident.Rank.BELIEVER
+	return (rank - 1) as Resident.Rank
 
 
 ## Can `building` train someone for `rank` right now?
 func can_train(rank: Resident.Rank, building: Node3D) -> bool:
-	if building == null or not building.is_in_group(Population.PRAYER_HOUSES):
+	if building == null:
+		return false
+	if rank == Resident.Rank.AGENT:
+		return _population.districts.is_base(building) \
+				and _population.believer_count >= U.agent_unlock_believers \
+				and _population.agent_count + _training_for(Resident.Rank.AGENT) < U.max_agents
+	if not building.is_in_group(Population.PRAYER_HOUSES):
 		return false
 	if staff_count(building) >= capacity(building):
 		return false
@@ -129,9 +145,10 @@ func staff_count(building: Node3D, job := Resident.Job.FREE) -> int:
 ## Who could start training for `rank` in `building`: free people of the rank
 ## below within `radius` of it, and those praying there.
 func trainees_for(rank: Resident.Rank, building: Node3D, radius: float) -> Array[Resident]:
-	var out := _population.free_believers_near(building.global_position, radius, rank - 1)
+	var from := trainee_rank(rank)
+	var out := _population.free_believers_near(building.global_position, radius, from)
 	for r: Resident in members(building):
-		if r.job == Resident.Job.PRAY and r.rank == rank - 1:
+		if r.job == Resident.Job.PRAY and r.rank == from:
 			out.append(r)
 	return out
 
@@ -174,6 +191,15 @@ func forget(building: Node3D) -> void:
 	for r: Resident in members(building).duplicate():
 		unassign(r)
 	_staff.erase(building)
+
+
+func _training_for(rank: Resident.Rank) -> int:
+	var n := 0
+	for building: Node3D in _staff:
+		for r: Resident in _staff[building]:
+			if r.job == Resident.Job.TRAIN and r.training_for == rank:
+				n += 1
+	return n
 
 
 func _raw(building: Node3D) -> float:

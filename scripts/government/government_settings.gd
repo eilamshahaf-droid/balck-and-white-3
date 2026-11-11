@@ -35,3 +35,13 @@ extends Resource
 @export var give_up_time := 15.0            # blocked this long, the crew goes home
 @export var guards_to_block := 3            # believers standing at the building that stop the bulldozer
 @export var guard_radius := 25.0
+
+@export_group("Condemnation instead")
+## District kinds where City Hall sends no inspector or bulldozer: neighbours'
+## complaints and the condemnation notice (condemnation.gd) do the job there.
+@export var condemn_kinds := PackedStringArray(["Slums"])
+
+
+# An accessor rather than reading the array from a const preload (editor parse rule).
+func condemns_in(kind: String) -> bool:
+	return condemn_kinds.has(kind)

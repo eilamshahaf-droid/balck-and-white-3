@@ -1,7 +1,9 @@
 extends Node
 ## Checks the Slums slice of the core loop in the real main scene: who lives in
 ## the start district, the high priest at the start building, the conversion
-## formula, believers' output and needs, training, and capturing the district.
+## formula, believers' output and needs, training, claiming next to your buildings,
+## awareness, fragility, the Vandalist and his arrest, condemnation, and capturing
+## the district.
 ##
 ## Run headless:
 ##   godot --headless --path . res://tests/cult_test.tscn
@@ -10,10 +12,12 @@ extends Node
 const MAIN := preload("res://scenes/main.tscn")
 const U: UnitSettings = preload("res://data/units.tres")
 const DS: DistrictSettings = preload("res://data/districts.tres")
+const A: AwarenessSettings = preload("res://data/awareness.tres")
 
 var _main: Node3D
 var _population: Population
 var _districts: Districts
+var _near := -1   # a building claimed next to the headquarters by _test_borders
 var _failures := 0
 
 
@@ -29,6 +33,11 @@ func _ready() -> void:
 	_test_output_and_needs()
 	await _test_training()
 	await _test_borders()
+	_test_awareness()
+	await _test_fragility()
+	await _test_vandalist()
+	await _test_condemnation()
+	_test_landmarks()
 	_test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -146,12 +155,118 @@ func _test_borders() -> void:
 	await _frames(int(DS.tick * 60.0 * 3.0))
 	_check(not _districts.is_yours(far), "a believing building far from yours stays out of reach")
 	_check(_districts.is_yours(near), "a believing building bordering yours becomes yours")
+	_near = near
+
+
+func _test_awareness() -> void:
+	var aware: Awareness = _main.get_node("Awareness")
+	var d := DS.start_district
+	var home := _districts.buildings[_near]
+	_check(is_equal_approx(aware.factor_for(home), 1.0), "an unaware district converts at full chance")
+	aware.add(d, 0.5)
+	_check(absf(aware.factor_for(home) - (1.0 - A.effect * 0.5)) < 0.001,
+			"awareness 0.5 makes converting harder (x%.2f)" % aware.factor_for(home))
+	aware.add(d, 1.0)
+	var floor_ := maxf(A.effect_min, 1.0 - A.effect)
+	_check(absf(aware.factor_for(home) - floor_) < 0.001, "full awareness: x%.2f at most" % floor_)
+	aware.add(d, -1.0)
+	aware.add_martyr(home)
+	var martyr := (1.0 - A.effect * A.arrest_awareness) * A.martyr_bonus
+	_check(absf(aware.factor_for(home) - martyr) < 0.001,
+			"a martyr nearby makes converting easier (x%.2f)" % aware.factor_for(home))
+	aware.add(d, -1.0)
+
+
+func _test_fragility() -> void:
+	var fragility: Fragility = _main.get_node("Fragility")
+	_check(fragility.is_exposed(_near), "a building with one of yours next to it is exposed")
+	_check(not fragility.is_exposed(_districts.headquarters), "the headquarters is never exposed")
+	var before := _districts.believers_at(_near)
+	fragility.crumble(_near)
+	_check(not _districts.is_yours(_near), "a crumbling building is lost")
+	await _frames(int(DS.tick * 60.0 * 2.0))
+	_check(_districts.believers_at(_near) <= ceili(before / 2.0),
+			"half its believers stop believing (%d of %d left)" % [_districts.believers_at(_near), before])
+
+
+func _test_vandalist() -> void:
+	var hq := _districts.buildings[_districts.headquarters]
+	var r := _resident_of("Blue collar")
+	if r == null:
+		_check(false, "a resident to make a Vandalist")
+		return
+	_population.convert_to(r, Resident.Rank.BELIEVER)
+	_check(not _population.staffing.can_train(Resident.Rank.AGENT, hq) \
+			or _population.believer_count >= U.agent_unlock_believers,
+			"the Vandalist needs %d believers first" % U.agent_unlock_believers)
+	_districts.convert_near(hq.global_position, 3)
+	await _frames(120)  # believers are counted on a timer
+	_check(_population.staffing.train(r, Resident.Rank.AGENT, hq), "a believer trains as a Vandalist at the core")
+	_population.staffing.tick_training(r, U.agent_time + 1.0)
+	_check(r.rank == Resident.Rank.AGENT, "training makes a Vandalist")
+	var murals: Murals = _main.get_node("Murals")
+	var painted := [-1]
+	murals.painted.connect(func(i: int) -> void: painted[0] = i)
+	murals.paint(r, _near, Vector3.FORWARD)
+	_check(painted[0] == _near, "he paints a mural")
+	_population.bring_out(r)
+	var arrests: PoliceArrests = _main.get_node("Arrests")
+	_check(arrests.arrest(r), "the police can arrest the Vandalist")
+	var aware: Awareness = _main.get_node("Awareness")
+	var spot := _districts.building_near(r.body.global_position)
+	_check(aware.factor_for(_districts.buildings[spot]) > 1.0, "the arrest makes him a martyr nearby")
+	_check(not arrests.bail(), "no bail while nobody is in jail")
+	await _frames(5)
+
+
+func _test_condemnation() -> void:
+	var condemnation: Condemnation = _main.get_node("Condemnation")
+	_districts.convert_near(_districts.buildings[_districts.headquarters].global_position, 4)
+	var target := -1
+	for i in _districts.buildings.size():
+		if _districts.is_yours(i) and i != _districts.headquarters and _districts.residents_in(i) > 0:
+			target = i
+			break
+	if target < 0:
+		_check(false, "a building of yours to condemn")
+		return
+	condemnation.warning_seconds = 1.0
+	condemnation.close_seconds = 6.0
+	var lived := _population.residents_in(_districts.buildings[target])
+	condemnation.condemn(target)
+	_check(condemnation.current() == target, "a notice goes up")
+	await _frames(int(60.0 * 2.5))
+	_check(condemnation.is_closed(target) and _population.residents_in(_districts.buildings[target]) == 0,
+			"after the warning the building is closed and empty")
+	await _frames(int(60.0 * 7.0))
+	_check(condemnation.current() < 0 and _population.residents_in(_districts.buildings[target]) == lived,
+			"it reopens and its people come back (%d)" % lived)
 
 
 func _believe_in(index: int) -> void:
 	for r: Resident in _population.residents:
 		if r.home == _districts.buildings[index] and not r.is_believer():
 			_population.convert_to(r, Resident.Rank.BELIEVER)
+
+
+func _test_landmarks() -> void:
+	var landmarks: Landmarks = _main.get_node("Landmarks")
+	var d := DS.start_district
+	var core := _districts.core_of(d)
+	_check(_districts.headquarters != core, "the base is not the core")
+	_check(landmarks.buildings.size() == 5, "five landmarks (%d)" % landmarks.buildings.size())
+	var apart := true
+	for i in landmarks.buildings:
+		apart = apart and i != core and i != _districts.headquarters \
+				and _districts.district_of(i) == d
+	_check(apart, "landmarks stand in the Slums, apart from the base and the core")
+	var before := landmarks.core_ease(d)
+	landmarks.mark(landmarks.buildings[0])
+	landmarks.mark(landmarks.buildings[1])
+	_check(landmarks.marks_in(d) == 2 and landmarks.core_ease(d) > before * 6.0,
+			"each mark makes the core easier (x%.2f)" % landmarks.core_ease(d))
+	landmarks.clean(landmarks.buildings[0])
+	_check(landmarks.marks_in(d) == 1, "City Hall can clean a mark off")
 
 
 func _test_capture() -> void:

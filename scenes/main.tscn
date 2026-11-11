@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3]
+[gd_scene load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -34,6 +34,12 @@
 [ext_resource type="Script" path="res://scripts/building_menus.gd" id="50_menus"]
 [ext_resource type="Script" path="res://scripts/sermon_alerts.gd" id="51_alerts"]
 [ext_resource type="Script" path="res://scripts/world/district_won.gd" id="60_won"]
+[ext_resource type="Script" path="res://scripts/world/awareness.gd" id="61_awareness"]
+[ext_resource type="Script" path="res://scripts/world/fragility.gd" id="62_fragility"]
+[ext_resource type="Script" path="res://scripts/world/murals.gd" id="63_murals"]
+[ext_resource type="Script" path="res://scripts/government/condemnation.gd" id="64_condemnation"]
+[ext_resource type="Script" path="res://scripts/world/landmarks.gd" id="65_landmarks"]
+[ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -71,11 +77,12 @@ decrees = NodePath("../Decrees")
 [node name="Surroundings" type="Node3D" parent="."]
 script = ExtResource("17_surroundings")
 
-[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles", "police", "districts")]
+[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles", "police", "districts", "awareness")]
 miracles = NodePath("../Miracles")
 police = NodePath("../Police")
 script = ExtResource("11_population")
 districts = NodePath("../Districts")
+awareness = NodePath("../Awareness")
 
 [node name="Faith" type="Node" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("4_faith")
@@ -166,9 +173,51 @@ districts = NodePath("../Districts")
 faith = NodePath("../Faith")
 heat = NodePath("../Heat")
 
-[node name="Arrests" type="Node3D" parent="." node_paths=PackedStringArray("population")]
+[node name="Arrests" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts", "awareness", "faith", "treasury")]
 script = ExtResource("23_arrests")
 population = NodePath("../Population")
+districts = NodePath("../Districts")
+awareness = NodePath("../Awareness")
+faith = NodePath("../Faith")
+treasury = NodePath("../Treasury")
+
+[node name="Awareness" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "landmarks")]
+script = ExtResource("61_awareness")
+districts = NodePath("../Districts")
+population = NodePath("../Population")
+landmarks = NodePath("../Landmarks")
+
+[node name="Landmarks" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
+script = ExtResource("65_landmarks")
+districts = NodePath("../Districts")
+
+[node name="StageScreens" type="CanvasLayer" parent="." node_paths=PackedStringArray("population")]
+layer = 6
+script = ExtResource("66_stage")
+population = NodePath("../Population")
+
+[node name="Fragility" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "awareness", "heat")]
+script = ExtResource("62_fragility")
+districts = NodePath("../Districts")
+population = NodePath("../Population")
+awareness = NodePath("../Awareness")
+heat = NodePath("../Heat")
+
+[node name="Murals" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts", "awareness", "treasury", "arrests", "landmarks")]
+script = ExtResource("63_murals")
+population = NodePath("../Population")
+districts = NodePath("../Districts")
+awareness = NodePath("../Awareness")
+treasury = NodePath("../Treasury")
+arrests = NodePath("../Arrests")
+landmarks = NodePath("../Landmarks")
+
+[node name="Condemnation" type="Node3D" parent="." node_paths=PackedStringArray("districts", "population", "awareness", "faith")]
+script = ExtResource("64_condemnation")
+districts = NodePath("../Districts")
+population = NodePath("../Population")
+awareness = NodePath("../Awareness")
+faith = NodePath("../Faith")
 
 [node name="Government" type="Node" parent="."]
 script = ExtResource("15_government")

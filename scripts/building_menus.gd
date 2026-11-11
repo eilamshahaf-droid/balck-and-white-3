@@ -33,6 +33,7 @@ const POSTS := {
 const TRAINING := {
 	&"missionary": Resident.Rank.MISSIONARY,
 	&"priest": Resident.Rank.PRIEST,
+	&"agent": Resident.Rank.AGENT,
 }
 
 @export var population: Population
@@ -41,7 +42,8 @@ const TRAINING := {
 
 ## Does `building` take free believers as staff?
 func has_posts(building: Node3D) -> bool:
-	return building.is_in_group(Population.PRAYER_HOUSES) or building.is_in_group(Population.SHOPS)
+	return building.is_in_group(Population.PRAYER_HOUSES) or building.is_in_group(Population.SHOPS) \
+			or population.districts.is_base(building)
 
 
 ## The upgrades this kind of building can buy (a home, a sermon house, a workplace).
@@ -66,13 +68,22 @@ func post_items(building: Node3D) -> Array[Dictionary]:
 		var priests := population.free_believers_near(p, S.staff_reach, Resident.Rank.PRIEST).size()
 		items.append(_post_item(&"serve", "Serve as " + U.title(Resident.Rank.PRIEST),
 				U.color(Resident.Rank.PRIEST), priests))
-		for id: StringName in TRAINING:
-			var rank: Resident.Rank = TRAINING[id]
+	for id: StringName in TRAINING:
+		var rank: Resident.Rank = TRAINING[id]
+		var here := population.districts.is_base(building) if rank == Resident.Rank.AGENT \
+				else building.is_in_group(Population.PRAYER_HOUSES)
+		if here:
 			var free := population.staffing.trainees_for(rank, building, S.staff_reach).size()
 			var item := _post_item(id, "Train " + U.title(rank), U.color(rank), free)
 			if not population.staffing.can_train(rank, building):
 				item.enabled = false
-				item.note = "not here" if rank == Resident.Rank.PRIEST else "house full"
+				match rank:
+					Resident.Rank.PRIEST: item.note = "not here"
+					Resident.Rank.AGENT:
+						item.note = "needs %d believers" % U.agent_unlock_believers \
+								if population.believer_count < U.agent_unlock_believers \
+								else "%d at most" % U.max_agents
+					_: item.note = "house full"
 			elif not treasury.can_afford(_training_cost(rank)):
 				item.enabled = false
 				item.note = "needs $%d" % roundi(_training_cost(rank))
@@ -115,13 +126,16 @@ func send_to_post(id: StringName, building: Node3D) -> bool:
 
 
 func _training_cost(rank: Resident.Rank) -> float:
-	return U.priest_cost if rank == Resident.Rank.PRIEST else 0.0
+	match rank:
+		Resident.Rank.PRIEST: return U.priest_cost
+		Resident.Rank.AGENT: return U.agent_cost
+	return 0.0
 
 
 func _post_item(id: StringName, label: String, color: Color, free: int) -> Dictionary:
 	var title: String = U.title(Resident.Rank.BELIEVER).to_lower()
 	if TRAINING.has(id):
-		title = U.title(TRAINING[id] - 1).to_lower()
+		title = U.title(Staffing.trainee_rank(TRAINING[id])).to_lower()
 	elif POSTS.has(id):
 		title = U.title(POSTS[id][1]).to_lower()
 	return {"id": id, "label": label, "color": color, "enabled": free > 0,
