@@ -16,8 +16,8 @@ Realistic objects, stylized like a toy or dollhouse miniature, seen from above l
   from the god camera, not from a street-level eye.
 - Humour lives in the props: laundry, boarded windows, flags, signs, tiny absurd details.
 - The god's hand is a **white cloth glove** (`assets/models/god_hand`).
-- Tone: a comedy about a tiny cult taking over an NYC-like city. No good or evil colour coding;
-  the cult's gold is the only "meaning" colour.
+- Tone: a comedy. The story is being reshaped (cult versus a god against bureaucracy); until it
+  settles, cult branding such as gold rings and robes is provisional.
 
 ## Palette
 
@@ -79,6 +79,28 @@ head/hat or prop shape when close.
 
 Believers get a gold ring or tint over the archetype colour; zealots orange. Exact values
 go in `data/people.tres` once the designer confirms the table.
+
+## Grey to colour: freedom (proposed, not built)
+
+Direction from Eilam: colour follows independence. A district has a freedom value 0..1; at 0
+everything is grey and uniform, at 1 it is full street-art colour. Concept picture:
+`art/concept-sheet-2-grey-to-colour.png` in the project's shared folder.
+
+Shader plan, so no gameplay code needs to know about colour:
+
+- One global shader uniform: a small `freedom_map` texture (for example 64 x 64, one channel,
+  blurred so district edges fade over a few metres) plus the city bounds. The game rewrites it
+  when a district's value changes (rarely).
+- `toon_common.gdshaderinc` samples it by world x/z and scales the existing `saturation`
+  towards grey by the value. Ground, buildings, props and people all follow with no
+  per-object parameters, so MultiMesh and merged building meshes stay as they are.
+- Grey is not flat: keep a slight warm-cool tint so a grey district still looks like a toy.
+- Needs a quick check that a global sampler uniform works on the Compatibility renderer.
+- The colour grade in `screen_pass` is left alone, so camera effects stay the same everywhere.
+
+Walls: a mural is a decal quad on a wall (white ground, bold bright shapes) that ignores the
+grey-out so it always pops; a covered wall is a flat beige slab in the same place; a camera and
+a fine notice are small props. The district systems place them.
 
 ## Assets in use (and rules)
 

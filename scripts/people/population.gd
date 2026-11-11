@@ -521,7 +521,7 @@ func evacuate(building: Node3D) -> void:
 	_by_home.erase(building)
 
 
-## Skip the story: the families in the homes nearest one corner become a
+## The game starts here: the families in the homes nearest one corner become a
 ## small congregation of believers. The nearest home is the headquarters (the
 ## first prayer house), and its most devoted believer the head priest.
 func found_congregation() -> void:
@@ -642,6 +642,7 @@ func _populate() -> void:
 		_presence[b] = 0.0
 		b.tree_exiting.connect(_forget_building.bind(b), CONNECT_ONE_SHOT)
 	_refresh_presence()
+	found_congregation.call_deferred()
 
 
 func _ordain_priest(headquarters: Node3D) -> void:
