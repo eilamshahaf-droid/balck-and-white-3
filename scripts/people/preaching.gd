@@ -59,13 +59,16 @@ func preachers() -> Array[Resident]:
 ## base x curiosity x (1 - skepticism) x (1 - anxiety_weight x anxiety)
 ## x (1 + charisma_weight x charisma), times the preacher's sermon house upgrades
 ## and 1 + the miracle proof at `p`, divided by core_difficulty for someone who lives in
-## a district's core building. Miracles never convert on their own.
+## a district's core building, and times the district's awareness and any martyr near
+## their home (Awareness.factor_for). Miracles never convert on their own.
 func chance(target: Resident, preacher: Resident, p: Vector3) -> float:
 	var c := U.conversion_base * target.curiosity * (1.0 - target.skepticism) \
 			* (1.0 - U.anxiety_weight * target.anxiety) \
 			* (1.0 + U.charisma_weight * preacher.charisma) * boost(preacher)
 	if _population.districts.is_core(target.home):
 		c /= U.core_difficulty
+	if _population.awareness:
+		c *= _population.awareness.factor_for(target.home)
 	return clampf(c * maxf(1.0 + _population.miracles.proof_at(p), 0.0), 0.0, 1.0)
 
 

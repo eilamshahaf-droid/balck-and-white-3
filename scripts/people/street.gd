@@ -66,6 +66,20 @@ func bring_out(r: Resident) -> void:
 			return
 
 
+## Take `r` off the street: their body goes to someone of the same home who is
+## indoors, or to anyone indoors. Nobody gives `r` a body back while jailed.
+func put_away(r: Resident) -> void:
+	var c := r.body
+	var other := _indoors_at(r.home)
+	for _attempt in 32:
+		if other:
+			break
+		var any: Resident = bodies[_rng.randi() % bodies.size()].resident
+		other = _indoors_at(any.home)
+	if other:
+		_give_body(other, c)
+
+
 ## The resident whose body stands nearest `p` on the ground, within `radius`; null if none.
 func resident_near(p: Vector3, radius: float) -> Resident:
 	var best: Resident = null
@@ -118,7 +132,7 @@ func _indoors_at(home: Node3D) -> Resident:
 	var start := _rng.randi() % people.size()
 	for k in people.size():
 		var r: Resident = people[(start + k) % people.size()]
-		if r.body == null:
+		if r.body == null and r.jailed_left <= 0.0 and r.alive:
 			return r
 	return null
 

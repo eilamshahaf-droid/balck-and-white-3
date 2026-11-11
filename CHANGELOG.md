@@ -7,6 +7,17 @@ Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-
 - New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. No paid API: it runs on the PC alone. No dependencies, no subscription, no game code touched.
 - Try it: double-click `tools/researcher/run_researcher.cmd`; the Hebrew guide is `tools/researcher/README.md`.
 
+## Pre-Alpha 0.7.1 (2026-11-11): The city notices
+The designer's 0.7.1 brief, with the Balance Tester's numbers (`data/awareness.tres` and friends; provisional until playtested).
+- **Awareness.** Each district notices the cult (0 to 1, hidden). Working one building over and over raises it; a broad, joined-up front lets it fade. It makes converting harder there (down to x0.4). The first attempt on a district's core makes it fully aware for 10 minutes; your buildings next to the core shield that attempt.
+- **Thin lines give way.** A building of yours with at most one of yours next to it can be lost (5% a minute times awareness plus heat); half its believers stop believing.
+- **Neighbours complain.** A building of yours with more than 2 believers draws complaints, which raise awareness. At 3 complaints City Hall condemns it: a notice goes up, 30 seconds later the building is closed and emptied for 5 minutes, then everyone moves back. Tear the notice off with the hand (20 belief) to reopen it at once; the Secretary has a word about it. In the Slums this replaces the inspector and the bulldozer.
+- **The Vandalist.** Train one from a believer at the core building (2 min, $150, once you have 8 believers; at most 2). Pick him up and set him down by a building: he paints a mural there (30 s). Murals give believers living within two buildings pleasure, and raise awareness a little. The neighbourhood answers every mural: painted over, a fine, or a camera, each more likely the more it has been used. A fine or a camera can get him arrested.
+- **Arrests make martyrs.** The police no longer arrest priests. When they surround the Vandalist, people near the spot are won over 30% more easily for 3 minutes, and awareness rises. Three ways out: throw the officers off him (15 belief), pay $100 bail once he is taken, or wait 3 minutes.
+- **Police.** A building's heat limit is 30 in the Slums, so an ordinary missionary crew stays under it; at most one roadblock per district every 4 minutes. A sermon raid now just breaks the sermon up (15% chance on a street with no believers, down to 2%), and the same preacher is left alone for 3 minutes.
+- **Numbers.** Conversion base 0.6. A core's residents are 60 times harder to win (landmarks will bring that down in 0.7.2).
+- Try it: open https://eilamshahaf-droid.github.io/balck-and-white-3/ , grow to 8 believers, hold the button on the core building and choose "Train Vandalist", then drop him by a wall.
+
 ## Pre-Alpha 0.7.0 (2026-11-11): The Slums, the first playable slice
 The first district of the core loop, built from the designer's brief (`docs/GDD.md`).
 - **One man and a building.** The cult starts with the high priest alone in the Slums' core building, its first sermon house. Nobody else believes yet. The other districts are locked for now.

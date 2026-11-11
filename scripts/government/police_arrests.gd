@@ -1,21 +1,29 @@
 class_name PoliceArrests
 extends Node3D
-## The police try to arrest the preaching priest. A squad surrounds him and he
-## stands still; the player frees him by getting the officers away (pick them
-## up and throw them, or a miracle scatters them). If the squad is still around
-## him when the time runs out, he is taken. Whoever decides that an arrest
-## happens (the priest's sermon: Sermons.police_moved_in) starts it, and the end of
-## the arrest ends the sermon.
+## The police arrest the Vandalist (Murals calls arrest after the neighbourhood
+## answers a mural). A squad surrounds him and he stands still, and from then on he
+## is a martyr: people near the spot side with him for a while (Awareness). Three ways
+## out: throw the officers off him with the hand or scatter them with a miracle (costs
+## belief), pay bail once he is taken, or wait until jail lets him go.
 
-## A squad surrounds `priest`; `where` is on the street, for the alert.
-signal arrest_started(priest: Resident, where: Vector3)
-## The squad is gone from `priest`: he got away (`freed`), or time ran out and he is taken.
-## Sermons releases him on this too (end_sermon).
-signal arrest_ended(priest: Resident, freed: bool)
+## A squad surrounds `agent`; `where` is on the street, for the alert.
+signal arrest_started(agent: Resident, where: Vector3)
+## The squad is gone from `agent`: he got away (`freed`), or time ran out and he is taken.
+signal arrest_ended(agent: Resident, freed: bool)
+## `agent` is out of jail (bail or time served).
+signal released(agent: Resident)
 
 const S: PoliceSettings = preload("res://data/police.tres")
+const A: AwarenessSettings = preload("res://data/awareness.tres")
 
 @export var population: Population
+@export var districts: Districts
+@export var awareness: Awareness
+@export var faith: Faith
+@export var treasury: Treasury
+
+## The agents in jail, soonest out first.
+var jailed: Array[Resident] = []
 
 var _squads: Array[Squad] = []
 var _timer := 0.0
@@ -23,47 +31,41 @@ var _uniform := _mat(S.uniform_color)
 var _skin := _mat(S.skin_color)
 
 
-func _ready() -> void:
-	population.sermons.police_moved_in.connect(
-			func(priest: Resident, _at: Vector3) -> void: arrest(priest))
-	arrest_ended.connect(_on_arrest_ended)
-
-
 class Squad:
-	var priest: Resident
+	var agent: Resident
 	var officers: Array[PoliceOfficer] = []
 	var left := 0.0
 	var marker: Label3D
 
 
-## Is an arrest going on for `priest`?
-func is_arresting(priest: Resident) -> bool:
+## Is an arrest going on for `agent`?
+func is_arresting(agent: Resident) -> bool:
 	for squad in _squads:
-		if squad.priest == priest:
+		if squad.agent == agent:
 			return true
 	return false
 
 
-## Seconds left before the priest is taken, for the HUD alert (0 with none going on).
+## Seconds left before the agent is taken, for the HUD alert (0 with none going on).
 func seconds_left() -> float:
 	return _squads[0].left if not _squads.is_empty() else 0.0
 
 
 ## Where the arrest is, or Vector3.INF with none going on.
 func where() -> Vector3:
-	if _squads.is_empty() or _squads[0].priest.body == null:
+	if _squads.is_empty() or _squads[0].agent.body == null:
 		return Vector3.INF
-	return _squads[0].priest.body.global_position
+	return _squads[0].agent.body.global_position
 
 
-## Send a squad after `priest`. False when he has no body on the street or is already held.
-func arrest(priest: Resident) -> bool:
-	if priest.body == null or is_arresting(priest):
+## Send a squad after `agent`. False when he has no body on the street or is already held.
+func arrest(agent: Resident) -> bool:
+	if agent.body == null or is_arresting(agent):
 		return false
 	var squad := Squad.new()
-	squad.priest = priest
+	squad.agent = agent
 	squad.left = S.arrest_time
-	var centre := priest.body.global_position
+	var centre := agent.body.global_position
 	for i in S.officers:
 		var officer := PoliceOfficer.new()
 		add_child(officer)
@@ -81,10 +83,26 @@ func arrest(priest: Resident) -> bool:
 	squad.marker.pixel_size = S.label_size * 2.0
 	squad.marker.modulate = S.stripe_color.lightened(0.3)
 	squad.marker.position = Vector3(0.0, 4.0, 0.0)
-	priest.body.add_child(squad.marker)
+	agent.body.add_child(squad.marker)
 	_squads.append(squad)
-	arrest_started.emit(priest, centre)
+	var near := districts.building_near(centre)
+	if near >= 0:
+		awareness.add_martyr(districts.buildings[near])
+	arrest_started.emit(agent, centre)
 	return true
+
+
+## Pay bail for the agent who has been in jail longest. False without one or the money.
+func bail() -> bool:
+	if jailed.is_empty() or not treasury.spend_money(A.bail_money):
+		return false
+	_release(jailed[0])
+	return true
+
+
+## Seconds before the next jailed agent is let go (0 with nobody in jail).
+func jail_left() -> float:
+	return jailed[0].jailed_left if not jailed.is_empty() else 0.0
 
 
 ## A miracle goes off at `point`: officers within `radius` are thrown clear.
@@ -106,21 +124,24 @@ func _physics_process(delta: float) -> void:
 	_timer = S.arrest_tick
 	for squad in _squads.duplicate():
 		_tend(squad, step)
+	for agent in jailed.duplicate():
+		agent.jailed_left -= step
+		if agent.jailed_left <= 0.0:
+			_release(agent)
 
 
-## An arrested priest who is taken loses his post and his home; the head priest is spared.
-func _on_arrest_ended(priest: Resident, freed: bool) -> void:
-	population.sermons.end_sermon(priest)
-	if freed or priest == population.priest:
-		return
-	population.staffing.unassign(priest)
-	population.evict(priest)
+func _release(agent: Resident) -> void:
+	jailed.erase(agent)
+	agent.jailed_left = 0.0
+	if agent.alive:
+		population.bring_out(agent)
+	released.emit(agent)
 
 
 func _tend(squad: Squad, step: float) -> void:
-	var body := squad.priest.body
+	var body := squad.agent.body
 	if body == null or not is_instance_valid(body):
-		_finish(squad, true)
+		_finish(squad, true, false)
 		return
 	if body.state == Citizen.State.WALKING:
 		body.idle = true
@@ -136,9 +157,10 @@ func _tend(squad: Squad, step: float) -> void:
 		_finish(squad, false)
 
 
-func _finish(squad: Squad, freed: bool) -> void:
+## `rescued`: the hand or a miracle got the officers off him, which costs belief.
+func _finish(squad: Squad, freed: bool, rescued := true) -> void:
 	_squads.erase(squad)
-	var body := squad.priest.body
+	var body := squad.agent.body
 	if is_instance_valid(body):
 		body.idle = false
 		if is_instance_valid(squad.marker):
@@ -146,7 +168,17 @@ func _finish(squad: Squad, freed: bool) -> void:
 	for officer in squad.officers:
 		if is_instance_valid(officer):
 			officer.queue_free()
-	arrest_ended.emit(squad.priest, freed)
+	if freed and rescued:
+		faith.spend(minf(A.rescue_belief, faith.belief_pool))
+	else:
+		_jail(squad.agent)
+	arrest_ended.emit(squad.agent, freed)
+
+
+func _jail(agent: Resident) -> void:
+	agent.jailed_left = A.jail_seconds
+	jailed.append(agent)
+	population.put_away(agent)
 
 
 static func _mat(color: Color) -> StandardMaterial3D:
