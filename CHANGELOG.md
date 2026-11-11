@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
 
+## 2026-11-11: Grey-to-colour plan
+- `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.
+- Try it: read the "Grey to colour" section of `docs/ART.md`.
+
 ## 2026-11-11: Art bible
 - New `docs/ART.md`: the decided look, palette, camera readability rules, the 7 districts' art direction, the 8 resident archetype colours, the Slums asset list and the Cratial kit pipeline. Docs only; nothing changes in the game.
 - Try it: read `docs/ART.md`.
