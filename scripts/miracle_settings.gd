@@ -1,6 +1,6 @@
 class_name MiracleSettings
 extends Resource
-## Every tunable number for the miracles, accidents and the divine signs.
+## Every tunable number for the miracles.
 ## Open data/miracles.tres in Godot and change values in the Inspector.
 ##
 ## Each miracle has the belief formula's inputs (see balance.gd): intensity I,
@@ -10,7 +10,7 @@ extends Resource
 
 @export_group("Miracle power: believers near the spot")
 @export var power_radius := 70.0             # metres: believers this close lend the miracle their faith
-@export var full_power_belief := 6.0         # summed belief of those believers for full power
+@export var full_power_belief := 6.0         # believers that close for full power
 @export var weak_size := 0.6                 # radius of a miracle cast with no believers near...
 @export var strong_size := 1.6               # ...and at full power
 @export var weak_time := 0.7                 # how long it lasts, the same way
@@ -19,9 +19,9 @@ extends Resource
 @export var strong_cost := 0.7               # ...cheaper among your own
 @export var power_update := 0.25             # seconds between updates of the power under the hand
 
-@export_group("Proof: what a miracle leaves for the priests")
-## A miracle converts nobody; it leaves proof where it landed, and priests there
-## persuade (1 + proof) times as well while it lasts.
+@export_group("Proof: what a miracle leaves for the preachers")
+## A miracle converts nobody; it leaves proof where it landed, and a preacher's
+## chance there is (1 + proof) times as high while it lasts.
 @export var proof_time := 60.0               # seconds the proof takes to fade away
 @export var proof_radius := 40.0             # metres around the miracle, at size 1
 ## Each miracle that landed near here in the last proof_memory seconds makes
@@ -124,15 +124,6 @@ extends Resource
 ## Chance that the frogs wreck a police roadblock within their reach.
 @export_range(0.0, 1.0) var frog_roadblock_chance := 0.7
 
-@export_group("Accidents: believers set their own buildings on fire")
-@export var accident_interval := 240.0       # seconds between chances of an accident
-@export_range(0.0, 1.0) var accident_chance := 0.15
-@export var accident_use_weight := 3.0       # how much likelier a Prayer House or Course Center burns
-@export var accident_zealot_radius := 20.0   # each zealot this close makes a building likelier to burn
-@export var accident_burn_time := 35.0       # seconds to put it out before the building is lost
-@export var accident_lines: Array[String] = ["Who left the candles on?",
-		"The incense! THE INCENSE!", "It was a very moving sermon.", "Fire is a sign, right? RIGHT?"]
-
 @export_group("Saved from the fire: water puts out a burning building")
 @export var saved_intensity := 1.0
 @export_range(-1.0, 1.0) var saved_situation := 0.8     # the god saved our home
@@ -140,7 +131,7 @@ extends Resource
 @export var saved_seen_from := 60.0
 @export var saved_proof := 1.2               # the strongest proof: the god saved their home
 
-@export_group("Head priest marker: so you can find him")
+@export_group("High priest marker: so you can find him")
 @export var priest_ring_radius := 2.2        # metres, the ring on the ground around him
 @export var priest_ring_color := Color(1.0, 0.85, 0.3)
 @export var priest_label_pixel := 0.0011
@@ -153,7 +144,3 @@ extends Resource
 @export_group("Floating notes: who just came to believe")
 @export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once
 
-@export_group("Divine signs on buildings")
-@export var beam_height := 160.0             # metres of the beam of light above the roof
-@export var cloud_flash_interval := 3.0      # seconds between flashes in the storm cloud (on average)
-@export var ring_spin := 0.6                 # radians per second

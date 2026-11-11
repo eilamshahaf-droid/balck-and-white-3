@@ -10,7 +10,6 @@ extends Resource
 @export var tick := 1.0                     # seconds between payments
 
 @export_group("Collection box")
-@export var tithe_per_believer := 0.05      # money per second per believer
 
 @export_group("Rent: a building of yours with no use")
 @export var rent_per_resident := 0.1        # money per second per resident

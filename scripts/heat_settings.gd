@@ -23,5 +23,3 @@ extends Resource
 @export var crowd := 0.3
 ## Per breach of the building rules (a floor over the limit, a change of use).
 @export var code_breach := 4.0
-## An accident (a fire a zealot started).
-@export var accident := 5.0

@@ -1,14 +1,15 @@
 class_name Sermons
 extends Node
-## A priest now and then stops and preaches: he stands still, a crowd gathers
-## around him, and while it lasts his preaching is stronger the bigger the
-## crowd. Each sermon has a hidden chance that the police step in, higher on a
+## A preacher (a missionary or the high priest) now and then stops and
+## preaches: they stand still, a crowd gathers around them, and while it lasts
+## they try to win someone over more often the bigger the crowd. Each sermon has a hidden chance that the police step in, higher on a
 ## street where few people believe. A raid stops the sermon and leaves the
 ## priest surrounded until the world (the police) calls end_sermon, or
 ## raid_time passes. The player sees the sermon and the raid through the signals.
 ##
-## Only the cult's priests start sermons, and not while the homes are full:
-## there is nobody to convert without a home for them.
+## Only preachers start sermons, and not while the homes are full: there is
+## nobody to convert without a home for them. (The `priest` names below mean
+## whoever preaches.)
 
 ## `priest` began a sermon at `at`, with `risk` the hidden police chance (0..1).
 signal sermon_started(priest: Resident, at: Vector3, risk: float)
@@ -25,10 +26,7 @@ class Sermon extends RefCounted:
 	var crowd := 0
 	var raided := false
 
-# Loaded at run time: a parse-time preload would load social_group.gd before
-# its class_name is registered and break the typed groups array.
-var _people: PeopleSettings = load("res://data/people.tres")
-const B: Balance = preload("res://data/balance.tres")
+const U: UnitSettings = preload("res://data/units.tres")
 const CHECK_INTERVAL := 1.0
 
 var _population: Population
@@ -36,6 +34,9 @@ var _active: Array[Sermon] = []
 var _rest: Dictionary = {}   # priest -> seconds until their next sermon
 var _check_timer := 0.0
 var _rng := RandomNumberGenerator.new()
+# Loaded at run time: a parse-time preload would load the element scripts before
+# their class_name is registered and break the typed arrays.
+var _people: PeopleSettings = load("res://data/people.tres")
 
 
 func setup(population: Population) -> void:
@@ -51,7 +52,7 @@ func _physics_process(delta: float) -> void:
 	if _check_timer > 0.0:
 		return
 	_check_timer = CHECK_INTERVAL
-	for priest in _population.priests():
+	for priest in _population.preaching.preachers():
 		if _sermon_of(priest) == null and _population.has_body(priest):
 			_rest[priest] = _rest.get(priest, _people.sermon_interval) - CHECK_INTERVAL
 			if _rest[priest] <= 0.0:
@@ -79,7 +80,7 @@ func risk_at(p: Vector3) -> float:
 	for c in _population.street_bodies():
 		if c.global_position.distance_to(p) < _people.safety_radius:
 			all += 1
-			if c.belief > B.believer_threshold:
+			if c.resident.is_believer():
 				believers += 1
 	var safety := float(believers) / all if all > 0 else 0.0
 	return lerpf(_people.raid_chance_unsafe, _people.raid_chance_safe, safety)
@@ -95,7 +96,7 @@ func _begin(priest: Resident) -> void:
 	_active.append(s)
 	# He stands where he is for the whole sermon.
 	priest.body.send_on_errand(s.at, s.at, _people.sermon_time + _people.raid_time, "",
-			_people.priest_color)
+			U.color(priest.rank))
 	_gather_crowd(s)
 	var risk := risk_at(s.at)
 	sermon_started.emit(priest, s.at, risk)
@@ -130,12 +131,9 @@ func _tick(s: Sermon, delta: float) -> void:
 		return
 	s.preach_timer -= delta
 	if s.preach_timer <= 0.0:
-		s.preach_timer = _people.priest_interval
 		var crowd_boost := 1.0 + _people.crowd_boost * float(s.crowd) / maxi(_people.crowd_size, 1)
-		var reached := _population.persuade_near(
-				s.at, _population.preach_reach(s.priest),
-				_population.preach_strength(s.priest) * crowd_boost)
-		_population.priest_preached.emit(s.priest, reached)
+		s.preach_timer = U.attempt_interval / crowd_boost
+		_population.preaching.attempt_near(s.priest, s.at)
 
 
 func _finish(s: Sermon) -> void:

@@ -7,7 +7,6 @@ extends Node3D
 ## node, sharing the prop's mesh and material.
 
 const SETTINGS_PATH := "res://data/city_props.tres"
-const DivineSign := preload("res://scripts/divine_sign.gd")
 
 ## Decrees tell which building changed its use.
 @export var decrees: Decrees
@@ -26,7 +25,7 @@ func _on_decree_issued(kind: StringName, building: Node3D) -> void:
 		return
 	_clear(building)
 	var use: String = building.get_meta(&"decree_use", "")
-	var size := DivineSign.building_size(building)
+	var size := BuildingBox.size_of(building)
 	for marker in _s.use_markers:
 		if marker.use_name == use:
 			_place(building, size, marker)

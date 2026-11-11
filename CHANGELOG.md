@@ -1,7 +1,36 @@
 # Changelog
 
 One entry per update, newest first. Each entry says what changed and how to try it.
-Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
+Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
+
+## Pre-Alpha 0.7.0 (2026-11-11): The Slums, the first playable slice
+The first district of the core loop, built from the designer's brief (`docs/GDD.md`).
+- **One man and a building.** The cult starts with the high priest alone in the Slums' core building, its first sermon house. Nobody else believes yet. The other districts are locked for now.
+- **Eight kinds of people.** Every resident is one of the GDD's eight archetypes, with fixed traits (anxiety, sociability, curiosity, skepticism) and assets (wealth, connections, faith). The Slums hold only homeless (about 40%) and blue collar people. Numbers: `data/archetypes.tres`.
+- **Winning people over.** Missionaries and the high priest convert, one attempt every 20 seconds each, on someone near them; plain believers on the street try too, at 4% of that rate. Chance = 0.5 x curiosity x (1 - skepticism) x (1 - 0.5 x anxiety) x (1 + 0.3 x charisma), raised by sermon-house upgrades and by miracle proof. People who live in a district's core are twice as hard to win. Miracles never convert. Sermons draw a crowd and make attempts come faster.
+- **Believers work for you.** Each believer makes money (4 x wealth per minute) and, inside a sermon house with a priest, belief (3 x faith per minute), both times how well their four needs (livelihood, security, pleasure, meaning) are met: x0.7 to x1.3. A believer whose livelihood is badly met may leave.
+- **Training.** Bring believers to a sermon house and choose "Train Missionary" on its wheel (90 s). Missionaries trained at the high priest's house can become priests (180 s and $400, up to 12). "Serve as Priest" sends a free priest to another sermon house. The sky-sign takeover mark now needs missionaries.
+- **Capturing the Slums.** A district is yours when its core building and 60% of its buildings are (`control_share` in `data/districts.tres`, the designer's call). A building can only become yours if it borders one you already hold, on its block or across one street or avenue (`border_gap`), so the Slums are taken outwards from the headquarters; abandoned places too. A district's core can only be taken once half the buildings within two borders of it are yours. The tooltip says when a building is out of reach. Numbers from the Balance Tester's simulation (`data/units.tres`, `data/districts.tres`). A "district captured" screen with a line from the Secretary's minutes ends the slice.
+- **Removed:** the old belief scale with skeptics, sympathizers and zealots, belief drifting back, the old seven social groups, and believers setting their own buildings on fire.
+- The B debug card shows a person's archetype, rank, traits, needs and output multiplier. The HUD shows believers out of homes, missionaries and priests.
+- Code: `population.gd` is split into `Preaching`, `Staffing` and `BuildingUpgrades`; all rank names live in `data/units.tres`, so a new story can rename them. New test: `godot --headless --path . res://tests/cult_test.tscn` prints `CULT TEST: PASS`.
+- Try it: open https://eilamshahaf-droid.github.io/balck-and-white-3/ , follow the high priest (gold ring), and watch "+ Believer" pop up. Pick believers up, drop them by his sermon house, hold the button on it and train a missionary.
+
+## Pre-Alpha 0.6.5 (2026-11-11): The congregation is back
+- Fix: since 0.6.4 the game started with no believers and no head priest, because the removed opening used to found the congregation. Population now founds it itself once the residents move in.
+- Try it: start the game; the HUD shows believers and one priest.
+
+## Pre-Alpha 0.6.4 (2026-11-11): Play the Alpha in the browser, and a clean-up
+- Every Alpha now opens in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/ . A GitHub workflow (`.github/workflows/alpha-web.yml`) builds the web version on every push to `alpha` and puts it on GitHub Pages. The ZIP download stays as a fallback.
+- Fixed a crash in exported builds: when Godot turned `data/people.tres` into a binary file on export, the residents lost their names and the game froze at start. Text resources now stay text in the export.
+- Removed what the design no longer has: the burning-building opening with the Keepers of the Hand (`opening.gd`, already switched off) and the divine signs on buildings (`divine_sign.gd`, replaced by the takeover marks). Its one useful helper, a building's size, is now `BuildingBox.size_of`.
+- The help line no longer says that only miracles change belief: priests win people over, miracles help them.
+- `CLAUDE.md` now points to `docs/GDD.md` and `docs/ART.md`, lists the three studio roles as owners, and explains the web build.
+- Try it: open the link above in Chrome or Edge.
+
+## 2026-11-11: Grey-to-colour plan
+- `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.
+- Try it: read the "Grey to colour" section of `docs/ART.md`.
 
 ## 2026-11-11: Grey-to-colour plan
 - `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.
@@ -113,7 +142,7 @@ Run the main game with F5; run a single scene by opening it in the FileSystem pa
 - A building that burns down because nobody put the fire out now calls `Population.burn_down`: some of the people indoors die (people thread). Roaches and frogs still just empty a building.
 - Accidental fires are now a rare event: a chance every 4 minutes (was 40 s) and 15% (was 50%): `accident_interval`, `accident_chance` in `data/miracles.tres`.
 - The campaign mark labels ("2 / 11 believe") draw above everything else, so a nearer roof no longer cuts them off; the version label sits in the screen corner.
-- The Upgrades wheel now depends on the building: homes (elevator, roof garden, cameras, gate), prayer houses (loudspeaker, banners, lecture hall) and workplaces (storefront, training hall, real estate, seminary, restaurant), from `Population.upgrades_for`. Banners, storefront, training hall and real estate only add places for now; the people thread adds their effects.
+- The Upgrades wheel now depends on the building: homes (elevator, roof garden, cameras, gate), prayer houses (loudspeaker, banners, lecture hall) and workplaces (storefront, training hall, real estate, seminary, restaurant), from `Population.upgrades_for`. Banners make priests preach stronger, the storefront raises shop income, the training hall trains fighters and real estate makes buying cheaper (the last two work once Campaigns reads them).
 - Sermon alerts: when a priest stops to preach a gold ring marks the spot and a button at the top of the screen flies the camera there; when the police move in the ring turns red and the button says so (`scripts/sermon_alerts.gd`). The raid chance stays hidden. Any miracle cast near an arrest throws the officers clear (`scatter_radius` in `data/miracles.tres`).
 - Try it: press F5, zoom out and orbit: no building fades unless it is near you;.
 

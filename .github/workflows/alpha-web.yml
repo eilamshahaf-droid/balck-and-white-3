@@ -1,0 +1,73 @@
+# Builds the web version of the Alpha and publishes it on GitHub Pages, so Eilam can play
+# every Alpha in the browser without the Godot editor. Runs on every push to `alpha`.
+name: Alpha web build
+
+on:
+  push:
+    branches: [alpha]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.4.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot and the web templates
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-web
+
+      - name: Download Godot and the web templates
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          base=https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable
+          mkdir -p ~/godot
+          curl -sSL -o godot.zip $base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          unzip -q godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+          curl -sSL -o templates.tpz $base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
+          dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p $dest
+          unzip -qj templates.tpz templates/web_nothreads_release.zip templates/version.txt -d $dest
+
+      - name: Export the web build
+        run: |
+          ~/godot/godot --headless --path . --import || true
+          mkdir -p build/web
+          ~/godot/godot --headless --path . --export-release Web build/web/index.html
+          test -s build/web/index.pck
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

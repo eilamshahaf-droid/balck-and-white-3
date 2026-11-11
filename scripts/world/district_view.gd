@@ -6,7 +6,6 @@ extends Node3D
 ## call. The takeover marks (skull, dollar, sky sign) are campaign_marks.gd.
 
 const S: DistrictSettings = preload("res://data/districts.tres")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 const ROOF_LIFT := 1.4      # above the roof modules (Kenney roofs stand about a metre proud of the box)
 const ROOF_INSET := 0.8     # plate size as a share of the roof
 const BORDER_LIFT := 0.03   # just above the asphalt
@@ -68,7 +67,7 @@ func _place_core(d: int) -> void:
 	if b == null:
 		_cores.set_instance_transform(d, _hidden)
 		return
-	var size := DivineSign.building_size(b)
+	var size := BuildingBox.size_of(b)
 	var at := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT + S.core_beacon.y / 2.0)
 	_cores.set_instance_transform(d, Transform3D(Basis.from_scale(S.core_beacon), at))
 	_cores.set_instance_color(d, S.roof_color if districts.is_yours(core) else S.core_color)
@@ -82,7 +81,7 @@ func _on_building_changed(index: int, yours: bool) -> void:
 	if b == null or not yours:
 		_roofs.set_instance_transform(index, _hidden)
 		return
-	var size := DivineSign.building_size(b)  # live: decrees add floors
+	var size := BuildingBox.size_of(b)  # live: decrees add floors
 	var top := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT)
 	_roofs.set_instance_transform(index, Transform3D(Basis.from_scale(Vector3(size.x, 1.0, size.z) * ROOF_INSET), top))
 

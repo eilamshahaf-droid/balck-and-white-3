@@ -4,7 +4,7 @@ extends Node
 ## Eilam's round of 2026-10-27). Skull, force: fighters from a Combat Training
 ## building scare the non-believers out and move in. Dollar, buy: the cult buys
 ## out non-believers one by one and believers move in. Sky sign, missionaries:
-## believers preach at the door until the residents believe. The building is
+## missionaries try to win the residents over at the door (Population.attempt). The building is
 ## yours, by Districts' rule, once most of its residents believe; then the
 ## campaign ends. Marks come from the building wheel.
 
@@ -14,13 +14,12 @@ signal campaign_ended(building: Node3D, route: Route, won: bool)
 enum Route { FORCE, BUY, PREACH }
 
 const S: CampaignSettings = preload("res://data/campaigns.tres")
-const B: Balance = preload("res://data/balance.tres")
-const DivineSign = preload("res://scripts/divine_sign.gd")
+const U: UnitSettings = preload("res://data/units.tres")
 const NONE := -1
 const SIDEWALK_GAP := 1.5   # metres out from the wall
 
 @export var districts: Districts
-@export var population: Node
+@export var population: Population
 @export var faith: Node
 @export var treasury: Treasury
 @export var decrees: Decrees
@@ -87,6 +86,12 @@ func why_not(building: Node3D, route: Route) -> String:
 		return "not a building"
 	if districts.is_yours(i):
 		return "already yours"
+	if not districts.is_open(building):
+		return "opens in a later stage"
+	if not districts.borders_yours(i):
+		return "must border a building of yours"
+	if not districts.can_claim(i):
+		return "take the buildings around it first"
 	match route:
 		Route.FORCE:
 			if _training() == null:
@@ -107,7 +112,7 @@ func why_not(building: Node3D, route: Route) -> String:
 func price_in(building: Node3D) -> float:
 	var i := districts.index_of(building)
 	return (S.apartment_price * (districts.wealth_at(i) if i >= 0 else 1.0)
-			* population.buy_price_factor(building))
+			* population.staffing.buy_price_factor(building))
 
 
 ## Every marked building.
@@ -191,8 +196,9 @@ func _step(c: Campaign) -> void:
 				c.stalled = "needs %d belief" % roundi(S.preach_cost)
 				return
 			var r := _doubter_in(c.building)
-			if r and faith.spend(S.preach_cost):
-				population.persuade(r, SocialGroup.Route.PREACH, S.preach_strength)
+			var preacher := _arrived_agent(c)
+			if r and preacher and faith.spend(S.preach_cost):
+				population.preaching.attempt(r, preacher)
 				c.stalled = ""
 			c.wait = S.preach_interval
 
@@ -229,7 +235,7 @@ func _top_up(c: Campaign) -> void:
 	var wanted: int = [S.fighters, S.buyers, S.missionaries][c.route]
 	var gym := _training() if c.route == Route.FORCE else null
 	if gym:
-		wanted = mini(wanted + floori(population.fighters_of(gym)), S.max_fighters)
+		wanted = mini(wanted + floori(population.staffing.fighters_of(gym)), S.max_fighters)
 	if c.agents.size() >= wanted:
 		return
 	var from := c.building.global_position
@@ -240,11 +246,16 @@ func _top_up(c: Campaign) -> void:
 			return
 		from = training.global_position
 	var free: Array[Citizen] = []
+	var rank := Resident.Rank.MISSIONARY if c.route == Route.PREACH else Resident.Rank.BELIEVER
 	for r: Resident in population.residents:
-		if r.belief > B.believer_threshold and is_instance_valid(r.body) and r.body.can_answer():
+		if r.rank == rank and r.job == Resident.Job.FREE and is_instance_valid(r.body) \
+				and r.body.can_answer():
 			free.append(r.body)
 	free.sort_custom(func(a: Citizen, b: Citizen) -> bool:
 		return a.global_position.distance_squared_to(from) < b.global_position.distance_squared_to(from))
+	if free.is_empty() and c.agents.is_empty():
+		c.stalled = "needs a free %s" % U.title(rank).to_lower()
+		return
 	var line: String = [S.fighter_line, S.buyer_line, S.missionary_line][c.route]
 	var center := c.building.global_position
 	for a in free.slice(0, wanted - c.agents.size()):
@@ -256,7 +267,7 @@ func _top_up(c: Campaign) -> void:
 ## gives its centre, otherwise somewhere along the wall.
 func _spot_outside(building: Node3D, middle: bool) -> Vector3:
 	var center := building.global_position
-	var half := DivineSign.building_size(building) / 2.0
+	var half := BuildingBox.size_of(building) / 2.0
 	var corner: Vector3 = districts.city.intersection(districts.city.nearest_grid(center))
 	var to := corner - center
 	var spot := center
@@ -270,10 +281,18 @@ func _spot_outside(building: Node3D, middle: bool) -> Vector3:
 	return spot
 
 
+## A crew member of `c` standing at the building, or null.
+func _arrived_agent(c: Campaign) -> Resident:
+	for a in c.agents:
+		if is_instance_valid(a) and a.errand_arrived:
+			return a.resident
+	return null
+
+
 ## A resident of `building` who doesn't believe, or null.
 func _doubter_in(building: Node3D) -> Resident:
 	for r: Resident in population.residents:
-		if r.home == building and r.belief <= B.believer_threshold:
+		if r.home == building and not r.is_believer():
 			return r
 	return null
 
@@ -284,7 +303,7 @@ func _mover_for(building: Node3D) -> Resident:
 	var best: Resident = null
 	var best_d := INF
 	for r: Resident in population.residents:
-		if r.home == building or r.belief <= B.believer_threshold or r.home == null:
+		if r.home == building or not r.is_believer() or r.home == null:
 			continue
 		var i := districts.index_of(r.home)
 		if i >= 0 and districts.is_yours(i) and not _spare(i):

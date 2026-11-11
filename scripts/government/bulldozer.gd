@@ -10,8 +10,6 @@ signal finished(demolished: bool)
 enum Mode { DRIVING, WORKING, DONE }
 
 const G = preload("res://data/government.tres")
-const B = preload("res://data/balance.tres")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 const RIDE_HEIGHT := 1.1
 const LINES := {
 	&"believers": ["Folks, please step away from the building.", "I just drive the thing, lady."],
@@ -112,7 +110,7 @@ func _drive(delta: float) -> void:
 			_mode = Mode.WORKING
 			# Measured now, not when sent: a +3 Floors decree may have grown it meanwhile.
 			_building_y = _building.position.y
-			_building_height = DivineSign.building_size(_building).y
+			_building_height = BuildingBox.size_of(_building).y
 			var to_building := _building.global_position - global_position
 			to_building.y = 0.0
 			global_basis = Basis.looking_at(to_building.normalized())  # blade to the wall
@@ -150,7 +148,7 @@ func _work(delta: float) -> void:
 func _what_blocks() -> StringName:
 	var guards := 0
 	for c in get_tree().get_nodes_in_group("citizens"):
-		if c.errand_arrived and c.belief > B.believer_threshold \
+		if c.errand_arrived and c.resident.is_believer() \
 				and c.global_position.distance_to(global_position) < G.guard_radius:
 			guards += 1
 	return &"believers" if guards >= G.guards_to_block else &""
