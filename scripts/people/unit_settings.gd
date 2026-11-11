@@ -9,11 +9,11 @@ extends Resource
 ## believer, missionary, priest, special agent, high priest. Renaming the
 ## cult's words happens here, not in code.
 @export var rank_titles := PackedStringArray([
-	"Resident", "Believer", "Missionary", "Priest", "Special agent", "High priest",
+	"Resident", "Believer", "Missionary", "Priest", "Vandalist", "High priest",
 ])
 ## The same, in the plural (the HUD's captions).
 @export var rank_plurals := PackedStringArray([
-	"Residents", "Believers", "Missionaries", "Priests", "Special agents", "High priests",
+	"Residents", "Believers", "Missionaries", "Priests", "Vandalists", "High priests",
 ])
 ## Body colour per rank, same order (a resident keeps their own colour).
 @export var rank_colors := PackedColorArray([
@@ -27,7 +27,7 @@ extends Resource
 ## Chance per attempt = base x curiosity x (1 - skepticism)
 ## x (1 - anxiety_weight x anxiety) x (1 + charisma_weight x charisma), times
 ## 1 + the miracle proof where it happens.
-@export_range(0.0, 1.0) var conversion_base := 0.5
+@export_range(0.0, 1.0) var conversion_base := 0.6
 @export_range(0.0, 1.0) var anxiety_weight := 0.5
 @export var charisma_weight := 0.3
 ## Seconds between one preacher's attempts (missionaries and the high priest).
@@ -37,8 +37,9 @@ extends Resource
 ## Every believer on the street also tries now and then, at this share of a
 ## preacher's attempt rate.
 @export_range(0.0, 1.0) var believer_attempt_share := 0.04
-## A core building's residents are this many times harder to win over.
-@export var core_difficulty := 2.0
+## A core building's residents are this many times harder to win over. Very hard on
+## purpose: landmarks marked by the Vandalist will bring it down (0.7.2).
+@export var core_difficulty := 60.0
 
 @export_group("Output per believer")
 ## Per believer per minute: money = this x wealth, belief = this x faith, both times
@@ -68,6 +69,13 @@ extends Resource
 @export var max_priests := 12
 ## Money it costs to start training a priest.
 @export var priest_cost := 400.0
+## The special agent (in the Slums the Vandalist): trained from a believer at a
+## district's core building you hold, this long, for this much money, so many at once.
+@export var agent_time := 120.0
+@export var agent_cost := 150.0
+@export var max_agents := 2
+## The cult needs this many believers before it can train one.
+@export var agent_unlock_believers := 8
 
 
 # Accessors rather than indexing the arrays from a const preload: in the editor the

@@ -27,6 +27,7 @@ var _blue := _mat(S.car_color)
 var _dented := _mat(S.dented_color)
 var _closed := _tile_mat(S.closed_street_color)
 var _count := 0                  # roadblocks raised so far, for their names
+var _district_wait := {}         # district -> seconds before it can get another roadblock
 
 
 class Roadblock:
@@ -51,6 +52,10 @@ func _physics_process(delta: float) -> void:
 	_timer = S.check_interval
 	_lift_roadblocks()
 	_wear_down()
+	for d: int in _district_wait.keys():
+		_district_wait[d] -= S.check_interval
+		if _district_wait[d] <= 0.0:
+			_district_wait.erase(d)
 	for b in campaigns.marked():
 		var crew := campaigns.crew_at(b)
 		if crew == 0 or _blocks.has(b) or _is_safe(b):
@@ -73,6 +78,10 @@ func status_text() -> String:
 func _on_police_called(building: Node3D, _reason: Heat.Reason) -> void:
 	if _blocks.has(building) or _is_safe(building):
 		return
+	var d := districts.district_at(building.global_position)
+	if _district_wait.has(d):
+		return  # at most one roadblock per district per district_cooldown
+	_district_wait[d] = S.district_cooldown
 	_close_street(building)
 
 

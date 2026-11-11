@@ -165,11 +165,28 @@ func borders_yours(index: int) -> bool:
 ## The share of the standing buildings within core_base_steps borders of `index`
 ## that are yours.
 func core_base(index: int) -> float:
-	var near := _graph.around(index, S.core_base_steps, _demolished())
+	var near := around(index, S.core_base_steps)
 	var held := 0
 	for j in near:
 		held += _yours[j]
 	return float(held) / maxi(near.size(), 1)
+
+
+## The standing buildings within `steps` borders of building `index` (not itself).
+func around(index: int, steps: int) -> Array[int]:
+	return _graph.around(index, steps, _demolished())
+
+
+## Which district building `index` is in, -1 once demolished.
+func district_of(index: int) -> int:
+	return _district_of[index]
+
+
+## Building `index` is yours no longer (a thin line gave way): it counts as lost until
+## the next count says otherwise.
+func lose(index: int) -> void:
+	if _yours[index] == 1 and index != headquarters:
+		_set_side(index, false)
 
 
 ## The buildings that building `index` borders (demolished ones included).

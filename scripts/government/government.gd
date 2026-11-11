@@ -119,7 +119,8 @@ func _pick_target() -> Node3D:
 			heat.raise(b, Heat.Reason.CODE_BREACH, score)
 		elif score == 0.0:
 			_flagged.erase(b)
-		if score > worst_score:
+		# Where condemnation notices replace it (the Slums), no inspector comes.
+		if score > worst_score and not G.condemns_in(districts.kind_at(b.global_position)):
 			worst_score = score
 			worst = b
 	return worst

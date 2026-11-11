@@ -130,13 +130,13 @@ extends Resource
 @export var crowd_boost := 1.0
 @export var sermon_line := "Amen!"
 @export var crowd_line_color := Color(1.0, 0.95, 0.7)
-## Hidden chance that the police step in on a sermon, on a street where nobody
+## Hidden chance that the police break up a sermon, on a street where nobody
 ## believes and on one where everybody does; safety counts believers within safety_radius.
-@export_range(0.0, 1.0) var raid_chance_unsafe := 0.5
+@export_range(0.0, 1.0) var raid_chance_unsafe := 0.15
 @export_range(0.0, 1.0) var raid_chance_safe := 0.02
 @export var safety_radius := 60.0
-## A raid ends after this many seconds if nobody has dealt with it.
-@export var raid_time := 60.0
+## After a raid the same preacher is left alone this many seconds.
+@export var raid_cooldown := 180.0
 
 @export_group("Dancing")
 ## People sent on an errand to dance (a block party) bob this high, this fast, and turn.
