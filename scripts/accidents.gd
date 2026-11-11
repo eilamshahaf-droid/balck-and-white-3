@@ -7,7 +7,6 @@ extends Node
 
 const M: MiracleSettings = preload("res://data/miracles.tres")
 const Sfx := preload("res://scripts/sfx.gd")
-const DivineSign := preload("res://scripts/divine_sign.gd")
 
 ## A believer set `building` on fire by accident.
 signal accident(building: Node3D)
@@ -43,7 +42,7 @@ func _physics_process(delta: float) -> void:
 func start_fire(building: Node3D) -> void:
 	miracles.set_alight(building, M.accident_burn_time / M.fire_burn_time)
 	var line: String = M.accident_lines[randi() % M.accident_lines.size()]
-	var roof := DivineSign.building_size(building).y / 2.0 + 3.0
+	var roof := BuildingBox.size_of(building).y / 2.0 + 3.0
 	FloatingNote.pop(building.get_parent(), building.global_position + Vector3.UP * roof,
 			line + "  Water, quick!", Color(1.0, 0.55, 0.25))
 	Sfx.play(get_tree(), building.global_position, &"fire", 1.0)

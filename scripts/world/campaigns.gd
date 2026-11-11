@@ -15,7 +15,6 @@ enum Route { FORCE, BUY, PREACH }
 
 const S: CampaignSettings = preload("res://data/campaigns.tres")
 const B: Balance = preload("res://data/balance.tres")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 const NONE := -1
 const SIDEWALK_GAP := 1.5   # metres out from the wall
 
@@ -256,7 +255,7 @@ func _top_up(c: Campaign) -> void:
 ## gives its centre, otherwise somewhere along the wall.
 func _spot_outside(building: Node3D, middle: bool) -> Vector3:
 	var center := building.global_position
-	var half := DivineSign.building_size(building) / 2.0
+	var half := BuildingBox.size_of(building) / 2.0
 	var corner: Vector3 = districts.city.intersection(districts.city.nearest_grid(center))
 	var to := corner - center
 	var spot := center

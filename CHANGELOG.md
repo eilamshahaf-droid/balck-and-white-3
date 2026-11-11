@@ -1,7 +1,15 @@
 # Changelog
 
 One entry per update, newest first. Each entry says what changed and how to try it.
-Run the main game with F5; run a single scene by opening it in the FileSystem panel and pressing F6.
+Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
+
+## Pre-Alpha 0.6.4 (2026-11-11): Play the Alpha in the browser, and a clean-up
+- Every Alpha now opens in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/ . A GitHub workflow (`.github/workflows/alpha-web.yml`) builds the web version on every push to `alpha` and puts it on GitHub Pages. The ZIP download stays as a fallback.
+- Fixed a crash in exported builds: when Godot turned `data/people.tres` into a binary file on export, the residents lost their names and the game froze at start. Text resources now stay text in the export.
+- Removed what the design no longer has: the burning-building opening with the Keepers of the Hand (`opening.gd`, already switched off) and the divine signs on buildings (`divine_sign.gd`, replaced by the takeover marks). Its one useful helper, a building's size, is now `BuildingBox.size_of`.
+- The help line no longer says that only miracles change belief: priests win people over, miracles help them.
+- `CLAUDE.md` now points to `docs/GDD.md` and `docs/ART.md`, lists the three studio roles as owners, and explains the web build.
+- Try it: open the link above in Chrome or Edge.
 
 ## 2026-11-11: Art bible
 - New `docs/ART.md`: the decided look, palette, camera readability rules, the 7 districts' art direction, the 8 resident archetype colours, the Slums asset list and the Cratial kit pipeline. Docs only; nothing changes in the game.

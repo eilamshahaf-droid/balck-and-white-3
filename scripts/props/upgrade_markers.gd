@@ -7,7 +7,6 @@ extends Node3D
 ## at most, so each prop is its own node, sharing the model's mesh and material.
 
 const SETTINGS_PATH := "res://data/city_props.tres"
-const DivineSign := preload("res://scripts/divine_sign.gd")
 
 ## Tells which building bought what.
 @export var population: Population
@@ -23,7 +22,7 @@ func _ready() -> void:
 
 func _on_upgraded(building: Node3D, _kind: Population.Upgrade) -> void:
 	_clear(building)
-	var size := DivineSign.building_size(building)
+	var size := BuildingBox.size_of(building)
 	var bought := population.upgrades_of(building)
 	for marker in _s.upgrade_markers:
 		if marker.upgrade in bought:

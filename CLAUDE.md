@@ -5,9 +5,11 @@ Guide for every Claude session that works on this repo. Read it before writing c
 ## The project
 
 An original god game with city building, made in **Godot 4** (standard build, GDScript, no C#).
-The player is a real god in a modern city that denies him; the hand is the whole interface.
-Design doc and research live outside the repo (links in `README.md`). `README.md` is the
-player-facing guide in Hebrew; `CHANGELOG.md` is the update log in English.
+A comedy: you are the god of a small cult taking over an NYC-like city, district by district,
+up to City Hall; the hand is the whole interface. The design is `docs/GDD.md` (owned by the
+Game Designer thread) and the look is `docs/ART.md` (owned by the Artist thread); build what
+they say. `README.md` is the player-facing guide in Hebrew; `CHANGELOG.md` is the update log
+in English.
 
 Eilam, the owner, is not a programmer. Code quality is our responsibility, not his.
 He chats in Hebrew; everything in the repo and in the game (UI, dialogue, code, comments,
@@ -28,11 +30,9 @@ scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, 
 scripts/maplab/      the map lab: districts' street styles, blocks, land use, menu
 data/                every tunable number, as .tres resources (one per system)
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
-assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT), with their licence files
-assets/models/       third-party models (Kenney CC0) and our Meshy props (meshy/), with licence notes
 assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT) and our Meshy props (meshy/), with licence notes
 tests/               headless tests that drive the real game (run before pushing)
-docs/                screenshot for the README
+docs/                GDD.md (design), ART.md (art bible), screenshot for the README
 ```
 
 ### Main game (`scenes/main.tscn`)
@@ -52,7 +52,7 @@ The scene is small; most nodes are built in code at startup.
 | `Population` | `people/population.gd` | Every person is a `Resident` record (name, `SocialGroup`, home, work, family, friends, belief stage); `census.gd` (`Census`) builds them, at least 5 per home. About one in `residents_per_body` (at least one per lived-in home) has a `Citizen` body at a time; the rest are indoors and swap with housemates out of view. The belief pool's prayer comes only from believers living or sitting in buildings of group `prayer_houses`. Belief drifts back to a baseline (nothing pulls it up but a priest's preaching); `stage_changed` announces stages; `persuade(r, route, strength)` (PREACH, MONEY, FORCE) and `persuade_near` are the ways to win people; miracles don't convert. Residents have hidden wealth, comfort and fear (`scare`, `add_comfort`); preaching needs comfort, force works on fear, too much fear moves people out. `street.gd` (`Street`) keeps the bodies on the street. Free believers get a post (`assign`, `unassign`, `free_believers_near`): PRAY or PRIEST in a prayer house, SHOP in a building of group `shops`, with slot limits; `upgrade` / `upgrade_cost` / `note_floor` (rising prices, `Upgrade` enum), `staffed(building)` is the staff output (0 with nobody), comfort raises it, and `force_power_of` / `defense_of` give the fear bonuses (`Heat.threshold` uses the latter). Priests stop now and then for sermons (`people/sermons.gd`, `Population.sermons`): a crowd gathers, a hidden chance of a police raid (`police_moved_in`, ended by `end_sermon`), none while the homes are full (`housing_capacity`). Priests (the head priest `priest` and any ordained, `priest_count`) are drawn larger, preach around them (`priest_preached`) and pray; believers are gold, zealots orange. `resident.gd` is the record, `social_group.gd` the per-group traits and per-route responses, `crowd.gd` (`Crowd`, a child it makes) draws every person's body in one MultiMesh. Believers the hand sets down on or at a building sit in there; `power_presence(building)` (cached) and `believer_share(building)` feed the claim meter; `evacuate`, `evict` and `preach_to` change who lives where and believes. Drops a building that leaves the tree. |
 | `Heat` | `heat.gd` | The police's hidden criteria: per-building heat from sit-ins, crowds, broken building rules and accidents (`raise`), decaying; `police_called(building, reason)` past a threshold scaled by district hardness (`set_hardness`). Tunables: `data/heat.tres`. |
 | `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
-| `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, uproot, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
+| `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
 | `Miracles` | `miracles.gd` | Casts the miracles (water, fire, roaches, money, block party, rain of frogs): spends belief and reports to `Faith`. A burnt-out, roach- or frog-infested building is emptied (`Population.evacuate`) and announced with `building_abandoned`; a fire put out in time is `building_saved` and awes the residents (`Population.awe`). Effects: `rain.gd`, `fire.gd`, `roaches.gd`, `money_rain.gd`, `block_party.gd`, `frog_rain.gd`. |
 | `Accidents` | `accidents.gd` | Now and then believers set one of your buildings on fire (likelier with zealots near, in a Prayer House or Course Center). Tunables in `data/miracles.tres`. |
 | `ConversionNotes` | `conversion_notes.gd` (+ `floating_note.gd`) | Floats "+ Believer" / "Zealot!" / "Lost a believer" over people from `Population.stage_changed`; `FloatingNote.pop` is the shared pop-up text |
@@ -60,7 +60,6 @@ The scene is small; most nodes are built in code at startup.
 | `SermonAlerts` | `sermon_alerts.gd` | A ring on the ground and a click-to-fly button for each sermon and police raid (`Population.sermons` signals). |
 | `BuildingMenus` | `building_menus.gd` | The second wheels of a building of yours: housing upgrades (paid from `Treasury`, applied with `Population.upgrade`) and posts for free believers in prayer houses and shops. |
 | `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees on your building, the three `Campaigns` takeover marks on anyone else's, miracles elsewhere. A chosen miracle sits in the hand until cast. |
-| `SignFollowers` | `sign_followers.gd` (+ `divine_sign.gd`) | Believers act on the divine signs, by the sign and the god's path. |
 | `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Splits the city into 3 x 3 districts and keeps who holds every building: yours once most of its residents believe (an empty one, while a believer sits in); abandoned buildings; the cult starts from its headquarters; a district is yours at 60%. `DistrictView` puts a gold plate on yours. Tunables `data/districts.tres`. |
 | `Treasury` | `world/treasury.gd` | The cult's money: tithes from believers, and each building of yours earns or costs money by its decrees (`net_of`, `net_if`: rent, use upkeep, shop, luxury speed, floor efficiency) and its district's wealth; `spend_money` / `add_money`. Tunables `data/treasury.tres`. |
 | `Campaigns` | `world/campaigns.gd` (+ `campaign_marks.gd`) | The three takeover marks on a building (force, buy, missionaries), carried out by believers until most residents believe. Tunables `data/campaigns.tres`. |
@@ -69,20 +68,17 @@ The scene is small; most nodes are built in code at startup.
 | `Arrests` | `government/police_arrests.gd` (+ `police_officer.gd`, `arrest_alert.gd`) | A squad of grabbable officers surrounds the preaching priest and holds him still; the hand or a miracle (`scatter_near`) clears them to free him, or he is taken when the time runs out. `arrest_started` / `arrest_ended` signals; a banner shows the countdown. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |
-| `Opening` | `opening.gd` | The burning-building opening and the Keepers of the Hand. Off for now (`enabled = false` in `main.tscn`), so the game starts in free play with a ready congregation. |
 | `HUD` | `hud.gd` | The numbers the player may see. |
 
 World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`,
 `door.gd`, `litter.gd`, `pigeon.gd`.
 `building_visual.gd` merges Kenney facade modules into one mesh per building.
+`building_box.gd` (`BuildingBox.size_of`) reads a building's box from its collision shape.
 `shared_meshes.gd` (`SharedMeshes`) hands out low-poly primitive meshes shared by every instance.
 `sfx.gd` makes placeholder sounds in code.
 
-Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `shops`, `prayer_houses`,
-`wind_reactive`, `no_toon`, `preserved`.
 Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `shops`,
-Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`,
-`wind_reactive`, `no_toon`, `preserved`, `prayer_houses`.
+`prayer_houses`, `wind_reactive`, `no_toon`, `preserved`.
 
 Physics layers (bit values in code): 1 = world (ground, buildings), 2 = citizens,
 3 (4) = props (taxis, trees, litter), 4 (8) = critters (pigeons, as Area3D so the hand's wind
@@ -154,27 +150,43 @@ Tunables: `data/planning.tres`.
 
 ### Who owns what
 
-Several threads push to `main`. Message the owning thread before changing its files.
+The studio has three standing role threads. All code here belongs to the Programmer.
 
 | Area | Files | Owner thread |
 | --- | --- | --- |
-| Hand, miracles, decrees, wheels, city, opening, planning | `god_hand.gd`, `hand_tools.gd`, `miracles.gd`, `decrees.gd`, `decree_looks.gd`, `city.gd`, `opening.gd`, `scripts/planning/` | "Design the hand" (game-planning) |
-| People | `citizen.gd`, `faith.gd`, `heat.gd`, `scripts/people/` | "Build the people in the city" |
-| Look | `art_style.gd`, `art_style_settings.gd`, `shaders/`, `hand_visual.gd`, hand model | visual-style |
-| Building models | `building_visual.gd`, `assets/models/kenney_modular/` | model-library |
-| Meshy props | `scripts/props/`, `assets/models/meshy/`, `data/city_props.tres` | "Test the Meshy connection" |
-| World: districts, City Hall, surroundings | `scripts/world/`, `scripts/government/` | "World and stages" |
-| Map lab | `scripts/maplab/`, `scenes/map_lab.tscn`, `data/map_lab.tres` | "Design the city map generator" |
-| Code quality, `CLAUDE.md`, `tests/`, `shared_meshes.gd` | | code-quality |
+| Design, balance, research | `docs/GDD.md` | "מעצב המשחק" (Game Designer) |
+| All code, tests, builds, the `alpha` branch, the web export, `CLAUDE.md`, `CHANGELOG.md` | everything else | "המתכנת" (Programmer) |
+| Look, 3D assets, shaders' art direction, UI art | `docs/ART.md`, `assets/` | "האמן" (Artist) |
+
+The Programmer builds only what the Designer briefed or Eilam asked, and asks the Designer
+when the design is unclear.
 
 ### The Alpha build
 
-The Alpha is the build Eilam plays. It is the branch `alpha`, and Eilam downloads it from one
-fixed link that always gives the branch's newest commit:
-https://github.com/eilamshahaf-droid/balck-and-white-3/archive/refs/heads/alpha.zip
-A thread that refreshes the Alpha pushes the new build to the `alpha` branch (that is what
-updates the link) and also keeps `/mnt/project-files/builds/alpha.zip` in step with it.
-Do not rename or delete the branch, or the link breaks.
+The Alpha is the build Eilam plays. It is the branch `alpha`. Eilam never opens the Godot
+editor, so every Alpha must be playable in the browser.
+
+- **Browser (the main way):** https://eilamshahaf-droid.github.io/balck-and-white-3/
+  `.github/workflows/alpha-web.yml` runs on every push to `alpha`: it downloads Godot and
+  its web templates, exports the `Web` preset (`export_presets.cfg`, no threads so GitHub
+  Pages needs no special headers; the web always uses the Compatibility renderer) and
+  publishes it on GitHub Pages. Check that the run is green after each Alpha push.
+- **Download (fallback):** https://github.com/eilamshahaf-droid/balck-and-white-3/archive/refs/heads/alpha.zip
+  always gives the branch's newest commit. Also keep `/mnt/project-files/builds/alpha.zip`
+  in step with it.
+
+To refresh the Alpha: merge `main` into `alpha`, bump the version (see Versions), push,
+tag, check the workflow run, then open the page and play a minute. To test a web build
+before pushing, export it locally with
+`godot --headless --path . --export-release Web build/web/index.html` (needs the
+`web_nothreads_release.zip` template under `~/.local/share/godot/export_templates/<version>/`),
+serve `build/web/` with `python3 -m http.server` and open it in Chromium.
+
+Text resources stay text in the export (`editor/export/convert_text_resources_to_binary=false`
+in `project.godot`): converting a `.tres` whose typed array holds a custom class drops the
+properties after that array (the residents lost their names and the web build crashed).
+
+Do not rename or delete the `alpha` branch, or the links break.
 
 ## Coding rules
 
@@ -255,6 +267,7 @@ section of the release with the version. Stages in order: Pre-Alpha, Alpha, Beta
    `HAND TEST: PASS` (exit code 0). Add a check there when you add a hand behaviour.
 4. Test the feature you changed. For visual changes, take a screenshot
    (`godot --path . -- --shot=out.png` saves one after 120 frames) and share it.
-5. Check that both renderers still start (`--rendering-method gl_compatibility`).
+5. Check that both renderers still start (`--rendering-method gl_compatibility`); for an
+   Alpha, also that the web export loads (see The Alpha build).
 6. Add an entry to `CHANGELOG.md`: date, what changed, how to try it.
 7. Update this file when the structure changes (new system, new scene, new owner).

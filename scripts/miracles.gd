@@ -22,7 +22,6 @@ const RoachScript = preload("res://scripts/roaches.gd")
 const MoneyScript = preload("res://scripts/money_rain.gd")
 const PartyScript = preload("res://scripts/block_party.gd")
 const FrogScript = preload("res://scripts/frog_rain.gd")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 
 ## A miracle was cast: `kind`, and the node that performs it.
 signal miracle_cast(kind: StringName, miracle: Node3D)
@@ -226,7 +225,7 @@ func set_alight(building: Node3D, length := 1.0) -> Node3D:
 	else:
 		fire = FireScript.new()
 		city.add_child(fire)
-		var size := DivineSign.building_size(building)
+		var size := BuildingBox.size_of(building)
 		fire.ignite(building, size)
 		fire.endangered = _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 3.0)
 		fire.burned_down.connect(_on_burned.bind(building))  # a burnt building stands empty
@@ -321,7 +320,7 @@ func _on_saved(building: Node3D, fire: Node3D) -> void:
 	if not is_instance_valid(building) or fire.lost:
 		return
 	FloatingNote.pop(city, _roof(building), "Saved!", Color(1.0, 0.85, 0.3))
-	var size := DivineSign.building_size(building)
+	var size := BuildingBox.size_of(building)
 	var helped: Array = fire.endangered.filter(func(c): return is_instance_valid(c))
 	for c in _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 6.0):
 		if not c in helped:
@@ -333,7 +332,7 @@ func _on_saved(building: Node3D, fire: Node3D) -> void:
 
 
 func _roof(building: Node3D) -> Vector3:
-	return building.global_position + Vector3.UP * (DivineSign.building_size(building).y / 2.0 + 3.0)
+	return building.global_position + Vector3.UP * (BuildingBox.size_of(building).y / 2.0 + 3.0)
 
 
 func _on_burned(building: Node3D) -> void:
@@ -383,7 +382,7 @@ func _buildings_near(p: Vector3, radius: float) -> Array[Node3D]:
 
 func _building_near(p: Vector3, margin: float) -> Node3D:
 	for b in get_tree().get_nodes_in_group("buildings"):
-		var half := DivineSign.building_size(b) / 2.0 + Vector3.ONE * margin
+		var half := BuildingBox.size_of(b) / 2.0 + Vector3.ONE * margin
 		var d: Vector3 = (p - b.global_position).abs()
 		if d.x < half.x and d.z < half.z:
 			return b

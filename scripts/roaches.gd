@@ -4,7 +4,6 @@ extends Node3D
 ## Population to empty it, and the building is abandoned).
 
 const M: MiracleSettings = preload("res://data/miracles.tres")
-const DivineSign := preload("res://scripts/divine_sign.gd")
 const Sfx := preload("res://scripts/sfx.gd")
 
 static var _mesh: BoxMesh
@@ -16,7 +15,7 @@ var _street: CPUParticles3D
 
 ## Swarm over `building`; `size` scales the swarm, `length` how long it lasts.
 func infest(building: Node3D, size := 1.0, length := 1.0) -> void:
-	var box := DivineSign.building_size(building)
+	var box := BuildingBox.size_of(building)
 	global_position = building.global_position
 	_time_left = M.roach_time * length
 	if _mesh == null:

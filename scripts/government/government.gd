@@ -14,7 +14,6 @@ const G = preload("res://data/government.tres")
 const CitizenScript = preload("res://scripts/citizen.gd")
 const BulldozerScript = preload("res://scripts/government/bulldozer.gd")
 const NoticeScript = preload("res://scripts/government/demolition_notice.gd")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 
 const OFF_KERB := 3.5          # where people stand in front of a building: sidewalk + a step
 const NOTICE_LIFT := 6.0       # above the roof, so other towers don't hide it from the sky
@@ -98,7 +97,7 @@ func _maybe_visit() -> void:
 	if _suspicion < G.suspicion_visit:
 		return
 	_suspicion = 0.0
-	var size := DivineSign.building_size(_target)
+	var size := BuildingBox.size_of(_target)
 	var p := _target.global_position
 	_front = Vector3(p.x, 0.0, p.z + size.z / 2.0 + OFF_KERB)
 	_send_inspector()
@@ -180,7 +179,7 @@ func _inspect() -> void:
 		return
 	_notice = NoticeScript.new()
 	_target.add_child(_notice)
-	var roof := _target.global_position.y + DivineSign.building_size(_target).y / 2.0
+	var roof := _target.global_position.y + BuildingBox.size_of(_target).y / 2.0
 	_notice.global_position = Vector3(_target.global_position.x, roof + NOTICE_LIFT, _target.global_position.z)
 	_notice_left = G.notice_time
 	_notice.show_seconds(_notice_left)
@@ -214,7 +213,7 @@ func _on_bulldozer_finished(demolished: bool) -> void:
 
 
 func _demolish(building: Node3D) -> void:
-	var size := DivineSign.building_size(building)
+	var size := BuildingBox.size_of(building)
 	var rubble := StaticBody3D.new()
 	rubble.collision_layer = city.LAYER_WORLD
 	rubble.set_meta("surface", &"concrete")

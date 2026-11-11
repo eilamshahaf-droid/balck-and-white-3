@@ -21,7 +21,6 @@ signal core_changed(district: int)
 
 const S: DistrictSettings = preload("res://data/districts.tres")
 const B: Balance = preload("res://data/balance.tres")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 
 ## Every building, by index. A demolished one stays in the list as null.
 var buildings: Array[Node3D] = []
@@ -294,7 +293,7 @@ func _collect() -> void:
 		var d := district_at(b.global_position)
 		_index[b] = buildings.size()
 		buildings.append(b)
-		sizes.append(DivineSign.building_size(b))
+		sizes.append(BuildingBox.size_of(b))
 		_district_of.append(d)
 		_totals[d] += 1
 	_find_cores(count)

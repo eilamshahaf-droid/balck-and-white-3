@@ -15,7 +15,6 @@ signal dressed
 const SETTINGS_PATH := "res://data/city_props.tres"
 const D: DecreeSettings = preload("res://data/decrees.tres")
 const DecreeLooks := preload("res://scripts/decree_looks.gd")
-const DivineSign := preload("res://scripts/divine_sign.gd")
 const BuildingVisual := preload("res://scripts/building_visual.gd")
 const LAYER_WORLD := 1
 const LAYER_PROPS := 4
@@ -64,7 +63,7 @@ func _dress() -> void:
 	_collect_blockers()
 	for node in get_tree().get_nodes_in_group("buildings"):
 		var building := node as Node3D
-		var size := DivineSign.building_size(building)
+		var size := BuildingBox.size_of(building)
 		_dress_facades(building, size)
 		_dress_roof(building, size)
 		_line_sidewalk(building, size)
@@ -166,7 +165,7 @@ func _on_decree_issued(kind: StringName, building: Node3D) -> void:
 	await get_tree().create_timer(D.grow_time).timeout
 	if not is_instance_valid(building) or building.get_meta(&"decree_luxury", false):
 		return
-	var size := DivineSign.building_size(building)
+	var size := BuildingBox.size_of(building)
 	for p: Placement in _roofs[building]:
 		p.multimesh.set_instance_transform(p.index, _roof_frame(building, size) * p.local)
 
