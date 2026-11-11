@@ -32,6 +32,10 @@ The first district of the core loop, built from the designer's brief (`docs/GDD.
 - `CLAUDE.md` now points to `docs/GDD.md` and `docs/ART.md`, lists the three studio roles as owners, and explains the web build.
 - Try it: open the link above in Chrome or Edge.
 
+## 2026-11-11: Facade style catalog
+- `docs/ART.md`: the first four New York facade styles (brownstone, tenement, prewar apartment, projects) compared in one table, what they share, and which parts the Cratial kit can and cannot build. Docs only.
+- Try it: read "Facade styles" in `docs/ART.md`.
+
 ## 2026-11-11: Art decisions
 - `docs/ART.md`: how the Artist works (quick experiment, then a picture) and the decision to build with simplified Cratial modules. Docs only.
 - Try it: read "How we work" and "Decisions" in `docs/ART.md`.
