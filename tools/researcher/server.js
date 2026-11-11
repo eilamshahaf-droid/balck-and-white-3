@@ -8,12 +8,10 @@ const PORT = 5177;
 const ROOT = __dirname;
 const CONFIG_FILE = path.join(ROOT, "config.json");
 const UA = "SpinCycleResearcher/1.0 (local tool)";
-const HAIKU_MODEL = "claude-haiku-5-5";
 const DEFAULTS = {
   outputDir: path.join(ROOT, "downloads"),
   pexelsKey: "",
   unsplashKey: "",
-  anthropicKey: "",
 };
 
 function loadConfig() {
@@ -98,36 +96,6 @@ async function search({ query, sources, count }, cfg) {
   return { results, errors };
 }
 
-// Optional pay-per-use filter: Claude Haiku looks at each thumbnail. Cents per hundred images.
-async function haikuFilter(items, criteria, cfg) {
-  if (!cfg.anthropicKey) throw new Error("No Anthropic key (Settings)");
-  return Promise.all(items.map(async (it) => {
-    try {
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": cfg.anthropicKey, "anthropic-version": "2023-06-01",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: HAIKU_MODEL, max_tokens: 80,
-          messages: [{ role: "user", content: [
-            { type: "image", source: { type: "url", url: it.thumb } },
-            { type: "text", text: `Does this image match: "${criteria}"? ` +
-              'Reply only with JSON {"ok":true|false,"why":"<8 words>"}' },
-          ] }],
-        }),
-      });
-      const j = await r.json();
-      const m = (j.content?.[0]?.text || "").match(/\{.*\}/s);
-      const v = m ? JSON.parse(m[0]) : { ok: true, why: "unparsed" };
-      return { ...it, ok: !!v.ok, why: v.why };
-    } catch (e) {
-      return { ...it, ok: true, why: "filter failed: " + e.message };
-    }
-  }));
-}
-
 const slug = (s) => s.toLowerCase().replace(/\.[a-z0-9]+$/, "").replace(/[^a-z0-9]+/g, "-")
   .replace(/^-|-$/g, "").slice(0, 50) || "image";
 
@@ -155,83 +123,6 @@ async function save({ items, folder }, cfg) {
 }
 
 
-// Chat: Haiku turns a natural request (Hebrew is fine) into searches and saves, by tool calls.
-const known = new Map(); // id -> item, so the model can only save what a search returned
-const TOOLS = [
-  {
-    name: "search_images",
-    description: "Search free open-licence photo sources. Use English queries. Returns id, title, " +
-      "licence for each result. Call several times with different queries if needed.",
-    input_schema: { type: "object", properties: {
-      query: { type: "string" },
-      sources: { type: "array", items: { type: "string", enum: ["wikimedia", "pexels", "unsplash"] } },
-      count: { type: "integer", description: "results per source, default 10, max 30" },
-    }, required: ["query"] },
-  },
-  {
-    name: "save_images",
-    description: "Save images (ids from search_images) into a subfolder of the output folder.",
-    input_schema: { type: "object", properties: {
-      ids: { type: "array", items: { type: "string" } },
-      folder: { type: "string", description: "short English subfolder name" },
-    }, required: ["ids", "folder"] },
-  },
-];
-const SYSTEM = "You are a small research assistant inside a local tool for a game studio. The user " +
-  "(chatting in Hebrew) asks for reference images. Turn the request into English searches with " +
-  "search_images (default source wikimedia, add others only if the user has keys or asks), pick " +
-  "the results whose titles fit best, and save them with save_images when the user asked to " +
-  "save or collect them. Answer briefly in Hebrew: what you searched, how many you saved and " +
-  "where. Wikimedia titles are descriptive; skip diagrams, maps and logos.";
-
-async function runTool(name, input, cfg, state) {
-  if (name === "search_images") {
-    const { results, errors } = await search({
-      query: input.query, sources: input.sources?.length ? input.sources : ["wikimedia"],
-      count: Math.min(input.count || 10, 30) }, cfg);
-    results.forEach((r) => known.set(r.id, r));
-    state.shown.push(...results);
-    return JSON.stringify({ errors, results: results.map((r) =>
-      ({ id: r.id, title: r.title.slice(0, 90), license: r.license })) });
-  }
-  const picks = (input.ids || []).map((id) => known.get(id)).filter(Boolean);
-  const out = await save({ items: picks, folder: input.folder || "misc" }, cfg);
-  state.saved.push(...out.saved);
-  return JSON.stringify({ saved: out.saved.length, dir: out.dir });
-}
-
-async function chat({ messages }, cfg) {
-  if (!cfg.anthropicKey) throw new Error("NO_KEY");
-  const state = { shown: [], saved: [] };
-  const convo = messages.map((m) => ({ role: m.role, content: m.content }));
-  for (let turn = 0; turn < 8; turn++) {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "x-api-key": cfg.anthropicKey, "anthropic-version": "2023-06-01",
-        "content-type": "application/json" },
-      body: JSON.stringify({ model: HAIKU_MODEL, max_tokens: 1000, system: SYSTEM,
-        tools: TOOLS, messages: convo }),
-    });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error?.message || "Anthropic HTTP " + r.status);
-    convo.push({ role: "assistant", content: j.content });
-    const calls = j.content.filter((b) => b.type === "tool_use");
-    if (!calls.length) {
-      const reply = j.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
-      return { reply, shown: state.shown, saved: state.saved };
-    }
-    const resultsBlocks = [];
-    for (const c of calls) {
-      let content;
-      try { content = await runTool(c.name, c.input, cfg, state); }
-      catch (e) { content = "Error: " + e.message; }
-      resultsBlocks.push({ type: "tool_result", tool_use_id: c.id, content });
-    }
-    convo.push({ role: "user", content: resultsBlocks });
-  }
-  return { reply: "(stopped after too many steps)", shown: state.shown, saved: state.saved };
-}
-
 const readBody = (req) => new Promise((res) => {
   let b = "";
   req.on("data", (c) => (b += c));
@@ -251,15 +142,14 @@ http.createServer(async (req, res) => {
     }
     if (req.method === "GET" && req.url === "/api/config") {
       return send(res, 200, {
-        outputDir: cfg.outputDir, pexelsKey: mask(cfg.pexelsKey),
-        unsplashKey: mask(cfg.unsplashKey), anthropicKey: mask(cfg.anthropicKey),
+        outputDir: cfg.outputDir, pexelsKey: mask(cfg.pexelsKey), unsplashKey: mask(cfg.unsplashKey),
       });
     }
     if (req.method === "POST" && req.url === "/api/config") {
       const b = await readBody(req);
       const next = { ...cfg };
       if (b.outputDir) next.outputDir = b.outputDir;
-      for (const k of ["pexelsKey", "unsplashKey", "anthropicKey"]) {
+      for (const k of ["pexelsKey", "unsplashKey"]) {
         if (typeof b[k] === "string" && b[k] && !b[k].startsWith("••••")) next[k] = b[k].trim();
       }
       saveConfig(next);
@@ -267,13 +157,6 @@ http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && req.url === "/api/search") {
       return send(res, 200, await search(await readBody(req), cfg));
-    }
-    if (req.method === "POST" && req.url === "/api/chat") {
-      return send(res, 200, await chat(await readBody(req), cfg));
-    }
-    if (req.method === "POST" && req.url === "/api/filter") {
-      const b = await readBody(req);
-      return send(res, 200, { items: await haikuFilter(b.items, b.criteria, cfg) });
     }
     if (req.method === "POST" && req.url === "/api/save") {
       return send(res, 200, await save(await readBody(req), cfg));
