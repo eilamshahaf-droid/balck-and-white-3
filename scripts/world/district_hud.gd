@@ -15,6 +15,7 @@ var _timer := 0.0
 @onready var treasury: Treasury = get_node("../../Treasury")
 @onready var police: Police = get_node("../../Police")
 @onready var rig: Node3D = get_node("../../CameraRig")
+@onready var landmarks: Landmarks = get_node("../../Landmarks")
 
 
 func _process(delta: float) -> void:
@@ -39,6 +40,9 @@ func _process(delta: float) -> void:
 			place = "%d of %d residents believe (more than half makes it yours)" % [districts.believers_at(i), people]
 	var wealth := districts.wealth_of(d)
 	var standing := " (poor)" if wealth < POOR else (" (rich)" if wealth > RICH else "")
-	var line := "Marks: skull = take by force, dollar = buy, sky sign = send missionaries\nDistrict: %s%s, %s\nBuilding: %s\nCity Hall: %s    Police: %s" % [districts.district_name(d), standing, hold, place, government.status_text(), police.status_text()]
+	var core := "yours" if districts.is_yours(districts.core_of(d)) else "not yet yours"
+	var marked := "Core: %s    Landmarks marked by the Vandalist: %d of %d" \
+			% [core, landmarks.marks_in(d), landmarks.buildings.size()]
+	var line := "Marks: skull = take by force, dollar = buy, sky sign = send missionaries\nDistrict: %s%s, %s\n%s\nBuilding: %s\nCity Hall: %s    Police: %s" % [districts.district_name(d), standing, hold, marked, place, government.status_text(), police.status_text()]
 	if text != line:
 		text = line

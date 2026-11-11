@@ -400,7 +400,7 @@ func add_comfort(building: Node3D, amount: float) -> void:
 ## Everyone leaves `building` for good (roaches, fire): the people who live
 ## there move to the nearest other homes and those close by run out into the
 ## street. Nobody moves in again, so it stays empty.
-func evacuate(building: Node3D) -> void:
+func evacuate(building: Node3D, quiet := false) -> void:
 	_homes.erase(building)
 	_release_occupants(building)
 	var new_home := home_near(building.global_position)
@@ -412,7 +412,7 @@ func evacuate(building: Node3D) -> void:
 		if not _has_body(r):
 			continue
 		r.body.move_out()
-		if r.body.global_position.distance_to(building.global_position) < _people.flee_reach:
+		if not quiet and r.body.global_position.distance_to(building.global_position) < _people.flee_reach:
 			r.body.flee(building.global_position)
 	_by_home.erase(building)
 

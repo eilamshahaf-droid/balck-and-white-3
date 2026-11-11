@@ -11,6 +11,7 @@ const A: AwarenessSettings = preload("res://data/awareness.tres")
 
 @export var districts: Districts
 @export var population: Population
+@export var landmarks: Landmarks
 
 var _level := PackedFloat32Array()
 var _spike_left := PackedFloat32Array()   # seconds of full awareness after a core attempt
@@ -72,7 +73,8 @@ func add(d: int, amount: float) -> void:
 
 
 ## What converting someone who lives in `home` is multiplied by: awareness makes it
-## harder (less so at a core your buildings shield), a martyr nearby easier.
+## harder (less so at a core your buildings shield), a martyr nearby easier, and at a
+## core every landmark mark easier.
 func factor_for(home: Node3D) -> float:
 	var i := districts.index_of(home)
 	if i < 0:
@@ -83,6 +85,8 @@ func factor_for(home: Node3D) -> float:
 		hit *= 1.0 - A.protection_max * minf(1.0,
 				float(held_neighbours(i)) / maxi(A.protection_neighbours, 1))
 	var out := maxf(A.effect_min, 1.0 - hit)
+	if districts.is_core(home) and landmarks:
+		out *= landmarks.core_ease(d)
 	for m in _martyrs:
 		if m.near.has(i):
 			return out * A.martyr_bonus

@@ -91,7 +91,7 @@ func can_train(rank: Resident.Rank, building: Node3D) -> bool:
 	if building == null:
 		return false
 	if rank == Resident.Rank.AGENT:
-		return _population.districts.is_core(building) and _population.districts.owns(building) \
+		return _population.districts.is_base(building) \
 				and _population.believer_count >= U.agent_unlock_believers \
 				and _population.agent_count + _training_for(Resident.Rank.AGENT) < U.max_agents
 	if not building.is_in_group(Population.PRAYER_HOUSES):

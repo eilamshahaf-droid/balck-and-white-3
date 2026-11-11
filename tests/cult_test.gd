@@ -37,6 +37,7 @@ func _ready() -> void:
 	await _test_fragility()
 	await _test_vandalist()
 	await _test_condemnation()
+	_test_landmarks()
 	_test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -246,6 +247,26 @@ func _believe_in(index: int) -> void:
 	for r: Resident in _population.residents:
 		if r.home == _districts.buildings[index] and not r.is_believer():
 			_population.convert_to(r, Resident.Rank.BELIEVER)
+
+
+func _test_landmarks() -> void:
+	var landmarks: Landmarks = _main.get_node("Landmarks")
+	var d := DS.start_district
+	var core := _districts.core_of(d)
+	_check(_districts.headquarters != core, "the base is not the core")
+	_check(landmarks.buildings.size() == 5, "five landmarks (%d)" % landmarks.buildings.size())
+	var apart := true
+	for i in landmarks.buildings:
+		apart = apart and i != core and i != _districts.headquarters \
+				and _districts.district_of(i) == d
+	_check(apart, "landmarks stand in the Slums, apart from the base and the core")
+	var before := landmarks.core_ease(d)
+	landmarks.mark(landmarks.buildings[0])
+	landmarks.mark(landmarks.buildings[1])
+	_check(landmarks.marks_in(d) == 2 and landmarks.core_ease(d) > before * 6.0,
+			"each mark makes the core easier (x%.2f)" % landmarks.core_ease(d))
+	landmarks.clean(landmarks.buildings[0])
+	_check(landmarks.marks_in(d) == 1, "City Hall can clean a mark off")
 
 
 func _test_capture() -> void:

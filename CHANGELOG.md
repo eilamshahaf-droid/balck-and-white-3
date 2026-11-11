@@ -11,6 +11,16 @@ Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-
 - New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. No paid API: it runs on the PC alone. No dependencies, no subscription, no game code touched.
 - Try it: double-click `tools/researcher/run_researcher.cmd`; the Hebrew guide is `tools/researcher/README.md`.
 
+## Pre-Alpha 0.8.0 (2026-11-11): The Slums, a stage to play from start to finish
+Everything in 0.7.1, plus what makes the Slums a whole trial stage.
+- **A briefing to start.** The Secretary's founding minutes explain the goal; the city waits until you open the meeting.
+- **Base and core are apart.** The cult starts in its base at the edge of the Slums (the high priest, priest and Vandalist training are there). The core is a separate building in the middle that has to be won: the district grows from the edge in.
+- **Five landmarks of the status quo:** the landlord's office, the city notice board, the police booth, the inspector's office and the post office, spread on a ring around the core with signs over them. Set the Vandalist down by one and he marks it (4 minutes, $100 an attempt, 10% chance he is caught). Each standing mark makes the core's residents much easier to win (the core is 60 times harder, x0.4 per mark). City Hall may scrub a mark that has stood 5 minutes, so slow play means doing it again.
+- **Cameras** from the neighbourhood's answers add 10% to the arrest chance of murals and marks near them.
+- **Win and lose.** Win: the core and 60% of the Slums, and the "district captured" screen. Lose: once you have had 8 believers, none at all for 3 minutes dissolves the cult ("Try again" restarts).
+- The bottom-left panel shows whether the core is yours and how many landmarks are marked.
+- Try it: open https://eilamshahaf-droid.github.io/balck-and-white-3/ and play the Slums.
+
 ## Pre-Alpha 0.7.1 (2026-11-11): The city notices
 The designer's 0.7.1 brief, with the Balance Tester's numbers (`data/awareness.tres` and friends; provisional until playtested).
 - **Awareness.** Each district notices the cult (0 to 1, hidden). Working one building over and over raises it; a broad, joined-up front lets it fade. It makes converting harder there (down to x0.4). The first attempt on a district's core makes it fully aware for 10 minutes; your buildings next to the core shield that attempt.
