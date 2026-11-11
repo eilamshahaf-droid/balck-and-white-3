@@ -18,6 +18,16 @@ extends Resource
 ## income and what it costs to buy people out. The start district by the river
 ## is poor; downtown (Garment Row) is rich.
 @export var wealth := PackedFloat32Array([1.2, 2.0, 0.4, 1.0, 1.5, 0.9, 0.8, 1.0, 0.7])
+## The kind of each district, same order: which archetypes live there (see
+## ResidentArchetype.lives_in). The GDD's seven stages.
+@export var kinds: PackedStringArray = [
+	"Gentrification", "Financial", "Slums",
+	"Students", "Old civic", "Workers",
+	"Workers", "Nightlife", "Workers",
+]
+## How free each district starts (0 grey and ruled .. 1 free), same order. Not
+## used yet: the story's "independence" will drive grey versus colour.
+@export var independence := PackedFloat32Array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
 
 @export_group("Who holds a building")
 @export var tick := 0.5                     # seconds between counts
@@ -26,13 +36,33 @@ extends Resource
 ## A district's core building (the one nearest its middle) is harder: this share of its
 ## residents must believe. Once it is yours, City Hall and the police leave the district alone.
 @export_range(0.0, 1.0) var core_capture_share := 0.75
-@export_range(0.0, 1.0) var control_share := 0.6   # share of a district's buildings that makes it yours
+## With its core building, this share of a district's buildings makes it yours
+## (60 or 75 is still open with Eilam).
+@export_range(0.0, 1.0) var control_share := 0.6
+## Two buildings of a district border each other when this many metres or fewer of
+## ground lie between their walls: neighbours on a block, and across one street or
+## avenue (14 m and 19 m kerb to kerb with sidewalks). A building can only become
+## yours if it borders one you hold, so the cult spreads out from the core.
+@export var border_gap := 20.0
 
 @export_group("Start district")
-## The cult starts in the district of its headquarters (the home of most of
-## its believers). Abandoned buildings stand empty: whoever moves in holds them.
+## The district the cult starts in; its core building is the cult's first. The
+## other districts stay locked until this one is captured.
+@export var start_district := 2
+## Abandoned buildings stand empty: whoever moves in holds them.
 @export_range(0.0, 1.0) var abandoned_start := 0.3      # share of the start district's buildings
 @export_range(0.0, 1.0) var abandoned_elsewhere := 0.04  # scattered through the rest of the city
+
+@export_group("District captured")
+## The screen when a district is yours; %s is the district's name.
+@export var captured_title := "%s is yours!"
+## One line from the Secretary's meeting minutes, by district (wraps around).
+@export var captured_minutes: PackedStringArray = [
+	"Minutes, item 1: the district is ours. Item 2: someone keeps eating the biscuits. Motion carried.",
+]
+@export var next_stage_note := "The next district opens in a later version."
+@export var keep_playing_label := "Keep playing"
+@export var captured_color := Color(1.0, 0.8, 0.25)
 
 @export_group("Look")
 @export var core_color := Color(0.62, 0.3, 0.85)           # beacon on each district's core building
@@ -43,3 +73,19 @@ extends Resource
 @export var border_color := Color(1.0, 1.0, 1.0, 0.85)
 @export var controlled_border_color := Color(1.0, 0.7, 0.0, 1.0)
 @export var border_width := 2.0
+
+
+# Accessors rather than indexing the arrays from a const preload: in the editor the
+# parser folds a const resource's unsaved arrays to null and rejects the index.
+func kind_of(d: int) -> String:
+	return kinds[d] if d < kinds.size() else ""
+
+
+func start_independence(count: int) -> PackedFloat32Array:
+	var out := independence.duplicate()
+	out.resize(count)
+	return out
+
+
+func minute_for(d: int) -> String:
+	return captured_minutes[d % captured_minutes.size()] if not captured_minutes.is_empty() else ""

@@ -1,10 +1,9 @@
 class_name Balance
 extends Resource
-## Every tunable number for belief, witnesses, exposure and the hand's power,
-## in one place (like the Balance file of Black & White 2).
+## Every tunable number for miracle witnesses, exposure and the belief pool's start.
 ## Open data/balance.tres in Godot and change values in the Inspector.
 ##
-## Miracles don't convert: they are proof a priest preaches with. Witnesses
+## Miracles don't convert: they are proof a preacher works with. Witnesses
 ## stop to stare, and some film it.
 
 @export_group("Miracles: situation S")
@@ -25,20 +24,3 @@ extends Resource
 
 @export_group("Belief (the resource)")
 @export var belief_start := 100.0            # belief in the pool when the game starts
-@export var prayer_rate := 0.25              # belief per second from each full believer praying in a prayer house
-@export_range(0.0, 1.0) var believer_threshold := 0.5   # belief above this counts as a believer
-
-@export_group("Stages of belief")
-## Where each stage starts on the belief scale (-1..1). Below curious_from a
-## person is a skeptic; believer starts at believer_threshold.
-@export var curious_from := -0.2
-@export var sympathizer_from := 0.15
-@export var zealot_from := 0.85
-## Every push toward belief (any route) is multiplied by this: the one knob for how fast the cult grows.
-@export var persuasion_scale := 0.6
-
-@export_group("Drift")
-## Belief per second sliding back toward what a person believed before the
-## cult, unless their friends or their building hold it up.
-@export var belief_decay := 0.0008
-## Belief per second pulled up toward close friends who believe more.

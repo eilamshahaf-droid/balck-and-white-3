@@ -2,12 +2,8 @@ class_name Citizen
 extends CharacterBody3D
 ## The body of a city resident: walks between intersections near home,
 ## falls, gets up, stares at miracles. Who the person is (name, home, family,
-## belief) lives on the Resident record, so it outlasts this body.
-##
-## Belief is hidden from the player. A miracle can push it toward faith or
-## toward skepticism, depending on what the miracle did to this person, on a
-## personal coefficient (skepticism) the player never sees, and on how many
-## times they have seen that kind of miracle before (see balance.gd).
+## rank) lives on the Resident record, so it outlasts this body. Miracles
+## don't convert: a witness stares, maybe films, and is scared if it hurt them.
 
 ## Back on our feet after the hand dropped or threw us.
 signal set_down
@@ -23,9 +19,10 @@ const OCCUPY_LINES: Array[String] = [
 const OCCUPY_COLOR := Color(1.0, 0.85, 0.35)
 const FLEE_LINES: Array[String] = ["ROACHES!", "Not my kitchen!", "I'm never going back in there!", "It touched me!"]
 const FLEE_COLOR := Color(1.0, 0.55, 0.45)
-const B = preload("res://data/balance.tres")
-# Loaded at run time: a parse-time preload would load social_group.gd before
-# its class_name is registered and break the typed groups array.
+const B: Balance = preload("res://data/balance.tres")
+const U: UnitSettings = preload("res://data/units.tres")
+# Loaded at run time: a parse-time preload would load the element scripts before
+# their class_name is registered and break the typed arrays.
 var _people: PeopleSettings = load("res://data/people.tres")
 
 var city: Node3D
@@ -42,18 +39,6 @@ var lane_offset := Vector3.ZERO
 ## Population hands every resident's body its record before adding it. A body
 ## spawned without one (a passer-by, an inspector) keeps this anonymous record.
 var resident := Resident.new()
-## Hidden: -1 = total skeptic, +1 = devoted believer.
-var belief: float:
-	get:
-		return resident.belief
-	set(value):
-		resident.belief = value
-## Hidden personal coefficient k: 0 believes easily, 1 always finds a rational explanation.
-var skepticism: float:
-	get:
-		return resident.skepticism
-	set(value):
-		resident.skepticism = value
 var has_phone: bool:
 	get:
 		return resident.has_phone
@@ -125,7 +110,6 @@ func _ready() -> void:
 
 	speed = randf_range(_people.walk_speed_min, _people.walk_speed_max)
 	if resident.id < 0:
-		skepticism = randf()
 		has_phone = randf() < B.phone_chance
 		resident.color = Color.from_hsv(randf(), 0.45, 0.85)
 	if resident.home:
@@ -219,28 +203,21 @@ func body_transform() -> Transform3D:
 	if _body.visible:
 		return Transform3D(Basis.from_scale(Vector3.ZERO), global_position)
 	var t := global_transform * _body.transform
-	if resident.job != Resident.Job.PRIEST:
+	if not resident.is_priest():
 		return t
 	# Grow about the feet, so a priest doesn't sink into the street.
 	var s := _people.priest_scale
 	return Transform3D(t.basis.scaled(Vector3.ONE * s), global_position + (t.origin - global_position) * s)
 
 
-## The body's colour: priests white, believers gold, zealots orange. With the
-## belief view on (B): red = skeptic, white = undecided, gold = believer.
+## The body's colour: by rank for the cult's people (UnitSettings.rank_colors),
+## their own for everyone else. With the debug view on (B): gold = believer.
 func body_color() -> Color:
-	if not city.show_belief:
-		if resident.job == Resident.Job.PRIEST:
-			return _people.priest_color
-		match resident.stage():
-			Resident.Stage.ZEALOT:
-				return _people.zealot_color
-			Resident.Stage.BELIEVER:
-				return _people.believer_color
-		return resident.color
-	if belief < 0:
-		return Color.WHITE.lerp(Color(0.9, 0.15, 0.1), -belief)
-	return Color.WHITE.lerp(Color(1.0, 0.8, 0.1), belief)
+	if city.show_belief:
+		return Color(1.0, 0.8, 0.1) if resident.is_believer() else Color.WHITE
+	if resident.is_believer():
+		return U.color(resident.rank)
+	return resident.color
 
 
 func has_seen_event(id: int) -> bool:

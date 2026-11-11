@@ -3,15 +3,15 @@ extends CanvasLayer
 ## their family (gold), friends (blue), home (green) and work (grey).
 ## The player never sees this; in the game people are read by how they act.
 
-# Loaded at run time: a parse-time preload would load social_group.gd before
-# its class_name is registered and break the typed groups array.
+# Loaded at run time: a parse-time preload would load the element scripts before
+# their class_name is registered and break the typed arrays.
 var _people: PeopleSettings = load("res://data/people.tres")
 const FAMILY_COLOR := Color(1.0, 0.8, 0.2)
 const FRIEND_COLOR := Color(0.4, 0.75, 1.0)
 const HOME_COLOR := Color(0.4, 0.95, 0.45)
 const WORK_COLOR := Color(0.75, 0.75, 0.75)
 const CHEST := Vector3(0, 1.2, 0)
-const STAGE_NAMES: Array[String] = ["Skeptic", "Curious", "Sympathizer", "Believer", "Zealot"]
+const U: UnitSettings = preload("res://data/units.tres")
 
 var _shown: Resident
 var _panel: PanelContainer
@@ -99,13 +99,33 @@ func _line(a: Vector3, b: Vector3, color: Color) -> void:
 
 func _describe(r: Resident) -> String:
 	var work := "works near %s" % _corner(r.work) if r.work else "doesn't work"
-	return "%s, %s\nLives near %s, %s\nFamily: %s\nFriends: %s\nBelief %+d%%   Skepticism %d%%" % [
-		r.full_name(), r.group.title.to_lower(), _corner(r.home), work,
-		_names(r.family, true), _names(r.friends, false),
-		roundi(r.belief * 100.0), roundi(r.skepticism * 100.0)] \
-		+ "\n%s   Wealth %d%%   Comfort %d%%   Fear %d%%" % [STAGE_NAMES[r.stage()],
-				roundi(r.wealth * 100.0), roundi(r.comfort * 100.0), roundi(r.fear * 100.0)] \
-		+ ("\nSitting in near %s" % _corner(r.occupying) if r.occupying else "")
+	var kind := r.archetype.title.to_lower() if r.archetype else "passer-by"
+	var text := "%s, %s, %s\nLives near %s, %s\nFamily: %s\nFriends: %s" % [
+		r.full_name(), kind, U.title(r.rank).to_lower(), _corner(r.home), work,
+		_names(r.family, true), _names(r.friends, false)]
+	text += "\nAnxiety %d  Sociability %d  Curiosity %d  Skepticism %d" % [
+		_pct(r.anxiety), _pct(r.sociability), _pct(r.curiosity), _pct(r.skepticism)]
+	text += "\nWealth %d  Connections %d  Faith %d  Fear %d" % [
+		_pct(r.wealth), _pct(r.connections), _pct(r.faith), _pct(r.fear)]
+	if r.is_believer() and r.archetype:
+		var a := population.archetypes()
+		var t := r.archetype
+		text += "\nNeeds (met): livelihood %d  security %d  pleasure %d  meaning %d" % [
+			_pct(Needs.met(r.livelihood, a.value(t.livelihood_desire))),
+			_pct(Needs.met(r.security, a.value(t.security_desire))),
+			_pct(Needs.met(r.pleasure, a.value(t.pleasure_desire))),
+			_pct(Needs.met(r.meaning, a.value(t.meaning_desire)))]
+		text += "\nOutput x%.2f" % population.needs_multiplier(r)
+	if r.job == Resident.Job.TRAIN:
+		text += "\nTraining to be a %s: %d s left" % [
+			U.title(r.training_for).to_lower(), ceili(r.training_left)]
+	if r.occupying:
+		text += "\nSitting in near %s" % _corner(r.occupying)
+	return text
+
+
+func _pct(v: float) -> int:
+	return roundi(v * 100.0)
 
 
 func _corner(building: Node3D) -> String:

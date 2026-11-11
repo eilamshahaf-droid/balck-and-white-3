@@ -14,7 +14,6 @@ extends Resource
 @export var residents_per_body := 25
 ## Seconds between one person going indoors and another coming out (out of view).
 @export var swap_interval := 0.5
-@export var groups: Array[SocialGroup] = []
 @export var family_size_min := 1
 @export var family_size_max := 4
 ## Close friends per person: the ties belief will travel along.
@@ -24,19 +23,8 @@ extends Resource
 @export var neighbour_radius := 120.0
 ## Share of friends picked from anywhere in the city instead.
 @export_range(0.0, 1.0) var distant_friend_chance := 0.2
-## Starting belief, before the god does anything.
-@export var belief_min := -0.6
-@export var belief_max := 0.2
 ## Buildings taller than this are glass office towers: people work there but don't live there.
 @export var office_height := 60.0
-
-@export_group("Sandbox congregation")
-## The game starts with one congregation living around one corner.
-@export var congregation_size := 14
-@export var congregation_corner := Vector2i(6, 3)
-@export var congregation_belief_min := 0.6
-@export var congregation_belief_max := 0.95
-@export var congregation_skepticism_max := 0.3
 
 @export_group("Walking")
 ## How far (in metres) people wander from their home corner.
@@ -70,13 +58,6 @@ extends Resource
 @export var fear_decay := 0.004
 ## Fear a miracle that hurt someone adds, times its intensity and how bad it was.
 @export var fear_per_harm := 0.5
-## A priest only reaches people at least this comfortable and at most this afraid.
-@export_range(0.0, 1.0) var preach_min_comfort := 0.3
-@export_range(0.0, 1.0) var preach_max_fear := 0.5
-## Force works this well on someone with no fear at all (1 = as on the terrified).
-@export_range(0.0, 1.0) var force_without_fear := 0.2
-## Money works this well on the richest (1 = as on the poorest).
-@export_range(0.0, 1.0) var money_on_rich := 0.3
 ## Above this fear a resident moves to another home; their fear halves.
 @export_range(0.0, 1.0) var flee_fear := 0.85
 
@@ -86,8 +67,8 @@ extends Resource
 ## more than a shed; priests are limited on top of that.
 @export var staff_volume := 1500.0
 @export var priest_slots := 2
-## Comfortable staff do more: output is times 1 + this * comfort.
-@export var comfort_output_bonus := 0.5
+## A sermon house has room for at least this many staff and trainees, however small.
+@export var sermon_house_places := 8
 ## Frightened believers fight harder: a takeover by force is times 1 + this *
 ## the fear of the believers there, and the police need that much more heat.
 @export var fear_force_bonus := 0.5
@@ -111,11 +92,11 @@ extends Resource
 ## and prayer houses have no residents, so converting one crowds the homes around.
 @export_range(0.0, 1.0) var crowding_penalty := 0.5
 
-## Prayer house upgrades: each loudspeaker widens the reach of its priests, each
-## lecture hall makes their preaching stronger, by this share.
+## Sermon house upgrades: each loudspeaker widens the reach of its preachers, each
+## lecture hall raises their chance to convert, by this share.
 @export var loudspeaker_reach := 0.25
 @export var lecture_hall_strength := 0.25
-## Each banner makes the priests of its prayer house preach this much stronger.
+## Each banner raises the chance of its sermon house's preachers by this share.
 @export var banner_strength := 0.2
 ## Workplace upgrades: each storefront raises the shop's output, each gym turns
 ## the staff into this many fighters per person (see fighters_of), each real
@@ -129,31 +110,23 @@ extends Resource
 ## A building burns down with its people inside: each one indoors dies with this chance.
 @export_range(0.0, 1.0) var fire_death_chance := 0.5
 
-@export_group("Colours")
-@export var believer_color := Color(1.0, 0.78, 0.15)
-@export var zealot_color := Color(1.0, 0.45, 0.1)
 
-@export_group("Priest")
-## The cult's head priest, a believer from the starting congregation, walks
-## the streets and preaches to everyone within reach every few seconds.
-@export var priest_interval := 3.0
-@export var priest_reach := 12.0
-@export var priest_strength := 0.15
-## Belief per second the priest prays into the pool on his own.
-@export var priest_prayer := 0.02
-@export var priest_color := Color(1.0, 1.0, 1.0)
-## Priests are drawn this many times larger, so the crowd can pick them out.
+@export_group("Preachers")
+## Seconds between checks on who is due to preach (each preacher's own pace is
+## UnitSettings.attempt_interval).
+@export var preach_check := 1.0
+## Priests and the high priest are drawn this many times larger, so the crowd can pick them out.
 @export var priest_scale := 1.5
 
 @export_group("Sermons")
-## A priest stops to preach this often (seconds apart) and for this long; a crowd
-## of up to crowd_size people within crowd_reach gathers in a ring around him.
+## A preacher stops to preach this often (seconds apart) and for this long; a crowd
+## of up to crowd_size people within crowd_reach gathers in a ring around them.
 @export var sermon_interval := 25.0
 @export var sermon_time := 15.0
 @export var crowd_size := 12
 @export var crowd_reach := 40.0
 @export var crowd_radius := 3.0
-## A full crowd preaches this much stronger (1 + this at crowd_size).
+## A full crowd makes the preacher try this much more often (1 + this at crowd_size).
 @export var crowd_boost := 1.0
 @export var sermon_line := "Amen!"
 @export var crowd_line_color := Color(1.0, 0.95, 0.7)

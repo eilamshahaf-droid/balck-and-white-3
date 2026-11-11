@@ -113,7 +113,7 @@ func _on_arrest_ended(priest: Resident, freed: bool) -> void:
 	population.sermons.end_sermon(priest)
 	if freed or priest == population.priest:
 		return
-	population.unassign(priest)
+	population.staffing.unassign(priest)
 	population.evict(priest)
 
 

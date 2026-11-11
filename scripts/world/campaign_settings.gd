@@ -27,7 +27,6 @@ extends Resource
 
 @export_group("Missionaries (sky sign)")
 @export var missionaries := 3
-@export var preach_interval := 3.0          # seconds between sermons
-@export var preach_strength := 0.25         # belief a sermon adds, before skepticism
-@export var preach_cost := 4.0              # belief per sermon
+@export var preach_interval := 7.0          # seconds between attempts at the door
+@export var preach_cost := 4.0              # belief per attempt
 @export var missionary_line := "Have you heard about the Hand?"

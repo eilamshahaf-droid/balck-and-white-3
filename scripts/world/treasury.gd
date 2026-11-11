@@ -1,7 +1,7 @@
 class_name Treasury
 extends Node
-## The cult's money. It comes from the collection box (every believer gives a
-## little) and from the buildings of yours: each one earns or costs money every
+## The cult's money. It comes from the believers (each by their wealth and
+## needs, Population.tithes) and from the buildings of yours: each one earns or costs money every
 ## second, by what the decrees made of it (net_of()). Decrees, miracles and
 ## buying buildings spend it.
 
@@ -10,6 +10,7 @@ signal money_changed(money: float)
 const S: TreasurySettings = preload("res://data/treasury.tres")
 
 @export var faith: Node
+@export var population: Population
 @export var districts: Districts
 @export var decrees: Decrees
 @export var police: Police
@@ -26,7 +27,7 @@ func _physics_process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = S.tick
-	income = faith.believers * S.tithe_per_believer
+	income = population.tithes
 	for b in districts.converted_buildings():
 		income += net_of(b)
 	add_money(income * S.tick)

@@ -10,7 +10,6 @@ signal finished(demolished: bool)
 enum Mode { DRIVING, WORKING, DONE }
 
 const G = preload("res://data/government.tres")
-const B = preload("res://data/balance.tres")
 const RIDE_HEIGHT := 1.1
 const LINES := {
 	&"believers": ["Folks, please step away from the building.", "I just drive the thing, lady."],
@@ -149,7 +148,7 @@ func _work(delta: float) -> void:
 func _what_blocks() -> StringName:
 	var guards := 0
 	for c in get_tree().get_nodes_in_group("citizens"):
-		if c.errand_arrived and c.belief > B.believer_threshold \
+		if c.errand_arrived and c.resident.is_believer() \
 				and c.global_position.distance_to(global_position) < G.guard_radius:
 			guards += 1
 	return &"believers" if guards >= G.guards_to_block else &""

@@ -154,8 +154,6 @@ func _send_inspector() -> void:
 	c.collision_layer = city.LAYER_CITIZENS
 	c.collision_mask = city.LAYER_WORLD
 	city.add_child(c)
-	c.belief = -0.9
-	c.skepticism = 1.0
 	c.add_child(_hard_hat())
 	c.send_on_errand(_front, _target.global_position, G.inspection_time, INSPECTOR_LINE, INSPECTOR_COLOR)
 	_inspector = c
