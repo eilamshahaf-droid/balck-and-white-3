@@ -11,7 +11,6 @@ enum Mode { DRIVING, WORKING, DONE }
 
 const G = preload("res://data/government.tres")
 const B = preload("res://data/balance.tres")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 const RIDE_HEIGHT := 1.1
 const LINES := {
 	&"believers": ["Folks, please step away from the building.", "I just drive the thing, lady."],
@@ -112,7 +111,7 @@ func _drive(delta: float) -> void:
 			_mode = Mode.WORKING
 			# Measured now, not when sent: a +3 Floors decree may have grown it meanwhile.
 			_building_y = _building.position.y
-			_building_height = DivineSign.building_size(_building).y
+			_building_height = BuildingBox.size_of(_building).y
 			var to_building := _building.global_position - global_position
 			to_building.y = 0.0
 			global_basis = Basis.looking_at(to_building.normalized())  # blade to the wall

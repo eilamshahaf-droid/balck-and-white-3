@@ -7,7 +7,6 @@ extends Node3D
 ## in, so a close-up isn't covered by a 12 m dollar sign.
 
 const S: CampaignSettings = preload("res://data/campaigns.tres")
-const DivineSign = preload("res://scripts/divine_sign.gd")
 const ICONS: Array[Texture2D] = [
 	preload("res://assets/icons/mark_force.png"),
 	preload("res://assets/icons/mark_buy.png"),
@@ -80,7 +79,7 @@ func _refresh() -> void:
 ## Follows the roof (+3 Floors) and updates the count under the icon.
 func _place(building: Node3D) -> void:
 	var label: Label3D = _marks[building]
-	var top := building.global_position.y + DivineSign.building_size(building).y / 2.0
+	var top := building.global_position.y + BuildingBox.size_of(building).y / 2.0
 	label.get_parent().global_position = Vector3(building.global_position.x, top + LIFT, building.global_position.z)
 	var i := districts.index_of(building)
 	var people := districts.residents_in(i)

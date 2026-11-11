@@ -13,7 +13,6 @@ extends Node3D
 
 const SETTINGS_PATH := "res://data/city_props.tres"
 const D: DecreeSettings = preload("res://data/decrees.tres")
-const DivineSign := preload("res://scripts/divine_sign.gd")
 
 ## The props already on the city: their window grid, and which windows have an
 ## air conditioner (no flower box goes there).
@@ -86,7 +85,7 @@ func _on_building_gone(building: Node3D) -> void:
 
 func _dress(building: Node3D, touched: Dictionary) -> void:
 	_undress(building, touched)
-	var size := DivineSign.building_size(building)
+	var size := BuildingBox.size_of(building)
 	var index := districts.index_of(building)
 	var abandoned := index >= 0 and districts.is_abandoned(index)
 	var luxury: bool = building.get_meta(&"decree_luxury", false)

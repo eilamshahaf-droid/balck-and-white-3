@@ -144,7 +144,7 @@ func _build_environment() -> void:
 	set_daylight(1.0)
 
 
-## 0 = night, 1 = full day. The opening starts at night.
+## 0 = night, 1 = full day.
 func set_daylight(t: float) -> void:
 	var horizon := Color(0.1, 0.1, 0.18).lerp(Color(0.74, 0.86, 0.97), t)
 	_sky_mat.sky_top_color = Color(0.03, 0.04, 0.1).lerp(Color(0.22, 0.5, 0.92), t)

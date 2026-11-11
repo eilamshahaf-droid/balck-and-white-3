@@ -31,7 +31,7 @@ extends Resource
 @export var office_height := 60.0
 
 @export_group("Sandbox congregation")
-## Skipping the opening starts you with one congregation living around one corner.
+## The game starts with one congregation living around one corner.
 @export var congregation_size := 14
 @export var congregation_corner := Vector2i(6, 3)
 @export var congregation_belief_min := 0.6
