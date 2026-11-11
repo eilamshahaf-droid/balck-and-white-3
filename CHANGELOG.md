@@ -28,6 +28,10 @@ The first district of the core loop, built from the designer's brief (`docs/GDD.
 - `CLAUDE.md` now points to `docs/GDD.md` and `docs/ART.md`, lists the three studio roles as owners, and explains the web build.
 - Try it: open the link above in Chrome or Edge.
 
+## 2026-11-11: Art decisions
+- `docs/ART.md`: how the Artist works (quick experiment, then a picture) and the decision to build with simplified Cratial modules. Docs only.
+- Try it: read "How we work" and "Decisions" in `docs/ART.md`.
+
 ## 2026-11-11: Cratial kit inventory
 - `docs/ART.md`: the kit now comes from a Google Drive link instead of Remote Control; inventory of its modules, materials and polycounts, and the import plan. Docs only.
 - Try it: read the "Cratial kit pipeline" section of `docs/ART.md`.

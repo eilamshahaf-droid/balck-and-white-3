@@ -121,6 +121,23 @@ a fine notice are small props. The district systems place them.
 6. Cult headquarters: the multi-purpose core building with a hand statue and banner. *Mostly have it.*
 7. Street clutter: puddles, cracked sidewalk decals, stray cats (new).
 
+## How we work
+
+- **Quick experiment, then a picture.** Eilam decides by looking. For any art question the Artist
+  makes the cheapest test that answers it (one building, one street, one render), sends the picture
+  with a clear recommendation, and does not write long reports. Token cost is part of the brief.
+- **Honest objection first.** If a direction is weak, too costly or hurts the look, say so plainly
+  and offer an alternative. Eilam decides.
+- Concept sheets and comparison renders go in the project's shared folder under `art/`.
+
+## Decisions
+
+- 2026-11-11: **Building look = simplified Cratial modules** (decimated by about half, clean UV per
+  module, one 1024 px atlas, one merged mesh per building). Tested against Kenney as it is, and
+  Kenney's shapes with Cratial brick (`art/compare-*.png`): the brick-only hybrid loses the trim
+  and window frames that make the miniature read, so it is dropped. Kenney stays only where a
+  district has no Cratial modules yet. Licence for shipping the models still to be checked.
+
 ## Cratial kit pipeline
 
 Source (Eilam's Google Drive folder, link-shared, not committed to the repo because of size):
