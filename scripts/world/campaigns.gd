@@ -90,6 +90,8 @@ func why_not(building: Node3D, route: Route) -> String:
 		return "opens in a later stage"
 	if not districts.borders_yours(i):
 		return "must border a building of yours"
+	if not districts.can_claim(i):
+		return "take the buildings around it first"
 	match route:
 		Route.FORCE:
 			if _training() == null:

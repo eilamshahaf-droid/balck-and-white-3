@@ -7,8 +7,9 @@ extends Node
 ## or missionaries. The cult starts from the start district's core building (its
 ## headquarters, always yours), in a neglected district with empty, abandoned
 ## buildings. A district is yours once its core and enough of its buildings are. Decrees ask owns(), so there is one answer.
-## A building can only become yours if it borders one you already hold (borders_yours),
-## so a district is taken outwards from its core; abandoned places too.
+## A building can only become yours if it borders one you already hold (can_claim),
+## so the city is taken outwards from the headquarters; abandoned places too. A core
+## also needs most of the buildings around it first.
 
 signal layout_ready
 signal building_changed(index: int, yours: bool)
@@ -43,7 +44,7 @@ var _index := {}                         # building -> index
 var _residents := PackedInt32Array()     # people who live there, counted every tick
 var _believers := PackedInt32Array()     # of them, believers
 var _presence := PackedFloat32Array()    # believing presence (residents and sit-ins)
-var _borders: Array[PackedInt32Array] = []  # per building: the buildings of its district it borders
+var _graph := BuildingGraph.new()
 var _timer := 0.0
 
 @onready var city: Node3D = get_parent()
@@ -68,7 +69,7 @@ func _physics_process(delta: float) -> void:
 		if _district_of[i] < 0:
 			continue
 		var mine := _holds(i)
-		if mine and _yours[i] == 0 and not borders_yours(i):
+		if mine and _yours[i] == 0 and not can_claim(i):
 			mine = false
 		if mine != (_yours[i] == 1):
 			_set_side(i, mine)
@@ -142,23 +143,44 @@ func is_yours(index: int) -> bool:
 
 
 ## Is `building` the god's? Decrees ask here, so there is one answer.
-## Building `index` could become yours: it borders a building you hold in its district,
-## or it is a district's core (where a district is entered).
-func borders_yours(index: int) -> bool:
+## Building `index` could become yours: its district is open, it borders a building you
+## hold, and, for a core, enough of the buildings around it are yours (core_base).
+func can_claim(index: int) -> bool:
 	var d := _district_of[index]
-	if d < 0:
-		return false
-	if _core[d] == index:
+	if index == headquarters:
 		return true
-	for j in _borders[index]:
-		if _yours[j] == 1:
+	if d < 0 or _unlocked[d] == 0 or not borders_yours(index):
+		return false
+	return _core[d] != index or core_base(index) >= S.core_base_share
+
+
+## Building `index` borders a standing building of yours.
+func borders_yours(index: int) -> bool:
+	for j in _graph.of(index):
+		if _yours[j] == 1 and _district_of[j] >= 0:
 			return true
 	return false
 
 
-## The standing buildings of its district that building `index` borders.
+## The share of the standing buildings within core_base_steps borders of `index`
+## that are yours.
+func core_base(index: int) -> float:
+	var near := _graph.around(index, S.core_base_steps, _demolished())
+	var held := 0
+	for j in near:
+		held += _yours[j]
+	return float(held) / maxi(near.size(), 1)
+
+
+## The buildings that building `index` borders (demolished ones included).
 func borders_of(index: int) -> PackedInt32Array:
-	return _borders[index]
+	return _graph.of(index)
+
+
+## `building` is a district's core.
+func is_core(building: Node3D) -> bool:
+	var i: int = _index.get(building, -1)
+	return i >= 0 and _core[_district_of[i]] == i
 
 
 func owns(building: Node3D) -> bool:
@@ -354,22 +376,23 @@ func _collect() -> void:
 	_found_headquarters()
 
 
-## Which buildings of the same district border each other (see DistrictSettings.border_gap).
-## Once at startup; a few hundred buildings per district.
+## Which buildings border each other (see DistrictSettings.border_gap), across district
+## lines too, so a new district is entered from the edge of one you hold.
 func _find_borders() -> void:
 	var feet: Array[Rect2] = []
 	for i in buildings.size():
 		var p := buildings[i].global_position
 		var s := Vector2(sizes[i].x, sizes[i].z)
-		feet.append(Rect2(Vector2(p.x, p.z) - s / 2.0, s).grow(S.border_gap / 2.0))
-	_borders.resize(buildings.size())
+		feet.append(Rect2(Vector2(p.x, p.z) - s / 2.0, s))
+	_graph.build(feet, S.border_gap)
+
+
+func _demolished() -> PackedByteArray:
+	var out := PackedByteArray()
+	out.resize(buildings.size())
 	for i in buildings.size():
-		_borders[i] = PackedInt32Array()
-	for i in buildings.size():
-		for j in range(i + 1, buildings.size()):
-			if _district_of[i] == _district_of[j] and feet[i].intersects(feet[j]):
-				_borders[i].append(j)
-				_borders[j].append(i)
+		out[i] = 1 if _district_of[i] < 0 else 0
+	return out
 
 
 func _find_cores(count: int) -> void:

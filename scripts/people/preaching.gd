@@ -25,6 +25,7 @@ func setup(population: Population) -> void:
 
 
 ## Gathering the preachers allocates, so it runs every preach_check seconds.
+## Plain believers try too, at a small share of a preacher's rate, by chance.
 func _physics_process(delta: float) -> void:
 	_check_timer -= delta
 	if _check_timer > 0.0:
@@ -37,6 +38,11 @@ func _physics_process(delta: float) -> void:
 		if left <= 0.0 and attempt_near(r, r.body.global_position):
 			left = U.attempt_interval
 		_timers[r] = left
+	var odds := _people.preach_check * U.believer_attempt_share / U.attempt_interval
+	for c in _population.street_bodies():
+		var r := c.resident
+		if r.rank == Resident.Rank.BELIEVER and _rng.randf() < odds:
+			attempt_near(r, c.global_position)
 
 
 ## Everyone who wins people over on the street (missionaries and the high
@@ -52,11 +58,14 @@ func preachers() -> Array[Resident]:
 ## The chance that `preacher` wins `target` over in one attempt at `p`:
 ## base x curiosity x (1 - skepticism) x (1 - anxiety_weight x anxiety)
 ## x (1 + charisma_weight x charisma), times the preacher's sermon house upgrades
-## and 1 + the miracle proof at `p`. Miracles never convert on their own.
+## and 1 + the miracle proof at `p`, divided by core_difficulty for someone who lives in
+## a district's core building. Miracles never convert on their own.
 func chance(target: Resident, preacher: Resident, p: Vector3) -> float:
 	var c := U.conversion_base * target.curiosity * (1.0 - target.skepticism) \
 			* (1.0 - U.anxiety_weight * target.anxiety) \
 			* (1.0 + U.charisma_weight * preacher.charisma) * boost(preacher)
+	if _population.districts.is_core(target.home):
+		c /= U.core_difficulty
 	return clampf(c * maxf(1.0 + _population.miracles.proof_at(p), 0.0), 0.0, 1.0)
 
 

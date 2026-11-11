@@ -68,8 +68,10 @@ func _describe(building: Node3D) -> String:
 	if districts.is_yours(i):
 		var net := treasury.net_of(building)
 		lines.append("Yours: %s $%.1f/s" % ["earns" if net >= 0.0 else "costs", absf(net)])
-	elif districts.borders_yours(i):
-		lines.append("Not yours")
-	else:
+	elif not districts.borders_yours(i):
 		lines.append("Not yours, and too far: it must border a building of yours")
+	elif not districts.can_claim(i):
+		lines.append("Not yours: take the buildings around it first")
+	else:
+		lines.append("Not yours")
 	return "\n".join(lines)

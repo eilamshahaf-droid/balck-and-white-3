@@ -72,7 +72,7 @@ func _test_chance() -> void:
 		_check(false, "a homeless resident to preach to")
 		return
 	# Homeless: curiosity H, skepticism L, anxiety L; the high priest's charisma H.
-	var expected := 0.35 * 0.8 * (1.0 - 0.2) * (1.0 - 0.5 * 0.2) * (1.0 + 0.3 * 0.8)
+	var expected := U.conversion_base * 0.8 * (1.0 - 0.2) * (1.0 - 0.5 * 0.2) * (1.0 + 0.3 * 0.8)
 	var got := _population.preaching.chance(target, priest, Vector3(9999, 0, 9999))
 	_check(absf(got - expected) < 0.001, "conversion chance matches the formula (%.3f)" % got)
 
@@ -118,7 +118,8 @@ func _test_borders() -> void:
 	var todo: Array[int] = [core]
 	while not todo.is_empty():
 		for j in _districts.borders_of(todo.pop_back()):
-			if not seen.has(j):
+			if not seen.has(j) and _districts.buildings[j] \
+					and _districts.district_at(_districts.buildings[j].global_position) == d:
 				seen[j] = true
 				todo.append(j)
 	var total := 0
@@ -133,7 +134,7 @@ func _test_borders() -> void:
 		if not _districts.buildings[i] or _districts.residents_in(i) == 0 or _districts.is_yours(i) \
 				or _districts.district_at(_districts.buildings[i].global_position) != d:
 			continue
-		if _districts.borders_yours(i):
+		if _districts.can_claim(i):
 			near = i if near < 0 else near
 		else:
 			far = i if far < 0 else far

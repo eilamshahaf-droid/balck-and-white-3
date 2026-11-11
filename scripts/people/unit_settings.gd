@@ -27,13 +27,18 @@ extends Resource
 ## Chance per attempt = base x curiosity x (1 - skepticism)
 ## x (1 - anxiety_weight x anxiety) x (1 + charisma_weight x charisma), times
 ## 1 + the miracle proof where it happens.
-@export_range(0.0, 1.0) var conversion_base := 0.35
+@export_range(0.0, 1.0) var conversion_base := 0.5
 @export_range(0.0, 1.0) var anxiety_weight := 0.5
 @export var charisma_weight := 0.3
 ## Seconds between one preacher's attempts (missionaries and the high priest).
 @export var attempt_interval := 20.0
 ## How far a preacher reaches on the street, in metres.
 @export var preach_reach := 14.0
+## Every believer on the street also tries now and then, at this share of a
+## preacher's attempt rate.
+@export_range(0.0, 1.0) var believer_attempt_share := 0.04
+## A core building's residents are this many times harder to win over.
+@export var core_difficulty := 2.0
 
 @export_group("Output per believer")
 ## Per believer per minute: money = this x wealth, belief = this x faith, both times
@@ -61,6 +66,8 @@ extends Resource
 @export var missionary_time := 90.0
 @export var priest_time := 180.0
 @export var max_priests := 12
+## Money it costs to start training a priest.
+@export var priest_cost := 400.0
 
 
 # Accessors rather than indexing the arrays from a const preload: in the editor the

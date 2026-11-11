@@ -73,6 +73,9 @@ func post_items(building: Node3D) -> Array[Dictionary]:
 			if not population.staffing.can_train(rank, building):
 				item.enabled = false
 				item.note = "not here" if rank == Resident.Rank.PRIEST else "house full"
+			elif not treasury.can_afford(_training_cost(rank)):
+				item.enabled = false
+				item.note = "needs $%d" % roundi(_training_cost(rank))
 			items.append(item)
 	if building.is_in_group(Population.SHOPS):
 		items.append(_post_item(&"shop", "Work Here", Color(0.5, 0.9, 0.55), believers))
@@ -95,8 +98,11 @@ func send_to_post(id: StringName, building: Node3D) -> bool:
 	var p := building.global_position
 	if TRAINING.has(id):
 		var rank: Resident.Rank = TRAINING[id]
+		if not treasury.can_afford(_training_cost(rank)):
+			return false
 		for r in population.staffing.trainees_for(rank, building, S.staff_reach):
 			if population.staffing.train(r, rank, building):
+				treasury.spend_money(_training_cost(rank))
 				return true
 		return false
 	if not POSTS.has(id):
@@ -106,6 +112,10 @@ func send_to_post(id: StringName, building: Node3D) -> bool:
 		if population.staffing.assign(r, job, building):
 			return true
 	return false
+
+
+func _training_cost(rank: Resident.Rank) -> float:
+	return U.priest_cost if rank == Resident.Rank.PRIEST else 0.0
 
 
 func _post_item(id: StringName, label: String, color: Color, free: int) -> Dictionary:

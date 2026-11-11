@@ -39,11 +39,15 @@ extends Resource
 ## With its core building, this share of a district's buildings makes it yours
 ## (60 or 75 is still open with Eilam).
 @export_range(0.0, 1.0) var control_share := 0.6
-## Two buildings of a district border each other when this many metres or fewer of
-## ground lie between their walls: neighbours on a block, and across one street or
-## avenue (14 m and 19 m kerb to kerb with sidewalks). A building can only become
-## yours if it borders one you hold, so the cult spreads out from the core.
+## Two buildings border each other when this many metres or fewer of ground lie
+## between their walls: neighbours on a block, and across one street or avenue
+## (14 m and 19 m kerb to kerb with sidewalks). A building can only become yours if
+## it borders one you hold, so the cult spreads out from its headquarters.
 @export var border_gap := 20.0
+## A district's core can only become yours once this share of the buildings within
+## core_base_steps borders of it are yours.
+@export_range(0.0, 1.0) var core_base_share := 0.5
+@export var core_base_steps := 2
 
 @export_group("Start district")
 ## The district the cult starts in; its core building is the cult's first. The
