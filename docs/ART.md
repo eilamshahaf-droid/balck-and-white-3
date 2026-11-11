@@ -102,6 +102,48 @@ Walls: a mural is a decal quad on a wall (white ground, bold bright shapes) that
 grey-out so it always pops; a covered wall is a flat beige slab in the same place; a camera and
 a fine notice are small props. The district systems place them.
 
+## Facade styles (catalog, first four: New York)
+
+Source: Eilam's reference photos (Wikimedia Commons, CC BY-SA: reference only, never in the game),
+cards drafted by the researcher thread and checked here against the Cratial kit. The Designer turns
+this into procedural rules. Later styles: federal, cast-iron, beaux-arts, art-deco, taxpayer,
+modern-glass, plus Chicago, Philadelphia and Los Angeles.
+
+**What they share (the main finding):** a building does not read as a "cube with windows" because of
+three things. (1) Base, middle and top are different: a ground floor that is not the same as the
+floors above, and a top that ends with a cornice or a crown. (2) A strict window rhythm that is
+broken on purpose in one place (a bay window, a stoop, a shopfront, an entrance). (3) One main
+material with edge details (lintels, cornice, corner) in a second colour. Rows repeat one silhouette
+and vary the details (colour, hoods, bays). Street furniture on the facade (fire escapes, awnings,
+air conditioners, signs) does as much for the look as the wall itself.
+
+| | Brownstone | Tenement | Prewar apartment | Projects |
+| --- | --- | --- | --- | --- |
+| Floors | 3-4 + raised basement | 5-6 | 9-16 | 6-8 slabs, 13-25 towers |
+| Width | 2 bays (about 8 m), in rows | 2-3 bays per lot, corners wider | 4-5 bays, corner buildings | free slab, cross or Y plan |
+| Base / middle / top | stoop to parlor floor / identical floors / heavy bracketed cornice | shopfront / identical floors / sheet-metal cornice | rusticated stone base with canopy / brick middle / decorated top floors | none, plain on purpose |
+| Material, colour | brown sandstone, some brick | red-orange brick, strong shopfront colours | beige brick, light stone base and top | red-brown brick only |
+| Window rhythm | tall, aligned, parlor floor tallest, bay window | dense even grid, light sills and lintels | even grid, pairs, small balconies | small, even, no frames |
+| Signature | stoop, iron railing, bay | fire escapes, shop awnings, AC units | canopy, belt courses, corner tower | repeated buildings on lawns |
+| Roof | flat, hidden | flat, parapet, water tank | flat, penthouse, water tank | flat, mechanical box |
+| Fit | middle to upper, quiet | poor to mixed, dense (Slums) | rich, by parks and river | poor, city edge |
+
+**Buildable from the Cratial kit (4 m bay, 3 m floor):**
+
+- Have: flat, rectangular-window and arched-window walls, corners, bay-window walls (outcrops
+  left, right, centre), main and service doors, trim strips, roof edges, fire-escape platform
+  and stairway, brick colours (dark, red, tan), trim colours (white, brown, green).
+- Missing, to model as small extra modules (cheap, a few hundred faces each): stoop with railing,
+  bracketed cornice, shopfront with awning, entrance canopy, balustrade, rusticated stone base
+  (can be a texture swap on the ground-floor wall), air conditioner (already Meshy).
+- To test: the kit has one window per 4 m bay, but a real tenement has about two. Check whether
+  the wider wall and window variants carry two, otherwise halve the bay with a narrow module.
+- Order of value for the Slums: tenement first (fire escapes, shopfront, brick), then projects
+  (easiest: one tower or slab, rotated), then brownstone, then prewar for the rich districts.
+
+Projects are laid out at block level (free-standing in a superblock with lawns and paths), unlike
+the other three, which sit on the street line in rows; that is a layout rule, not a building rule.
+
 ## Assets in use (and rules)
 
 - Kenney modular buildings (CC0) for facades, merged per building by `building_visual.gd`.
