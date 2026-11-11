@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Researcher tool (2026-11-11)
+- New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. Optional Claude Haiku filter (pay per use, off without a key). No dependencies, no subscription, no game code touched.
+- Try it: double-click `tools/researcher/run_researcher.cmd`; the Hebrew guide is `tools/researcher/README.md`.
+
 ## Pre-Alpha 0.7.0 (2026-11-11): The Slums, the first playable slice
 The first district of the core loop, built from the designer's brief (`docs/GDD.md`).
 - **One man and a building.** The cult starts with the high priest alone in the Slums' core building, its first sermon house. Nobody else believes yet. The other districts are locked for now.

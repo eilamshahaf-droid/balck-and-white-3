@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Researcher</title>
+<style>
+  :root { --bg:#14161a; --card:#1e2127; --ink:#e8e8ea; --dim:#9aa0aa; --acc:#e9b44c; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px system-ui,sans-serif; padding:16px; }
+  h1 { font-size:20px; margin:0 0 12px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  input, button { font:inherit; padding:8px 10px; border-radius:6px; border:1px solid #3a3f48;
+    background:var(--card); color:var(--ink); }
+  input[type=text] { min-width:220px; flex:1; }
+  input[type=number] { width:70px; }
+  button { cursor:pointer; background:var(--acc); color:#111; border:0; font-weight:600; }
+  button.ghost { background:var(--card); color:var(--ink); border:1px solid #3a3f48; }
+  button:disabled { opacity:.5; cursor:wait; }
+  label { color:var(--dim); }
+  #status { color:var(--dim); margin:6px 0; min-height:1.4em; white-space:pre-wrap; }
+  #grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; }
+  .card { background:var(--card); border:2px solid transparent; border-radius:8px; overflow:hidden;
+    cursor:pointer; }
+  .card.sel { border-color:var(--acc); }
+  .card.bad { opacity:.35; }
+  .card img { width:100%; height:130px; object-fit:cover; display:block; }
+  .card div { padding:6px 8px; font-size:12px; color:var(--dim); }
+  details { background:var(--card); border-radius:8px; padding:8px 12px; margin-bottom:12px; }
+  summary { cursor:pointer; }
+  details .bar { margin-top:8px; }
+  details input[type=text] { min-width:300px; }
+</style>
+</head>
+<body>
+<h1>Researcher</h1>
+
+<details id="settings">
+  <summary>Settings (folder and keys)</summary>
+  <div class="bar"><label>Output folder</label><input type="text" id="outputDir"></div>
+  <div class="bar"><label>Pexels key</label><input type="text" id="pexelsKey"></div>
+  <div class="bar"><label>Unsplash key</label><input type="text" id="unsplashKey"></div>
+  <div class="bar"><label>Anthropic key (optional, for the AI filter)</label>
+    <input type="text" id="anthropicKey"></div>
+  <div class="bar"><button id="saveCfg">Save settings</button></div>
+</details>
+
+<div class="bar">
+  <input type="text" id="query" placeholder="Search terms, e.g. brownstone facade New York">
+  <input type="number" id="count" value="12" min="1" max="40" title="Results per source">
+  <label><input type="checkbox" class="src" value="wikimedia" checked> Wikimedia</label>
+  <label><input type="checkbox" class="src" value="pexels"> Pexels</label>
+  <label><input type="checkbox" class="src" value="unsplash"> Unsplash</label>
+  <button id="go">Search</button>
+</div>
+<div class="bar">
+  <input type="text" id="criteria" placeholder="AI filter (optional): e.g. street-level facade photo, no people">
+  <button class="ghost" id="filter">AI filter (costs cents)</button>
+</div>
+<div class="bar">
+  <label>Save into subfolder</label><input type="text" id="folder" value="facades">
+  <button class="ghost" id="all">Select all</button>
+  <button id="save">Save selected</button>
+</div>
+<div id="status"></div>
+<div id="grid"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let items = [];
+const selected = new Set();
+
+async function api(path, body) {
+  const r = await fetch("/api/" + path, body ? { method: "POST",
+    headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : {});
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error);
+  return j;
+}
+const status = (t) => ($("status").textContent = t);
+
+function render() {
+  const grid = $("grid");
+  grid.textContent = "";
+  for (const it of items) {
+    const c = document.createElement("div");
+    c.className = "card" + (selected.has(it.id) ? " sel" : "") + (it.ok === false ? " bad" : "");
+    const img = document.createElement("img");
+    img.src = it.thumb; img.loading = "lazy";
+    const d = document.createElement("div");
+    d.textContent = `${it.provider} · ${it.license}\n${it.author || ""}${it.why ? " · " + it.why : ""}`;
+    d.style.whiteSpace = "pre-wrap";
+    c.append(img, d);
+    c.onclick = () => { selected.has(it.id) ? selected.delete(it.id) : selected.add(it.id); render(); };
+    grid.append(c);
+  }
+}
+
+async function loadCfg() {
+  const c = await api("config");
+  for (const k of ["outputDir", "pexelsKey", "unsplashKey", "anthropicKey"]) $(k).value = c[k];
+}
+$("saveCfg").onclick = async () => {
+  const b = {};
+  for (const k of ["outputDir", "pexelsKey", "unsplashKey", "anthropicKey"]) b[k] = $(k).value;
+  await api("config", b); status("Settings saved."); loadCfg();
+};
+
+$("go").onclick = async () => {
+  const sources = [...document.querySelectorAll(".src:checked")].map((e) => e.value);
+  $("go").disabled = true; status("Searching...");
+  try {
+    const r = await api("search", { query: $("query").value, sources, count: +$("count").value });
+    items = r.results; selected.clear(); render();
+    status(`${items.length} results.` + (r.errors.length ? "\n" + r.errors.join("\n") : ""));
+  } catch (e) { status(e.message); }
+  $("go").disabled = false;
+};
+
+$("filter").onclick = async () => {
+  if (!items.length || !$("criteria").value) return status("Search first and write the criteria.");
+  $("filter").disabled = true; status("Asking Haiku about " + items.length + " images...");
+  try {
+    items = (await api("filter", { items, criteria: $("criteria").value })).items;
+    items.forEach((it) => { if (it.ok) selected.add(it.id); else selected.delete(it.id); });
+    render(); status(`${items.filter((i) => i.ok).length} match; selected them.`);
+  } catch (e) { status(e.message); }
+  $("filter").disabled = false;
+};
+
+$("all").onclick = () => { items.forEach((i) => selected.add(i.id)); render(); };
+
+$("save").onclick = async () => {
+  const picks = items.filter((i) => selected.has(i.id));
+  if (!picks.length) return status("Nothing selected. Click the pictures to select.");
+  $("save").disabled = true; status(`Saving ${picks.length}...`);
+  try {
+    const r = await api("save", { items: picks, folder: $("folder").value });
+    status(`Saved ${r.saved.length} files to:\n${r.dir}`);
+  } catch (e) { status(e.message); }
+  $("save").disabled = false;
+};
+$("query").onkeydown = (e) => { if (e.key === "Enter") $("go").click(); };
+loadCfg();
+</script>
+</body>
+</html>
