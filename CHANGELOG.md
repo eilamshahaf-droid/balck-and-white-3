@@ -4,7 +4,7 @@ One entry per update, newest first. Each entry says what changed and how to try 
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
 ## Researcher tool (2026-11-11)
-- New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. Optional Claude Haiku filter (pay per use, off without a key). No dependencies, no subscription, no game code touched.
+- New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. A chat box (Hebrew) driven by Claude Haiku (pay per use, needs an API key; manual search works without) turns requests into searches and saves, plus an AI filter button. No dependencies, no subscription, no game code touched.
 - Try it: double-click `tools/researcher/run_researcher.cmd`; the Hebrew guide is `tools/researcher/README.md`.
 
 ## Pre-Alpha 0.7.0 (2026-11-11): The Slums, the first playable slice
