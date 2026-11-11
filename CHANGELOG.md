@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Researcher tool (2026-11-11)
+- New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. No paid API: it runs on the PC alone. No dependencies, no subscription, no game code touched.
+- Try it: double-click `tools/researcher/run_researcher.cmd`; the Hebrew guide is `tools/researcher/README.md`.
+
 ## Pre-Alpha 0.7.0 (2026-11-11): The Slums, the first playable slice
 The first district of the core loop, built from the designer's brief (`docs/GDD.md`).
 - **One man and a building.** The cult starts with the high priest alone in the Slums' core building, its first sermon house. Nobody else believes yet. The other districts are locked for now.
@@ -27,6 +31,22 @@ The first district of the core loop, built from the designer's brief (`docs/GDD.
 - The help line no longer says that only miracles change belief: priests win people over, miracles help them.
 - `CLAUDE.md` now points to `docs/GDD.md` and `docs/ART.md`, lists the three studio roles as owners, and explains the web build.
 - Try it: open the link above in Chrome or Edge.
+
+## 2026-11-11: Facade style catalog
+- `docs/ART.md`: the first four New York facade styles (brownstone, tenement, prewar apartment, projects) compared in one table, what they share, and which parts the Cratial kit can and cannot build. Docs only.
+- Try it: read "Facade styles" in `docs/ART.md`.
+
+## 2026-11-11: Art decisions
+- `docs/ART.md`: how the Artist works (quick experiment, then a picture) and the decision to build with simplified Cratial modules. Docs only.
+- Try it: read "How we work" and "Decisions" in `docs/ART.md`.
+
+## 2026-11-11: Cratial kit inventory
+- `docs/ART.md`: the kit now comes from a Google Drive link instead of Remote Control; inventory of its modules, materials and polycounts, and the import plan. Docs only.
+- Try it: read the "Cratial kit pipeline" section of `docs/ART.md`.
+
+## 2026-11-11: Grey-to-colour plan
+- `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.
+- Try it: read the "Grey to colour" section of `docs/ART.md`.
 
 ## 2026-11-11: Grey-to-colour plan
 - `docs/ART.md` gains a proposed shader plan for district freedom (grey at 0, full colour at 1) and notes on murals and painted-over walls. Docs only.
