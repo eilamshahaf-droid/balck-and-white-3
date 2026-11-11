@@ -4,6 +4,8 @@ One entry per update, newest first. Each entry says what changed and how to try 
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
 ## Facade rules and wildness meter (2026-11-11)
+- Facade Lab: seed-driven massing, courtyard notch, rear extensions, projects plans (slab, cross, Y), and cornice rules with a "cornice kept" meter. Described in `docs/ART.md`.
+- Facade Lab: shop awnings, an air-shaft strip on tenement side walls, roof clutter at high wildness; ART.md notes what real 3D views show that a box misses.
 - `docs/ART.md` has a new "Facade rules" section: dominant window per building, window pairs, air conditioners and curtains per apartment column, renovated columns, and a wildness meter.
 - Try it in the Facade Lab (link in the section): move the "Wildness" slider.
 
