@@ -74,8 +74,8 @@ The scene is small; most nodes are built in code at startup.
 | `Murals` | `world/murals.gd` | The Vandalist set down by a building (`Population.agent_set_down`) paints a mural; murals feed `Population.pleasure_bonus` and awareness; the neighbourhood's answer (painted over, fine, camera; weights grow with use) may call `Arrests.arrest`. |
 | `Condemnation` | `government/condemnation.gd` (+ `condemnation_notice.gd`) | Complaints from loud buildings of yours raise awareness; at `condemn_at` a notice, then `Population.close_building` for `close_minutes` and `reopen_building`. The hand can tear the notice off for belief. Replaces the inspector in `GovernmentSettings.condemn_kinds` (the Slums). |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
-| `DebugPanel` | `debug_panel.gd` | Testing shortcuts (F1 hides). Not part of the game. |
-| `HUD` | `hud.gd` | The numbers the player may see. |
+| `DebugPanel` | `debug_panel.gd` | Testing shortcuts, hidden until F1. Not part of the game. |
+| `HUD` | `hud.gd` (+ `help_label.gd`) | The numbers the player may see, and the controls folded into one hint line (H opens them). |
 
 World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`,
 `door.gd`, `litter.gd`, `pigeon.gd`.
@@ -196,7 +196,12 @@ each thread owes; read both before starting work.
 
 ### Standing decisions (Eilam, 2026-11-12)
 
-- The story is a god against the bureaucracy, not a cult taking over.
+- The story is a god against the bureaucracy, not a cult taking over, and not a street-artist
+  god. Two ways to resist: control (you write the rules anew: fast, focused, little spreading)
+  and freedom (a real majority: slower, with time to invest in buildings and people). The game
+  should feel considered, not a fast takeover; do not tune it to go faster.
+- `docs/GDD.md` is a copy of the Designer's page (the link is at its top). If Eilam says the
+  design changed and the copy has not, read the page with the Artifact tool and sync the copy.
 - Buildings are taken one at a time; a whole block pays a bonus.
 - **Feature freeze**: no new systems and no other districts until the Slums' base loop is good.
   Fix, tune, simplify and make readable; judge balance with `tests/pace_sim`.

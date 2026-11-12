@@ -1,10 +1,11 @@
-[gd_scene load_steps=43 format=3]
+[gd_scene load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
 [ext_resource type="Script" path="res://scripts/god_hand.gd" id="3_hand"]
 [ext_resource type="Script" path="res://scripts/faith.gd" id="4_faith"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5_hud"]
+[ext_resource type="Script" path="res://scripts/help_label.gd" id="5_help"]
 [ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
 [ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
@@ -229,19 +230,24 @@ script = ExtResource("10_debug")
 
 [node name="Help" type="Label" parent="HUD"]
 offset_left = 12.0
-offset_top = 10.0
+offset_top = 96.0
 offset_right = 900.0
-offset_bottom = 120.0
+offset_bottom = 206.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
+script = ExtResource("5_help")
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
-Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
+Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: who is this (debug)    F1: debug panel
 Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
 The hand lifts people and things (not trees). Only missionaries and the high priest win people over; miracles help them."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
-offset_top = 176.0
+offset_top = 62.0
 offset_right = 900.0
-offset_bottom = 206.0
+offset_bottom = 92.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
 script = ExtResource("5_hud")
 
 [node name="District" type="Label" parent="HUD"]
@@ -253,6 +259,8 @@ offset_top = -64.0
 offset_right = 900.0
 offset_bottom = -12.0
 grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
 
 [node name="ArrestAlert" type="Label" parent="HUD" node_paths=PackedStringArray("arrests")]

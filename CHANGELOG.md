@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.10.1 (2026-11-12): a clean screen
+- **Less text.** The four lines of controls are folded into "H: how to play" (H opens and closes them). The debug panel is hidden until F1. The numbers sit at the top of the screen.
+- **Readable text.** The HUD's white text has a dark outline, so it reads over the bright sky and ground.
+- **The opening view** looks from the edge of the map in toward the district, closer (`start_distance`, `start_lead` in `data/hand_settings.tres`), instead of showing mostly the land outside the map.
+- **The design document** (`docs/GDD.md`) is the Designer's updated page again (the story, missions, the building editor, about an hour for the Slums and no clock), and opens with Eilam's direction of the same day: not a street-artist god, and two ways to resist the bureaucracy, control (fast, focused) and freedom (a real majority, slower, with time to invest in buildings and people).
+- Try it: start the game; press H, then F1.
+
 ## Pre-Alpha 0.10.0 (2026-11-12): one building at a time
 Eilam's rule: you take single buildings, and a whole block pays a bonus. No new features besides that; the rest is making the base of the Slums work.
 - **Buildings, not blocks.** Each of the Slums' 417 buildings is taken on its own, once most of the people living in it believe (1 to 3 residents each, so one or two conversions), and only if it borders a building of yours (next door or across the street). Gold plate on the roof, as before.

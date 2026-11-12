@@ -8,6 +8,10 @@ extends Resource
 @export var rotate_key_speed := 1.5         # Q/E, radians per second
 @export var tilt_key_speed := 1.0           # R/F, radians per second
 @export var orbit_sensitivity := 0.005      # middle-drag, radians per pixel
+## The opening view: this far from the base, looking in toward the district.
+@export var start_distance := 95.0
+## The view is centred this far in from the base, so the district fills the screen.
+@export var start_lead := 40.0
 @export var zoom_step := 1.15               # per wheel notch
 @export var zoom_drag_sensitivity := 0.01   # both buttons + mouse, per pixel
 @export var distance_min := 8.0
