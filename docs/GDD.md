@@ -32,7 +32,19 @@ Where this disagrees with the text below, this wins.
    - **Willingness.** Someone who lives well goes gladly and gives full effort. Someone neglected or worn out by orders still goes, with a penalty in three parts, all approved: their work is worth less; it wears them further and after a few such orders they leave; and the neighbours who see it raise the district's awareness.
    - This is the dial between the two ways: moving people like pieces is fast and wears them down, and a following that lives well acts by itself.
 6. **Names (Eilam chose set B, 2026-11-12; in the game since 0.12.0).** Believer: Member. Missionary: Canvasser. Priest: Clerk. High priest: the Secretary, who is also the narrator of the minutes. Special agent: Field Delegate. The cult: the Committee. Sermon house: Branch. The text of sections 1 to 12 still uses the old names.
-7. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
+7. **How people come over (Eilam, after playing 0.12; built in 0.13.0).**
+   - **Not in the street.** Converting passers-by felt pointless. The street is to get another job later; for now a street meeting only rests worn-out members.
+   - **At a door the player chose**: the residents of a building, by canvassers set down there.
+   - **Or by themselves, slowly, and only inside a block**: buildings of yours bring their neighbours round by how free and inviting they are. One block never works on another, so growth is orderly and the player decides where to cross.
+   - **The first building, the Office, is the most capable**: it gets the game going by itself (it works on its block four times as hard) and the Secretary canvasses in person.
+   - **No abandoned or empty buildings** anywhere in the game: a building is won by winning its residents, nothing else.
+8. **Paperwork and miracles (Eilam, 2026-11-12; not built yet).**
+   - **Paperwork replaces belief** as the resource. Branches make it; it buys everything official: stamping your own rules on a building, objecting to a notice, bail, training.
+   - **A miracle cannot move the bureaucracy.** It works on people and the physical world only: it never takes a building, fills the bar, cancels a notice or frees anyone. It gathers a crowd, lifts spirits, distracts officers and inspectors.
+   - **Miracles do not cost paperwork.** They come from a small stock (about three) that refills slowly.
+   - **City Hall answers every miracle with a form**: a dry notice and a fine ("unlicensed precipitation"). That is the price and the joke.
+   - Open: the list of miracles and powers that fit this. The Programmer's candidates: Block Party (keeps), Rain of Frogs (a distraction), a smell of fresh bread that brings residents to their doors, a yawn that sends officers to sleep for a minute, a sunbeam on one canvasser, pigeons over a camera, every phone ringing at once.
+9. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
 
 ---
 

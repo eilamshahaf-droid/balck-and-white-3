@@ -8,6 +8,9 @@ extends Resource
 ## explain without a god). People a miracle actually helps always read it
 ## with balance.tres's helped_situation.
 
+## The miracles on the wheel. Eilam, 2026-11-12: a miracle never touches a building, so
+## fire and roaches (which empty one) are off it until the new list of miracles is chosen.
+@export var offered := PackedStringArray(["water", "money", "party", "frogs"])
 @export_group("Miracle power: believers near the spot")
 @export var power_radius := 70.0             # metres: believers this close lend the miracle their faith
 @export var full_power_belief := 6.0         # believers that close for full power
@@ -111,7 +114,7 @@ extends Resource
 @export_range(0.0, 1.0) var frog_knock_chance := 0.3    # people hit by a frog and knocked down
 @export var frog_push := 5.0                 # how hard a frog knocks someone over (m/s)
 ## Every building under the frogs, yours too, may be overrun and emptied.
-@export_range(0.0, 1.0) var frog_overrun_chance := 0.3
+@export_range(0.0, 1.0) var frog_overrun_chance := 0.0
 @export var frog_seen_from := 90.0
 @export var frog_gather_radius := 40.0       # people this close come to gawk...
 @export var frog_gawkers := 25               # ...at most this many, at size 1
@@ -144,3 +147,7 @@ extends Resource
 @export_group("Floating notes: who just came to believe")
 @export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once
 
+
+
+func is_offered(kind: StringName) -> bool:
+	return offered.has(String(kind))

@@ -25,8 +25,10 @@ extends Resource
 @export var neighbour_radius := 120.0
 ## Share of friends picked from anywhere in the city instead.
 @export_range(0.0, 1.0) var distant_friend_chance := 0.2
-## Buildings taller than this are glass office towers: people work there but don't live there.
-@export var office_height := 60.0
+## Buildings taller than this are glass office towers: people work there but don't live
+## there. None in the Slums (its towers are housing), so every building has residents to
+## win over; a later stage's profile brings office towers back.
+@export var office_height := 1000.0
 
 @export_group("Walking")
 ## How far (in metres) people wander from their home corner.
