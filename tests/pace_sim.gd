@@ -12,6 +12,7 @@ extends Node
 
 const MAIN := preload("res://scenes/main.tscn")
 const LS: LandmarkSettings = preload("res://data/landmarks.tres")
+const U: UnitSettings = preload("res://data/units.tres")
 const SPEED := 8.0
 const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
@@ -132,7 +133,9 @@ func _send_delegate(base: Node3D) -> void:
 	if agent == null:
 		for r in _population.residents:
 			if r.rank == Resident.Rank.BELIEVER and r.job == Resident.Job.FREE \
+					and _treasury.can_afford(U.agent_cost) \
 					and _population.staffing.train(r, Resident.Rank.AGENT, base):
+				_treasury.spend_money(U.agent_cost)
 				break
 		return
 	var d := _districts.start_district()

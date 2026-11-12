@@ -80,8 +80,10 @@ extends Resource
 @export var missionary_time := 90.0
 @export var priest_time := 180.0
 @export var max_priests := 12
-## Money it costs to start training a priest.
+## Money it costs to start training a priest; each clerk you already have makes the
+## next one priest_cost_growth dearer (compounding).
 @export var priest_cost := 400.0
+@export var priest_cost_growth := 0.25
 ## The special agent (in the Slums the Vandalist): trained from a believer at the
 ## cult's base, this long, for this much money, so many at once.
 @export var agent_time := 120.0

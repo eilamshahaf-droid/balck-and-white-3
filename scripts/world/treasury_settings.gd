@@ -10,7 +10,7 @@ extends Resource
 @export var tick := 1.0                     # seconds between payments
 
 ## Every believer costs this much money per minute.
-@export var believer_upkeep := 1.0
+@export var believer_upkeep := 1.5
 ## Free spaces, bought in tiers (built when the feature freeze lifts): the price of each
 ## tier, and how much more the believers within free_space_reach blocks of it make.
 @export var free_space_costs := PackedFloat32Array([400.0, 1200.0])

@@ -15,8 +15,8 @@ extends Resource
 ## A mark takes the Vandalist this long and costs this much money in supplies per
 ## attempt; marking again a landmark City Hall scrubbed costs redo_cost.
 @export var mark_minutes := 4.0
-@export var mark_cost := 60.0
-@export var redo_cost := 100.0
+@export var mark_cost := 200.0
+@export var redo_cost := 300.0
 ## Chance he is arrested when a mark is done.
 @export var arrest_chance := 0.1
 ## Each standing mark multiplies the core's difficulty by this.

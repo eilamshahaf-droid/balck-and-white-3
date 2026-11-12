@@ -127,7 +127,10 @@ func send_to_post(id: StringName, building: Node3D) -> bool:
 
 func _training_cost(rank: Resident.Rank) -> float:
 	match rank:
-		Resident.Rank.PRIEST: return U.priest_cost
+		Resident.Rank.PRIEST:
+			# The Secretary counts among the priests but was never trained.
+			var clerks := maxi(population.priest_count - 1, 0)
+			return U.priest_cost * pow(1.0 + U.priest_cost_growth, clerks)
 		Resident.Rank.AGENT: return U.agent_cost
 	return 0.0
 
