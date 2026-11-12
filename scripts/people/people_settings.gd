@@ -4,10 +4,11 @@ extends Resource
 ## Open data/people.tres in Godot and change values in the Inspector.
 
 @export_group("Population")
-## Every home gets at least this many residents; the city's total is that or
+## Every home (a unit of the map) gets at least this many residents; each record stands
+## for a group of like people (the Designer: about 4 per unit). The total is that or
 ## resident_count, whichever is more.
-@export var min_residents_per_home := 5
-@export var resident_count := 500
+@export var min_residents_per_home := 3
+@export var resident_count := 200
 ## One resident in this many walks the streets at a time (at least one from
 ## every lived-in home); the rest are indoors. Each body on the street costs
 ## frame time, so this is the knob for slower computers.

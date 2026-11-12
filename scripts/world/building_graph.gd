@@ -1,24 +1,14 @@
 class_name BuildingGraph
 extends RefCounted
-## Which buildings border each other: their footprints, grown by half the gap on every
-## side, overlap. Built once; Districts asks it who a building's neighbours are.
+## Which buildings (the stage map's units) border each other, set once from the map;
+## Districts asks it who a building's neighbours are.
 
 var _borders: Array[PackedInt32Array] = []
 
 
-## `feet` are the buildings' footprints on the ground (x, z), by index.
-func build(feet: Array[Rect2], gap: float) -> void:
-	var grown: Array[Rect2] = []
-	for f in feet:
-		grown.append(f.grow(gap / 2.0))
-	_borders.resize(feet.size())
-	for i in feet.size():
-		_borders[i] = PackedInt32Array()
-	for i in feet.size():
-		for j in range(i + 1, feet.size()):
-			if grown[i].intersects(grown[j]):
-				_borders[i].append(j)
-				_borders[j].append(i)
+## Neighbours given outright (the stage map's units), by index.
+func set_borders(lists: Array[PackedInt32Array]) -> void:
+	_borders = lists.duplicate()
 
 
 ## The buildings `index` borders.
