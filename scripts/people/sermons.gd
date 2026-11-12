@@ -91,8 +91,6 @@ func risk_at(p: Vector3) -> float:
 
 
 func _begin(priest: Resident) -> void:
-	if _population.believer_count >= _population.housing_capacity:
-		return  # no free homes: nobody to convert
 	var s := Sermon.new()
 	s.priest = priest
 	s.at = priest.body.global_position

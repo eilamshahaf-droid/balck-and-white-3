@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3]
+[gd_scene load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -38,6 +38,8 @@
 [ext_resource type="Script" path="res://scripts/world/fragility.gd" id="62_fragility"]
 [ext_resource type="Script" path="res://scripts/world/murals.gd" id="63_murals"]
 [ext_resource type="Script" path="res://scripts/government/condemnation.gd" id="64_condemnation"]
+[ext_resource type="Script" path="res://scripts/world/landmarks.gd" id="65_landmarks"]
+[ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -179,9 +181,19 @@ awareness = NodePath("../Awareness")
 faith = NodePath("../Faith")
 treasury = NodePath("../Treasury")
 
-[node name="Awareness" type="Node" parent="." node_paths=PackedStringArray("districts", "population")]
+[node name="Awareness" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "landmarks")]
 script = ExtResource("61_awareness")
 districts = NodePath("../Districts")
+population = NodePath("../Population")
+landmarks = NodePath("../Landmarks")
+
+[node name="Landmarks" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
+script = ExtResource("65_landmarks")
+districts = NodePath("../Districts")
+
+[node name="StageScreens" type="CanvasLayer" parent="." node_paths=PackedStringArray("population")]
+layer = 6
+script = ExtResource("66_stage")
 population = NodePath("../Population")
 
 [node name="Fragility" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "awareness", "heat")]
@@ -191,13 +203,14 @@ population = NodePath("../Population")
 awareness = NodePath("../Awareness")
 heat = NodePath("../Heat")
 
-[node name="Murals" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts", "awareness", "treasury", "arrests")]
+[node name="Murals" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts", "awareness", "treasury", "arrests", "landmarks")]
 script = ExtResource("63_murals")
 population = NodePath("../Population")
 districts = NodePath("../Districts")
 awareness = NodePath("../Awareness")
 treasury = NodePath("../Treasury")
 arrests = NodePath("../Arrests")
+landmarks = NodePath("../Landmarks")
 
 [node name="Condemnation" type="Node3D" parent="." node_paths=PackedStringArray("districts", "population", "awareness", "faith")]
 script = ExtResource("64_condemnation")

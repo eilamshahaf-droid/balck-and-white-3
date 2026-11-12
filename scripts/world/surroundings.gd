@@ -160,28 +160,35 @@ func _build_water() -> void:
 func _lay_roads() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 11
-	var last_avenue: int = city.AVENUES - 1
-	var last_street: int = city.STREETS - 1
-	# The avenues carry on north and south and fan out.
-	for i in city.AVENUES:
-		var x: float = city.intersection(Vector2i(i, 0)).x
-		var fan: float = x / city.half_size.x
-		_add_road(_wander(Vector2(x, -city.half_size.y), Vector2.UP, S.avenue_reach, fan, i), S.road_width)
-		_add_road(_wander(Vector2(x, city.half_size.y), Vector2.DOWN, S.avenue_reach, -fan, i + 50), S.road_width)
-	# Side streets run west a little way into the neighbourhoods.
-	for j in city.STREETS:
-		var z: float = city.intersection(Vector2i(0, j)).z
-		var reach := rng.randf_range(S.street_reach.x, S.street_reach.y)
-		_add_road(_wander(Vector2(-city.half_size.x, z), Vector2.LEFT, reach, -z / city.half_size.y, j + 100), S.road_width * 0.75)
-	# A few cross the river on bridges, then wander off on the far bank.
-	for k in S.bridges:
-		var j := roundi(float(k + 1) * last_street / (S.bridges + 1))
-		var start: Vector3 = city.intersection(Vector2i(last_avenue, j))
-		var far_bank := river_x(start.z) + S.river_width / 2.0 + S.promenade_width + 10.0
-		var path := PackedVector2Array([Vector2(start.x, start.z), Vector2(far_bank, start.z)])
-		path.append_array(_wander(Vector2(far_bank, start.z), Vector2.RIGHT, S.avenue_reach, 0.0, k + 200).slice(1))
+	var plan: CityPlan = city.plan
+	var edge: Vector2 = city.half_size
+	var east: Array[Vector2] = []
+	# Every street that runs off the map carries on into the outskirts and fans out:
+	# the wide ones far, side streets a little way.
+	for i in plan.roads.size():
+		var road := plan.roads[i]
+		for at_start: bool in [true, false]:
+			var n := road.points.size()
+			var end := road.points[0] if at_start else road.points[n - 1]
+			var inner := road.points[1] if at_start else road.points[n - 2]
+			if absf(end.x) < edge.x - S.edge_reach and absf(end.y) < edge.y - S.edge_reach:
+				continue
+			var dir := (end - inner).normalized()
+			var wide := road.tier != &"street"
+			var reach := S.avenue_reach if wide else rng.randf_range(S.street_reach.x, S.street_reach.y)
+			var fan := (end.x / edge.x) * dir.y - (end.y / edge.y) * dir.x
+			_add_road(_wander(end, dir, reach, fan, i * 2 + int(at_start)), S.road_width if wide else S.road_width * 0.75)
+			if end.x > edge.x - S.edge_reach:
+				east.append(end)
+	# A few of those on the river side cross it on bridges, then wander off on the far bank.
+	east.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.y < q.y)
+	for k in mini(S.bridges, east.size()):
+		var start := east[floori((k + 0.5) * east.size() / mini(S.bridges, east.size()))]
+		var far_bank := river_x(start.y) + S.river_width / 2.0 + S.promenade_width + 10.0
+		var path := PackedVector2Array([start, Vector2(far_bank, start.y)])
+		path.append_array(_wander(Vector2(far_bank, start.y), Vector2.RIGHT, S.avenue_reach, 0.0, k + 200).slice(1))
 		_add_road(path, S.road_width)
-		_bridges.append(Vector3(river_x(start.z) - S.river_width / 2.0 - 6.0, far_bank - S.promenade_width, start.z))
+		_bridges.append(Vector3(river_x(start.y) - S.river_width / 2.0 - 6.0, far_bank - S.promenade_width, start.y))
 	var rings: PackedFloat32Array = S.ring_offsets
 	for r in rings:
 		_lay_ring(r)

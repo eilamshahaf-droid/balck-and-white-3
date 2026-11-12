@@ -129,8 +129,7 @@ func _pct(v: float) -> int:
 
 
 func _corner(building: Node3D) -> String:
-	var g: Vector2i = city.nearest_grid(building.global_position)
-	return "Avenue %d & Street %d" % [g.x + 1, g.y + 1]
+	return "corner %d" % (city.nearest_node(building.global_position) + 1)
 
 
 func _names(ids: Array[int], first_only: bool) -> String:

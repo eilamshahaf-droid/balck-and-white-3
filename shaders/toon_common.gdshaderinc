@@ -28,6 +28,12 @@ uniform float shadow_softness = 0.08;
 uniform vec3 key_tint : source_color = vec3(1.0, 0.96, 0.88);
 uniform float rim_strength = 0.25;
 
+#ifdef GHOST
+// Ordered 4 x 4 dither: the share of pixels kept follows alpha.
+const float DITHER[16] = float[](0.03, 0.53, 0.16, 0.66, 0.78, 0.28, 0.91, 0.41,
+	0.22, 0.72, 0.09, 0.59, 0.97, 0.47, 0.84, 0.34);
+#endif
+
 float bands(float t) {
 	return band_low
 		+ (band_mid - band_low) * smoothstep(step1 - softness, step1 + softness, t)
@@ -48,7 +54,10 @@ void fragment() {
 	AO = ambient_amount;
 	AO_LIGHT_AFFECT = 0.0;
 #ifdef GHOST
-	ALPHA = alpha;
+	ivec2 cell = ivec2(FRAGCOORD.xy) % 4;
+	if (alpha <= DITHER[cell.y * 4 + cell.x]) {
+		discard;
+	}
 #endif
 }
 

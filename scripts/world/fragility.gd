@@ -32,12 +32,12 @@ func _physics_process(delta: float) -> void:
 			crumble(i)
 
 
-## Building `index` is yours, not the headquarters or a core, and has at most
-## fragile_neighbours of yours next to it.
+## Building `index` is yours, not the headquarters or a core, not in a complete block,
+## and has at most fragile_neighbours of yours next to it.
 func is_exposed(index: int) -> bool:
 	var b := districts.buildings[index]
 	if b == null or not districts.is_yours(index) or index == districts.headquarters \
-			or districts.is_core(b):
+			or districts.is_core(b) or districts.in_complete_block(index):
 		return false
 	return awareness.held_neighbours(index) <= A.fragile_neighbours
 

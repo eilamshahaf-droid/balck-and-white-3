@@ -8,9 +8,11 @@ extends Node
 signal changed(district: int, level: float)
 
 const A: AwarenessSettings = preload("res://data/awareness.tres")
+const DS: DistrictSettings = preload("res://data/districts.tres")
 
 @export var districts: Districts
 @export var population: Population
+@export var landmarks: Landmarks
 
 var _level := PackedFloat32Array()
 var _spike_left := PackedFloat32Array()   # seconds of full awareness after a core attempt
@@ -27,6 +29,7 @@ class Martyr:
 
 func _ready() -> void:
 	districts.layout_ready.connect(_on_layout_ready, CONNECT_ONE_SHOT)
+	districts.block_changed.connect(_on_block_changed)
 	population.preaching.preached.connect(_on_preached)
 
 
@@ -72,7 +75,8 @@ func add(d: int, amount: float) -> void:
 
 
 ## What converting someone who lives in `home` is multiplied by: awareness makes it
-## harder (less so at a core your buildings shield), a martyr nearby easier.
+## harder (less so at a core your buildings shield), a martyr nearby easier, and at a
+## core every landmark mark easier.
 func factor_for(home: Node3D) -> float:
 	var i := districts.index_of(home)
 	if i < 0:
@@ -83,6 +87,8 @@ func factor_for(home: Node3D) -> float:
 		hit *= 1.0 - A.protection_max * minf(1.0,
 				float(held_neighbours(i)) / maxi(A.protection_neighbours, 1))
 	var out := maxf(A.effect_min, 1.0 - hit)
+	if districts.is_core(home) and landmarks:
+		out *= landmarks.core_ease(d)
 	for m in _martyrs:
 		if m.near.has(i):
 			return out * A.martyr_bonus
@@ -122,6 +128,13 @@ func joined_share(d: int) -> float:
 			if held_neighbours(i) >= 2:
 				joined += 1
 	return float(joined) / held if held > 0 else 0.0
+
+
+## A block that is all yours settles the neighbourhood a little.
+func _on_block_changed(block: int, complete: bool) -> void:
+	if complete:
+		var first := districts.block_members(block)[0]
+		add(districts.district_of(first), -DS.block_awareness_drop)
 
 
 func _on_layout_ready() -> void:

@@ -30,7 +30,7 @@ var police: Police
 ## Used by the god's hand: heavier things lag and swing more when held.
 var mass := 1.0
 var fall_gravity := _people.gravity
-var grid := Vector2i.ZERO
+var grid := 0
 var state := State.WALKING
 var speed := 3.0
 var target := Vector3.ZERO
@@ -44,9 +44,9 @@ var has_phone: bool:
 		return resident.has_phone
 	set(value):
 		resident.has_phone = value
-## The corner nearest home: people wander around it.
-var home := Vector2i.ZERO
-## Stand still (watching a fire, waiting on a roof) instead of walking the grid.
+## The street node nearest home: people wander around it.
+var home := 0
+## Stand still (watching a fire, waiting on a roof) instead of walking the streets.
 var idle := false
 ## Answering a divine sign: walking to a building, or standing at it.
 var on_errand := false
@@ -58,6 +58,7 @@ var occupying := false
 ## The body's pose (tumbling, lying down). The crowd (crowd.gd) draws every
 ## body; this mesh stays hidden and gives the hand its size, and shows only
 ## while the hand outlines this person, since the outline is drawn on it.
+var _came_from := -1   # the node walked from, so people don't turn back at every step
 var _body: MeshInstance3D
 static var _phone_screen: StandardMaterial3D
 
@@ -113,10 +114,10 @@ func _ready() -> void:
 		has_phone = randf() < B.phone_chance
 		resident.color = Color.from_hsv(randf(), 0.45, 0.85)
 	if resident.home:
-		grid = city.nearest_grid(resident.home.global_position)
+		grid = city.nearest_node(resident.home.global_position)
 	home = grid
 	lane_offset = Vector3(randf_range(-_people.lane_spread, _people.lane_spread), 0, randf_range(-_people.lane_spread, _people.lane_spread))
-	position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
+	position = city.node_position(grid) + lane_offset + Vector3.UP * 0.1
 	_pick_next_target()
 
 
@@ -260,7 +261,7 @@ func send_on_errand(spot: Vector3, face: Vector3, stay: float, line: String, col
 	_dancing = dance
 	on_errand = true
 	errand_arrived = false
-	var corner: Vector3 = city.intersection(city.nearest_grid(spot))
+	var corner: Vector3 = city.node_position(city.nearest_node(spot))
 	_errand_route = [corner + lane_offset * 0.3, Vector3(spot.x, corner.y, spot.z)]
 	_errand_time = stay
 	_errand_line = line
@@ -346,7 +347,7 @@ func leave_occupied() -> void:
 	_stop_occupying()
 	# Down the stairs from a roof, back to the street.
 	if global_position.y > 1.0:
-		global_position = city.intersection(city.nearest_grid(global_position)) + lane_offset + Vector3.UP * 0.1
+		global_position = city.node_position(city.nearest_node(global_position)) + lane_offset + Vector3.UP * 0.1
 	resume_walking()
 
 
@@ -496,8 +497,8 @@ func _stand_up() -> void:
 	_body.position.y = 0.9
 	state = State.WALKING
 	velocity = Vector3.ZERO
-	grid = city.nearest_grid(global_position)
-	target = city.intersection(grid) + lane_offset
+	grid = city.nearest_node(global_position)
+	target = city.node_position(grid) + lane_offset
 	if _from_hand:
 		_from_hand = false
 		set_down.emit()
@@ -507,7 +508,7 @@ func _stand_up() -> void:
 func _respawn() -> void:
 	state = State.WALKING
 	grid = home
-	global_position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
+	global_position = city.node_position(grid) + lane_offset + Vector3.UP * 0.1
 	velocity = Vector3.ZERO
 	_spin = Vector3.ZERO
 	_body.quaternion = UPRIGHT
@@ -519,15 +520,15 @@ func _respawn() -> void:
 func resume_walking() -> void:
 	idle = false
 	_look_at_target = Vector3.INF
-	grid = city.nearest_grid(global_position)
-	target = city.intersection(grid) + lane_offset
+	grid = city.nearest_node(global_position)
+	target = city.node_position(grid) + lane_offset
 
 
 ## Moved house: start again from the corner nearest the new home.
 func settle_at_home() -> void:
 	move_out()
 	grid = home
-	global_position = city.intersection(grid) + lane_offset + Vector3.UP * 0.1
+	global_position = city.node_position(grid) + lane_offset + Vector3.UP * 0.1
 	resume_walking()
 
 
@@ -558,8 +559,8 @@ func flee(danger: Vector3) -> void:
 	away.y = 0.0
 	if away.length() < 0.1:
 		away = Vector3.RIGHT
-	grid = city.nearest_grid(global_position + away.normalized() * _people.flee_distance)
-	target = city.intersection(grid) + lane_offset
+	grid = city.nearest_node(global_position + away.normalized() * _people.flee_distance)
+	target = city.node_position(grid) + lane_offset
 	_flee_time = _people.flee_time
 	_say_line(FLEE_LINES[randi() % FLEE_LINES.size()], FLEE_COLOR, _people.errand_line_time)
 
@@ -568,28 +569,29 @@ func flee(danger: Vector3) -> void:
 ## around the new one, walking there instead of appearing at it.
 func move_out() -> void:
 	var base: Node3D = resident.post if resident.post else resident.home
-	home = city.nearest_grid(base.global_position)
+	home = city.nearest_node(base.global_position)
 
 
 func _pick_next_target() -> void:
 	# Everyone has a neighbourhood: believers gather where they live.
-	var next: Vector2i = city.random_neighbor(grid)
+	var next: int = city.random_neighbor(grid, _came_from)
 	for attempt in 4:
-		if city.intersection(next).distance_to(city.intersection(home)) <= _people.home_range \
+		if city.node_position(next).distance_to(city.node_position(home)) <= _people.home_range \
 				and not _street_closed(grid, next):
 			break
-		next = city.random_neighbor(grid)
+		next = city.random_neighbor(grid, _came_from)
 	if _street_closed(grid, next):
 		# Every way out is shut for now: wait a beat at this corner.
 		_pause = randf_range(_people.notice_pause_min, _people.notice_pause_max)
 		return
+	_came_from = grid
 	grid = next
-	target = city.intersection(grid) + lane_offset
+	target = city.node_position(grid) + lane_offset
 
 
 ## Is the street between two corners shut by a roadblock?
-func _street_closed(from: Vector2i, to: Vector2i) -> bool:
+func _street_closed(from: int, to: int) -> bool:
 	if police == null:
 		return false
-	var mid: Vector3 = (city.intersection(from) + city.intersection(to)) / 2.0
+	var mid: Vector3 = (city.node_position(from) + city.node_position(to)) / 2.0
 	return police.is_closed_at(mid)

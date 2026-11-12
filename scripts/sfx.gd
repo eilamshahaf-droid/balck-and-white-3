@@ -34,7 +34,7 @@ static func surface_of(obj: Object) -> StringName:
 	var node: Node = obj
 	if node.is_in_group("citizens"):
 		return &"cloth"
-	if node.is_in_group("buildings"):
+	if BuildingBox.building_of(node):
 		return &"concrete"
 	return &"asphalt"
 

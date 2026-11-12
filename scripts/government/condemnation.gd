@@ -72,7 +72,8 @@ func condemn(index: int) -> void:
 
 func _complain(minutes: float) -> void:
 	for i in districts.buildings.size():
-		if not districts.is_yours(i) or i == districts.headquarters or i == _index:
+		if not districts.is_yours(i) or i == districts.headquarters or i == _index \
+				or districts.in_complete_block(i):
 			continue
 		var loud := districts.believers_at(i) - A.noise_at
 		if loud <= 0:

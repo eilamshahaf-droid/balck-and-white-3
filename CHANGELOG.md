@@ -3,6 +3,33 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.10.0 (2026-11-12): one building at a time
+Eilam's rule: you take single buildings, and a whole block pays a bonus. No new features besides that; the rest is making the base of the Slums work.
+- **Buildings, not blocks.** Each of the Slums' 417 buildings is taken on its own, once most of the people living in it believe (1 to 3 residents each, so one or two conversions), and only if it borders a building of yours (next door or across the street). Gold plate on the roof, as before.
+- **Block bonus.** The ring on the ground is a block; it warms toward gold as you take its buildings. When every building in it is yours: "Block complete!", its buildings can no longer give way or draw complaints, its people make 25% more money and belief, and the district calms down a little. The bottom-left panel has a "Block: 4 of 7 buildings yours" line.
+- **No more empty buildings to start with.** A third of the Slums stood abandoned and could only be taken by moving a believer in; they walled the cult in. Every building has people now; a fire or roaches can still empty one (`abandoned_start` in `data/districts.tres`).
+- **No cap on believers.** Converting used to stop when "the homes were full"; that rule is gone.
+- **The stage moves now.** A bot that plays the real game went from 1 block of 51 in an hour to about 150 buildings and 3 whole blocks, with missionaries alone. What was holding it back:
+  - Believers kept leaving: the people of the empty buildings were squeezed in next door from the first minute, and crowded believers quit. Those homes now have room for them.
+  - A sky-sign attempt cost 4 belief, which emptied the pool in ten minutes; it costs 1.
+  - Awareness climbed to full within 15 minutes and stayed; it rises slower and fades faster (`rate` 0.08, `decay` 0.08). A building at the tip of your line gives way less often (2% a minute, was 5%).
+  - Someone bought or scared out of a building moved next door, even into a building of yours, and cost you that one; they now keep to buildings you don't hold.
+  - The dollar mark could take the only believer out of a building it had just filled, so two buildings swapped forever; and a mark whose building no longer bordered yours kept pulling believers in. Both fixed.
+  - All of these numbers are provisional, for the Designer and the Balance Tester to set.
+- **Fading buildings** (the camera's see-through effect) were broken since 0.9.0: the building under the hand could fade, so the hand went through it and the tooltip and wheel landed on the one behind. Fixed. A faded building is a see-through dot pattern now, not real transparency (the depth of field wiped that out and brought it back as the camera moved), fades less (60%, was 85%) and only within 40 m of the camera (was 70). `fade_amount`, `fade_max_distance` in `data/hand_settings.tres`. Doors and roof props of a faded building still stay solid.
+- **Small fixes.** Landmark signs and other 3D text no longer vanish where the background is blurred. The city behind the opening briefing has its colours. Letting go of the mouse button over a HUD button no longer leaves a person stuck in the hand.
+- **For testing balance:** `godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,pray,preach,buy` plays the Slums at 8x with a simple bot and prints believers, buildings, blocks, money and awareness every two minutes.
+- **Documents.** `docs/GDD.md` and `docs/ART.md` open with Eilam's decisions of 2026-11-12 (the story is a god against the bureaucracy; one building at a time; feature freeze) and what each thread owes; the GDD lists the systems the game has that it did not describe.
+- Try it: train missionaries at the base, hold the button on a building next to yours and choose the sky sign. Watch the ring of the base's block turn gold.
+
+## Pre-Alpha 0.9.0 (2026-11-12): The Slums on a Map Lab map
+The city is no longer a fixed grid: each stage's map is made in the browser Map Lab and loaded by the game.
+- **A real neighbourhood.** The Slums are a Map Lab map (seed 31, 0.8 km): streets that bend, parks, 417 buildings of the Slums' own mix (tenements, brownstone rows, project slabs and towers, corner shops, sheds), each turned to face its street, with sidewalks and centre lines.
+- **You take blocks, not single buildings** (the Designer's rule): a block or a run of one, 5 to 12 buildings, changes hands at once. The Slums have 51 such units; a ring on the ground shows each one, and turns gold with gold plates on every roof once it is yours. The core is its own unit in the middle; the base is 5 units from it. About 200 residents, 3 to 4 per unit, as the Balance Tester asked.
+- **People walk the real streets** (a street graph from the map) instead of a grid; taxis park along the wider streets; the outskirts' roads carry on from the map's streets.
+- **Maps are data.** `node tools/maplab/export_map.js data/maps/slums/stage.json` turns a stage file (a Map Lab code or settings, the scale, the district names and kinds) into `data/maps/slums/map.json`. Each district kind can have a style file (`data/maps/styles/slums.json`: street pattern, land use, building mix, height, ART.md facade style per building), so the next stages are new data files.
+- Try it: open the browser build and play the Slums; the rings on the ground show what each takeover wins.
+
 ## Facade rules and wildness meter (2026-11-11)
 - Facade Lab: seed-driven massing, courtyard notch, rear extensions, projects plans (slab, cross, Y), and cornice rules with a "cornice kept" meter. Described in `docs/ART.md`.
 - Facade Lab: shop awnings, an air-shaft strip on tenement side walls, roof clutter at high wildness; ART.md notes what real 3D views show that a box misses.
@@ -12,6 +39,16 @@ Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-
 ## Researcher tool (2026-11-11)
 - New local tool `tools/researcher`: a one-click web UI on Eilam's PC that searches Wikimedia Commons, Pexels and Unsplash, lets him pick images, and saves them (with a CREDITS.txt of authors and licences) into a chosen folder such as the Google Drive "Claude" folder. No paid API: it runs on the PC alone. No dependencies, no subscription, no game code touched.
 - Try it: double-click `tools/researcher/run_researcher.cmd`; the Hebrew guide is `tools/researcher/README.md`.
+
+## Pre-Alpha 0.8.0 (2026-11-11): The Slums, a stage to play from start to finish
+Everything in 0.7.1, plus what makes the Slums a whole trial stage.
+- **A briefing to start.** The Secretary's founding minutes explain the goal; the city waits until you open the meeting.
+- **Base and core are apart.** The cult starts in its base at the edge of the Slums (the high priest, priest and Vandalist training are there). The core is a separate building in the middle that has to be won: the district grows from the edge in.
+- **Five landmarks of the status quo:** the landlord's office, the city notice board, the police booth, the inspector's office and the post office, spread on a ring around the core with signs over them. Set the Vandalist down by one and he marks it (4 minutes, $100 an attempt, 10% chance he is caught). Each standing mark makes the core's residents much easier to win (the core is 60 times harder, x0.4 per mark). City Hall may scrub a mark that has stood 5 minutes, so slow play means doing it again.
+- **Cameras** from the neighbourhood's answers add 10% to the arrest chance of murals and marks near them.
+- **Win and lose.** Win: the core and 60% of the Slums, and the "district captured" screen. Lose: once you have had 8 believers, none at all for 3 minutes dissolves the cult ("Try again" restarts).
+- The bottom-left panel shows whether the core is yours and how many landmarks are marked.
+- Try it: open https://eilamshahaf-droid.github.io/balck-and-white-3/ and play the Slums.
 
 ## Pre-Alpha 0.7.1 (2026-11-11): The city notices
 The designer's 0.7.1 brief, with the Balance Tester's numbers (`data/awareness.tres` and friends; provisional until playtested).

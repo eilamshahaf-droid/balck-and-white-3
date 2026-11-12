@@ -23,12 +23,12 @@ extends Resource
 @export var suspicion_visit := 40.0
 
 @export_group("Inspector")
-@export var inspector_walk_blocks := 1      # corners up the avenue he starts walking from
+@export var inspector_walk_blocks := 3      # street nodes (about 10 m apart) away he starts walking from
 @export var inspection_time := 5.0          # seconds he stands at the door
 
 @export_group("Demolition")
 @export var notice_time := 45.0             # seconds on the notice before the bulldozer comes
-@export var bulldozer_start_blocks := 4     # corners up the avenue it starts driving from
+@export var bulldozer_start_blocks := 6     # street nodes away it starts driving from
 @export var bulldozer_speed := 7.0
 @export var bulldozer_mass := 12.0
 @export var demolish_time := 8.0            # seconds to bring a building down

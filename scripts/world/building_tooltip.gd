@@ -44,8 +44,8 @@ func _building_under(mouse: Vector2) -> Node3D:
 	var query := PhysicsRayQueryParameters3D.create(
 			from, from + camera.project_ray_normal(mouse) * RAY_LENGTH, 1)
 	var hit := camera.get_world_3d().direct_space_state.intersect_ray(query)
-	if hit and hit.collider is Node3D and (hit.collider as Node3D).is_in_group("buildings"):
-		return hit.collider
+	if hit and BuildingBox.building_of(hit.collider):
+		return BuildingBox.building_of(hit.collider)
 	return null
 
 

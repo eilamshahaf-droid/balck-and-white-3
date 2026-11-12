@@ -23,6 +23,7 @@ extends Resource
 @export_group("Roads")
 @export var avenue_reach := 1400.0      # roads that carry on from the avenues
 @export var street_reach := Vector2(180.0, 520.0)   # side streets end sooner, min..max
+@export var edge_reach := 6.0          # a street ending this close to the map edge runs on
 @export var road_width := 11.0
 @export var bend := 0.5                 # how much roads wander once they leave the grid
 @export var spread := 0.35              # how much they fan out away from the city

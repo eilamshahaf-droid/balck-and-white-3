@@ -69,8 +69,8 @@ extends Resource
 @export var max_priests := 12
 ## Money it costs to start training a priest.
 @export var priest_cost := 400.0
-## The special agent (in the Slums the Vandalist): trained from a believer at a
-## district's core building you hold, this long, for this much money, so many at once.
+## The special agent (in the Slums the Vandalist): trained from a believer at the
+## cult's base, this long, for this much money, so many at once.
 @export var agent_time := 120.0
 @export var agent_cost := 150.0
 @export var max_agents := 2

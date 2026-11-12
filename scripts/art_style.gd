@@ -20,6 +20,7 @@ const TOON_TINTED := preload("res://shaders/toon_tinted.gdshader")
 const GHOST := preload("res://shaders/toon_ghost.gdshader")
 const SCREEN := preload("res://shaders/screen_pass.gdshader")
 const DOF := preload("res://shaders/depth_of_field.gdshader")
+const DOF_PRIORITY := Material.RENDER_PRIORITY_MAX - 2
 
 var enabled := true
 
@@ -36,6 +37,8 @@ var _shot_frames := 120
 
 func _ready() -> void:
 	process_priority = 1000  # after gameplay scripts have made their meshes this frame
+	# The briefing pauses the tree at startup; the city behind it still needs its look.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	enabled = S.enabled
 	_screen_mat.shader = SCREEN
 	_push_screen_params()
@@ -111,8 +114,7 @@ func make_ghost(mat: Material) -> Material:
 		g.shader = GHOST
 		return g
 	var s: BaseMaterial3D = mat.duplicate()
-	s.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	s.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_ALWAYS
+	s.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_HASH
 	return s
 
 
@@ -126,6 +128,12 @@ func set_ghost_alpha(mat: Material, a: float) -> void:
 func _on_node_added(node: Node) -> void:
 	if node is MeshInstance3D or node is MultiMeshInstance3D:
 		_pending.append(node as GeometryInstance3D)
+	elif node is Label3D:
+		# Text is transparent, so the depth of field would paint the blurred
+		# background over it; drawn after it, a far sign stays readable.
+		var label := node as Label3D
+		label.render_priority = Material.RENDER_PRIORITY_MAX
+		label.outline_render_priority = Material.RENDER_PRIORITY_MAX - 1
 	elif node is WorldEnvironment:
 		_style_environment.call_deferred(node)
 	elif node is DirectionalLight3D:
@@ -227,7 +235,7 @@ func _build_dof() -> void:
 	quad.size = Vector2(1.0, 1.0)
 	var mat := ShaderMaterial.new()
 	mat.shader = DOF
-	mat.render_priority = Material.RENDER_PRIORITY_MAX  # after fire, rain and glows
+	mat.render_priority = DOF_PRIORITY  # after fire, rain and glows, before labels
 	mat.set_shader_parameter("blur", S.dof_blur)
 	mat.set_shader_parameter("start", S.dof_start)
 	mat.set_shader_parameter("end", S.dof_end)

@@ -249,7 +249,7 @@ func _update_fade(delta: float) -> void:
 			wanted[body] = true
 	for body in _bodies_between(cam, cam + Vector3.UP * 0.1, S.fade_near_camera):
 		wanted[body] = true
-	wanted.erase(hand.pointed_building)
+	wanted.erase(hand.pointed_part)
 	for body in _bodies_between(pivot, pivot + Vector3.UP * 0.1, S.fade_keep_radius):
 		wanted.erase(body)
 	for body in wanted:
@@ -297,7 +297,7 @@ func _bodies_between(from: Vector3, to: Vector3, radius: float) -> Array:
 	params.transform = Transform3D(Basis(side, up, side.cross(up)), (from + to) / 2.0)
 	var found := []
 	for hit in get_world_3d().direct_space_state.intersect_shape(params, 32):
-		if hit.collider.is_in_group("buildings"):
+		if BuildingBox.building_of(hit.collider):
 			found.append(hit.collider)
 	return found
 

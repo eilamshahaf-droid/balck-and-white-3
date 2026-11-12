@@ -4,6 +4,7 @@ extends Node3D
 ## nearest wall; murals give believers living near them pleasure, and the district
 ## notices. After each one the neighbourhood answers (painted over, a fine, a camera),
 ## each answer more likely the more it has been used, and some answers end in his arrest.
+## Set down by a landmark he marks it instead (longer, paid, no answer, Landmarks).
 
 ## A mural went up on building `index`.
 signal painted(index: int)
@@ -11,6 +12,7 @@ signal painted(index: int)
 signal answered(index: int, answer: int)
 
 const A: AwarenessSettings = preload("res://data/awareness.tres")
+const L: LandmarkSettings = preload("res://data/landmarks.tres")
 const U: UnitSettings = preload("res://data/units.tres")
 ## Answer order in AwarenessSettings.answer_names: what each one does.
 const PAINT_OVER := 0
@@ -22,8 +24,10 @@ const CAMERA := 2
 @export var awareness: Awareness
 @export var treasury: Treasury
 @export var arrests: PoliceArrests
+@export var landmarks: Landmarks
 
 var _murals: Dictionary = {}     # building index -> MeshInstance3D
+var _cameras: Array[int] = []    # buildings with a camera
 var _painting: Array[Painting] = []
 var _weights := PackedFloat32Array()
 var _quad: QuadMesh
@@ -37,11 +41,13 @@ class Painting:
 	var index := -1
 	var face := Vector3.ZERO   # outward normal of the wall
 	var left := 0.0
+	var mark := false          # marking a landmark rather than a plain mural
 
 
 func _ready() -> void:
 	_rng.seed = 31
 	population.agent_set_down.connect(_on_agent_set_down)
+	landmarks.changed.connect(_on_landmark_changed)
 	for i in A.answer_count():
 		_weights.append(A.answer_weight(i))
 	_quad = QuadMesh.new()
@@ -62,7 +68,10 @@ func _physics_process(delta: float) -> void:
 		p.left -= delta
 		if p.left <= 0.0:
 			_painting.erase(p)
-			paint(p.agent, p.index, p.face)
+			if p.mark:
+				_finish_mark(p.agent, p.index, p.face)
+			else:
+				paint(p.agent, p.index, p.face)
 
 
 ## Is there a mural on building `index`?
@@ -82,6 +91,13 @@ func paint(agent: Resident, index: int, face: Vector3) -> void:
 	_answer(agent, index, face)
 
 
+func _on_landmark_changed(index: int, marked: bool) -> void:
+	if not marked and _murals.has(index):
+		_murals[index].queue_free()
+		_murals.erase(index)
+		_refresh_pleasure()
+
+
 func _on_agent_set_down(agent: Resident, building: Node3D) -> void:
 	var index := districts.index_of(building)
 	if index < 0 or not population.has_body(agent):
@@ -95,10 +111,20 @@ func _on_agent_set_down(agent: Resident, building: Node3D) -> void:
 	p.index = index
 	p.face = _wall_facing(index, agent.body.global_position)
 	p.left = A.paint_seconds
+	if landmarks.is_landmark(index):
+		var top := _wall_point(index, p.face) + Vector3.UP * (A.mural_size.y + 2.0)
+		if landmarks.is_marked(index):
+			FloatingNote.pop(self, top, "Already marked", L.marked_color)
+			return
+		if not treasury.spend_money(L.mark_cost):
+			FloatingNote.pop(self, top, "A mark needs $%d" % roundi(L.mark_cost), L.sign_color)
+			return
+		p.mark = true
+		p.left = L.mark_minutes * 60.0
 	_painting.append(p)
 	var spot := _wall_point(index, p.face) + p.face * 1.5
 	spot.y = agent.body.global_position.y
-	agent.body.send_on_errand(spot, spot - p.face, A.paint_seconds, A.paint_line,
+	agent.body.send_on_errand(spot, spot - p.face, p.left, A.paint_line,
 			U.color(Resident.Rank.AGENT))
 
 
@@ -126,7 +152,29 @@ func _answer(agent: Resident, index: int, face: Vector3) -> void:
 		CAMERA:
 			_put_camera(index, face)
 	answered.emit(index, pick)
-	if population.has_body(agent) and _rng.randf() < A.arrest_chance(pick):
+	if population.has_body(agent) and _rng.randf() < A.arrest_chance(pick) + camera_bonus(index):
+		arrests.arrest(agent)
+
+
+## The arrest chance a camera within camera_steps borders of building `index` adds.
+func camera_bonus(index: int) -> float:
+	var near := districts.around(index, A.camera_steps)
+	near.append(index)
+	for c in _cameras:
+		if near.has(c):
+			return A.camera_arrest
+	return 0.0
+
+
+## A landmark mark is done: it counts for the core, shows as a mural, and he may be caught.
+func _finish_mark(agent: Resident, index: int, face: Vector3) -> void:
+	landmarks.mark(index)
+	if _murals.has(index):
+		_murals[index].queue_free()
+	_murals[index] = _mural_on(index, face)
+	_refresh_pleasure()
+	awareness.add(districts.district_of(index), A.mural_awareness)
+	if population.has_body(agent) and _rng.randf() < L.arrest_chance + camera_bonus(index):
 		arrests.arrest(agent)
 
 
@@ -154,6 +202,7 @@ func _mural_on(index: int, face: Vector3) -> MeshInstance3D:
 
 
 func _put_camera(index: int, face: Vector3) -> void:
+	_cameras.append(index)
 	var cam := MeshInstance3D.new()
 	cam.mesh = SharedMeshes.box(Vector3(0.5, 0.4, 0.9))
 	cam.material_override = _camera_material

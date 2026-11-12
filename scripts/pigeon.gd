@@ -79,8 +79,8 @@ func _physics_process(delta: float) -> void:
 			_flap(1.0)
 			_timer -= delta
 			if _timer <= 0.0:
-				var g: Vector2i = city.random_grid()
-				_landing = city.intersection(g) + Vector3(randf_range(-6, 6), 0, randf_range(-6, 6))
+				var g: int = city.random_node()
+				_landing = city.node_position(g) + Vector3(randf_range(-6, 6), 0, randf_range(-6, 6))
 				state = State.LAND
 		State.LAND:
 			var to := _landing - position

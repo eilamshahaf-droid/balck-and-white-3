@@ -2,6 +2,17 @@
 
 Source text of the designed version (https://claude.ai/artifact/3SbaznH5KKjxk2jop61iBf). Owned by the Game Designer thread; Eilam (Creative Director) gives direction and the designer merges it here. Last rewrite: 2026-11-11.
 
+## 0. Decisions by Eilam, 2026-11-12 (read first)
+
+These override anything below that disagrees; the Designer folds them into the sections.
+
+1. **The story is a god against the bureaucracy.** Not "a cult takes over a city". The enemy is City Hall and the status quo (the landlord, the inspector, the notice board, the police booth, the post office). The art direction "grey to colour: freedom" (ART.md) is the same story. Everything that reads as a cult exploiting people (tithes, luxury, buying residents out, taking by force, the gold branding) is to be re-themed or cut by the Designer; the code keeps the mechanics until then.
+2. **Buildings are taken one at a time; a whole block pays a bonus.** A building is yours when most of the people living in it are with you, and only if it borders a building of yours. A block (5 to 12 buildings, the ring on the ground) whose buildings are all yours is safe (no giving way, no complaints), its people make 25% more, and the district calms a little. Built in 0.10.0.
+3. **Feature freeze.** No new systems and no other districts until the Slums' base loop is good. The first target is ten good opening minutes, not a 3 to 4 hour stage.
+4. **No cap on believers by housing.** It made no sense to the player. Removed in 0.10.0.
+5. **No abandoned buildings at the start.** A third of the Slums stood empty and could only be taken by moving a believer in; Eilam disliked it and the test bot showed it walling the cult in. A building is still abandoned when a fire or roaches empty it. Off since 0.10.0 (`abandoned_start` in `data/districts.tres`).
+6. **Open: what the divine hand is for.** Today the loop runs by itself and the hand mostly opens wheels. The Designer owes a proposal for the hand's verbs in the core loop (see section 9).
+
 Working title: "Spin Cycle". Platform: PC, Godot 4, 3D toy/dollhouse look, tilt-shift, saturated colours, no outlines. The god's hand is a white cloth glove and is the whole interface.
 
 ---
@@ -141,11 +152,11 @@ Converted followers no longer roll skepticism or curiosity.
 
 1. Hold the start building (core). Residents nearby are neutral.
 2. A missionary or the high priest talks to residents. Chance to convert = base x curiosity x (1 - skepticism), scaled by the target's anxiety and the preacher's charisma and sociability. Only trained people convert; miracles never convert, they speed missionaries up and protect them.
-3. Believers earn money and belief by their wealth and faith assets, multiplied by how well the four needs are met. Belief is produced in staffed sermon houses (an empty house makes none). Believers are capped by housing.
+3. Believers earn money and belief by their wealth and faith assets, multiplied by how well the four needs are met. Belief is produced in staffed sermon houses (an empty house makes none). There is no cap on believers.
 4. Spend: money and belief on buildings, upgrades, decrees (floors, luxury, facade, change use, preserve) and miracles; mission coins on buildings, miracles and upgrades.
 5. Train believers into missionaries and priests (limited number of priests), and agents where the district has the special building.
 6. Police react to visible activity (crowds, sermons, rule-breaking) by closing streets. City Hall watches rule-breaking (floors over the limit, luxury, combat training) and escalates: inspector, notice, bulldozer.
-7. A building is yours when most of its residents believe. A district is yours when its core building and most of its buildings are (starting threshold 60%, a tunable). The next district then opens.
+7. A building is yours when most of its residents believe, and it borders a building of yours. A block whose buildings are all yours pays a bonus (section 0, decision 2). A district is yours when its core building and most of its buildings are (starting threshold 60%, a tunable). The next district then opens.
 8. Final stage: take City Hall with a majority of special agents inside, plus believers, money and belief.
 
 Further rules: belief drifts back to a baseline; each visible person stands for a group of similar people; residents commute between home and work; captured workplaces become shops, seminaries or combat sites; poor districts are cheap to take and every later one costs more; police close streets and never demolish.
@@ -156,8 +167,32 @@ Further rules: belief drifts back to a baseline; each visible person stands for 
 - Heat and price growth steer the pace (+15% cost cliff).
 - The hard part of the last stage is taking the houses around City Hall, not money or conversions.
 
-These live in `data/*.tres`.
+These live in `data/*.tres`. The numbers in the game have drifted from this list (for example the police step in at 23 heat times the district's hardness, not 120); the game's files are the truth until the Balance Tester sets them again. To judge a change, run the bot: `godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,pray,preach`. With 0.10.0 it reaches about 150 of 417 buildings and 3 whole blocks in an hour, with no hand and no miracles.
 
 ## 8. Left out
 
 Good/evil meter, three worlds, end-of-world backstory, the creature, lifting trees, plague and bedbugs, conversion by miracle.
+
+## 9. The Slums as built (0.10.0), and what the Designer owes
+
+Written by the Programmer on 2026-11-12 so this document matches the game again; the briefs for these lived in chat. The Designer keeps, changes or cuts each one.
+
+Built and not described above:
+
+- **Base and core.** The start building is the base, at the edge of the Slums. The core is a separate building in the middle that has to be won; its residents are 60 times harder to win.
+- **Five landmarks of the status quo** on a ring around the core. The Vandalist marks them (4 minutes, $100, 10% chance of arrest); each standing mark makes the core 2.5 times easier. City Hall scrubs old marks.
+- **Awareness** (hidden, 0 to 1 per district): working one building over and over raises it, a broad front lets it fade; it makes converting harder (down to x0.4). The first attempt on the core makes the district fully aware for 10 minutes.
+- **Thin lines give way.** A building of yours with at most one of yours next to it can be lost (2% a minute times awareness plus heat). Not in a complete block.
+- **Complaints and condemnation.** More than 2 believers in a building draw complaints; at 3 a notice goes up and the building closes for 5 minutes. The hand can tear the notice off.
+- **The Vandalist and murals**, the neighbourhood's answers (painted over, fine, camera), arrest by a squad of officers the hand can throw off, martyr bonus, bail.
+- **Takeover marks** on a building next to yours: sky sign (missionaries preach at its door), dollar (buy residents out), skull (force).
+- **Win and lose.** Win: the core and 60% of the buildings. Lose: once you have had 8 believers, none for 3 minutes.
+
+What the game needs from the Designer, in order:
+
+1. **The hand's verbs in the loop** (decision 6). Suggestions from the Programmer, cheapest first: setting a missionary down at a building starts the sky sign there (no wheel); knocking on a door brings its residents out to be talked to; a miracle near a preacher is the main way to speed a street up, shown on screen. Today a miracle only adds hidden "proof".
+2. **Re-theme for the story** (decision 1): what the resources, ranks, decrees and marks are called and mean when the enemy is the bureaucracy. Which of money, tithes, luxury, buy and force stay.
+3. **The first ten minutes**, step by step: what the player does, sees and wins.
+4. **Fewer hidden meters.** Awareness, heat, exposure, suspicion, fear, comfort and four needs all work unseen; the player only feels the game slow down. Each one kept needs a sign in the world.
+5. **Money has no use** in the Slums (the bot ends an hour with $24,000). **Missions and mission coins**, the rival cult and the media are named above and not designed.
+6. **Numbers** for the block bonus, residents per building (now 1 to 3), awareness and fragility (changed in 0.10.0, provisional).
