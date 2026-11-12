@@ -200,7 +200,8 @@ each thread owes; read both before starting work.
   god. Two ways to resist: control (you write the rules anew: fast, focused, little spreading)
   and freedom (a real majority: slower, with time to invest in buildings and people). The game
   should feel considered, not a fast takeover; do not tune it to go faster.
-- Chosen direction, not built yet (GDD section 0): a journey in one of two ways, sweeping
+- Chosen direction, not built yet (GDD section 0): the god asked City Hall to be recognised and
+  was refused (the background story, kept for its humour); from there a journey in one of two ways, sweeping
   believers along behind you (freedom) or taking things over yourself (control); the hand's two
   verbs are stamp (your own rules) and tear (no rules). No signatures or petition.
 - `docs/GDD.md` is a copy of the Designer's page (the link is at its top). If Eilam says the
