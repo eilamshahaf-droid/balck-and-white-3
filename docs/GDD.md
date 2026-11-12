@@ -21,7 +21,13 @@ Where this disagrees with the text below, this wins.
    - **Control: you take things over yourself.** Buildings, offices and rules pass into your hands. Fast and focused, with little spreading out. Ending: you are the new City Hall, and the game laughs at you.
    - **Mechanics: stamp or tear.** Every building stands under City Hall's rules. The hand can stamp rules of its own in their place (control; today's decrees are this) or tear them up and let the residents decide (freedom; tearing the condemnation notice off is this). Two plain verbs for the hand.
    - Kept as inspiration for the Artist: bureaucracy as a physical thing in the city (red tape round buildings, forms in the wind, people stuck in queues). Dropped: a second, dark hand (too close to good and evil).
-4. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
+4. **One bar per district, two sources (Eilam, 2026-11-12; built in 0.11.0 with provisional numbers).** Not an independence meter alone. A district is won when its bar is full, and two kinds of action fill it:
+   - **A wide following**: sweeping people along, their welfare and their freedom. In the game: the share of the district's buildings that are yours, over 60%, times 0.85 to 1.15 by how well your believers' needs are met.
+   - **Focused actions on key places**: the agent defacing things, and other options to come. In the game: the core held is worth 20%, each marked landmark 8%.
+   - Either way alone is very hard: the following alone needs most of the district (52% to 70% of its buildings, by welfare); the key places alone give 60% and still need about a quarter of the buildings. Mixed, the player can raise a large force and use the agent lightly, and put the time into other things.
+   - Key places are not required: an aggressive player needs more of them and plans the takeover to reach them; a player who cultivates a large area can use them to get ahead, or take none and win on most of the district.
+   - The core is therefore no longer a condition for winning, only the largest key place.
+5. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
 
 ---
 
@@ -299,7 +305,7 @@ Built and not described above:
 - **Complaints and condemnation.** More than 2 believers in a building draw complaints; at 3 a notice goes up and the building closes for 5 minutes. The hand can tear the notice off.
 - **The Vandalist and murals**, the neighbourhood's answers (painted over, fine, camera), arrest by a squad of officers the hand can throw off, martyr bonus, bail.
 - **Takeover marks** on a building next to yours: sky sign (missionaries preach at its door), dollar (buy residents out), skull (force).
-- **Win and lose.** Win: the core and 60% of the buildings. Lose: once you have had 8 believers, none for 3 minutes.
+- **Win and lose.** Win: the district's bar is full (section 0, item 4). Lose: once you have had 8 believers, none for 3 minutes.
 
 What the game needs from the Designer, in order:
 

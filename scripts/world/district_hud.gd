@@ -8,6 +8,8 @@ const REFRESH := 0.25   # seconds; the text doesn't need to change every frame
 const POOR := 0.6       # district wealth below this reads "poor", above RICH "rich"
 const RICH := 1.4
 
+@export var progress: DistrictProgress
+
 var _timer := 0.0
 
 @onready var districts: Districts = get_node("../../Districts")
@@ -26,7 +28,9 @@ func _process(delta: float) -> void:
 	var d: int = districts.district_at(rig.target_pivot)
 	var hold := "yours"
 	if not districts.is_controlled(d):
-		hold = "%d%% yours (%d%% takes it)" % [roundi(districts.share(d) * 100.0), roundi(S.control_share * 100.0)]
+		hold = "%d%% of the way (following %d%% + key places %d%%)" % [
+				floori(progress.value(d) * 100.0), floori(progress.following(d) * 100.0),
+				floori(progress.key_places(d) * 100.0)]
 	var i := districts.building_near(rig.target_pivot)
 	var people := districts.residents_in(i)
 	var place := ""

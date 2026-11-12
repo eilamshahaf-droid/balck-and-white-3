@@ -22,6 +22,7 @@ var _districts: Districts
 var _campaigns: Campaigns
 var _treasury: Treasury
 var _awareness: Awareness
+var _progress: DistrictProgress
 var _faith: Node
 var _habits := PackedStringArray()
 var _minutes := 40.0
@@ -45,6 +46,7 @@ func _ready() -> void:
 	_campaigns = _main.get_node("Campaigns")
 	_treasury = _main.get_node("Treasury")
 	_awareness = _main.get_node("Awareness")
+	_progress = _main.get_node("DistrictProgress")
 	_faith = _main.get_node("Faith")
 	_districts.building_changed.connect(_on_building_changed)
 	Engine.time_scale = SPEED
@@ -63,10 +65,10 @@ func _physics_process(delta: float) -> void:
 	var blocks := 0
 	for b in _districts.block_count():
 		blocks += 1 if _districts.is_block_complete(b) else 0
-	print("PACE %3d min  believers %3d  missionaries %2d  buildings %3d (%2.0f%%, won %d lost %d)  blocks %2d  core %s  $%5.0f  belief %4.0f  awareness %.2f" % [
+	print("PACE %3d min  believers %3d  missionaries %2d  buildings %3d (%2.0f%%, won %d lost %d)  blocks %2d  bar %3.0f%%  core %s  $%5.0f  belief %4.0f  awareness %.2f" % [
 			roundi(_clock / 60.0), _population.believer_count, _population.missionary_count,
 			_districts.converted_buildings().size(), _districts.share(d) * 100.0, _won, _lost,
-			blocks,
+			blocks, _progress.value(d) * 100.0,
 			"yes" if _districts.is_yours(_districts.core_of(d)) else "no",
 			_treasury.money, _faith.belief_pool, _awareness.level(d)])
 	if _clock >= _minutes * 60.0 or _districts.is_controlled(d):

@@ -60,6 +60,9 @@ var priest: Resident
 ## Refreshed with the presence: how many residents believe, the belief per second
 ## the sermon houses add to the pool, and the money per second believers bring in.
 var believer_count := 0
+## How well the believers live, 0 (every need unmet) to 1 (all met): the average of
+## their needs multipliers.
+var welfare := 0.5
 var prayer := 0.0
 var tithes := 0.0
 ## How many priests the cult has (the high priest, and whoever is trained).
@@ -650,6 +653,7 @@ func _refresh_presence() -> void:
 	believer_count = 0
 	prayer = 0.0
 	tithes = 0.0
+	var lived := 0.0
 	var dt := _people.presence_refresh
 	for r in residents:
 		if not r.alive:
@@ -664,6 +668,7 @@ func _refresh_presence() -> void:
 			continue
 		staffing.tick_training(r, dt)
 		believer_count += 1
+		lived += needs_multiplier(r)
 		tithes += money_rate(r)
 		_presence[r.home] += 1.0
 		if r.occupying and r.occupying != r.home:
@@ -674,6 +679,9 @@ func _refresh_presence() -> void:
 		if house and house.is_in_group(PRAYER_HOUSES) and staffing.is_staffed(house) \
 				and not is_blockaded(house):
 			prayer += belief_rate(r)
+	if believer_count > 0:
+		welfare = clampf(inverse_lerp(U.multiplier_min, U.multiplier_max, lived / believer_count),
+				0.0, 1.0)
 
 
 func _count_ranks() -> void:

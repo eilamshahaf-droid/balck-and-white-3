@@ -1,4 +1,4 @@
-[gd_scene load_steps=44 format=3]
+[gd_scene load_steps=45 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -37,6 +37,7 @@
 [ext_resource type="Script" path="res://scripts/world/district_won.gd" id="60_won"]
 [ext_resource type="Script" path="res://scripts/world/awareness.gd" id="61_awareness"]
 [ext_resource type="Script" path="res://scripts/world/fragility.gd" id="62_fragility"]
+[ext_resource type="Script" path="res://scripts/world/district_progress.gd" id="63_progress"]
 [ext_resource type="Script" path="res://scripts/world/murals.gd" id="63_murals"]
 [ext_resource type="Script" path="res://scripts/government/condemnation.gd" id="64_condemnation"]
 [ext_resource type="Script" path="res://scripts/world/landmarks.gd" id="65_landmarks"]
@@ -204,6 +205,12 @@ population = NodePath("../Population")
 awareness = NodePath("../Awareness")
 heat = NodePath("../Heat")
 
+[node name="DistrictProgress" type="Node" parent="." node_paths=PackedStringArray("districts", "landmarks", "population")]
+script = ExtResource("63_progress")
+districts = NodePath("../Districts")
+landmarks = NodePath("../Landmarks")
+population = NodePath("../Population")
+
 [node name="Murals" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts", "awareness", "treasury", "arrests", "landmarks")]
 script = ExtResource("63_murals")
 population = NodePath("../Population")
@@ -250,7 +257,7 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 5
 script = ExtResource("5_hud")
 
-[node name="District" type="Label" parent="HUD"]
+[node name="District" type="Label" parent="HUD" node_paths=PackedStringArray("progress")]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -262,6 +269,7 @@ grow_vertical = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
+progress = NodePath("../../DistrictProgress")
 
 [node name="ArrestAlert" type="Label" parent="HUD" node_paths=PackedStringArray("arrests")]
 anchors_preset = 5

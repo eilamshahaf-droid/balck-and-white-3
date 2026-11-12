@@ -24,9 +24,19 @@ extends Resource
 ## A district's core building (the one nearest its middle) is harder: this share of its
 ## residents must believe. Once it is yours, City Hall and the police leave the district alone.
 @export_range(0.0, 1.0) var core_capture_share := 0.75
-## With its core building, this share of a district's buildings makes it yours
-## (60 or 75 is still open with Eilam).
+## A following that holds this share of a district's buildings fills its bar alone
+## (at middling welfare, with no key place).
 @export_range(0.0, 1.0) var control_share := 0.6
+@export_group("Winning a district: one bar, two sources")
+## The following (the share of buildings that are yours over control_share) counts this
+## much when your believers live badly, and this much when they live well.
+@export var welfare_low := 0.85
+@export var welfare_high := 1.15
+## What holding the district's core adds to the bar, and each marked landmark.
+@export_range(0.0, 1.0) var core_points := 0.2
+@export_range(0.0, 1.0) var landmark_points := 0.08
+@export var progress_tick := 1.0   # seconds between looks at the bar
+@export_group("Who holds a building: the core")
 ## A district's core can only become yours once this share of the buildings within
 ## core_base_steps borders of it are yours.
 @export_range(0.0, 1.0) var core_base_share := 0.5
@@ -50,7 +60,7 @@ extends Resource
 @export_group("The stage")
 ## The start screen: a title and the Secretary's briefing.
 @export var start_title := "Stage 1: The Slums"
-@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the High Priest, a kettle.\n\nItem 1: we have a base at the edge of the Slums. Win the street one building at a time; we can only take a building next to one we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 2: train a Vandalist at the base and have him mark the five landmarks of the status quo. Each mark makes the heart of the district easier to win.\nItem 3: take the core in the middle and most of the district.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
+@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the High Priest, a kettle.\n\nItem 1: we have a base at the edge of the Slums. Win the street one building at a time; we can only take a building next to one we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 2: train a Vandalist at the base and have him mark the five landmarks of the status quo. Each mark makes the heart of the district easier to win.\nItem 3: the district is ours when its bar is full. A wide following that lives well fills it; so do the core in the middle and every marked landmark. Either way alone is hard; the two together leave us room.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
 @export var start_button := "Open the meeting"
 ## The cult loses once it has had lose_after_believers believers and then has none
 ## at all (the high priest aside) for lose_minutes.
