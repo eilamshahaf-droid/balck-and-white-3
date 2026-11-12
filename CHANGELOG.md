@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.12.1 (2026-11-12): balance from the Designer and the Balance Tester
+All numbers are provisional, and each is in a `.tres`. They were checked over about 20 bot runs of 90 minutes.
+- **The district bar.** The core is worth 25% and each landmark mark 12%. A following alone fills at most 70%, so a district always needs some key places.
+- **Seats, a soft limit on believers.** There is no hard cap. Believers need seats: 20 at the Branch, plus 10 per Clerk (and 25 per free space, once free spaces exist). A believer without a seat makes no money and half the belief, and draws awareness (up to 0.5 from this alone). Numbers are in `data/units.tres`, under "Seats".
+- **Money.** Each seated believer costs $1.5 a minute. A building of yours with no use pays the Committee's dues of $0.03 per resident a second (never "rent": the god is against landlords). Prices rise: a Field Delegate's mark costs $200, or $300 where City Hall scrubbed one; bail is $400; each Clerk costs 25% more than the last.
+- **Debt.** Upkeep can overdraw the treasury down to -$1,000 and no further. While overdrawn, nothing that costs money can be bought; free training goes on. The Secretary minutes it.
+- **For testing:** `pace_sim` has a new habit, `delegate`, which trains the Field Delegate and keeps three landmarks marked. With it the bot wins at about minute 62 to 78. Without it, it stops at the 70% bar, and money is $8-11k at minute 90.
+
 ## Pre-Alpha 0.12.0 (2026-11-12): the Hand places people, and the Committee's names
 - **Where you set someone down is what they do** (Eilam's rule; the first step of the hand's role). It depends on who they are:
   - a **Canvasser** or the **Secretary** at a building next to yours: the sky sign starts there, with no wheel; out of reach, a note says why not.
