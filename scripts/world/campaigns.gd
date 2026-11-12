@@ -263,21 +263,13 @@ func _top_up(c: Campaign) -> void:
 		c.agents.append(a)
 
 
-## The pavement in front of `building` facing the nearest corner; `middle`
-## gives its centre, otherwise somewhere along the wall.
+## The pavement in front of `building`, on its street side (local -z, see PlanBuilder);
+## `middle` gives its centre, otherwise somewhere along the wall.
 func _spot_outside(building: Node3D, middle: bool) -> Vector3:
-	var center := building.global_position
 	var half := BuildingBox.size_of(building) / 2.0
-	var corner: Vector3 = districts.city.intersection(districts.city.nearest_grid(center))
-	var to := corner - center
-	var spot := center
-	if absf(to.x) / half.x > absf(to.z) / half.z:
-		spot.x += signf(to.x) * (half.x + SIDEWALK_GAP)
-		spot.z += 0.0 if middle else randf_range(-half.z, half.z) * 0.8
-	else:
-		spot.z += signf(to.z) * (half.z + SIDEWALK_GAP)
-		spot.x += 0.0 if middle else randf_range(-half.x, half.x) * 0.8
-	spot.y = corner.y
+	var along := 0.0 if middle else randf_range(-half.x, half.x) * 0.8
+	var spot := building.global_transform * Vector3(along, -half.y, -half.z - SIDEWALK_GAP)
+	spot.y = 0.0
 	return spot
 
 

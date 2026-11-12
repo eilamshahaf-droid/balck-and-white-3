@@ -108,11 +108,12 @@ func _open(hit: Dictionary, at: Vector2) -> void:
 		return
 	_target = hit
 	hand.start_pointing(at)
-	if hit.collider.is_in_group("buildings"):
+	var building := BuildingBox.building_of(hit.collider)
+	if building:
 		_mode = Mode.BUILDING
-		_set_outline(hit.collider, true)
-		Sfx.play(get_tree(), hit.position, Sfx.surface_of(hit.collider), 0.4)
-		_wheel.open(at, _building_items(hit.collider))
+		_set_outline(building, true)
+		Sfx.play(get_tree(), hit.position, Sfx.surface_of(building), 0.4)
+		_wheel.open(at, _building_items(building))
 	else:
 		_mode = Mode.MIRACLES
 		var items: Array[Dictionary] = miracles.wheel_items()
@@ -126,7 +127,7 @@ func _open(hit: Dictionary, at: Vector2) -> void:
 
 func _choose() -> void:
 	var id: StringName = _wheel.close()
-	var building: Node3D = _target.collider if is_instance_valid(_target.collider) and _target.collider.is_in_group("buildings") else null
+	var building: Node3D = BuildingBox.building_of(_target.collider) if is_instance_valid(_target.collider) else null
 	if id != &"":
 		match _mode:
 			Mode.MIRACLES:
@@ -170,14 +171,14 @@ func _close() -> void:
 	_wheel.visible = false
 	_wheel.set_process(false)
 	if _mode in [Mode.BUILDING, Mode.USES, Mode.UPGRADES, Mode.POSTS] and is_instance_valid(_target.collider):
-		_set_outline(_target.collider, false)
+		_set_outline(BuildingBox.building_of(_target.collider), false)
 	_target = {}
 	_mode = Mode.NONE
 	hand.stop_pointing()
 
 
 func _cast_charged(hit: Dictionary) -> void:
-	var building: Node3D = hit.collider if hit.collider.is_in_group("buildings") else null
+	var building: Node3D = BuildingBox.building_of(hit.collider)
 	miracles.cast(charged, hit.position, building)
 	_charge(&"")
 
@@ -218,5 +219,6 @@ func _building_items(building: Node3D) -> Array[Dictionary]:
 
 
 func _set_outline(building: Node3D, on: bool) -> void:
-	for mesh in building.find_children("*", "MeshInstance3D", false, false):
-		mesh.material_overlay = _outline if on else null
+	for piece in BuildingBox.pieces_of(building):
+		for mesh in piece.find_children("*", "MeshInstance3D", false, false):
+			mesh.material_overlay = _outline if on else null

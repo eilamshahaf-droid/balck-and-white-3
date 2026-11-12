@@ -1,19 +1,22 @@
 class_name DistrictView
 extends Node3D
-## Shows who holds what: a gold plate on the roof of every building of yours,
-## and an outline on the roads around each district that turns gold once the
-## district is yours. Both are MultiMeshes, so hundreds of roofs cost one draw
-## call. The takeover marks (skull, dollar, sky sign) are campaign_marks.gd.
+## Shows who holds what: a gold plate on the roof of every building of yours (all the
+## buildings of a unit, which change hands together), and a ring on the ground round
+## each unit, so the player sees what they take; it turns gold once the unit is yours.
+## All MultiMeshes, so hundreds of roofs cost one draw call. The takeover marks (skull,
+## dollar, sky sign) are campaign_marks.gd.
 
 const S: DistrictSettings = preload("res://data/districts.tres")
 const ROOF_LIFT := 1.4      # above the roof modules (Kenney roofs stand about a metre proud of the box)
 const ROOF_INSET := 0.8     # plate size as a share of the roof
-const BORDER_LIFT := 0.03   # just above the asphalt
+const BORDER_LIFT := 0.08   # just above the asphalt
 
 var _roofs := MultiMesh.new()
 var _borders := MultiMesh.new()
 var _cores := MultiMesh.new()
 var _hidden := Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO)
+var _first_roof := PackedInt32Array()     # per building: its first roof plate
+var _first_strip := PackedInt32Array()    # per building: its first ring strip (one more at the end)
 
 @onready var districts: Districts = get_node("../Districts")
 
@@ -32,7 +35,11 @@ func _build() -> void:
 	plate.material = _unshaded(S.roof_color, false)
 	_roofs.transform_format = MultiMesh.TRANSFORM_3D
 	_roofs.mesh = plate
-	_roofs.instance_count = districts.buildings.size()
+	var roofs := 0
+	for b in districts.buildings:
+		_first_roof.append(roofs)
+		roofs += BuildingBox.pieces_of(b).size()
+	_roofs.instance_count = roofs
 	for i in _roofs.instance_count:
 		_roofs.set_instance_transform(i, _hidden)
 	_add_instance(_roofs)
@@ -43,9 +50,14 @@ func _build() -> void:
 	_borders.transform_format = MultiMesh.TRANSFORM_3D
 	_borders.use_colors = true
 	_borders.mesh = strip
-	_borders.instance_count = districts.district_count() * 4
-	for d in districts.district_count():
-		_outline(d)
+	var rings: Array[PackedVector2Array] = []
+	_first_strip = PackedInt32Array([0])
+	for b in districts.buildings:
+		rings.append(_ring(b))
+		_first_strip.append(_first_strip[-1] + rings[-1].size())
+	_borders.instance_count = _first_strip[-1]
+	for i in rings.size():
+		_outline(i, rings[i])
 	_add_instance(_borders)
 
 	var beacon := BoxMesh.new()
@@ -77,13 +89,21 @@ func _on_building_changed(index: int, yours: bool) -> void:
 	for d in districts.district_count():
 		if districts.core_of(d) == index:
 			_place_core(d)
+	_colour_ring(index, S.controlled_border_color if yours else S.border_color)
 	var b: Node3D = districts.buildings[index]
-	if b == null or not yours:
-		_roofs.set_instance_transform(index, _hidden)
-		return
-	var size := BuildingBox.size_of(b)  # live: decrees add floors
-	var top := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT)
-	_roofs.set_instance_transform(index, Transform3D(Basis.from_scale(Vector3(size.x, 1.0, size.z) * ROOF_INSET), top))
+	var pieces: Array[Node3D] = BuildingBox.pieces_of(b) if b else []
+	var count := (_first_roof[index + 1] if index + 1 < _first_roof.size() else _roofs.instance_count) \
+			- _first_roof[index]
+	for k in count:
+		var at := _first_roof[index] + k
+		if not yours or k >= pieces.size() or not is_instance_valid(pieces[k]):
+			_roofs.set_instance_transform(at, _hidden)
+			continue
+		var piece := pieces[k]
+		var size := BuildingBox.size_of(piece)  # live: decrees add floors
+		var top := piece.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT)
+		var turn := piece.global_basis.orthonormalized() * Basis.from_scale(Vector3(size.x, 1.0, size.z) * ROOF_INSET)
+		_roofs.set_instance_transform(at, Transform3D(turn, top))
 
 
 ## +3 Floors lifts the roof, so the plate follows it.
@@ -94,28 +114,39 @@ func _on_decree_issued(_kind: StringName, building: Node3D) -> void:
 
 
 func _on_district_controlled(d: int) -> void:
-	for side in 4:
-		_borders.set_instance_color(d * 4 + side, S.controlled_border_color)
+	for i in districts.buildings.size():
+		if districts.district_of(i) == d:
+			_colour_ring(i, S.controlled_border_color)
 
 
-## Four strips just inside the district's edge, so two neighbours' outlines
-## run side by side down the middle of the road between them.
-func _outline(d: int) -> void:
-	var r: Rect2 = districts.district_rect(d)
-	var w := S.border_width
-	var inset := w * 1.5
-	var long := Vector3(r.size.x - inset * 2.0, 1.0, w)
-	var tall := Vector3(w, 1.0, r.size.y - inset * 2.0)
-	var mid := r.get_center()
-	var strips: Array[Transform3D] = [
-		Transform3D(Basis.from_scale(long), Vector3(mid.x, BORDER_LIFT, r.position.y + inset)),
-		Transform3D(Basis.from_scale(long), Vector3(mid.x, BORDER_LIFT, r.end.y - inset)),
-		Transform3D(Basis.from_scale(tall), Vector3(r.position.x + inset, BORDER_LIFT, mid.y)),
-		Transform3D(Basis.from_scale(tall), Vector3(r.end.x - inset, BORDER_LIFT, mid.y)),
-	]
-	for side in 4:
-		_borders.set_instance_transform(d * 4 + side, strips[side])
-		_borders.set_instance_color(d * 4 + side, S.border_color)
+## The ground round building `b` and the rest of its unit: the hull of their walls,
+## grown by the margin.
+func _ring(b: Node3D) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for piece in BuildingBox.pieces_of(b):
+		var half := BuildingBox.size_of(piece) / 2.0 + Vector3.ONE * S.unit_ring_margin
+		for corner in [Vector3(-half.x, 0, -half.z), Vector3(half.x, 0, -half.z),
+				Vector3(half.x, 0, half.z), Vector3(-half.x, 0, half.z)]:
+			var p: Vector3 = piece.global_transform * corner
+			points.append(Vector2(p.x, p.z))
+	var hull := Geometry2D.convex_hull(points)
+	hull.resize(hull.size() - 1)   # the hull repeats its first point at the end
+	return hull
+
+
+func _outline(index: int, ring: PackedVector2Array) -> void:
+	for k in ring.size():
+		var a := ring[k]
+		var b := ring[(k + 1) % ring.size()]
+		var mid := (a + b) / 2.0
+		var turn := Basis(Vector3.UP, -(b - a).angle()) * Basis.from_scale(Vector3(a.distance_to(b), 1.0, S.border_width))
+		_borders.set_instance_transform(_first_strip[index] + k, Transform3D(turn, Vector3(mid.x, BORDER_LIFT, mid.y)))
+	_colour_ring(index, S.border_color)
+
+
+func _colour_ring(index: int, color: Color) -> void:
+	for k in range(_first_strip[index], _first_strip[index + 1]):
+		_borders.set_instance_color(k, color)
 
 
 func _add_instance(multimesh: MultiMesh) -> void:

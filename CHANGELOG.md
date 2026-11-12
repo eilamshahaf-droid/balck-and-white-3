@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.9.0 (2026-11-12): The Slums on a Map Lab map
+The city is no longer a fixed grid: each stage's map is made in the browser Map Lab and loaded by the game.
+- **A real neighbourhood.** The Slums are a Map Lab map (seed 31, 0.8 km): streets that bend, parks, 417 buildings of the Slums' own mix (tenements, brownstone rows, project slabs and towers, corner shops, sheds), each turned to face its street, with sidewalks and centre lines.
+- **You take blocks, not single buildings** (the Designer's rule): a block or a run of one, 5 to 12 buildings, changes hands at once. The Slums have 51 such units; a ring on the ground shows each one, and turns gold with gold plates on every roof once it is yours. The core is its own unit in the middle; the base is 5 units from it. About 200 residents, 3 to 4 per unit, as the Balance Tester asked.
+- **People walk the real streets** (a street graph from the map) instead of a grid; taxis park along the wider streets; the outskirts' roads carry on from the map's streets.
+- **Maps are data.** `node tools/maplab/export_map.js data/maps/slums/stage.json` turns a stage file (a Map Lab code or settings, the scale, the district names and kinds) into `data/maps/slums/map.json`. Each district kind can have a style file (`data/maps/styles/slums.json`: street pattern, land use, building mix, height, ART.md facade style per building), so the next stages are new data files.
+- Try it: open the browser build and play the Slums; the rings on the ground show what each takeover wins.
+
 ## Facade rules and wildness meter (2026-11-11)
 - Facade Lab: seed-driven massing, courtyard notch, rear extensions, projects plans (slab, cross, Y), and cornice rules with a "cornice kept" meter. Described in `docs/ART.md`.
 - Facade Lab: shop awnings, an air-shaft strip on tenement side walls, roof clutter at high wildness; ART.md notes what real 3D views show that a box misses.
