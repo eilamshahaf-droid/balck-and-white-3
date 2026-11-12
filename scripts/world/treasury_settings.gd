@@ -9,11 +9,11 @@ extends Resource
 @export var start_money := 250.0
 @export var tick := 1.0                     # seconds between payments
 
-## Every believer costs this much money per minute.
+## Every seated believer (Population.seats) costs this much money per minute.
 @export var believer_upkeep := 1.5
 ## Upkeep can overdraw the treasury, but never below debt_floor: past it, costs stop
-## being charged so the game never spirals. While overdrawn nothing can be bought or
-## trained (can_afford is false), and the Secretary minutes it once.
+## being charged so the game never spirals. While overdrawn nothing that costs money can
+## be bought or trained (can_afford), and the Secretary minutes it once.
 @export var debt_floor := -1000.0
 @export var overdrawn_line := "Minutes: the treasury is overdrawn; no further expenditure is minuted."
 @export var overdrawn_color := Color(1.0, 0.45, 0.35)

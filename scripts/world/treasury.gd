@@ -27,7 +27,9 @@ func _physics_process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = S.tick
-	income = population.tithes - population.believer_count * S.believer_upkeep / 60.0
+	# Only seated believers cost upkeep: the unseated already cost half their output.
+	var seated := mini(population.believer_count, population.seats)
+	income = population.tithes - seated * S.believer_upkeep / 60.0
 	for b in districts.converted_buildings():
 		income += net_of(b)
 	var was := money
@@ -42,9 +44,9 @@ func _physics_process(delta: float) -> void:
 					S.overdrawn_line, S.overdrawn_color)
 
 
-## False for anything at all while the treasury is overdrawn.
+## While the treasury is overdrawn only what is free can be had (training a canvasser).
 func can_afford(amount: float) -> bool:
-	return money >= 0.0 and money >= amount
+	return amount <= 0.0 or (money >= 0.0 and money >= amount)
 
 
 func spend_money(amount: float) -> bool:

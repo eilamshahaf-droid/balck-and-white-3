@@ -309,8 +309,8 @@ func _test_debt() -> void:
 	var treasury: Treasury = _main.get_node("Treasury")
 	var kept := treasury.money
 	treasury.money = -10.0
-	_check(not treasury.can_afford(0.0) and not treasury.spend_money(1.0),
-			"nothing is bought or trained while overdrawn")
+	_check(not treasury.can_afford(1.0) and not treasury.spend_money(1.0)
+			and treasury.can_afford(0.0), "while overdrawn only what is free can be had")
 	treasury.money = kept
 
 

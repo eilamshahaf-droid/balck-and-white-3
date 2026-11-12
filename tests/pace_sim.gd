@@ -92,8 +92,7 @@ func _on_building_changed(_index: int, yours: bool) -> void:
 
 
 func _act() -> void:
-	if _habits.has("train") and _treasury.can_afford(0.0) \
-			and _population.missionary_count * 3 < _population.believer_count:
+	if _habits.has("train") and _population.missionary_count * 3 < _population.believer_count:
 		for r in _population.residents:
 			if r.rank == Resident.Rank.BELIEVER and r.job == Resident.Job.FREE \
 					and _population.staffing.train(r, Resident.Rank.MISSIONARY,
