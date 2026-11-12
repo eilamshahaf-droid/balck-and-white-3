@@ -11,6 +11,12 @@ extends Resource
 
 ## Every believer costs this much money per minute.
 @export var believer_upkeep := 1.5
+## Upkeep can overdraw the treasury, but never below debt_floor: past it, costs stop
+## being charged so the game never spirals. While overdrawn nothing can be bought or
+## trained (can_afford is false), and the Secretary minutes it once.
+@export var debt_floor := -1000.0
+@export var overdrawn_line := "Minutes: the treasury is overdrawn; no further expenditure is minuted."
+@export var overdrawn_color := Color(1.0, 0.45, 0.35)
 ## Free spaces, bought in tiers (built when the feature freeze lifts): the price of each
 ## tier, and how much more the believers within free_space_reach blocks of it make.
 @export var free_space_costs := PackedFloat32Array([400.0, 1200.0])

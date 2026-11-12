@@ -7,7 +7,7 @@ extends Node
 ## Bot habits (any mix): train = keep a third of the believers as missionaries,
 ## pray = keep a few believers praying at the base, preach = sky-sign marks on lived-in
 ## buildings within reach, buy = dollar marks on empty ones (two marks at a time),
-## delegate = train the Field Delegate at the base and keep two landmarks marked.
+## delegate = train the Field Delegate at the base and keep three landmarks marked.
 ## It never uses the hand or a miracle, so a player should do better than this.
 
 const MAIN := preload("res://scenes/main.tscn")
@@ -18,7 +18,7 @@ const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
 const MARKS := 2
 const PRAYING := 4
-const LANDMARK_MARKS := 2
+const LANDMARK_MARKS := 3
 const MARK_SLACK := 60.0      # game seconds to walk there and back
 
 var _main: Node3D
@@ -92,7 +92,8 @@ func _on_building_changed(_index: int, yours: bool) -> void:
 
 
 func _act() -> void:
-	if _habits.has("train") and _population.missionary_count * 3 < _population.believer_count:
+	if _habits.has("train") and _treasury.can_afford(0.0) \
+			and _population.missionary_count * 3 < _population.believer_count:
 		for r in _population.residents:
 			if r.rank == Resident.Rank.BELIEVER and r.job == Resident.Job.FREE \
 					and _population.staffing.train(r, Resident.Rank.MISSIONARY,

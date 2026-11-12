@@ -30,15 +30,25 @@ func _physics_process(delta: float) -> void:
 	income = population.tithes - population.believer_count * S.believer_upkeep / 60.0
 	for b in districts.converted_buildings():
 		income += net_of(b)
-	add_money(income * S.tick)
+	var was := money
+	var change := income * S.tick
+	if change < 0.0:
+		change = maxf(change, minf(S.debt_floor - money, 0.0))
+	add_money(change)
+	if was >= 0.0 and money < 0.0:
+		var base := districts.start_building()
+		if base:
+			FloatingNote.pop(self, base.global_position + Vector3.UP * 12.0,
+					S.overdrawn_line, S.overdrawn_color)
 
 
+## False for anything at all while the treasury is overdrawn.
 func can_afford(amount: float) -> bool:
-	return money >= amount
+	return money >= 0.0 and money >= amount
 
 
 func spend_money(amount: float) -> bool:
-	if money < amount:
+	if not can_afford(amount):
 		return false
 	money -= amount
 	money_changed.emit(money)

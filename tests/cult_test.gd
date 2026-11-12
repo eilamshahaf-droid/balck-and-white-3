@@ -40,6 +40,7 @@ func _ready() -> void:
 	await _test_vandalist()
 	await _test_condemnation()
 	_test_landmarks()
+	_test_debt()
 	await _test_block()
 	_test_hand_orders()
 	await _test_capture()
@@ -301,6 +302,16 @@ func _test_landmarks() -> void:
 			"marking a scrubbed landmark again costs more")
 	_check(_population.seats == U.seats_base + U.seats_per_clerk * _population.priest_count,
 			"believers have seats: %d" % _population.seats)
+
+
+## Upkeep may overdraw the treasury; then nothing can be bought or trained.
+func _test_debt() -> void:
+	var treasury: Treasury = _main.get_node("Treasury")
+	var kept := treasury.money
+	treasury.money = -10.0
+	_check(not treasury.can_afford(0.0) and not treasury.spend_money(1.0),
+			"nothing is bought or trained while overdrawn")
+	treasury.money = kept
 
 
 ## The hand's orders: someone set down at a building acts by who they are; a willing
