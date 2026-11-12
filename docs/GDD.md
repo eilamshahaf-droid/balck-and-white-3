@@ -27,7 +27,12 @@ Where this disagrees with the text below, this wins.
    - Either way alone is very hard: the following alone needs most of the district (52% to 70% of its buildings, by welfare); the key places alone give 60% and still need about a quarter of the buildings. Mixed, the player can raise a large force and use the agent lightly, and put the time into other things.
    - Key places are not required: an aggressive player needs more of them and plans the takeover to reach them; a player who cultivates a large area can use them to get ahead, or take none and win on most of the district.
    - The core is therefore no longer a condition for winning, only the largest key place.
-5. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
+5. **The hand places people (Eilam, 2026-11-12; first step built in 0.12.0).** The hand is a spirit that moves people, tears and stamps, and now and then works a miracle; it never talks anyone round itself and never builds.
+   - **Where it sets someone down, and who they are, is what they do**: a canvasser at a door talks to the people inside; a member at a branch joins it; a clerk at a branch serves there; the field delegate at a key place does their act.
+   - **Willingness.** Someone who lives well goes gladly and gives full effort. Someone neglected or worn out by orders still goes, with a penalty in three parts, all approved: their work is worth less; it wears them further and after a few such orders they leave; and the neighbours who see it raise the district's awareness.
+   - This is the dial between the two ways: moving people like pieces is fast and wears them down, and a following that lives well acts by itself.
+6. **Names (Eilam chose set B, 2026-11-12; in the game since 0.12.0).** Believer: Member. Missionary: Canvasser. Priest: Clerk. High priest: the Secretary, who is also the narrator of the minutes. Special agent: Field Delegate. The cult: the Committee. Sermon house: Branch. The text of sections 1 to 12 still uses the old names.
+7. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
 
 ---
 

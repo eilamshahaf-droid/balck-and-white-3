@@ -3,6 +3,16 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.12.0 (2026-11-12): the Hand places people, and the Committee's names
+- **Where you set someone down is what they do** (Eilam's rule; the first step of the hand's role). It depends on who they are:
+  - a **Canvasser** or the **Secretary** at a building next to yours: the sky sign starts there, with no wheel; out of reach, a note says why not.
+  - a **Member** at a Branch: joins it and makes belief; at a shop: works there; at any other building: sits in.
+  - a **Clerk** at a Branch: serves there.
+  - the **Field Delegate** at a building: marks it, as before.
+- **They don't always want to.** Each order wears a person a little; a worn-out or badly-off one still goes, and says so ("...if I must."), but: their work is worth less (down to x0.4), it wears them much more, and the neighbours notice (awareness rises). One order too many and they resign. Rest brings them back. Numbers: `data/people.tres`, "The hand's orders".
+- **New names** (set B): Believer is **Member**, Missionary **Canvasser**, Priest **Clerk**, High priest **the Secretary** (the one who keeps the minutes), the special agent **Field Delegate**, the cult **the Committee**, the Prayer House **Branch**. The briefing opens with the background story: City Hall turned down the god's application, a form was missing.
+- Try it: train a Canvasser, pick them up and set them down at the door of a building next to yours. Then do it to the same one five times in a row.
+
 ## Pre-Alpha 0.11.0 (2026-11-12): one bar, two ways to fill it
 Eilam's rule for winning a district, with provisional numbers (`data/districts.tres`, "Winning a district").
 - **The district has a bar**, shown bottom left: "34% of the way (following 22% + key places 12%)". The district is yours when it is full. The core is no longer a condition, only the biggest key place.

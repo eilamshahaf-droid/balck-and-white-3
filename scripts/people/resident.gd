@@ -46,6 +46,9 @@ var charisma := 0.0
 var livelihood := 0.5
 var security := 0.5
 var pleasure := 0.5
+## How worn out by the hand's orders, 0..1 and past it: every order adds to it, more when
+## they did not want to go; it fades with time. Past PeopleSettings.strain_leave they quit.
+var strain := 0.0
 var meaning := 0.5
 
 ## Hidden meters, 0..1. Comfort follows the home (livelihood); fear is what

@@ -237,13 +237,13 @@ surface = &"wood"
 
 [sub_resource type="Resource" id="Mark_0"]
 script = ExtResource("40_marker")
-use_name = "Prayer House"
+use_name = "Branch"
 kind = SubResource("Kind_hand_statue")
 on_roof = true
 
 [sub_resource type="Resource" id="Mark_1"]
 script = ExtResource("40_marker")
-use_name = "Prayer House"
+use_name = "Branch"
 kind = SubResource("Kind_prayer_entrance")
 on_roof = false
 

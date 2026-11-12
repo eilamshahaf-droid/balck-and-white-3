@@ -34,16 +34,16 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "Debug (F1 hides)"
 	box.add_child(title)
-	_button(box, "Believers +%d" % STEP, func(): _convert(STEP))
-	_button(box, "Believers -%d" % STEP, func(): _unconvert(STEP))
-	_button(box, "Believers come here", _gather_here)
+	_button(box, "Members +%d" % STEP, func(): _convert(STEP))
+	_button(box, "Members -%d" % STEP, func(): _unconvert(STEP))
+	_button(box, "Members come here", _gather_here)
 	_button(box, "Belief +%d" % roundi(BELIEF_GIFT), func(): faith.belief_pool += BELIEF_GIFT)
 	_button(box, "Exposure +%d%%" % roundi(EXPOSURE_GIFT * 100.0), func(): faith.exposure = minf(faith.exposure + EXPOSURE_GIFT, 1.0))
 	_button(box, "Take %d buildings here" % TAKE_COUNT, func(): districts.convert_near(rig.target_pivot, TAKE_COUNT))
 	_button(box, "Money +%d" % roundi(MONEY_GIFT), func(): treasury.add_money(MONEY_GIFT))
 	_button(box, "Mark: skull (force)", func(): _mark(Campaigns.Route.FORCE))
 	_button(box, "Mark: dollar (buy)", func(): _mark(Campaigns.Route.BUY))
-	_button(box, "Mark: sky sign (preach)", func(): _mark(Campaigns.Route.PREACH))
+	_button(box, "Mark: sky sign (canvass)", func(): _mark(Campaigns.Route.PREACH))
 
 
 func _unhandled_input(event: InputEvent) -> void:

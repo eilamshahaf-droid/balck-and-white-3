@@ -14,13 +14,13 @@ const UPGRADE_INFO := {
 	BuildingUpgrades.Kind.ROOF_GARDEN: ["Roof Garden", "comfort up", Color(0.55, 0.9, 0.5)],
 	BuildingUpgrades.Kind.CAMERAS: ["Cameras", "fear up", Color(0.9, 0.5, 0.45)],
 	BuildingUpgrades.Kind.GATE: ["Gate", "fear up", Color(0.75, 0.45, 0.7)],
-	BuildingUpgrades.Kind.LOUDSPEAKER: ["Loudspeaker", "priests reach further", Color(1.0, 0.85, 0.4)],
-	BuildingUpgrades.Kind.BANNERS: ["Banners", "preaching stronger", Color(0.85, 0.5, 0.9)],
-	BuildingUpgrades.Kind.LECTURE_HALL: ["Lecture Hall", "stronger preaching", Color(0.6, 0.75, 1.0)],
+	BuildingUpgrades.Kind.LOUDSPEAKER: ["Loudspeaker", "canvassers reach further", Color(1.0, 0.85, 0.4)],
+	BuildingUpgrades.Kind.BANNERS: ["Banners", "talks land better", Color(0.85, 0.5, 0.9)],
+	BuildingUpgrades.Kind.LECTURE_HALL: ["Lecture Hall", "talks land better", Color(0.6, 0.75, 1.0)],
 	BuildingUpgrades.Kind.STOREFRONT: ["Storefront", "shop income", Color(0.95, 0.7, 0.35)],
 	BuildingUpgrades.Kind.GYM: ["Training Hall", "trains fighters", Color(0.9, 0.45, 0.4)],
 	BuildingUpgrades.Kind.REAL_ESTATE: ["Real Estate", "cheaper buying nearby", Color(0.5, 0.8, 0.6)],
-	BuildingUpgrades.Kind.SEMINARY: ["Seminary", "trains priests", Color(0.95, 0.95, 1.0)],
+	BuildingUpgrades.Kind.SEMINARY: ["Seminary", "trains clerks", Color(0.95, 0.95, 1.0)],
 	BuildingUpgrades.Kind.RESTAURANT: ["Restaurant", "comfort up", Color(1.0, 0.75, 0.5)],
 }
 ## Post slices: the job, and the rank of who takes it.
@@ -64,7 +64,7 @@ func post_items(building: Node3D) -> Array[Dictionary]:
 	var believers := population.free_believers_near(p, S.staff_reach).size()
 	var items: Array[Dictionary] = []
 	if building.is_in_group(Population.PRAYER_HOUSES):
-		items.append(_post_item(&"pray", "Send to Pray", Color(1.0, 0.88, 0.5), believers))
+		items.append(_post_item(&"pray", "Send to the Branch", Color(1.0, 0.88, 0.5), believers))
 		var priests := population.free_believers_near(p, S.staff_reach, Resident.Rank.PRIEST).size()
 		items.append(_post_item(&"serve", "Serve as " + U.title(Resident.Rank.PRIEST),
 				U.color(Resident.Rank.PRIEST), priests))
@@ -80,7 +80,7 @@ func post_items(building: Node3D) -> Array[Dictionary]:
 				match rank:
 					Resident.Rank.PRIEST: item.note = "not here"
 					Resident.Rank.AGENT:
-						item.note = "needs %d believers" % U.agent_unlock_believers \
+						item.note = "needs %d members" % U.agent_unlock_believers \
 								if population.believer_count < U.agent_unlock_believers \
 								else "%d at most" % U.max_agents
 					_: item.note = "house full"

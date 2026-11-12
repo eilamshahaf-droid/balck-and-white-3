@@ -35,10 +35,10 @@ extends Resource
 ## Combat Training: the force route trains believers there. Shop: the only use that
 ## earns money (TreasurySettings.shop_use); the others cost upkeep.
 ## The use whose believers pray belief into the pool; no other building does.
-@export var prayer_use := "Prayer House"
+@export var prayer_use := "Branch"
 ## The use that opens shops (TreasurySettings.shop_use, the one that earns money).
 @export var shop_use := "Shop"
-@export var uses: Array[String] = ["Prayer House", "Course Center", "Free Personality Test",
+@export var uses: Array[String] = ["Branch", "Course Center", "Free Personality Test",
 		"Combat Training", "Shop"]
 
 @export_group("Preserve: no demolition, no buying it from under you")

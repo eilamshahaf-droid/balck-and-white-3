@@ -60,13 +60,13 @@ extends Resource
 @export_group("The stage")
 ## The start screen: a title and the Secretary's briefing.
 @export var start_title := "Stage 1: The Slums"
-@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the High Priest, a kettle.\n\nItem 1: we have a base at the edge of the Slums. Win the street one building at a time; we can only take a building next to one we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 2: train a Vandalist at the base and have him mark the five landmarks of the status quo. Each mark makes the heart of the district easier to win.\nItem 3: the district is ours when its bar is full. A wide following that lives well fills it; so do the core in the middle and every marked landmark. Either way alone is hard; the two together leave us room.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
+@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the Secretary (taking these minutes), a kettle.\n\nItem 1: City Hall has turned down our god's application to be recognised as a god. A form was missing. The Committee will appeal, street by street.\nItem 2: our office is at the edge of the Slums. We win the street one building at a time, and only next to a building we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 3: the district is ours when its bar is full. A wide membership that lives well fills it; so do the core in the middle and every landmark our Field Delegate marks. Either way alone is hard; together they leave us room.\nItem 4: the Hand places people. Where it sets a member down is what that member does. A worn-out member still goes, and lets everyone know.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
 @export var start_button := "Open the meeting"
 ## The cult loses once it has had lose_after_believers believers and then has none
 ## at all (the high priest aside) for lose_minutes.
 @export var lose_after_believers := 8
 @export var lose_minutes := 3.0
-@export var lose_title := "The cult has dissolved"
+@export var lose_title := "The Committee has dissolved"
 @export var lose_line := "Minutes, final item: attendance zero. The kettle has been repossessed. Meeting closed."
 @export var retry_button := "Try again"
 

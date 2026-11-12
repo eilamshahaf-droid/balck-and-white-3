@@ -38,6 +38,12 @@ signal cult_founded(building: Node3D)
 signal believers_dismissed(building: Node3D, count: int)
 ## The hand set a special agent (the Vandalist) down near `building`.
 signal agent_set_down(agent: Resident, building: Node3D)
+## The hand set someone who talks people round (a canvasser, the Secretary) down at
+## `building`, which is not yours: they are to work on it.
+signal canvasser_set_down(resident: Resident, building: Node3D)
+## The hand gave `resident` an order by setting them down at a building; `willing` is
+## whether they went gladly. `quit` when it was one order too many and they left.
+signal ordered(resident: Resident, willing: bool, quit: bool)
 
 ## Buildings whose use is prayer (sermon houses); whoever sets a building's use keeps this group.
 const PRAYER_HOUSES := &"prayer_houses"
@@ -352,7 +358,7 @@ func is_blockaded(building: Node3D) -> bool:
 ## faith (in a staffed sermon house) and money by their wealth, times their needs.
 func belief_rate(r: Resident) -> float:
 	return U.belief_per_minute / 60.0 * r.faith * needs_multiplier(r) \
-			* districts.block_bonus(r.home)
+			* districts.block_bonus(r.home) * effort_of(r)
 
 
 func money_rate(r: Resident) -> float:
@@ -521,16 +527,21 @@ func _on_set_down(c: Citizen) -> void:
 	var building := _place_at(p)
 	if building == null:
 		return
+	# Where the hand sets someone down, and who they are, is what they do.
+	if not _take_order(r):
+		return
 	if r.rank == Resident.Rank.AGENT:
 		agent_set_down.emit(r, building)
 		return
-	# Set down in a prayer house or shop: the believer starts working there.
+	if r.preaches() and not districts.owns(building):
+		canvasser_set_down.emit(r, building)
+		return
 	if r.job == Resident.Job.FREE:
 		var job := Resident.Job.FREE
 		if building.is_in_group(SHOPS):
 			job = Resident.Job.SHOP
 		elif building.is_in_group(PRAYER_HOUSES):
-			job = Resident.Job.PRAY
+			job = Resident.Job.PRIEST if r.is_priest() else Resident.Job.PRAY
 		if staffing.assign(r, job, building):
 			return
 	r.occupying = building
@@ -539,6 +550,37 @@ func _on_set_down(c: Citizen) -> void:
 	(_occupants[building] as Array).append(r)
 	r.body.occupy(building.global_position)
 	occupant_added.emit(building, r)
+
+
+## How gladly `r` takes an order from the hand, 0..1: how well they live, less how worn
+## out they are by earlier orders.
+func willingness(r: Resident) -> float:
+	var lived := inverse_lerp(U.multiplier_min, U.multiplier_max, needs_multiplier(r))
+	return clampf(lived - r.strain, 0.0, 1.0)
+
+
+## What `r`'s work is worth right now: full when they are willing, less the more
+## unwilling (they still do it; you are a god).
+func effort_of(r: Resident) -> float:
+	var w := willingness(r)
+	if w >= _people.willing_at:
+		return 1.0
+	return lerpf(_people.min_effort, 1.0, w / _people.willing_at)
+
+
+## The hand orders `r` about. An unwilling one goes anyway, worse at it, more worn out,
+## and the neighbours notice; one order too many and they quit (false: no order given).
+func _take_order(r: Resident) -> bool:
+	var willing := willingness(r) >= _people.willing_at
+	r.strain += _people.order_strain if willing else _people.forced_strain
+	if not willing and awareness:
+		awareness.add(districts.district_at(r.body.global_position), _people.forced_awareness)
+	var quit := r.strain >= _people.strain_leave and r != priest
+	ordered.emit(r, willing, quit)
+	if quit:
+		r.strain = 0.0
+		convert_to(r, Resident.Rank.RESIDENT)
+	return not quit
 
 
 func _on_stopped_occupying(c: Citizen) -> void:
@@ -659,6 +701,7 @@ func _refresh_presence() -> void:
 		if not r.alive:
 			continue
 		_feel(r, dt)
+		r.strain = maxf(r.strain - _people.strain_fade_per_minute * dt / 60.0, 0.0)
 		if not r.is_believer():
 			continue
 		Needs.refresh(r, U, pleasure_bonus.get(r.home, 0.0))
