@@ -87,6 +87,29 @@ extends Resource
 ## Each purchase also adds this many places to the building.
 @export var slots_per_purchase := 2
 
+@export_group("The hand's orders: set someone down at a building and they act")
+## What an order adds to a person's strain: when they go gladly, and when they don't.
+@export var order_strain := 0.1
+@export var forced_strain := 0.3
+## Strain that fades per minute.
+@export var strain_fade_per_minute := 0.1
+## A person goes gladly while their welfare (0..1) less their strain is at least this.
+@export_range(0.0, 1.0) var willing_at := 0.45
+## What an unwilling person's work is worth at the very worst (talking people round,
+## making belief); it rises to 1 as they come round.
+@export_range(0.0, 1.0) var min_effort := 0.4
+## Past this strain they have had enough and leave.
+@export var strain_leave := 1.0
+## What the neighbours' awareness rises by when they see someone hauled off unwilling.
+@export var forced_awareness := 0.02
+@export var willing_lines := PackedStringArray(["On it.", "Gladly.", "Say no more."])
+@export var unwilling_lines := PackedStringArray([
+	"...if I must.", "Again? Fine.", "Noted. In the minutes.", "I had plans, you know.",
+])
+@export var quit_line := "That's it. I resign."
+@export var willing_color := Color(1.0, 0.9, 0.5)
+@export var unwilling_color := Color(0.85, 0.6, 0.55)
+
 @export_group("Housing")
 ## A home holds its starting residents times this; past that it is crowded.
 @export var housing_slack := 1.3

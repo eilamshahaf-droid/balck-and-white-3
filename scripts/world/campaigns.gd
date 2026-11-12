@@ -10,6 +10,8 @@ extends Node
 
 signal campaign_started(building: Node3D, route: Route)
 signal campaign_ended(building: Node3D, route: Route, won: bool)
+## A canvasser the hand set down at `building` can't work on it, and `why`.
+signal mark_refused(building: Node3D, why: String)
 
 enum Route { FORCE, BUY, PREACH }
 
@@ -37,6 +39,10 @@ class Campaign:
 	var blocked := 0.0
 	## What holds it up, for the HUD ("" while it runs).
 	var stalled := ""
+
+
+func _ready() -> void:
+	population.canvasser_set_down.connect(_on_canvasser_set_down)
 
 
 func _physics_process(delta: float) -> void:
@@ -163,6 +169,19 @@ func stalled_on(building: Node3D) -> String:
 	return c.stalled if c else ""
 
 
+## The hand set a canvasser down at `building`: that is the sky sign, with no wheel. The
+## nearest free canvassers answer the mark, so the one just set down is the first.
+func _on_canvasser_set_down(_r: Resident, building: Node3D) -> void:
+	if route_of(building) == Route.PREACH:
+		return
+	var why := why_not(building, Route.PREACH)
+	if why != "":
+		mark_refused.emit(building, why)
+		return
+	clear(building)
+	mark(building, Route.PREACH)
+
+
 func _step(c: Campaign) -> void:
 	if not is_instance_valid(c.building) or districts.owns(c.building):
 		_end(c, is_instance_valid(c.building))
@@ -179,7 +198,7 @@ func _step(c: Campaign) -> void:
 	if c.wait > 0.0:
 		return
 	if not c.agents.any(func(a: Citizen) -> bool: return is_instance_valid(a) and a.errand_arrived):
-		c.stalled = "on the way" if not c.agents.is_empty() else "no free believers"
+		c.stalled = "on the way" if not c.agents.is_empty() else "nobody free to go"
 		return
 	match c.route:
 		Route.FORCE:

@@ -1,10 +1,11 @@
-[gd_scene load_steps=43 format=3]
+[gd_scene load_steps=45 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
 [ext_resource type="Script" path="res://scripts/god_hand.gd" id="3_hand"]
 [ext_resource type="Script" path="res://scripts/faith.gd" id="4_faith"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5_hud"]
+[ext_resource type="Script" path="res://scripts/help_label.gd" id="5_help"]
 [ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
 [ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
@@ -36,6 +37,7 @@
 [ext_resource type="Script" path="res://scripts/world/district_won.gd" id="60_won"]
 [ext_resource type="Script" path="res://scripts/world/awareness.gd" id="61_awareness"]
 [ext_resource type="Script" path="res://scripts/world/fragility.gd" id="62_fragility"]
+[ext_resource type="Script" path="res://scripts/world/district_progress.gd" id="63_progress"]
 [ext_resource type="Script" path="res://scripts/world/murals.gd" id="63_murals"]
 [ext_resource type="Script" path="res://scripts/government/condemnation.gd" id="64_condemnation"]
 [ext_resource type="Script" path="res://scripts/world/landmarks.gd" id="65_landmarks"]
@@ -113,9 +115,10 @@ script = ExtResource("51_alerts")
 population = NodePath("../Population")
 camera = NodePath("../CameraRig")
 
-[node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population")]
+[node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population", "campaigns")]
 script = ExtResource("40_notes")
 population = NodePath("../Population")
+campaigns = NodePath("../Campaigns")
 
 [node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "districts", "treasury", "population")]
 script = ExtResource("13_decrees")
@@ -203,6 +206,12 @@ population = NodePath("../Population")
 awareness = NodePath("../Awareness")
 heat = NodePath("../Heat")
 
+[node name="DistrictProgress" type="Node" parent="." node_paths=PackedStringArray("districts", "landmarks", "population")]
+script = ExtResource("63_progress")
+districts = NodePath("../Districts")
+landmarks = NodePath("../Landmarks")
+population = NodePath("../Population")
+
 [node name="Murals" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts", "awareness", "treasury", "arrests", "landmarks")]
 script = ExtResource("63_murals")
 population = NodePath("../Population")
@@ -229,22 +238,27 @@ script = ExtResource("10_debug")
 
 [node name="Help" type="Label" parent="HUD"]
 offset_left = 12.0
-offset_top = 10.0
+offset_top = 96.0
 offset_right = 900.0
-offset_bottom = 120.0
+offset_bottom = 206.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
+script = ExtResource("5_help")
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
-Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: belief (debug)
+Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: who is this (debug)    F1: debug panel
 Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
-The hand lifts people and things (not trees). Only missionaries and the high priest win people over; miracles help them."
+The hand lifts people and things (not trees). Where you set a member down is what they do. Only canvassers and the Secretary win people over; miracles help them."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
-offset_top = 176.0
+offset_top = 62.0
 offset_right = 900.0
-offset_bottom = 206.0
+offset_bottom = 92.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
 script = ExtResource("5_hud")
 
-[node name="District" type="Label" parent="HUD"]
+[node name="District" type="Label" parent="HUD" node_paths=PackedStringArray("progress")]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -253,7 +267,10 @@ offset_top = -64.0
 offset_right = 900.0
 offset_bottom = -12.0
 grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
+progress = NodePath("../../DistrictProgress")
 
 [node name="ArrestAlert" type="Label" parent="HUD" node_paths=PackedStringArray("arrests")]
 anchors_preset = 5

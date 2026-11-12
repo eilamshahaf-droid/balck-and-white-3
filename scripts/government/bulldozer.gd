@@ -75,7 +75,7 @@ func status_text() -> String:
 			return "a bulldozer is on its way"
 		Mode.WORKING:
 			if _blocker == &"believers":
-				return "believers are blocking the bulldozer"
+				return "members are blocking the bulldozer"
 			return "demolishing (%d%%)" % roundi(_progress * 100.0)
 	return "the crew went home"
 

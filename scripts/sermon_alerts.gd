@@ -44,7 +44,7 @@ func _on_started(priest: Resident, at: Vector3, _risk: float) -> void:
 	add_child(ring)
 	ring.global_position = at + Vector3.UP * 0.2
 	_rings[priest] = ring
-	_alert(priest, "%s is preaching" % priest.full_name(), at)
+	_alert(priest, "%s is holding a meeting" % priest.full_name(), at)
 
 
 func _on_police(priest: Resident, at: Vector3) -> void:

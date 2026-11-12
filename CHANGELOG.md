@@ -3,6 +3,32 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.12.0 (2026-11-12): the Hand places people, and the Committee's names
+- **Where you set someone down is what they do** (Eilam's rule; the first step of the hand's role). It depends on who they are:
+  - a **Canvasser** or the **Secretary** at a building next to yours: the sky sign starts there, with no wheel; out of reach, a note says why not.
+  - a **Member** at a Branch: joins it and makes belief; at a shop: works there; at any other building: sits in.
+  - a **Clerk** at a Branch: serves there.
+  - the **Field Delegate** at a building: marks it, as before.
+- **They don't always want to.** Each order wears a person a little; a worn-out or badly-off one still goes, and says so ("...if I must."), but: their work is worth less (down to x0.4), it wears them much more, and the neighbours notice (awareness rises). One order too many and they resign. Rest brings them back. Numbers: `data/people.tres`, "The hand's orders".
+- **New names** (set B): Believer is **Member**, Missionary **Canvasser**, Priest **Clerk**, High priest **the Secretary** (the one who keeps the minutes), the special agent **Field Delegate**, the cult **the Committee**, the Prayer House **Branch**. The briefing opens with the background story: City Hall turned down the god's application, a form was missing.
+- Try it: train a Canvasser, pick them up and set them down at the door of a building next to yours. Then do it to the same one five times in a row.
+
+## Pre-Alpha 0.11.0 (2026-11-12): one bar, two ways to fill it
+Eilam's rule for winning a district, with provisional numbers (`data/districts.tres`, "Winning a district").
+- **The district has a bar**, shown bottom left: "34% of the way (following 22% + key places 12%)". The district is yours when it is full. The core is no longer a condition, only the biggest key place.
+- **A wide following fills it**: the share of the district's buildings that are yours. 60% fills it alone; it counts for more when your believers' needs are met (x1.15) and less when they live badly (x0.85).
+- **Key places fill it**: the core, once yours, is worth 20%; every landmark the Vandalist has marked is worth 8% (and loses it when City Hall scrubs the mark).
+- **Either alone is hard, together is easier.** All six key places give 60% and still need about a quarter of the buildings; no key place at all needs most of the district. For example 30% of the buildings, the core and four marks is enough.
+- The briefing explains the bar. The background story and the two ways (sweeping people along, or taking things over) are in `docs/GDD.md`, section 0; the stamp-or-tear hand is not built yet.
+- Try it: watch the "District:" line while you take buildings; train a Vandalist (8 believers) and mark a landmark to see the key places part jump.
+
+## Pre-Alpha 0.10.1 (2026-11-12): a clean screen
+- **Less text.** The four lines of controls are folded into "H: how to play" (H opens and closes them). The debug panel is hidden until F1. The numbers sit at the top of the screen.
+- **Readable text.** The HUD's white text has a dark outline, so it reads over the bright sky and ground.
+- **The opening view** looks from the edge of the map in toward the district, closer (`start_distance`, `start_lead` in `data/hand_settings.tres`), instead of showing mostly the land outside the map.
+- **The design document** (`docs/GDD.md`) is the Designer's updated page again (the story, missions, the building editor, about an hour for the Slums and no clock), and opens with Eilam's direction of the same day: not a street-artist god, and two ways to resist the bureaucracy, control (fast, focused) and freedom (a real majority, slower, with time to invest in buildings and people).
+- Try it: start the game; press H, then F1.
+
 ## Pre-Alpha 0.10.0 (2026-11-12): one building at a time
 Eilam's rule: you take single buildings, and a whole block pays a bonus. No new features besides that; the rest is making the base of the Slums work.
 - **Buildings, not blocks.** Each of the Slums' 417 buildings is taken on its own, once most of the people living in it believe (1 to 3 residents each, so one or two conversions), and only if it borders a building of yours (next door or across the street). Gold plate on the roof, as before.

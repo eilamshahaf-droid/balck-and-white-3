@@ -14,11 +14,12 @@ static func met(have: float, desire: float) -> float:
 
 
 ## Refresh what `r` has of each need from the systems that feed it.
-## `pleasure_bonus` comes from murals near their home.
+## `pleasure_bonus` comes from murals near their home; being ordered about wears
+## pleasure down (Resident.strain).
 static func refresh(r: Resident, u: UnitSettings, pleasure_bonus := 0.0) -> void:
 	r.livelihood = r.comfort
 	r.security = 1.0 - r.fear
-	r.pleasure = minf(u.pleasure_base + pleasure_bonus, 1.0)
+	r.pleasure = clampf(u.pleasure_base + pleasure_bonus - r.strain, 0.0, 1.0)
 	r.meaning = u.meaning_free if r.job == Resident.Job.FREE else u.meaning_posted
 
 

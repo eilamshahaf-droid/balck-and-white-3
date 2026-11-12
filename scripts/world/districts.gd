@@ -6,8 +6,9 @@ extends Node
 ## it. Campaigns (campaigns.gd) are how the player tips a building: force, buying
 ## or missionaries. The cult starts from its base (`headquarters`, always yours) at the
 ## edge of the start district, a neglected place with empty, abandoned buildings, and
-## works in toward the core in the middle. A district is yours once its core and
-## enough of its buildings are. Decrees ask owns(), so there is one answer.
+## works in toward the core in the middle. A district is yours once its bar is full
+## (DistrictProgress: a wide following, key places, or both). Decrees ask owns(), so there
+## is one answer.
 ## Buildings change hands one at a time (index = CityPlan building index). Each stands
 ## in a block (a map unit: a block or a run of one); a block whose standing buildings
 ## are all yours is complete, which pays a bonus (block_bonus, in_complete_block).
@@ -149,6 +150,13 @@ func is_controlled(d: int) -> bool:
 ## The district's hard central building, as an index (-1 when it has none).
 func core_of(d: int) -> int:
 	return _core[d]
+
+
+## District `d` is won (DistrictProgress says its bar is full).
+func win(d: int) -> void:
+	if _controlled[d] == 0:
+		_controlled[d] = 1
+		district_controlled.emit(d)
 
 
 ## Once a district's core is yours, City Hall and the police leave it alone.
@@ -443,10 +451,6 @@ func _set_side(i: int, mine: bool) -> void:
 	_block_held[_block_of[i]] += 1 if mine else -1
 	building_changed.emit(i, mine)
 	_check_block(_block_of[i])
-	if mine and _controlled[d] == 0 and share(d) >= S.control_share \
-			and _core[d] >= 0 and _yours[_core[d]] == 1:
-		_controlled[d] = 1
-		district_controlled.emit(d)
 
 
 func _check_block(block: int) -> void:

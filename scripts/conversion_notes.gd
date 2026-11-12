@@ -11,12 +11,18 @@ const ABOVE := Vector3(0, 2.6, 0)
 const LOST_COLOR := Color(0.7, 0.7, 0.75)
 
 @export var population: Population
+@export var campaigns: Campaigns
+
+# Loaded at run time: its typed arrays hold custom resources.
+var _people: PeopleSettings = load("res://data/people.tres")
 
 var _budget := 0.0
 
 
 func _ready() -> void:
 	population.rank_changed.connect(_on_rank_changed)
+	population.ordered.connect(_on_ordered)
+	campaigns.mark_refused.connect(_on_mark_refused)
 
 
 func _physics_process(delta: float) -> void:
@@ -33,3 +39,18 @@ func _on_rank_changed(r: Resident, old: Resident.Rank, new: Resident.Rank) -> vo
 		color = LOST_COLOR
 	_budget -= 1.0
 	FloatingNote.pop(self, r.body.global_position + ABOVE, text, color)
+
+
+## What someone says when the hand sets them to work: gladly, grudgingly, or goodbye.
+func _on_ordered(r: Resident, willing: bool, quit: bool) -> void:
+	if r.body == null or not is_instance_valid(r.body):
+		return
+	var lines := _people.willing_lines if willing else _people.unwilling_lines
+	var text := _people.quit_line if quit else lines[randi() % lines.size()]
+	FloatingNote.pop(self, r.body.global_position + ABOVE, text,
+			_people.willing_color if willing else _people.unwilling_color)
+
+
+func _on_mark_refused(building: Node3D, why: String) -> void:
+	var top := BuildingBox.size_of(building).y / 2.0
+	FloatingNote.pop(self, building.global_position + Vector3.UP * top + ABOVE, why, LOST_COLOR)

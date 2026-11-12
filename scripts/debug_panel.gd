@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Testing shortcuts, top right (F1 hides it): convert or lose believers,
+## Testing shortcuts, top right (hidden; F1 shows it): convert or lose believers,
 ## move all believers to where the camera looks, fill the belief pool, raise
 ## exposure (to call City Hall), take buildings, add money and mark the building in the middle of the screen
 ## (until the building wheel has the marks). Not part of the game; there to make testing quick.
@@ -27,22 +27,23 @@ func _ready() -> void:
 	_panel.offset_left = -200
 	_panel.offset_top = 150  # below the help text
 	_panel.offset_right = -10
+	_panel.visible = false  # a tester's tool: F1 brings it up
 	add_child(_panel)
 	var box := VBoxContainer.new()
 	_panel.add_child(box)
 	var title := Label.new()
 	title.text = "Debug (F1 hides)"
 	box.add_child(title)
-	_button(box, "Believers +%d" % STEP, func(): _convert(STEP))
-	_button(box, "Believers -%d" % STEP, func(): _unconvert(STEP))
-	_button(box, "Believers come here", _gather_here)
+	_button(box, "Members +%d" % STEP, func(): _convert(STEP))
+	_button(box, "Members -%d" % STEP, func(): _unconvert(STEP))
+	_button(box, "Members come here", _gather_here)
 	_button(box, "Belief +%d" % roundi(BELIEF_GIFT), func(): faith.belief_pool += BELIEF_GIFT)
 	_button(box, "Exposure +%d%%" % roundi(EXPOSURE_GIFT * 100.0), func(): faith.exposure = minf(faith.exposure + EXPOSURE_GIFT, 1.0))
 	_button(box, "Take %d buildings here" % TAKE_COUNT, func(): districts.convert_near(rig.target_pivot, TAKE_COUNT))
 	_button(box, "Money +%d" % roundi(MONEY_GIFT), func(): treasury.add_money(MONEY_GIFT))
 	_button(box, "Mark: skull (force)", func(): _mark(Campaigns.Route.FORCE))
 	_button(box, "Mark: dollar (buy)", func(): _mark(Campaigns.Route.BUY))
-	_button(box, "Mark: sky sign (preach)", func(): _mark(Campaigns.Route.PREACH))
+	_button(box, "Mark: sky sign (canvass)", func(): _mark(Campaigns.Route.PREACH))
 
 
 func _unhandled_input(event: InputEvent) -> void:

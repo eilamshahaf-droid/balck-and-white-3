@@ -61,7 +61,7 @@ func _process(delta: float) -> void:
 	_preach_left = maxf(_preach_left - delta, 0.0)
 	var title := "%s\n%s" % [U.title(Resident.Rank.HIGH_PRIEST), priest.full_name()]
 	if _preach_left > 0.0:
-		title += "\npreaching..."
+		title += "\ntalking..."
 	if title != _title:
 		_title = title
 		_label.text = title
