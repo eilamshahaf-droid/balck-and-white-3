@@ -6,15 +6,20 @@ extends Node
 ##   godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,preach,buy
 ## Bot habits (any mix): train = keep a third of the believers as missionaries,
 ## pray = keep a few believers praying at the base, preach = sky-sign marks on lived-in
-## buildings within reach, buy = dollar marks on empty ones (two marks at a time).
+## buildings within reach, buy = dollar marks on empty ones (two marks at a time),
+## delegate = train the Field Delegate at the base and keep three landmarks marked.
 ## It never uses the hand or a miracle, so a player should do better than this.
 
 const MAIN := preload("res://scenes/main.tscn")
+const LS: LandmarkSettings = preload("res://data/landmarks.tres")
+const U: UnitSettings = preload("res://data/units.tres")
 const SPEED := 8.0
 const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
 const MARKS := 2
 const PRAYING := 4
+const LANDMARK_MARKS := 3
+const MARK_SLACK := 60.0      # game seconds to walk there and back
 
 var _main: Node3D
 var _population: Population
@@ -24,6 +29,8 @@ var _treasury: Treasury
 var _awareness: Awareness
 var _progress: DistrictProgress
 var _faith: Node
+var _landmarks: Landmarks
+var _delegate_free_at := 0.0
 var _habits := PackedStringArray()
 var _minutes := 40.0
 var _clock := 0.0
@@ -48,6 +55,7 @@ func _ready() -> void:
 	_awareness = _main.get_node("Awareness")
 	_progress = _main.get_node("DistrictProgress")
 	_faith = _main.get_node("Faith")
+	_landmarks = _main.get_node("Landmarks")
 	_districts.building_changed.connect(_on_building_changed)
 	Engine.time_scale = SPEED
 	print("PACE SIM bot=%s" % ",".join(_habits))
@@ -96,6 +104,8 @@ func _act() -> void:
 			if r.rank == Resident.Rank.BELIEVER and r.job == Resident.Job.FREE \
 					and _population.staffing.assign(r, Resident.Job.PRAY, base):
 				break
+	if _habits.has("delegate"):
+		_send_delegate(base)
 	if _campaigns.marked().size() >= MARKS:
 		return
 	for i in _districts.buildings.size():
@@ -109,4 +119,31 @@ func _act() -> void:
 		if not empty and _habits.has("preach") \
 				and _campaigns.why_not(b, Campaigns.Route.PREACH) == "":
 			_campaigns.mark(b, Campaigns.Route.PREACH)
+			return
+
+
+## Train the Field Delegate if there is none, and send him to an unmarked landmark
+## while fewer than LANDMARK_MARKS stand, once he is back from the last one.
+func _send_delegate(base: Node3D) -> void:
+	var agent: Resident = null
+	for r in _population.residents:
+		if r.rank == Resident.Rank.AGENT and r.alive:
+			agent = r
+			break
+	if agent == null:
+		for r in _population.residents:
+			if r.rank == Resident.Rank.BELIEVER and r.job == Resident.Job.FREE \
+					and _treasury.can_afford(U.agent_cost) \
+					and _population.staffing.train(r, Resident.Rank.AGENT, base):
+				_treasury.spend_money(U.agent_cost)
+				break
+		return
+	var d := _districts.start_district()
+	if _clock < _delegate_free_at or agent.jailed_left > 0.0 \
+			or not _population.has_body(agent) or _landmarks.marks_in(d) >= LANDMARK_MARKS:
+		return
+	for i in _landmarks.buildings:
+		if not _landmarks.is_marked(i) and _treasury.can_afford(_landmarks.mark_cost(i)):
+			_population.agent_set_down.emit(agent, _districts.buildings[i])
+			_delegate_free_at = _clock + LS.mark_minutes * 60.0 + MARK_SLACK
 			return

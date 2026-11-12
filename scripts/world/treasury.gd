@@ -27,18 +27,30 @@ func _physics_process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = S.tick
-	income = population.tithes
+	# Only seated believers cost upkeep: the unseated already cost half their output.
+	var seated := mini(population.believer_count, population.seats)
+	income = population.tithes - seated * S.believer_upkeep / 60.0
 	for b in districts.converted_buildings():
 		income += net_of(b)
-	add_money(income * S.tick)
+	var was := money
+	var change := income * S.tick
+	if change < 0.0:
+		change = maxf(change, minf(S.debt_floor - money, 0.0))
+	add_money(change)
+	if was >= 0.0 and money < 0.0:
+		var base := districts.start_building()
+		if base:
+			FloatingNote.pop(self, base.global_position + Vector3.UP * 12.0,
+					S.overdrawn_line, S.overdrawn_color)
 
 
+## While the treasury is overdrawn only what is free can be had (training a canvasser).
 func can_afford(amount: float) -> bool:
-	return money >= amount
+	return amount <= 0.0 or (money >= 0.0 and money >= amount)
 
 
 func spend_money(amount: float) -> bool:
-	if money < amount:
+	if not can_afford(amount):
 		return false
 	money -= amount
 	money_changed.emit(money)
@@ -88,7 +100,7 @@ func _net(building: Node3D, use: String, luxury: bool, levels: int) -> float:
 	var gain := 0.0
 	var upkeep := S.floor_upkeep * levels * levels
 	if use == "":
-		gain = S.rent_per_resident * districts.residents_in(i)
+		gain = S.dues_per_resident * districts.residents_in(i)
 	elif use == S.shop_use:
 		gain = S.shop_income + S.shop_income_per_believer * districts.believers_at(i)
 	else:

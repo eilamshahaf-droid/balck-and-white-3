@@ -73,6 +73,9 @@ var prayer := 0.0
 var tithes := 0.0
 ## How many priests the cult has (the high priest, and whoever is trained).
 var priest_count := 0
+## Where believers can be (UnitSettings seats), and how many are past it.
+var seats := 0
+var over_seats := 0
 ## How many missionaries the cult has.
 var missionary_count := 0
 ## How many special agents (Vandalists) the cult has, jailed ones included.
@@ -756,9 +759,26 @@ func _refresh_presence() -> void:
 		if house and house.is_in_group(PRAYER_HOUSES) and staffing.is_staffed(house) \
 				and not is_blockaded(house):
 			prayer += belief_rate(r)
+	_seat(dt)
 	if believer_count > 0:
 		welfare = clampf(inverse_lerp(U.multiplier_min, U.multiplier_max, lived / believer_count),
 				0.0, 1.0)
+
+
+## The soft limit: believers past the seats make less and draw the district's eye.
+func _seat(dt: float) -> void:
+	seats = U.seats_base + U.seats_per_clerk * priest_count
+	over_seats = maxi(believer_count - seats, 0)
+	if over_seats == 0:
+		return
+	tithes *= (seats + over_seats * U.money_over_seats) / believer_count
+	prayer *= (seats + over_seats * U.belief_over_seats) / believer_count
+	if awareness:
+		var d := districts.start_district()
+		var room := U.awareness_over_seats_max - awareness.level(d)
+		var grow := U.awareness_over_seats * over_seats / believer_count * dt / 60.0
+		if room > 0.0:
+			awareness.add(d, minf(grow, room))
 
 
 func _count_ranks() -> void:

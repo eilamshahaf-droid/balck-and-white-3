@@ -10,7 +10,7 @@ extends Resource
 @export var kinds: PackedStringArray = [
 	"Slums", "Workers", "Students", "Gentrification", "Nightlife", "Financial", "Old civic",
 ]
-## How well off a district of each kind is, same order: scales rent and shop income and
+## How well off a district of each kind is, same order: scales dues and shop income and
 ## what it costs to buy people out. The Slums are poor; the Financial district is rich.
 @export var wealth := PackedFloat32Array([0.4, 0.9, 1.0, 1.2, 1.0, 2.0, 1.5])
 ## How free each district of the stage map starts (0 grey and ruled .. 1 free), in map order. Not
@@ -33,8 +33,11 @@ extends Resource
 @export var welfare_low := 0.85
 @export var welfare_high := 1.15
 ## What holding the district's core adds to the bar, and each marked landmark.
-@export_range(0.0, 1.0) var core_points := 0.2
-@export_range(0.0, 1.0) var landmark_points := 0.08
+@export_range(0.0, 1.0) var core_points := 0.25
+@export_range(0.0, 1.0) var landmark_points := 0.12
+## The following alone fills at most this much of the bar, so a district always needs
+## some key places (the Balance Tester's sim: about 10 minutes' worth, at least 2 marks).
+@export_range(0.0, 1.0) var following_max := 0.7
 @export var progress_tick := 1.0   # seconds between looks at the bar
 @export_group("Who holds a building: the core")
 ## A district's core can only become yours once this share of the buildings within

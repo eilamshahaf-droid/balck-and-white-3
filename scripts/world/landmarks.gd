@@ -15,6 +15,7 @@ const L: LandmarkSettings = preload("res://data/landmarks.tres")
 var buildings: Array[int] = []
 var _marked: Dictionary = {}   # building index -> seconds the mark has stood
 var _signs: Dictionary = {}    # building index -> Label3D
+var _scrubbed: Dictionary = {}   # building index -> true, once City Hall cleaned it
 var _timer := 0.0
 var _rng := RandomNumberGenerator.new()
 
@@ -44,6 +45,11 @@ func is_marked(index: int) -> bool:
 	return _marked.has(index)
 
 
+## What a mark on landmark `index` costs: dearer where City Hall scrubbed one off.
+func mark_cost(index: int) -> float:
+	return L.redo_cost if _scrubbed.has(index) else L.mark_cost
+
+
 ## How many landmarks of district `d` carry a mark.
 func marks_in(d: int) -> int:
 	var n := 0
@@ -63,6 +69,7 @@ func mark(index: int) -> void:
 	if not is_landmark(index) or _marked.has(index):
 		return
 	_marked[index] = 0.0
+	_scrubbed.erase(index)
 	_show(index)
 	changed.emit(index, true)
 
@@ -71,6 +78,7 @@ func mark(index: int) -> void:
 func clean(index: int) -> void:
 	if not _marked.erase(index):
 		return
+	_scrubbed[index] = true
 	_show(index)
 	FloatingNote.pop(self, _signs[index].global_position, "City Hall cleaned it", L.sign_color)
 	changed.emit(index, false)
