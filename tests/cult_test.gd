@@ -13,6 +13,7 @@ const MAIN := preload("res://scenes/main.tscn")
 const U: UnitSettings = preload("res://data/units.tres")
 const DS: DistrictSettings = preload("res://data/districts.tres")
 const A: AwarenessSettings = preload("res://data/awareness.tres")
+const LS: LandmarkSettings = preload("res://data/landmarks.tres")
 const SPREAD_ROUNDS := 700
 
 var _main: Node3D
@@ -40,6 +41,7 @@ func _ready() -> void:
 	await _test_vandalist()
 	await _test_condemnation()
 	_test_landmarks()
+	_test_debt()
 	await _test_block()
 	_test_hand_orders()
 	await _test_spread_and_shop()
@@ -297,6 +299,21 @@ func _test_landmarks() -> void:
 			"each mark makes the core easier (x%.2f)" % landmarks.core_ease(d))
 	landmarks.clean(landmarks.buildings[0])
 	_check(landmarks.marks_in(d) == 1, "City Hall can clean a mark off")
+	_check(is_equal_approx(landmarks.mark_cost(landmarks.buildings[0]), LS.redo_cost)
+			and is_equal_approx(landmarks.mark_cost(landmarks.buildings[2]), LS.mark_cost),
+			"marking a scrubbed landmark again costs more")
+	_check(_population.seats == U.seats_base + U.seats_per_clerk * _population.priest_count,
+			"believers have seats: %d" % _population.seats)
+
+
+## Upkeep may overdraw the treasury; then nothing can be bought or trained.
+func _test_debt() -> void:
+	var treasury: Treasury = _main.get_node("Treasury")
+	var kept := treasury.money
+	treasury.money = -10.0
+	_check(not treasury.can_afford(1.0) and not treasury.spend_money(1.0)
+			and treasury.can_afford(0.0), "while overdrawn only what is free can be had")
+	treasury.money = kept
 
 
 ## The hand's orders: someone set down at a building acts by who they are; a willing
@@ -469,7 +486,8 @@ func _test_capture() -> void:
 	_districts.district_controlled.connect(func(x: int) -> void: got[0] = got[0] or x == d)
 	var core := _districts.buildings[_districts.core_of(d)]
 	_districts.convert_near(core.global_position, _districts.buildings.size())
-	_check(progress.following(d) >= 1.0, "a following that holds the whole district fills the bar alone")
+	_check(is_equal_approx(progress.following(d), DS.following_max),
+			"a following alone fills at most %d%% of the bar" % roundi(DS.following_max * 100.0))
 	await _frames(int(DS.progress_tick * 60.0 * 2.0))
 	_check(got[0] and _districts.is_controlled(d), "a full bar wins the district")
 

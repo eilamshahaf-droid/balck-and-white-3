@@ -2,20 +2,35 @@ class_name TreasurySettings
 extends Resource
 ## Tunables for the cult's money (treasury.gd). Open data/treasury.tres in
 ## Godot and change values in the Inspector. Every building of yours earns or
-## costs money each second: rent while it has no use, upkeep once it has one
+## costs money each second: the Committee's dues (never "rent": the god is against
+## landlords) while it has no use, upkeep once it has one
 ## (except a shop, which earns), more upkeep for luxury and every floor level.
 ## District wealth (data/districts.tres) scales what a building earns.
 
 @export var start_money := 250.0
 @export var tick := 1.0                     # seconds between payments
 
+## Every seated believer (Population.seats) costs this much money per minute.
+@export var believer_upkeep := 1.5
+## Upkeep can overdraw the treasury, but never below debt_floor: past it, costs stop
+## being charged so the game never spirals. While overdrawn nothing that costs money can
+## be bought or trained (can_afford), and the Secretary minutes it once.
+@export var debt_floor := -1000.0
+@export var overdrawn_line := "Minutes: the treasury is overdrawn; no further expenditure is minuted."
+@export var overdrawn_color := Color(1.0, 0.45, 0.35)
+## Free spaces, bought in tiers (built when the feature freeze lifts): the price of each
+## tier, and how much more the believers within free_space_reach blocks of it make.
+@export var free_space_costs := PackedFloat32Array([400.0, 1200.0])
+@export var free_space_output := PackedFloat32Array([0.15, 0.25])
+@export var free_space_reach := 2
+
 @export_group("Collection box")
 
-@export_group("Rent: a building of yours with no use")
-@export var rent_per_resident := 0.1        # money per second per resident
+@export_group("Dues: a building of yours with no use")
+@export var dues_per_resident := 0.03       # money per second per resident
 
 @export_group("Uses: a Change Use decree")
-## Every use but the shop costs upkeep instead of bringing rent in.
+## Every use but the shop costs upkeep instead of bringing dues in.
 @export var use_upkeep := 1.2               # money per second
 @export var shop_use := "Shop"
 @export var shop_income := 2.0              # money per second

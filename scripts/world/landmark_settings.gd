@@ -12,9 +12,11 @@ extends Resource
 @export var min_steps := 2
 ## How far out the ring they stand on is, as a share of the district's reach from the core.
 @export_range(0.0, 1.0) var ring := 0.75
-## A mark takes the Vandalist this long and costs this much money per attempt.
+## A mark takes the Vandalist this long and costs this much money in supplies per
+## attempt; marking again a landmark City Hall scrubbed costs redo_cost.
 @export var mark_minutes := 4.0
-@export var mark_cost := 100.0
+@export var mark_cost := 200.0
+@export var redo_cost := 300.0
 ## Chance he is arrested when a mark is done.
 @export var arrest_chance := 0.1
 ## Each standing mark multiplies the core's difficulty by this.

@@ -116,8 +116,9 @@ func _on_agent_set_down(agent: Resident, building: Node3D) -> void:
 		if landmarks.is_marked(index):
 			FloatingNote.pop(self, top, "Already marked", L.marked_color)
 			return
-		if not treasury.spend_money(L.mark_cost):
-			FloatingNote.pop(self, top, "A mark needs $%d" % roundi(L.mark_cost), L.sign_color)
+		var cost := landmarks.mark_cost(index)
+		if not treasury.spend_money(cost):
+			FloatingNote.pop(self, top, "A mark needs $%d" % roundi(cost), L.sign_color)
 			return
 		p.mark = true
 		p.left = L.mark_minutes * 60.0

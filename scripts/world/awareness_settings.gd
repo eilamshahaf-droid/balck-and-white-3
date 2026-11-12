@@ -92,7 +92,7 @@ extends Resource
 ## Three ways out of an arrest: throw the squad off him with the hand (costs
 ## rescue_belief), pay bail_money once he is taken, or wait jail_seconds.
 @export var rescue_belief := 15.0
-@export var bail_money := 100.0
+@export var bail_money := 400.0
 @export var jail_seconds := 180.0
 ## From the moment the squad arrives: conversion times martyr_bonus for martyr_minutes
 ## for anyone living within martyr_steps borders of the spot; and awareness rises.
