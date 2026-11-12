@@ -200,6 +200,9 @@ each thread owes; read both before starting work.
   god. Two ways to resist: control (you write the rules anew: fast, focused, little spreading)
   and freedom (a real majority: slower, with time to invest in buildings and people). The game
   should feel considered, not a fast takeover; do not tune it to go faster.
+- Chosen direction, not built yet (GDD section 0): the god applied to City Hall to be recognised
+  and was refused, and the game is the appeal; the hand's two verbs are stamp (your own rules:
+  control) and tear (no rules: freedom).
 - `docs/GDD.md` is a copy of the Designer's page (the link is at its top). If Eilam says the
   design changed and the copy has not, read the page with the Artifact tool and sync the copy.
 - Buildings are taken one at a time; a whole block pays a bonus.
