@@ -315,3 +315,54 @@ What the game needs from the Designer, in order:
 4. **Fewer hidden meters.** Awareness, heat, exposure, suspicion, fear, comfort and four needs all work unseen; the player only feels the game slow down. Each one kept needs a sign in the world.
 5. **Money has no use yet** in the Slums (the bot ends an hour with $24,000): the spending list in section 7 is not built.
 6. **Numbers** for the block bonus, residents per building (now 1 to 3), awareness and fragility (changed in 0.10.0, provisional).
+
+## 13. The system in three layers (the Programmer's outline, 2026-11-12, at Eilam's request)
+
+Eilam: sort the system into its base, then the branches that let a player balance by their own style, in a form that carries over to the other stages by raising the difficulty through the kind of residents, the kind of buildings and the balance. This is that outline; the Designer corrects it.
+
+### Layer 1: the base (the same in every stage; a stage never changes these)
+
+1. You start in a base at the edge and grow outward; a building can only be taken if it borders one of yours.
+2. A building is yours when most of the people living in it are with you.
+3. A block whose buildings are all yours is safe and pays a bonus.
+4. The district has one bar with two sources, a wide following and key places; when it is full the district is yours.
+5. Believers have four needs; how well they are met sets what they give, whether they stay, and how much the following counts.
+6. The city pushes back on what it sees: the district's awareness, the police at a building, City Hall.
+7. The hand has two verbs: stamp (your rules) and tear (no rules). Not built yet.
+
+### Layer 2: the branches (what the player balances by style)
+
+Every branch has a wide side and a focused side, a price, and the thing that pushes back. A player leans on one side or mixes.
+
+| Branch | Wide side (sweeping people along) | Focused side (taking things over) | What pushes back |
+| --- | --- | --- | --- |
+| People | missionaries, sermons | the special agent and its act on key places | awareness against a crowd; arrest and cameras against the agent |
+| Buildings | welfare: upgrades for comfort, later the building editor | rules of your own: decrees, uses, posts | complaints and condemnation; City Hall's building code |
+| Money | free spaces, comfort, upkeep of many | the agent's supplies, fines and bail, buying | it runs out: a wide area costs upkeep, focused acts cost per try |
+| Belief | staffed sermon houses, miracles that help preachers | miracles that rescue the agent or clear the police | exposure when miracles are seen |
+| The bar | share of buildings, times welfare | the core and marked landmarks | lost buildings; marks scrubbed |
+
+A branch is balanced when its wide side alone and its focused side alone are both possible and both hard.
+
+### Layer 3: the stage profile (what changes from stage to stage; numbers only)
+
+A stage is the base and the branches with one profile of numbers. Difficulty rises by turning these, not by adding rules.
+
+| Knob | The Slums today | How later stages turn it |
+| --- | --- | --- |
+| Who lives there | homeless and blue collar: curious, sociable, poor, quick to believe | more skeptical and anxious people, who resist and leave more easily, and want more of each need |
+| What they give | much belief, little money | more money, less belief |
+| Residents per building | 1 to 3 (one or two conversions take a building) | bigger buildings with more people, so a building takes longer |
+| Kinds of building | walk-ups, small shops and sheds; few public buildings | more workplaces and public buildings, which need the agent or another way in |
+| Blocks | 5 to 12 buildings, about 50 blocks | larger blocks, harder to complete |
+| Key places | the core and five landmarks; core 20% of the bar, a mark 8% | more of them needed, guarded better, worth less each |
+| The following alone | 60% of the buildings | a larger share |
+| The agent | the Vandalist: marks landmarks; 10% arrest chance, 4 minutes, $100 | a different agent per district, with a costlier and riskier act |
+| Awareness | rises 0.08 a minute at most, fades 0.08; makes converting harder down to x0.4 | rises faster, fades slower |
+| Police | step in at 30 heat; one roadblock per 4 minutes | lower threshold, more often |
+| City Hall | complaints and a notice that closes a building for 5 minutes | harsher tools: inspector, demolition |
+| Welfare | counts x0.85 to x1.15 on the following | counts for more, so neglect costs more |
+
+### What this asks of the code (for when the freeze ends)
+
+Today only four of these knobs follow the district: who lives there, the district's wealth, the map's building mix, and how hard the police are. The rest (awareness, the agent, key places, the bar, residents per building, City Hall's tools) are single numbers for the whole game, spread over eight data files. Before a second stage is built they move into one profile per stage, so a new stage is a new data file and the Balance Tester can run the bot on each.

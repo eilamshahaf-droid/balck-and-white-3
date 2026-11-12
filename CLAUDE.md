@@ -208,6 +208,10 @@ each thread owes; read both before starting work.
 - `docs/GDD.md` is a copy of the Designer's page (the link is at its top). If Eilam says the
   design changed and the copy has not, read the page with the Artifact tool and sync the copy.
 - Buildings are taken one at a time; a whole block pays a bonus.
+- The system has three layers (GDD section 13): a base that no stage changes, branches the player
+  balances by style, and a stage profile of numbers. A later stage is harder by its numbers
+  (residents, buildings, reactions), never by new rules; before a second stage, the per-stage
+  numbers move into one profile per stage.
 - A district is won by filling one bar from two sources, a wide following that lives well and
   focused actions on key places; either alone must stay hard and the mix flexible.
 - **Feature freeze**: no new systems and no other districts until the Slums' base loop is good.
