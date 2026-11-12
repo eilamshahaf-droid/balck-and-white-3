@@ -1,10 +1,13 @@
 # Builds the web version of the Alpha and publishes it on GitHub Pages, so Eilam can play
-# every Alpha in the browser without the Godot editor. Runs on every push to `alpha`.
+# every Alpha in the browser without the Godot editor. It always builds the `alpha` branch,
+# but runs from `main`: GitHub only lets the default branch deploy to Pages, so a run
+# started by a push to `alpha` builds and then has its deploy refused. Push `alpha` first,
+# then `main`.
 name: Alpha web build
 
 on:
   push:
-    branches: [alpha]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -24,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: alpha
 
       - name: Cache Godot and the web templates
         id: cache

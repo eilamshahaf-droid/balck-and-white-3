@@ -214,7 +214,9 @@ The Alpha is the build Eilam plays. It is the branch `alpha`. Eilam never opens 
 editor, so every Alpha must be playable in the browser.
 
 - **Browser (the main way):** https://eilamshahaf-droid.github.io/balck-and-white-3/
-  `.github/workflows/alpha-web.yml` runs on every push to `alpha`: it downloads Godot and
+  `.github/workflows/alpha-web.yml` builds the `alpha` branch but runs on every push to `main`
+  (GitHub lets only the default branch deploy to Pages), so push `alpha` first, then `main`;
+  it can also be started by hand from `main` (workflow_dispatch). It downloads Godot and
   its web templates, exports the `Web` preset (`export_presets.cfg`, no threads so GitHub
   Pages needs no special headers; the web always uses the Compatibility renderer) and
   publishes it on GitHub Pages. Check that the run is green after each Alpha push.
@@ -222,8 +224,8 @@ editor, so every Alpha must be playable in the browser.
   always gives the branch's newest commit. Also keep `/mnt/project-files/builds/alpha.zip`
   in step with it.
 
-To refresh the Alpha: merge `main` into `alpha`, bump the version (see Versions), push,
-tag, check the workflow run, then open the page and play a minute. To test a web build
+To refresh the Alpha: bump the version (see Versions), merge the work into `alpha` and push
+it, then push `main`, tag, check the workflow run, then open the page and play a minute. To test a web build
 before pushing, export it locally with
 `godot --headless --path . --export-release Web build/web/index.html` (needs the
 `web_nothreads_release.zip` template under `~/.local/share/godot/export_templates/<version>/`),
