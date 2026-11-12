@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.11.0 (2026-11-12): one bar, two ways to fill it
+Eilam's rule for winning a district, with provisional numbers (`data/districts.tres`, "Winning a district").
+- **The district has a bar**, shown bottom left: "34% of the way (following 22% + key places 12%)". The district is yours when it is full. The core is no longer a condition, only the biggest key place.
+- **A wide following fills it**: the share of the district's buildings that are yours. 60% fills it alone; it counts for more when your believers' needs are met (x1.15) and less when they live badly (x0.85).
+- **Key places fill it**: the core, once yours, is worth 20%; every landmark the Vandalist has marked is worth 8% (and loses it when City Hall scrubs the mark).
+- **Either alone is hard, together is easier.** All six key places give 60% and still need about a quarter of the buildings; no key place at all needs most of the district. For example 30% of the buildings, the core and four marks is enough.
+- The briefing explains the bar. The background story and the two ways (sweeping people along, or taking things over) are in `docs/GDD.md`, section 0; the stamp-or-tear hand is not built yet.
+- Try it: watch the "District:" line while you take buildings; train a Vandalist (8 believers) and mark a landmark to see the key places part jump.
+
 ## Pre-Alpha 0.10.1 (2026-11-12): a clean screen
 - **Less text.** The four lines of controls are folded into "H: how to play" (H opens and closes them). The debug panel is hidden until F1. The numbers sit at the top of the screen.
 - **Readable text.** The HUD's white text has a dark outline, so it reads over the bright sky and ground.

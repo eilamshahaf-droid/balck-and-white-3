@@ -40,7 +40,7 @@ func _ready() -> void:
 	await _test_condemnation()
 	_test_landmarks()
 	await _test_block()
-	_test_capture()
+	await _test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
 
@@ -337,11 +337,26 @@ func _move_believer_into(index: int, block: int) -> void:
 
 func _test_capture() -> void:
 	var d := _districts.start_district()
+	var progress: DistrictProgress = _main.get_node("DistrictProgress")
+	var landmarks: Landmarks = _main.get_node("Landmarks")
+	_check(progress.value(d) < 1.0 and not _districts.is_controlled(d),
+			"the district's bar is not full yet (%d%%)" % roundi(progress.value(d) * 100.0))
+	var before := progress.key_places(d)
+	var spot := -1
+	for i in landmarks.buildings:
+		if not landmarks.is_marked(i):
+			spot = i
+			break
+	landmarks.mark(spot)
+	_check(is_equal_approx(progress.key_places(d) - before, DS.landmark_points),
+			"a marked landmark adds %d%% to the bar" % roundi(DS.landmark_points * 100.0))
 	var got := [false]
 	_districts.district_controlled.connect(func(x: int) -> void: got[0] = got[0] or x == d)
 	var core := _districts.buildings[_districts.core_of(d)]
 	_districts.convert_near(core.global_position, _districts.buildings.size())
-	_check(got[0] and _districts.is_controlled(d), "taking most of the Slums captures the district")
+	_check(progress.following(d) >= 1.0, "a following that holds the whole district fills the bar alone")
+	await _frames(int(DS.progress_tick * 60.0 * 2.0))
+	_check(got[0] and _districts.is_controlled(d), "a full bar wins the district")
 
 
 func _resident_of(title: String, believer := false) -> Resident:
