@@ -13,6 +13,7 @@ const MAIN := preload("res://scenes/main.tscn")
 const U: UnitSettings = preload("res://data/units.tres")
 const DS: DistrictSettings = preload("res://data/districts.tres")
 const A: AwarenessSettings = preload("res://data/awareness.tres")
+const SPREAD_ROUNDS := 700
 
 var _main: Node3D
 var _population: Population
@@ -41,6 +42,7 @@ func _ready() -> void:
 	_test_landmarks()
 	await _test_block()
 	_test_hand_orders()
+	await _test_spread_and_shop()
 	await _test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -349,6 +351,64 @@ func _test_hand_orders() -> void:
 	_check(campaigns.route_of(_districts.buildings[near]) == Campaigns.Route.PREACH,
 			"a canvasser set down next to yours starts the sky sign there")
 	campaigns.clear(_districts.buildings[near])
+
+
+## Nobody is won over on the street: a building of yours brings round only buildings
+## next to it in its own block. And a building of yours turned into a shop, which empties
+## it, stays yours.
+func _test_spread_and_shop() -> void:
+	# A building of ours with a lived-in neighbour in its own block that is not ours yet.
+	for k in _districts.buildings.size():
+		if _districts.is_yours(k) or _districts.residents_in(k) == 0 \
+				or _districts.is_core(_districts.buildings[k]):
+			continue
+		var has_neighbour := false
+		for j in _districts.borders_of(k):
+			has_neighbour = has_neighbour or (not _districts.is_yours(j) \
+					and _districts.residents_in(j) > 0 \
+					and _districts.block_of(j) == _districts.block_of(k) \
+					and not _districts.is_core(_districts.buildings[j]))
+		if has_neighbour:
+			_districts.convert_near(_districts.buildings[k].global_position, 1)
+			break
+	await _frames(int(DS.tick * 60.0 * 2.0))
+	var held := {}
+	for i in _districts.buildings.size():
+		if _districts.is_yours(i):
+			held[i] = true
+	var before := {}
+	for r in _population.residents:
+		before[r] = r.is_believer()
+	# Many rounds at the game's own slow rate (about an hour of play).
+	for round in SPREAD_ROUNDS:
+		_population.preaching._physics_process(U.spread_tick)
+	var came := 0
+	var inside := true
+	for r in _population.residents:
+		if before[r] or not r.is_believer():
+			continue
+		came += 1
+		var home := _districts.index_of(r.home)
+		var next_to_ours := false
+		for j in _districts.borders_of(home):
+			next_to_ours = next_to_ours or (held.has(j) \
+					and _districts.block_of(j) == _districts.block_of(home))
+		inside = inside and next_to_ours
+	_check(came > 0, "buildings of yours win neighbours over by themselves (%d came)" % came)
+	_check(inside, "only next door, and only inside their own block")
+	var shop := -1
+	for i in _districts.buildings.size():
+		if _districts.is_yours(i) and i != _districts.headquarters \
+				and _districts.residents_in(i) > 0 and not _districts.is_core(_districts.buildings[i]):
+			shop = i
+			break
+	if shop < 0:
+		_check(false, "a lived-in building of yours to turn into a shop")
+		return
+	_districts.buildings[shop].add_to_group(Population.SHOPS)
+	await _frames(180)
+	_check(_districts.residents_in(shop) == 0 and _districts.is_yours(shop),
+			"a building of yours turned into a shop empties and stays yours")
 
 
 ## A block whose buildings are all yours is complete: its people make more, and its

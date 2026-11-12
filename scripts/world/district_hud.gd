@@ -9,6 +9,8 @@ const POOR := 0.6       # district wealth below this reads "poor", above RICH "r
 const RICH := 1.4
 
 @export var progress: DistrictProgress
+@export var population: Population
+@export var campaigns: Campaigns
 
 var _timer := 0.0
 
@@ -51,6 +53,13 @@ func _process(delta: float) -> void:
 	var whole := "complete: safe, and its people make x%.2f" % S.block_output_bonus \
 			if districts.is_block_complete(block) \
 			else "%d of %d buildings yours" % [districts.block_held(block), districts.block_size(block)]
-	var line := "Marks: skull = take by force, dollar = buy, sky sign = send canvassers\nDistrict: %s%s, %s\n%s\nBuilding: %s\nBlock: %s\nCity Hall: %s    Police: %s" % [districts.district_name(d), standing, hold, marked, place, whole, government.status_text(), police.status_text()]
+	var next := S.next_working
+	if population.believer_count <= 1:
+		next = S.next_alone
+	elif population.missionary_count == 0:
+		next = S.next_train
+	elif campaigns.marked().is_empty():
+		next = S.next_canvass
+	var line := next + "\n" + "Marks: skull = take by force, dollar = buy, sky sign = send canvassers\nDistrict: %s%s, %s\n%s\nBuilding: %s\nBlock: %s\nCity Hall: %s    Police: %s" % [districts.district_name(d), standing, hold, marked, place, whole, government.status_text(), police.status_text()]
 	if text != line:
 		text = line

@@ -133,7 +133,8 @@ func _tick(s: Sermon, delta: float) -> void:
 	if s.preach_timer <= 0.0:
 		var crowd_boost := 1.0 + _people.crowd_boost * float(s.crowd) / maxi(_people.crowd_size, 1)
 		s.preach_timer = U.attempt_interval / crowd_boost
-		_population.preaching.attempt_near(s.priest, s.at)
+		# Nobody is won over on the street: a meeting is where worn-out members rest.
+		_population.rest_near(s.at, _population.preaching.reach(s.priest), U.meeting_rest)
 
 
 func _finish(s: Sermon) -> void:

@@ -552,6 +552,37 @@ func _on_set_down(c: Citizen) -> void:
 	occupant_added.emit(building, r)
 
 
+## How free and inviting `building` of yours is to its neighbours, 0..1: how well the
+## members living there live (the cult's average when nobody lives in it).
+func inviting(building: Node3D) -> float:
+	var sum := 0.0
+	var n := 0
+	for r: Resident in _by_home.get(building, []):
+		if r.is_believer():
+			sum += inverse_lerp(U.multiplier_min, U.multiplier_max, needs_multiplier(r))
+			n += 1
+	return clampf(sum / n, 0.0, 1.0) if n > 0 else welfare
+
+
+## A doubter living in `building`, picked at random; null when everyone there believes.
+func doubter_in(building: Node3D) -> Resident:
+	var picked: Resident = null
+	var seen := 0
+	for r: Resident in _by_home.get(building, []):
+		if r.alive and not r.is_believer():
+			seen += 1
+			if _rng.randi() % seen == 0:
+				picked = r
+	return picked
+
+
+## A street meeting at `p`: the members within `radius` rest from the hand's orders.
+func rest_near(p: Vector3, radius: float, amount: float) -> void:
+	for c in _street.bodies:
+		if c.resident.is_believer() and c.global_position.distance_to(p) <= radius:
+			c.resident.strain = maxf(c.resident.strain - amount, 0.0)
+
+
 ## How gladly `r` takes an order from the hand, 0..1: how well they live, less how worn
 ## out they are by earlier orders.
 func willingness(r: Resident) -> float:
@@ -659,7 +690,7 @@ func _footprint(building: Node3D) -> Rect2:
 
 
 ## Shops and prayer houses have no residents: whoever lives in a building
-## that became one moves to the nearest home, which crowds it.
+## that became one moves to the nearest home.
 func _vacate_work_buildings() -> void:
 	for b: Node3D in _by_home.keys():
 		if b == _headquarters or (_by_home[b] as Array).is_empty():
@@ -670,6 +701,9 @@ func _vacate_work_buildings() -> void:
 		var new_home := home_near(b.global_position)
 		if new_home == null:
 			return
+		# They take their room with them: turning a building into a shop must not
+		# crowd the neighbours and drive your own members out.
+		_housing[new_home] = _housing.get(new_home, 0) + _housing.get(b, 0)
 		for r: Resident in (_by_home[b] as Array).duplicate():
 			_set_home(r, new_home)
 			if _has_body(r):
