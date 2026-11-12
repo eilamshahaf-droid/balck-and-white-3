@@ -3,6 +3,19 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.13.0 (2026-11-12): how people come over, after Eilam played 0.12
+- **Fix: a building turned into a shop stays yours.** It used to empty and be lost. An empty building of yours is now simply yours, and the people who move out no longer crowd the house next door (which made your own members quit).
+- **Nobody is won over in the street any more.** People come over in two ways only:
+  - **At a door you chose**: set a Canvasser (or the Secretary) down at a building next to yours, or use the sky sign.
+  - **By themselves, slowly, inside a block**: every building of yours brings round the buildings next to it in its own block, faster the better its members live. It never crosses to another block; to enter a new block you canvass.
+- **The Office is the strongest building.** It works on its own block four times as hard as any other building, so a new game gets going by itself; and the Secretary canvasses in person, so the first doors open before anyone is trained.
+- **Street meetings** (the gold ring round a Canvasser) no longer convert: worn-out members near one rest from the hand's orders.
+- **No empty buildings left.** The Slums' towers were counted as offices with nobody living in them; they are housing now, so every building is won by winning its residents. Fire and Roaches are off the miracle wheel (they empty a building), and frogs no longer overrun one.
+- **"What now?"** A line at the bottom left says the next step until you are under way: set the Secretary down at a door, train a Canvasser, set Canvassers down at doors.
+- Numbers (`data/units.tres`, "Winning people over without being asked"; all provisional): left alone, the Office takes its own block in about 20 minutes and stops there; with Canvassers the bot holds 42 buildings and 3 whole blocks after half an hour.
+- Decided and not built yet: Paperwork replaces belief; miracles come from a small stock that refills, never touch buildings, the bar or notices, and each draws a dry fine from City Hall (GDD section 0).
+- Try it: start a game and do nothing for two minutes; then lift the Secretary and set him at a door across the street.
+
 ## Pre-Alpha 0.12.0 (2026-11-12): the Hand places people, and the Committee's names
 - **Where you set someone down is what they do** (Eilam's rule; the first step of the hand's role). It depends on who they are:
   - a **Canvasser** or the **Secretary** at a building next to yours: the sky sign starts there, with no wheel; out of reach, a note says why not.

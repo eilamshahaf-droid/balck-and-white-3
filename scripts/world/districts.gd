@@ -383,7 +383,9 @@ func _holds(i: int) -> bool:
 	if i == headquarters:
 		return true
 	if _residents[i] == 0:
-		return _presence[i] > 0.0
+		# Nobody lives there to dispute it: an empty building of yours (turned into a shop
+		# or a branch, or closed for a while) stays yours.
+		return _yours[i] == 1 or _presence[i] > 0.0
 	var needed := S.core_capture_share if _core[_district_of[i]] == i else S.capture_share
 	return float(_believers[i]) / _residents[i] > needed
 

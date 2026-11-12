@@ -58,7 +58,7 @@ var _proof := MiracleProof.new()
 
 ## The wheel's slices, in order.
 func wheel_items() -> Array[Dictionary]:
-	return [
+	var all: Array[Dictionary] = [
 		{"id": &"water", "label": "Water", "color": Color(0.45, 0.7, 1.0), "cost": cost(&"water")},
 		{"id": &"fire", "label": "Fire", "color": Color(1.0, 0.5, 0.2), "cost": cost(&"fire")},
 		{"id": &"roaches", "label": "Roaches", "color": Color(0.6, 0.42, 0.25), "cost": cost(&"roaches")},
@@ -66,6 +66,7 @@ func wheel_items() -> Array[Dictionary]:
 		{"id": &"party", "label": "Block Party", "color": Color(1.0, 0.45, 0.85), "cost": cost(&"party")},
 		{"id": &"frogs", "label": "Rain of Frogs", "color": Color(0.4, 0.8, 0.3), "cost": cost(&"frogs")},
 	]
+	return all.filter(func(item: Dictionary) -> bool: return M.is_offered(item.id))
 
 
 ## What `kind` costs at `power` (by default, the power under the hand).

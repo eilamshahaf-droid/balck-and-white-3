@@ -270,8 +270,11 @@ func _top_up(c: Campaign) -> void:
 	var free: Array[Citizen] = []
 	var rank := Resident.Rank.MISSIONARY if c.route == Route.PREACH else Resident.Rank.BELIEVER
 	for r: Resident in population.residents:
-		if r.rank == rank and r.job == Resident.Job.FREE and is_instance_valid(r.body) \
-				and r.body.can_answer():
+		# The Secretary canvasses in person: with nobody trained yet, the Office is what
+		# gets the first doors opened.
+		var secretary := c.route == Route.PREACH and r.rank == Resident.Rank.HIGH_PRIEST
+		if ((r.rank == rank and r.job == Resident.Job.FREE) or secretary) \
+				and is_instance_valid(r.body) and r.body.can_answer():
 			free.append(r.body)
 	free.sort_custom(func(a: Citizen, b: Citizen) -> bool:
 		return a.global_position.distance_squared_to(from) < b.global_position.distance_squared_to(from))

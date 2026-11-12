@@ -30,13 +30,24 @@ extends Resource
 @export_range(0.0, 1.0) var conversion_base := 0.6
 @export_range(0.0, 1.0) var anxiety_weight := 0.5
 @export var charisma_weight := 0.3
-## Seconds between one preacher's attempts (missionaries and the high priest).
+## Seconds between the rounds of a street meeting.
 @export var attempt_interval := 20.0
-## How far a preacher reaches on the street, in metres.
+## How far a street meeting reaches, in metres (loudspeakers widen it).
 @export var preach_reach := 14.0
-## Every believer on the street also tries now and then, at this share of a
-## preacher's attempt rate.
-@export_range(0.0, 1.0) var believer_attempt_share := 0.04
+@export_group("Winning people over without being asked")
+## A building of yours wins over the buildings next to it in its own block, slowly: this
+## many tries a minute on each such neighbour, by how inviting it is (spread_low when its
+## members live badly, spread_high when they live well). Never across to another block.
+@export var spread_per_minute := 0.25
+@export var spread_low := 0.3
+@export var spread_high := 1.5
+## The Office is the strongest building there is: it works on its block this many times
+## as hard, which is what gets a new stage going.
+@export var office_spread := 4.0
+@export var spread_tick := 5.0   # seconds between rounds
+## A street meeting rests the members around it by this much strain a round.
+@export var meeting_rest := 0.05
+@export_group("Converting: the core")
 ## A core building's residents are this many times harder to win over. Very hard on
 ## purpose: landmarks marked by the Vandalist will bring it down (0.7.2).
 @export var core_difficulty := 60.0

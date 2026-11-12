@@ -1,9 +1,9 @@
 class_name Preaching
 extends Node
-## How the cult wins people over (GDD 6.2): missionaries and the high priest
-## each try once every attempt_interval seconds on a non-believer on the street
-## near them, and sermons and the sky-sign campaigns call attempt too. A child
-## Population makes; it asks Population who is who and converts through it.
+## How people are won over: at a door the player chose (the sky-sign campaigns call
+## `attempt`), and by themselves next to a building of yours in the same block
+## (`drift_chance`). Nobody is converted on the street. A child Population makes; it
+## asks Population who is who and converts through it.
 
 ## A preacher tried to win someone over (`converted` if it worked).
 signal preached(preacher: Resident, target: Resident, converted: bool)
@@ -11,7 +11,6 @@ signal preached(preacher: Resident, target: Resident, converted: bool)
 const U: UnitSettings = preload("res://data/units.tres")
 
 var _population: Population
-var _timers: Dictionary = {}   # preacher -> seconds until their next attempt
 var _check_timer := 0.0
 var _rng := RandomNumberGenerator.new()
 # Loaded at run time: a parse-time preload would load the element scripts before
@@ -24,29 +23,35 @@ func setup(population: Population) -> void:
 	_rng.seed = 5
 
 
-## Gathering the preachers allocates, so it runs every preach_check seconds.
-## Plain believers try too, at a small share of a preacher's rate, by chance.
+## Nobody is won over on the street. A building of yours wins over its neighbours in
+## its own block, slowly, the more inviting it is (and the Office hardest of all); the
+## rest is canvassers at a door the player chose (Campaigns).
 func _physics_process(delta: float) -> void:
 	_check_timer -= delta
 	if _check_timer > 0.0:
 		return
-	_check_timer = _people.preach_check
-	for r in preachers():
-		if _population.sermons.is_preaching(r):
+	_check_timer = U.spread_tick
+	var districts := _population.districts
+	for i in districts.buildings.size():
+		var b := districts.buildings[i]
+		if b == null or not districts.is_yours(i):
 			continue
-		var left: float = _timers.get(r, U.attempt_interval * _rng.randf()) - _people.preach_check
-		if left <= 0.0 and attempt_near(r, r.body.global_position):
-			left = U.attempt_interval
-		_timers[r] = left
-	var odds := _people.preach_check * U.believer_attempt_share / U.attempt_interval
-	for c in _population.street_bodies():
-		var r := c.resident
-		if r.rank == Resident.Rank.BELIEVER and _rng.randf() < odds:
-			attempt_near(r, c.global_position)
+		var tries := U.spread_per_minute * U.spread_tick / 60.0 \
+				* lerpf(U.spread_low, U.spread_high, _population.inviting(b))
+		if districts.is_base(b):
+			tries *= U.office_spread
+		for j in districts.borders_of(i):
+			if districts.buildings[j] == null or districts.is_yours(j) \
+					or districts.block_of(j) != districts.block_of(i) \
+					or _rng.randf() >= tries:
+				continue
+			var target := _population.doubter_in(districts.buildings[j])
+			if target and _rng.randf() < drift_chance(target):
+				_population.convert_to(target, Resident.Rank.BELIEVER)
 
 
-## Everyone who wins people over on the street (missionaries and the high
-## priest, not while training) and has a body; they give sermons too.
+## Everyone who talks people round (canvassers and the Secretary, not while training)
+## and has a body; they hold the street meetings.
 func preachers() -> Array[Resident]:
 	var out: Array[Resident] = []
 	for c in _population.street_bodies():
@@ -87,29 +92,20 @@ func attempt(target: Resident, preacher: Resident) -> bool:
 	return won
 
 
-## One attempt by `preacher` on a non-believer on the street within its reach of `p`
-## (a random one, so a crowd is worked through) who lives in an open district.
-## False if nobody was in reach.
-func attempt_near(preacher: Resident, p: Vector3) -> bool:
-	var range_ := reach(preacher)
-	var picked: Resident = null
-	var seen := 0
-	for c in _population.street_bodies():
-		var r := c.resident
-		if r.is_believer() or r.id < 0 or c.global_position.distance_to(p) > range_ \
-				or not _population.districts.is_open(r.home):
-			continue
-		seen += 1
-		if _rng.randi() % seen == 0:
-			picked = r
-	if picked == null:
-		return false
-	attempt(picked, preacher)
-	return true
+## The chance that `target` comes over by themselves in one round of a neighbour's
+## influence: the same person, district and core as in `chance`, with nobody talking.
+func drift_chance(target: Resident) -> float:
+	var c := U.conversion_base * target.curiosity * (1.0 - target.skepticism) \
+			* (1.0 - U.anxiety_weight * target.anxiety)
+	if _population.districts.is_core(target.home):
+		c /= U.core_difficulty
+	if _population.awareness:
+		c *= _population.awareness.factor_for(target.home)
+	return clampf(c, 0.0, 1.0)
 
 
-## How far a preacher reaches on the street: the loudspeakers of their sermon
-## house (the high priest's for a missionary on the street) widen it.
+## How far a street meeting reaches: the loudspeakers of the holder's branch (the
+## Secretary's for a canvasser on the street) widen it.
 func reach(preacher: Resident) -> float:
 	var house := _house_of(preacher)
 	var out := U.preach_reach

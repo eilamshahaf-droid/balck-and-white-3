@@ -14,7 +14,7 @@ const UPGRADE_INFO := {
 	BuildingUpgrades.Kind.ROOF_GARDEN: ["Roof Garden", "comfort up", Color(0.55, 0.9, 0.5)],
 	BuildingUpgrades.Kind.CAMERAS: ["Cameras", "fear up", Color(0.9, 0.5, 0.45)],
 	BuildingUpgrades.Kind.GATE: ["Gate", "fear up", Color(0.75, 0.45, 0.7)],
-	BuildingUpgrades.Kind.LOUDSPEAKER: ["Loudspeaker", "canvassers reach further", Color(1.0, 0.85, 0.4)],
+	BuildingUpgrades.Kind.LOUDSPEAKER: ["Loudspeaker", "meetings reach further", Color(1.0, 0.85, 0.4)],
 	BuildingUpgrades.Kind.BANNERS: ["Banners", "talks land better", Color(0.85, 0.5, 0.9)],
 	BuildingUpgrades.Kind.LECTURE_HALL: ["Lecture Hall", "talks land better", Color(0.6, 0.75, 1.0)],
 	BuildingUpgrades.Kind.STOREFRONT: ["Storefront", "shop income", Color(0.95, 0.7, 0.35)],

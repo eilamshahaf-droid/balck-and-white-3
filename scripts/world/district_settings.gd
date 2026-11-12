@@ -60,8 +60,14 @@ extends Resource
 @export_group("The stage")
 ## The start screen: a title and the Secretary's briefing.
 @export var start_title := "Stage 1: The Slums"
-@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the Secretary (taking these minutes), a kettle.\n\nItem 1: City Hall has turned down our god's application to be recognised as a god. A form was missing. The Committee will appeal, street by street.\nItem 2: our office is at the edge of the Slums. We win the street one building at a time, and only next to a building we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 3: the district is ours when its bar is full. A wide membership that lives well fills it; so do the core in the middle and every landmark our Field Delegate marks. Either way alone is hard; together they leave us room.\nItem 4: the Hand places people. Where it sets a member down is what that member does. A worn-out member still goes, and lets everyone know.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
+@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the Secretary (taking these minutes), a kettle.\n\nItem 1: City Hall has turned down our god's application to be recognised as a god. A form was missing. The Committee will appeal, street by street.\nItem 2: our office is at the edge of the Slums. Nobody is won over in the street: the Office and every building of ours bring their own block round, slowly, and canvassers set down at a door do it faster. Only next to a building we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 3: the district is ours when its bar is full. A wide membership that lives well fills it; so do the core in the middle and every landmark our Field Delegate marks. Either way alone is hard; together they leave us room.\nItem 4: the Hand places people. Where it sets a member down is what that member does. A worn-out member still goes, and lets everyone know.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
 @export var start_button := "Open the meeting"
+## What to do next, shown bottom left until the player is under way: with nobody but the
+## Secretary, with members but no canvasser, with canvassers idle, and with canvassers at work.
+@export var next_alone := "Start here: the Office wins its own block over by itself, slowly. To push, lift the Secretary (gold ring) and set him down at the door of a building next to the Office."
+@export var next_train := "Next: hold the button on the Office (gold roof) and train a Canvasser."
+@export var next_canvass := "Next: lift a Canvasser and set them down at the door of a building next to one of yours."
+@export var next_working := "Canvassers are at a door. A building is yours once most of its residents are with you; take a whole ring to complete the block."
 ## The cult loses once it has had lose_after_believers believers and then has none
 ## at all (the high priest aside) for lose_minutes.
 @export var lose_after_believers := 8
