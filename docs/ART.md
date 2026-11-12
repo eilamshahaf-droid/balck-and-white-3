@@ -8,6 +8,7 @@ stay in the project's shared folder under `research/` and `style-refs/`.
 
 - **The story is a god against the bureaucracy** (GDD section 0). "Grey to colour: freedom" below is therefore the main visual idea, not a side proposal: the status quo is grey, what the god frees gets colour. Whether gold stays the god's colour is open again.
 - **Buildings are taken one at a time; a whole block pays a bonus.** The game shows it with a gold plate on each roof of yours and a ring on the ground round each block that warms toward gold. Both are placeholders that break the rule below ("props, not tints"); the Artist owes the real look of "this building is with us" and "this block is complete".
+- **Not a street-artist god** (Eilam, later the same day). The god stands for resistance to bureaucracy in two ways, control and freedom (GDD section 0). What "grey to colour" and the murals become is open until the Designer folds this in; do not build on street art as the god's identity.
 - **Feature freeze**: only the Slums, until its base is good.
 
 ### What the Programmer's screenshots of 0.10.0 show (for the Artist)

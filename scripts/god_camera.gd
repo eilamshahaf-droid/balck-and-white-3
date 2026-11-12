@@ -136,10 +136,17 @@ func fly_to(point: Vector3, close: bool, to_distance := -1.0) -> void:
 		_fly_to_distance = to_distance
 
 
-## Start the game looking at `building` (the cult's first one), with no flight.
+## Start the game looking at `building` (the cult's first one), with no flight: from
+## outside the map inward, so the screen shows the district and not the land around it.
 func start_at(building: Node3D) -> void:
 	target_pivot = Vector3(building.global_position.x, 0.0, building.global_position.z)
+	if target_pivot.length() > 1.0:
+		target_yaw = atan2(target_pivot.x, target_pivot.z)
+		yaw = target_yaw
+		target_pivot -= target_pivot.normalized() * minf(S.start_lead, target_pivot.length())
 	pivot = target_pivot
+	target_distance = S.start_distance
+	distance = target_distance
 	_place_camera()
 
 

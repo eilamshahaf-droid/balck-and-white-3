@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Testing shortcuts, top right (F1 hides it): convert or lose believers,
+## Testing shortcuts, top right (hidden; F1 shows it): convert or lose believers,
 ## move all believers to where the camera looks, fill the belief pool, raise
 ## exposure (to call City Hall), take buildings, add money and mark the building in the middle of the screen
 ## (until the building wheel has the marks). Not part of the game; there to make testing quick.
@@ -27,6 +27,7 @@ func _ready() -> void:
 	_panel.offset_left = -200
 	_panel.offset_top = 150  # below the help text
 	_panel.offset_right = -10
+	_panel.visible = false  # a tester's tool: F1 brings it up
 	add_child(_panel)
 	var box := VBoxContainer.new()
 	_panel.add_child(box)
