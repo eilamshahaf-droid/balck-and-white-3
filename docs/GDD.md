@@ -14,11 +14,12 @@ Where this disagrees with the text below, this wins.
    - **Control** (the "bad" way, so to speak): you write the bureaucracy anew yourself. Faster, focused, with less spreading out: an allegory for the few who dictate the rule.
    - **Freedom** (the "good" way): you win people their freedom. Unhurried; you need a real majority to succeed, so it is slower, and the game lets you enjoy the pace by investing: in key buildings, in planning the believers' apartments (section 9), in their welfare.
 2. **The game should feel considered, not a fast takeover of everything.** The player has time to put into each building, into the believers' welfare, and into cultivating their own values.
-3. **Chosen direction (Eilam agreed with the Programmer's recommendation, 2026-11-12; nothing of it is built yet).**
-   - **Story: the god applied and was refused.** The god filed a request with City Hall to be recognised as a god, and it was turned down (a form was missing). The whole game is the appeal. Each district is a department, belief is signatures on a petition, and the Secretary keeps the case file. This gives a reason to what the game already has: a majority in a building, the minutes, landmarks that are offices.
-   - **Freedom** is collecting real signatures: it takes a real majority and it is slow. Ending: the city abolishes the register, and nobody needs a permit for anything.
-   - **Control** is forging, leaning on people and opening an office of your own: fast and focused. Ending: you are the new City Hall, and the game laughs at you.
+3. **Chosen direction (Eilam, 2026-11-12; nothing of it is built yet).**
+   - **A journey, in one of two ways.** There are no signatures and no petition; believers stay believers.
+   - **Freedom: you sweep people along behind you.** A following that grows because people choose to come. It takes a real majority and it is slow, and the time goes into the buildings and the people. Ending: nobody needs a permit for anything.
+   - **Control: you take things over yourself.** Buildings, offices and rules pass into your hands. Fast and focused, with little spreading out. Ending: you are the new City Hall, and the game laughs at you.
    - **Mechanics: stamp or tear.** Every building stands under City Hall's rules. The hand can stamp rules of its own in their place (control; today's decrees are this) or tear them up and let the residents decide (freedom; tearing the condemnation notice off is this). Two plain verbs for the hand.
+   - Still open: whether the story opens with the god's request to be recognised being refused by City Hall (the Programmer's suggestion; Eilam dropped its signatures, the rest is undecided).
    - Kept as inspiration for the Artist: bureaucracy as a physical thing in the city (red tape round buildings, forms in the wind, people stuck in queues). Dropped: a second, dark hand (too close to good and evil).
 4. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
 
