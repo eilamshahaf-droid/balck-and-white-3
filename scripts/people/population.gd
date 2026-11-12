@@ -741,8 +741,11 @@ func _seat(dt: float) -> void:
 	tithes *= factor
 	prayer *= factor
 	if awareness:
-		awareness.add(districts.start_district(),
-				over_seats * U.awareness_over_seats * dt / 60.0)
+		var d := districts.start_district()
+		var room := U.awareness_over_seats_max - awareness.level(d)
+		var grow := U.awareness_over_seats * over_seats / believer_count * dt / 60.0
+		if room > 0.0:
+			awareness.add(d, minf(grow, room))
 
 
 func _count_ranks() -> void:
