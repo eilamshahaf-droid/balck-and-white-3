@@ -219,6 +219,5 @@ func _building_items(building: Node3D) -> Array[Dictionary]:
 
 
 func _set_outline(building: Node3D, on: bool) -> void:
-	for piece in BuildingBox.pieces_of(building):
-		for mesh in piece.find_children("*", "MeshInstance3D", false, false):
-			mesh.material_overlay = _outline if on else null
+	for mesh in building.find_children("*", "MeshInstance3D", false, false):
+		mesh.material_overlay = _outline if on else null

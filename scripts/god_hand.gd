@@ -214,14 +214,20 @@ func _notification(what: int) -> void:
 		_let_go()
 
 
+## The button coming up always ends what its press began, even over a HUD button or
+## panel that would swallow it: otherwise whatever the hand holds stays stuck to it.
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT \
+			and not event.pressed:
+		_on_release()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_drawing = false
 			_trail.clear_points()
 			_on_press(event)
-		else:
-			_on_release()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		if event.pressed and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not held:
 			_drawing = true

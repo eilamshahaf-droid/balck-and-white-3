@@ -28,8 +28,8 @@ var sun: DirectionalLight3D
 var half_size := Vector2.ZERO
 ## The stage's map.
 var plan: CityPlan
-## Each unit's "buildings" node, by CityPlan unit index.
-var unit_nodes: Array[StaticBody3D] = []
+## Every building's node, by CityPlan building index.
+var building_nodes: Array[StaticBody3D] = []
 var _sky_mat: ProceduralSkyMaterial
 var _builder: PlanBuilder
 
@@ -42,7 +42,7 @@ func _ready() -> void:
 	_builder = PlanBuilder.new(self, plan, S)
 	_build_ground()
 	_builder.build(LAYER_WORLD, LAYER_PROPS)
-	unit_nodes = _builder.unit_nodes
+	building_nodes = _builder.building_nodes
 	_spawn_taxis()
 	_spawn_litter()
 	_spawn_pigeons()

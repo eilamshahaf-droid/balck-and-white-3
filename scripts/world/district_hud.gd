@@ -43,6 +43,10 @@ func _process(delta: float) -> void:
 	var core := "yours" if districts.is_yours(districts.core_of(d)) else "not yet yours"
 	var marked := "Core: %s    Landmarks marked by the Vandalist: %d of %d" \
 			% [core, landmarks.marks_in(d), landmarks.buildings.size()]
-	var line := "Marks: skull = take by force, dollar = buy, sky sign = send missionaries\nDistrict: %s%s, %s\n%s\nBuilding: %s\nCity Hall: %s    Police: %s" % [districts.district_name(d), standing, hold, marked, place, government.status_text(), police.status_text()]
+	var block := districts.block_of(i)
+	var whole := "complete: safe, and its people make x%.2f" % S.block_output_bonus \
+			if districts.is_block_complete(block) \
+			else "%d of %d buildings yours" % [districts.block_held(block), districts.block_size(block)]
+	var line := "Marks: skull = take by force, dollar = buy, sky sign = send missionaries\nDistrict: %s%s, %s\n%s\nBuilding: %s\nBlock: %s\nCity Hall: %s    Police: %s" % [districts.district_name(d), standing, hold, marked, place, whole, government.status_text(), police.status_text()]
 	if text != line:
 		text = line

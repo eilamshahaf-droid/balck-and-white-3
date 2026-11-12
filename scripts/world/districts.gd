@@ -8,8 +8,9 @@ extends Node
 ## edge of the start district, a neglected place with empty, abandoned buildings, and
 ## works in toward the core in the middle. A district is yours once its core and
 ## enough of its buildings are. Decrees ask owns(), so there is one answer.
-## A "building" here is a unit of the map (a block or a run of one, City.unit_nodes, so
-## index = CityPlan unit index): its buildings change hands together.
+## Buildings change hands one at a time (index = CityPlan building index). Each stands
+## in a block (a map unit: a block or a run of one); a block whose standing buildings
+## are all yours is complete, which pays a bonus (block_bonus, in_complete_block).
 ## A building can only become yours if it borders one you already hold (can_claim),
 ## so the city is taken outwards from the headquarters; abandoned places too. A core
 ## also needs most of the buildings around it first.
@@ -17,6 +18,8 @@ extends Node
 signal layout_ready
 signal building_changed(index: int, yours: bool)
 signal district_controlled(district: int)
+## Block `block` became complete (all its standing buildings are yours), or stopped being.
+signal block_changed(block: int, complete: bool)
 ## Every building was counted again (a few times a second).
 signal counted
 ## Building `index` stands empty for good now (start district, fire, roaches).
@@ -48,6 +51,11 @@ var _residents := PackedInt32Array()     # people who live there, counted every 
 var _believers := PackedInt32Array()     # of them, believers
 var _presence := PackedFloat32Array()    # believing presence (residents and sit-ins)
 var _graph := BuildingGraph.new()
+var _block_of := PackedInt32Array()
+var _block_members: Array[PackedInt32Array] = []
+var _block_standing := PackedInt32Array()   # per block: buildings not demolished
+var _block_held := PackedInt32Array()       # of them, yours
+var _block_complete := PackedByteArray()
 var _timer := 0.0
 
 @onready var city: City = get_parent()
@@ -152,7 +160,44 @@ func is_yours(index: int) -> bool:
 	return _yours[index] == 1
 
 
-## Is `building` the god's? Decrees ask here, so there is one answer.
+func block_count() -> int:
+	return _block_members.size()
+
+
+## The block building `index` stands in.
+func block_of(index: int) -> int:
+	return _block_of[index]
+
+
+## The buildings of `block`, demolished ones included.
+func block_members(block: int) -> PackedInt32Array:
+	return _block_members[block]
+
+
+## How many of `block`'s standing buildings are yours.
+func block_held(block: int) -> int:
+	return _block_held[block]
+
+
+func block_size(block: int) -> int:
+	return _block_standing[block]
+
+
+func is_block_complete(block: int) -> bool:
+	return _block_complete[block] == 1
+
+
+## Building `index` stands in a block that is all yours.
+func in_complete_block(index: int) -> bool:
+	return _block_complete[_block_of[index]] == 1
+
+
+## What the people of `building` make is multiplied by this: more in a complete block.
+func block_bonus(building: Node3D) -> float:
+	var i: int = _index.get(building, -1)
+	return S.block_output_bonus if i >= 0 and in_complete_block(i) else 1.0
+
+
 ## Building `index` could become yours: its district is open, it borders a building you
 ## hold, and, for a core, enough of the buildings around it are yours (core_base).
 func can_claim(index: int) -> bool:
@@ -299,6 +344,8 @@ func remove_building(building: Node3D) -> void:
 	_district_of[i] = -1
 	buildings[i] = null
 	_index.erase(building)
+	_block_standing[_block_of[i]] -= 1
+	_check_block(_block_of[i])
 	building_changed.emit(i, false)
 	if _core[d] == i:
 		_core[d] = _pick_core(d)
@@ -361,18 +408,30 @@ func _found_headquarters() -> void:
 			abandon(buildings[i], true)
 
 
-## The base: the standing building of district `d` farthest from its core, so the cult
-## starts at the edge and works its way in to the heart.
+## The base: the largest building of the block of district `d` farthest from its core,
+## so the cult starts at the edge and works its way in to the heart.
 func _edge_building(d: int) -> int:
 	var middle := buildings[_core[d]].global_position
-	var best := _core[d]
-	var best_d := -1.0
+	var far := _core[d]
+	var far_d := -1.0
 	for i in buildings.size():
 		if _district_of[i] != d:
 			continue
-		var far := buildings[i].global_position.distance_squared_to(middle)
-		if far > best_d:
-			best_d = far
+		var gap := buildings[i].global_position.distance_squared_to(middle)
+		if gap > far_d:
+			far_d = gap
+			far = i
+	return _largest(_block_members[_block_of[far]], d)
+
+
+## The roomiest of `members` standing in district `d`.
+func _largest(members: PackedInt32Array, d: int) -> int:
+	var best := -1
+	var best_volume := -1.0
+	for i in members:
+		var volume := sizes[i].x * sizes[i].y * sizes[i].z
+		if _district_of[i] == d and volume > best_volume:
+			best_volume = volume
 			best = i
 	return best
 
@@ -381,11 +440,20 @@ func _set_side(i: int, mine: bool) -> void:
 	_yours[i] = 1 if mine else 0
 	var d := _district_of[i]
 	_owned[d] += 1 if mine else -1
+	_block_held[_block_of[i]] += 1 if mine else -1
 	building_changed.emit(i, mine)
+	_check_block(_block_of[i])
 	if mine and _controlled[d] == 0 and share(d) >= S.control_share \
 			and _core[d] >= 0 and _yours[_core[d]] == 1:
 		_controlled[d] = 1
 		district_controlled.emit(d)
+
+
+func _check_block(block: int) -> void:
+	var complete := _block_standing[block] > 0 and _block_held[block] == _block_standing[block]
+	if complete != (_block_complete[block] == 1):
+		_block_complete[block] = 1 if complete else 0
+		block_changed.emit(block, complete)
 
 
 func _collect() -> void:
@@ -399,15 +467,22 @@ func _collect() -> void:
 	_unlocked.resize(count)
 	_unlocked.fill(0)
 	independence = S.start_independence(count)
-	for u in city.unit_nodes.size():
-		var b: Node3D = city.unit_nodes[u]
-		var d := city.plan.units[u].district
-		if d < 0:
-			d = district_at(b.global_position)
-		_index[b] = buildings.size()
+	var blocks := city.plan.units.size()
+	_block_standing.resize(blocks)
+	_block_held.resize(blocks)
+	_block_complete.resize(blocks)
+	for unit in city.plan.units:
+		_block_members.append(unit.buildings)
+	for i in city.building_nodes.size():
+		var b: Node3D = city.building_nodes[i]
+		var p := city.plan.buildings[i]
+		var d := p.district if p.district >= 0 else district_at(b.global_position)
+		_index[b] = i
 		buildings.append(b)
 		sizes.append(BuildingBox.size_of(b))
 		_district_of.append(d)
+		_block_of.append(p.unit)
+		_block_standing[p.unit] += 1
 		_totals[d] += 1
 	_find_cores(count)
 	var n := buildings.size()
@@ -422,13 +497,10 @@ func _collect() -> void:
 	_found_headquarters()
 
 
-## Which units border each other, from the stage map (across a street counts, and
-## across district lines, so a new district is entered from the edge of one you hold).
+## Which buildings border each other (next door or across a street, and across district
+## lines, so a new district is entered from the edge of one you hold).
 func _find_borders() -> void:
-	var lists: Array[PackedInt32Array] = []
-	for unit in city.plan.units:
-		lists.append(unit.next)
-	_graph.set_borders(lists)
+	_graph.set_from_plan(city.plan, S.border_gap)
 
 
 func _demolished() -> PackedByteArray:
@@ -439,13 +511,14 @@ func _demolished() -> PackedByteArray:
 	return out
 
 
-## Each district's core is the unit the stage map marks as its core.
+## Each district's core is the largest building of the block the stage map marks as
+## its core.
 func _find_cores(count: int) -> void:
 	_core.resize(count)
 	_core.fill(-1)
-	for u in city.plan.units.size():
-		if city.plan.units[u].core and _district_of[u] >= 0:
-			_core[_district_of[u]] = u
+	for unit in city.plan.units:
+		if unit.core and unit.district >= 0 and unit.district < count:
+			_core[unit.district] = _largest(unit.buildings, unit.district)
 	for d in count:
 		if _core[d] < 0:
 			_core[d] = _pick_core(d)

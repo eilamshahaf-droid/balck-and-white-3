@@ -11,23 +11,7 @@ static func size_of(building: Node3D) -> Vector3:
 	return Vector3.ONE * 10.0
 
 
-## The building (a unit's "buildings" node) that `node` is or is a part of, or null:
-## a unit's other buildings point to it (PlanBuilder).
+## `node` as a building, or null when it is not one.
 static func building_of(node: Object) -> Node3D:
-	if not node is Node3D:
-		return null
 	var n := node as Node3D
-	if n.is_in_group("buildings"):
-		return n
-	if n.has_meta(&"building"):
-		var main: Variant = n.get_meta(&"building")
-		return main if is_instance_valid(main) else null
-	return null
-
-
-## `building` and the other buildings of its unit.
-static func pieces_of(building: Node3D) -> Array[Node3D]:
-	var out: Array[Node3D] = [building]
-	if building.has_meta(&"parts"):
-		out.append_array(building.get_meta(&"parts"))
-	return out
+	return n if n and n.is_in_group("buildings") else null

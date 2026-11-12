@@ -8,6 +8,10 @@ extends Node
 ## Prints one line per check and exits with code 1 if any failed.
 
 const MAIN := preload("res://scenes/main.tscn")
+const ALONE := 4.0   # metres
+## Frames before the first check: the city's first frames are slow (styling, props), and
+## a throw is read from real mouse speed, so a slow frame turns it into a put-down.
+const SETTLE := 150
 const S: HandSettings = preload("res://data/hand_settings.tres")
 
 var _main: Node3D
@@ -25,7 +29,7 @@ func _ready() -> void:
 	_hand = _main.get_node("GodHand")
 	_tools = _main.get_node("HandTools")
 	_camera = get_viewport().get_camera_3d()
-	await _frames(30)
+	await _frames(SETTLE)
 	await _test_pick_and_throw()
 	await _test_focus_loss_while_holding()
 	await _test_tap_taxi()
@@ -41,7 +45,7 @@ func _ready() -> void:
 
 
 func _test_pick_and_throw() -> void:
-	var person := await _hover_one_of(get_tree().get_nodes_in_group("citizens"))
+	var person := await _hover_one_of(_people_alone())
 	_check(person != null, "hover a person")
 	if person == null:
 		return
@@ -56,7 +60,7 @@ func _test_pick_and_throw() -> void:
 
 
 func _test_focus_loss_while_holding() -> void:
-	var standing := get_tree().get_nodes_in_group("citizens").filter(
+	var standing := _people_alone().filter(
 			func(c: Node) -> bool: return c.velocity.length() < 5.0)
 	var person := await _hover_one_of(standing)
 	if person == null:
@@ -213,6 +217,17 @@ func _hover_one_of(candidates: Array) -> Node3D:
 	return null
 
 
+## People with nobody else within arm's reach, so the hand can only mean them (every
+## building keeps someone on its corner, and neighbours stand close together).
+func _people_alone() -> Array:
+	var all := get_tree().get_nodes_in_group("citizens")
+	return all.filter(func(c: Node3D) -> bool:
+		for other: Node3D in all:
+			if other != c and other.global_position.distance_to(c.global_position) < ALONE:
+				return false
+		return true)
+
+
 func _parked_taxis() -> Array:
 	return get_tree().get_nodes_in_group("god_grabbable").filter(
 			func(n: Node) -> bool: return n is RigidBody3D and n.has_method("on_tapped"))
@@ -256,6 +271,9 @@ func _button(down: bool) -> void:
 	e.position = get_viewport().get_mouse_position()
 	e.global_position = e.position
 	Input.parse_input_event(e)
+	# Input is handed out once per frame, before its physics steps; a slow frame runs
+	# several steps, so wait for the next frame or the click may not have arrived yet.
+	await get_tree().process_frame
 	await _physics(2)
 
 
