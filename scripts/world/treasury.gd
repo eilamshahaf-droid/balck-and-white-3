@@ -27,7 +27,7 @@ func _physics_process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = S.tick
-	income = population.tithes
+	income = population.tithes - population.believer_count * S.believer_upkeep / 60.0
 	for b in districts.converted_buildings():
 		income += net_of(b)
 	add_money(income * S.tick)

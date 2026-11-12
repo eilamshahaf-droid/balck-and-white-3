@@ -9,6 +9,14 @@ extends Resource
 @export var start_money := 250.0
 @export var tick := 1.0                     # seconds between payments
 
+## Every believer costs this much money per minute.
+@export var believer_upkeep := 1.0
+## Free spaces, bought in tiers (built when the feature freeze lifts): the price of each
+## tier, and how much more the believers within free_space_reach blocks of it make.
+@export var free_space_costs := PackedFloat32Array([400.0, 1200.0])
+@export var free_space_output := PackedFloat32Array([0.15, 0.25])
+@export var free_space_reach := 2
+
 @export_group("Collection box")
 
 @export_group("Rent: a building of yours with no use")

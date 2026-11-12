@@ -44,10 +44,11 @@ func value(d: int) -> float:
 
 
 ## What the following gives: the share of the buildings that are yours against the share
-## that wins the district alone, times how well your believers live.
+## that wins the district alone, times how well your believers live; never more than
+## following_max of the bar.
 func following(d: int) -> float:
-	return districts.share(d) / S.control_share \
-			* lerpf(S.welfare_low, S.welfare_high, population.welfare)
+	return minf(districts.share(d) / S.control_share
+			* lerpf(S.welfare_low, S.welfare_high, population.welfare), S.following_max)
 
 
 ## What the key places give: the core, and each marked landmark.

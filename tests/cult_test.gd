@@ -13,6 +13,7 @@ const MAIN := preload("res://scenes/main.tscn")
 const U: UnitSettings = preload("res://data/units.tres")
 const DS: DistrictSettings = preload("res://data/districts.tres")
 const A: AwarenessSettings = preload("res://data/awareness.tres")
+const LS: LandmarkSettings = preload("res://data/landmarks.tres")
 
 var _main: Node3D
 var _population: Population
@@ -295,6 +296,11 @@ func _test_landmarks() -> void:
 			"each mark makes the core easier (x%.2f)" % landmarks.core_ease(d))
 	landmarks.clean(landmarks.buildings[0])
 	_check(landmarks.marks_in(d) == 1, "City Hall can clean a mark off")
+	_check(is_equal_approx(landmarks.mark_cost(landmarks.buildings[0]), LS.redo_cost)
+			and is_equal_approx(landmarks.mark_cost(landmarks.buildings[2]), LS.mark_cost),
+			"marking a scrubbed landmark again costs more")
+	_check(_population.seats == U.seats_base + U.seats_per_clerk * _population.priest_count,
+			"believers have seats: %d" % _population.seats)
 
 
 ## The hand's orders: someone set down at a building acts by who they are; a willing
@@ -409,7 +415,8 @@ func _test_capture() -> void:
 	_districts.district_controlled.connect(func(x: int) -> void: got[0] = got[0] or x == d)
 	var core := _districts.buildings[_districts.core_of(d)]
 	_districts.convert_near(core.global_position, _districts.buildings.size())
-	_check(progress.following(d) >= 1.0, "a following that holds the whole district fills the bar alone")
+	_check(is_equal_approx(progress.following(d), DS.following_max),
+			"a following alone fills at most %d%% of the bar" % roundi(DS.following_max * 100.0))
 	await _frames(int(DS.progress_tick * 60.0 * 2.0))
 	_check(got[0] and _districts.is_controlled(d), "a full bar wins the district")
 
