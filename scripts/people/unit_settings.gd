@@ -50,13 +50,15 @@ extends Resource
 @export_group("Seats: the soft limit on believers")
 ## Believers need somewhere to be: seats_base (the Branch), plus seats_per_clerk for
 ## every clerk (the Secretary included) and seats_per_space for every free space. There
-## is no hard cap: a believer past the seats makes output_over_seats of the output, and
-## the start district's awareness rises by awareness_over_seats a minute times the
-## share of believers without a seat, but never past awareness_over_seats_max this way.
+## is no hard cap: a believer past the seats makes money_over_seats of the money and
+## belief_over_seats of the belief, and the start district's awareness rises by
+## awareness_over_seats a minute times the share of believers without a seat, but never
+## past awareness_over_seats_max this way.
 @export var seats_base := 20
 @export var seats_per_clerk := 10
 @export var seats_per_space := 25
-@export_range(0.0, 1.0) var output_over_seats := 0.5
+@export_range(0.0, 1.0) var money_over_seats := 0.0
+@export_range(0.0, 1.0) var belief_over_seats := 0.5
 @export var awareness_over_seats := 0.04
 @export_range(0.0, 1.0) var awareness_over_seats_max := 0.5
 

@@ -737,9 +737,8 @@ func _seat(dt: float) -> void:
 	over_seats = maxi(believer_count - seats, 0)
 	if over_seats == 0:
 		return
-	var factor := (seats + over_seats * U.output_over_seats) / believer_count
-	tithes *= factor
-	prayer *= factor
+	tithes *= (seats + over_seats * U.money_over_seats) / believer_count
+	prayer *= (seats + over_seats * U.belief_over_seats) / believer_count
 	if awareness:
 		var d := districts.start_district()
 		var room := U.awareness_over_seats_max - awareness.level(d)
