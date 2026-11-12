@@ -1,6 +1,6 @@
 class_name Districts
 extends Node
-## Splits the city into districts and keeps who holds every building. Eilam's
+## Knows the stage map's districts (CityPlan) and keeps who holds every building. Eilam's
 ## rule: a building is yours once most of the people who live there believe
 ## (Population's residents); an empty one is yours while a believer sits in on
 ## it. Campaigns (campaigns.gd) are how the player tips a building: force, buying
@@ -8,6 +8,8 @@ extends Node
 ## edge of the start district, a neglected place with empty, abandoned buildings, and
 ## works in toward the core in the middle. A district is yours once its core and
 ## enough of its buildings are. Decrees ask owns(), so there is one answer.
+## A "building" here is a unit of the map (a block or a run of one, City.unit_nodes, so
+## index = CityPlan unit index): its buildings change hands together.
 ## A building can only become yours if it borders one you already hold (can_claim),
 ## so the city is taken outwards from the headquarters; abandoned places too. A core
 ## also needs most of the buildings around it first.
@@ -48,7 +50,7 @@ var _presence := PackedFloat32Array()    # believing presence (residents and sit
 var _graph := BuildingGraph.new()
 var _timer := 0.0
 
-@onready var city: Node3D = get_parent()
+@onready var city: City = get_parent()
 @onready var population: Population = get_node("../Population")
 
 
@@ -78,17 +80,18 @@ func _physics_process(delta: float) -> void:
 
 
 func district_count() -> int:
-	return S.columns * S.rows
+	return city.plan.districts.size()
 
 
+## The district at `p`; off the map, the start district (the outskirts are its edge).
 func district_at(p: Vector3) -> int:
-	var block: Vector2i = city.block_of(p)
-	return _band(block.y, city.STREETS - 1, S.rows) * S.columns + _band(block.x, city.AVENUES - 1, S.columns)
+	var d := city.plan.district_at(Vector2(p.x, p.z))
+	return d if d >= 0 else city.plan.start_district
 
 
 ## The kind of district (DistrictSettings.kinds) at `p`: who lives there.
 func kind_at(p: Vector3) -> String:
-	return S.kind_of(district_at(p))
+	return city.plan.districts[district_at(p)].kind
 
 
 ## The cult's first building, or null.
@@ -98,7 +101,7 @@ func start_building() -> Node3D:
 
 ## The district the cult starts in (the Slums).
 func start_district() -> int:
-	return S.start_district
+	return city.plan.start_district
 
 
 ## `building` is the cult's base (where the high priest starts and agents train).
@@ -118,16 +121,12 @@ func is_open(building: Node3D) -> bool:
 
 
 func district_name(d: int) -> String:
-	return S.names[d] if d < S.names.size() else "District %d" % (d + 1)
+	return city.plan.districts[d].name
 
 
-## The district's ground, between the road centre lines around it (x, z).
-func district_rect(d: int) -> Rect2:
-	var col := d % S.columns
-	var row := floori(float(d) / S.columns)
-	var a: Vector3 = city.intersection(Vector2i(_edge(col, city.AVENUES - 1, S.columns), _edge(row, city.STREETS - 1, S.rows)))
-	var b: Vector3 = city.intersection(Vector2i(_edge(col + 1, city.AVENUES - 1, S.columns), _edge(row + 1, city.STREETS - 1, S.rows)))
-	return Rect2(a.x, a.z, b.x - a.x, b.z - a.z)
+## The middle of the district on the ground (x, z).
+func district_centre(d: int) -> Vector2:
+	return city.plan.districts[d].centre
 
 
 ## Share of the district's standing buildings that are yours, 0..1.
@@ -222,7 +221,7 @@ func index_of(building: Node3D) -> int:
 
 ## How well off district `d` is (1 = average; the start district is poor).
 func wealth_of(d: int) -> float:
-	return S.wealth[d] if d < S.wealth.size() else 1.0
+	return S.wealth_of_kind(city.plan.districts[d].kind)
 
 
 func wealth_at(index: int) -> float:
@@ -351,7 +350,7 @@ func _count() -> void:
 ## The start district's core is the cult's first building; some of the
 ## district's other buildings stand empty.
 func _found_headquarters() -> void:
-	var start := S.start_district
+	var start := start_district()
 	headquarters = _edge_building(start)
 	_unlocked[start] = 1
 	var rng := RandomNumberGenerator.new()
@@ -400,9 +399,11 @@ func _collect() -> void:
 	_unlocked.resize(count)
 	_unlocked.fill(0)
 	independence = S.start_independence(count)
-	for node in get_tree().get_nodes_in_group("buildings"):
-		var b := node as Node3D
-		var d := district_at(b.global_position)
+	for u in city.unit_nodes.size():
+		var b: Node3D = city.unit_nodes[u]
+		var d := city.plan.units[u].district
+		if d < 0:
+			d = district_at(b.global_position)
 		_index[b] = buildings.size()
 		buildings.append(b)
 		sizes.append(BuildingBox.size_of(b))
@@ -421,15 +422,13 @@ func _collect() -> void:
 	_found_headquarters()
 
 
-## Which buildings border each other (see DistrictSettings.border_gap), across district
-## lines too, so a new district is entered from the edge of one you hold.
+## Which units border each other, from the stage map (across a street counts, and
+## across district lines, so a new district is entered from the edge of one you hold).
 func _find_borders() -> void:
-	var feet: Array[Rect2] = []
-	for i in buildings.size():
-		var p := buildings[i].global_position
-		var s := Vector2(sizes[i].x, sizes[i].z)
-		feet.append(Rect2(Vector2(p.x, p.z) - s / 2.0, s))
-	_graph.build(feet, S.border_gap)
+	var lists: Array[PackedInt32Array] = []
+	for unit in city.plan.units:
+		lists.append(unit.next)
+	_graph.set_borders(lists)
 
 
 func _demolished() -> PackedByteArray:
@@ -440,15 +439,21 @@ func _demolished() -> PackedByteArray:
 	return out
 
 
+## Each district's core is the unit the stage map marks as its core.
 func _find_cores(count: int) -> void:
 	_core.resize(count)
+	_core.fill(-1)
+	for u in city.plan.units.size():
+		if city.plan.units[u].core and _district_of[u] >= 0:
+			_core[_district_of[u]] = u
 	for d in count:
-		_core[d] = _pick_core(d)
+		if _core[d] < 0:
+			_core[d] = _pick_core(d)
 
 
 ## The standing building nearest the middle of district `d`, or -1.
 func _pick_core(d: int) -> int:
-	var middle := district_rect(d).get_center()
+	var middle := district_centre(d)
 	var best := -1
 	var best_gap := INF
 	for i in buildings.size():
@@ -460,16 +465,3 @@ func _pick_core(d: int) -> int:
 			best_gap = gap
 			best = i
 	return best
-
-
-## Which of `parts` bands a block falls in, with band edges on road lines.
-static func _band(block: int, blocks: int, parts: int) -> int:
-	var band := 0
-	for k in range(1, parts):
-		if block >= _edge(k, blocks, parts):
-			band = k
-	return band
-
-
-static func _edge(k: int, blocks: int, parts: int) -> int:
-	return roundi(float(k * blocks) / parts)

@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="CitySettings" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/city_settings.gd" id="1_c"]
+
+[resource]
+script = ExtResource("1_c")

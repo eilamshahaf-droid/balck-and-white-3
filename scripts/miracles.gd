@@ -121,7 +121,7 @@ func cast_at_screen(kind: StringName, screen_pos: Vector2, screen_radius := 40.0
 	var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(screen_pos) * RAY_LENGTH, LAYER_WORLD)
 	query.exclude = rig.faded_rids()
 	var hit := city.get_world_3d().direct_space_state.intersect_ray(query)
-	var building: Node3D = hit.collider if hit and hit.collider.is_in_group("buildings") else null
+	var building: Node3D = BuildingBox.building_of(hit.collider) if hit else null
 	var target: Vector3 = hit.position if hit else Vector3.INF
 	if kind == &"water":
 		var fire := _fire_near(camera, screen_pos, screen_radius * 1.3)

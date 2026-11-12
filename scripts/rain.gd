@@ -22,7 +22,7 @@ func start(ground: Vector3, size := 1.0, length := 1.0) -> void:
 	position = ground + Vector3.UP * 14.0
 	var query := PhysicsRayQueryParameters3D.create(ground + Vector3.UP * 1.0, ground - Vector3.UP * 2.0, 1)
 	var under := get_world_3d().direct_space_state.intersect_ray(query)
-	if under and under.collider.is_in_group("buildings"):
+	if under and BuildingBox.building_of(under.collider):
 		see_through.append(under.rid)
 	_time_left = M.rain_time * length
 	_cloud = Node3D.new()

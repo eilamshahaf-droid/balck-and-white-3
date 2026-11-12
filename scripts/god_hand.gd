@@ -164,7 +164,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	var hit := _raycast_mouse()
 	var first_wall := _raycast_mouse(LAYER_WORLD, false)
-	pointed_building = first_wall.collider if first_wall and first_wall.collider.is_in_group("buildings") else null
+	pointed_building = BuildingBox.building_of(first_wall.collider) if first_wall else null
 	# While holding, ride over streets and buildings only: hopping onto every tree
 	# crown or taxi roof under the cursor would jerk the held thing (and fling it).
 	var surface_hit := _raycast_mouse(LAYER_WORLD) if held else hit
@@ -297,8 +297,9 @@ func _on_press(event: InputEventMouseButton) -> void:
 	var hit := _raycast_mouse()
 	if event.double_click:
 		_press = Press.NONE
-		if hit and hit.collider.is_in_group("buildings") and districts.owns(hit.collider):
-			owned_building_double_clicked.emit(hit.collider)
+		var building := BuildingBox.building_of(hit.collider) if hit else null
+		if building and districts.owns(building):
+			owned_building_double_clicked.emit(building)
 		elif hit:
 			rig.fly_to(hit.position, _is_grabbable(hit.collider))
 		return

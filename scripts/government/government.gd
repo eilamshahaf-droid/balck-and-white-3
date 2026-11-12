@@ -145,10 +145,8 @@ func _demolishable(building: Node3D) -> bool:
 
 ## He walks down the avenue to the corner, then to the door.
 func _send_inspector() -> void:
-	var corner: Vector2i = city.nearest_grid(_front)
-	var start := Vector2i(corner.x, corner.y + G.inspector_walk_blocks)
-	if start.y >= city.STREETS:
-		start.y = corner.y - G.inspector_walk_blocks
+	var walk: PackedInt32Array = city.walk_from(city.nearest_node(_front), G.inspector_walk_blocks)
+	var start := walk[walk.size() - 1]
 	var c: CitizenScript = CitizenScript.new()
 	c.city = city
 	c.grid = start
@@ -188,11 +186,11 @@ func _inspect() -> void:
 func _send_bulldozer() -> void:
 	if is_instance_valid(_bulldozer) and not _bulldozer.held:
 		_bulldozer.queue_free()  # last visit's, left lying around
-	var corner: Vector2i = city.nearest_grid(_front)
-	var start := Vector2i(corner.x, clampi(corner.y + G.bulldozer_start_blocks, 0, city.STREETS - 1))
-	if start == corner:
-		start.y = maxi(corner.y - G.bulldozer_start_blocks, 0)
-	var route: Array[Vector3] = [city.intersection(start), city.intersection(corner), _front]
+	var walk: PackedInt32Array = city.walk_from(city.nearest_node(_front), G.bulldozer_start_blocks)
+	var route: Array[Vector3] = []
+	for k in range(walk.size() - 1, -1, -1):
+		route.append(city.node_position(walk[k]))
+	route.append(_front)
 	_bulldozer = BulldozerScript.new()
 	_bulldozer.build(route, _target, _yellow, _dark)
 	city.add_child(_bulldozer)

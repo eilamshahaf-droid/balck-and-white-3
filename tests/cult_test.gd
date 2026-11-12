@@ -27,6 +27,7 @@ func _ready() -> void:
 	_population = _main.get_node("Population")
 	_districts = _main.get_node("Districts")
 	await _frames(20)
+	_test_stage_map()
 	_test_start()
 	_test_slums_people()
 	_test_chance()
@@ -43,6 +44,31 @@ func _ready() -> void:
 	get_tree().quit(1 if _failures > 0 else 0)
 
 
+## The Slums come from the Map Lab's stage file: about 50 units of a few buildings each,
+## and the base far enough from the core (the Designer's and Balance Tester's numbers).
+func _test_stage_map() -> void:
+	var city: City = _main
+	var units := _districts.buildings.size()
+	_check(units >= 40 and units <= 65, "the stage map has about 50 units (%d)" % units)
+	var parts := get_tree().get_nodes_in_group(PlanBuilder.PARTS).size()
+	_check(parts > units * 3, "units are made of several buildings (%d more)" % parts)
+	var part: Node3D = get_tree().get_nodes_in_group(PlanBuilder.PARTS)[0]
+	_check(_districts.index_of(BuildingBox.building_of(part)) >= 0, "a part answers for its unit")
+	var d := _districts.start_district()
+	var steps := {_districts.core_of(d): 0}
+	var todo: Array[int] = [_districts.core_of(d)]
+	while not todo.is_empty():
+		var i: int = todo.pop_front()
+		for j in _districts.borders_of(i):
+			if not steps.has(j):
+				steps[j] = steps[i] + 1
+				todo.append(j)
+	_check(steps.get(_districts.headquarters, 0) >= 4,
+			"the base is several units from the core (%d)" % steps.get(_districts.headquarters, 0))
+	var walk := city.walk_from(city.nearest_node(_districts.start_building().global_position), 5)
+	_check(walk.size() >= 2, "people can walk the streets from the base")
+
+
 func _test_start() -> void:
 	var start := _districts.start_building()
 	_check(start != null, "the start district has a start building")
@@ -54,16 +80,17 @@ func _test_start() -> void:
 	_check(start.is_in_group(Population.PRAYER_HOUSES), "the start building is a sermon house")
 	_check(_population.believer_count <= 1, "nobody else believes at the start")
 	_check(_districts.owns(start), "the start building is yours")
-	_check(_districts.is_unlocked(DS.start_district), "the start district is open")
-	_check(not _districts.is_unlocked((DS.start_district + 1) % _districts.district_count()),
-			"the next district is locked")
+	_check(_districts.is_unlocked(_districts.start_district()), "the start district is open")
+	if _districts.district_count() > 1:
+		_check(not _districts.is_unlocked((_districts.start_district() + 1) % _districts.district_count()),
+				"the next district is locked")
 
 
 func _test_slums_people() -> void:
 	var counts := {}
 	var total := 0
 	for r in _population.residents:
-		if r.home == null or _districts.district_at(r.home.global_position) != DS.start_district:
+		if r.home == null or _districts.district_at(r.home.global_position) != _districts.start_district():
 			continue
 		counts[r.archetype.title] = counts.get(r.archetype.title, 0) + 1
 		total += 1
@@ -121,7 +148,7 @@ func _test_training() -> void:
 
 
 func _test_borders() -> void:
-	var d := DS.start_district
+	var d := _districts.start_district()
 	var core := _districts.core_of(d)
 	var seen := {core: true}
 	var todo: Array[int] = [core]
@@ -160,7 +187,7 @@ func _test_borders() -> void:
 
 func _test_awareness() -> void:
 	var aware: Awareness = _main.get_node("Awareness")
-	var d := DS.start_district
+	var d := _districts.start_district()
 	var home := _districts.buildings[_near]
 	_check(is_equal_approx(aware.factor_for(home), 1.0), "an unaware district converts at full chance")
 	aware.add(d, 0.5)
@@ -251,7 +278,7 @@ func _believe_in(index: int) -> void:
 
 func _test_landmarks() -> void:
 	var landmarks: Landmarks = _main.get_node("Landmarks")
-	var d := DS.start_district
+	var d := _districts.start_district()
 	var core := _districts.core_of(d)
 	_check(_districts.headquarters != core, "the base is not the core")
 	_check(landmarks.buildings.size() == 5, "five landmarks (%d)" % landmarks.buildings.size())
@@ -270,7 +297,7 @@ func _test_landmarks() -> void:
 
 
 func _test_capture() -> void:
-	var d := DS.start_district
+	var d := _districts.start_district()
 	var got := [false]
 	_districts.district_controlled.connect(func(x: int) -> void: got[0] = got[0] or x == d)
 	var core := _districts.buildings[_districts.core_of(d)]

@@ -116,7 +116,7 @@ func _swap_someone() -> void:
 		if not c.can_answer() or c.resident.is_believer() or _seen_by(camera, c.global_position):
 			continue
 		var home := c.resident.home
-		if _seen_by(camera, _city.intersection(_city.nearest_grid(home.global_position))):
+		if _seen_by(camera, _city.node_position(_city.nearest_node(home.global_position))):
 			continue
 		var r := _indoors_at(home)
 		if r:
