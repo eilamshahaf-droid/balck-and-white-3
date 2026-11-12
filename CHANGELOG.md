@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Fixes after 0.9.0 (2026-11-12): fading buildings and the briefing
+Not yet on the Alpha; goes out with the next version.
+- **Fading buildings.** Since the city became blocks, the building under the hand could fade (the rule that keeps it solid compared a block with one building), so the hand went through it and the tooltip and wheel landed on the one behind. Fixed. A faded building is now a see-through dot pattern instead of real transparency, which the depth of field used to wipe out and bring back as the camera moved. It fades less (60%, was 85%) and only within 40 m of the camera (was 70). `fade_amount`, `fade_max_distance` in `data/hand_settings.tres`. Doors and roof props of a faded building still stay solid.
+- **Far signs.** Landmark signs and other 3D text no longer vanish where the background is blurred.
+- **Briefing.** The city behind the opening briefing has its colours (it was pale blue until the meeting opened).
+- Try it: tilt the camera low (F) between tall buildings and point at one near the middle of the screen.
+
 ## Pre-Alpha 0.9.0 (2026-11-12): The Slums on a Map Lab map
 The city is no longer a fixed grid: each stage's map is made in the browser Map Lab and loaded by the game.
 - **A real neighbourhood.** The Slums are a Map Lab map (seed 31, 0.8 km): streets that bend, parks, 417 buildings of the Slums' own mix (tenements, brownstone rows, project slabs and towers, corner shops, sheds), each turned to face its street, with sidewalks and centre lines.
