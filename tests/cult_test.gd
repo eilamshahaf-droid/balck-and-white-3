@@ -40,6 +40,7 @@ func _ready() -> void:
 	await _test_condemnation()
 	_test_landmarks()
 	await _test_block()
+	_test_hand_orders()
 	await _test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -294,6 +295,60 @@ func _test_landmarks() -> void:
 			"each mark makes the core easier (x%.2f)" % landmarks.core_ease(d))
 	landmarks.clean(landmarks.buildings[0])
 	_check(landmarks.marks_in(d) == 1, "City Hall can clean a mark off")
+
+
+## The hand's orders: someone set down at a building acts by who they are; a willing
+## one gives full effort, a worn-out one still goes but does worse, is worn further, is
+## noticed by the neighbours, and quits after one order too many. A canvasser set down
+## at a building next to yours starts the sky sign there with no wheel.
+func _test_hand_orders() -> void:
+	var people: PeopleSettings = load("res://data/people.tres")
+	var aware: Awareness = _main.get_node("Awareness")
+	var campaigns: Campaigns = _main.get_node("Campaigns")
+	var d := _districts.start_district()
+	var r: Resident = null
+	for x in _population.residents:
+		if x.rank == Resident.Rank.BELIEVER and x != _population.priest and x.alive \
+				and _population.has_body(x):
+			r = x
+			break
+	if r == null:
+		_check(false, "a member on the street to give orders to")
+		return
+	r.strain = 0.0
+	_check(is_equal_approx(_population.effort_of(r), 1.0), "a rested member gives full effort")
+	_check(_population._take_order(r) and is_equal_approx(r.strain, people.order_strain),
+			"a glad order wears them a little (+%.1f)" % people.order_strain)
+	r.strain = 0.8
+	var before := aware.level(d)
+	_check(_population.effort_of(r) < 1.0, "a worn-out member does worse (x%.2f)" % _population.effort_of(r))
+	_check(_population._take_order(r) or r.rank == Resident.Rank.RESIDENT, "they still go, or quit")
+	_check(aware.level(d) > before, "the neighbours notice someone hauled off unwilling")
+	r.strain = people.strain_leave
+	_population.convert_to(r, Resident.Rank.BELIEVER)
+	_check(not _population._take_order(r) and r.rank == Resident.Rank.RESIDENT,
+			"one order too many and they quit")
+	var near := -1
+	var far := -1
+	for i in _districts.buildings.size():
+		if _districts.is_yours(i) or _districts.residents_in(i) == 0:
+			continue
+		if campaigns.why_not(_districts.buildings[i], Campaigns.Route.PREACH) == "":
+			near = i if near < 0 else near
+		elif not _districts.borders_yours(i):
+			far = i if far < 0 else far
+	if near < 0 or far < 0:
+		_check(false, "a building in reach and one out of reach for the canvasser")
+		return
+	var refused := [false]
+	campaigns.mark_refused.connect(func(_b: Node3D, _why: String) -> void: refused[0] = true)
+	_population.canvasser_set_down.emit(_population.priest, _districts.buildings[far])
+	_check(refused[0] and campaigns.route_of(_districts.buildings[far]) < 0,
+			"a canvasser set down out of reach is told why not")
+	_population.canvasser_set_down.emit(_population.priest, _districts.buildings[near])
+	_check(campaigns.route_of(_districts.buildings[near]) == Campaigns.Route.PREACH,
+			"a canvasser set down next to yours starts the sky sign there")
+	campaigns.clear(_districts.buildings[near])
 
 
 ## A block whose buildings are all yours is complete: its people make more, and its
