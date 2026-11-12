@@ -41,9 +41,11 @@ extends Resource
 @export var block_awareness_drop := 0.1
 @export var block_note := "Block complete!"
 @export_group("Start district")
-## Abandoned buildings stand empty: whoever moves in holds them.
-@export_range(0.0, 1.0) var abandoned_start := 0.3      # share of the start district's buildings
-@export_range(0.0, 1.0) var abandoned_elsewhere := 0.04  # scattered through the rest of the city
+## Abandoned buildings stand empty: whoever moves in holds them. None at the start
+## (Eilam, 2026-11-12: a wall of empty buildings only blocks the cult's way); a building
+## is still abandoned when a fire or roaches empty it.
+@export_range(0.0, 1.0) var abandoned_start := 0.0      # share of the start district's buildings
+@export_range(0.0, 1.0) var abandoned_elsewhere := 0.0  # scattered through the rest of the city
 
 @export_group("The stage")
 ## The start screen: a title and the Secretary's briefing.

@@ -15,8 +15,8 @@ extends Node
 ## the high priest win people over one attempt at a time (preaching, a
 ## Preaching child); a believer makes money by their wealth and, inside a
 ## staffed sermon house, belief by their faith, both times their needs
-## multiplier (Needs). Believers are capped by housing, and one whose livelihood
-## is not met may leave. Posts and training are staffing (Staffing), purchases
+## multiplier (Needs). One whose livelihood is not met (a crowded home) may
+## leave. Posts and training are staffing (Staffing), purchases
 ## for buildings are upgrades (BuildingUpgrades). A change of rank is announced
 ## with rank_changed.
 ##
@@ -62,8 +62,6 @@ var priest: Resident
 var believer_count := 0
 var prayer := 0.0
 var tithes := 0.0
-## How many believers the homes of the city hold; there can be no more believers than this.
-var housing_capacity := 0
 ## How many priests the cult has (the high priest, and whoever is trained).
 var priest_count := 0
 ## How many missionaries the cult has.
@@ -647,9 +645,6 @@ func _capacity_of_home(building: Node3D) -> int:
 
 func _refresh_presence() -> void:
 	_vacate_work_buildings()
-	housing_capacity = 0
-	for home: Node3D in _homes:
-		housing_capacity += _capacity_of_home(home)
 	for b: Node3D in _presence:
 		_presence[b] = 0.0
 	believer_count = 0

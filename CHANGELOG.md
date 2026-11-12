@@ -7,7 +7,9 @@ Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-
 Eilam's rule: you take single buildings, and a whole block pays a bonus. No new features besides that; the rest is making the base of the Slums work.
 - **Buildings, not blocks.** Each of the Slums' 417 buildings is taken on its own, once most of the people living in it believe (1 to 3 residents each, so one or two conversions), and only if it borders a building of yours (next door or across the street). Gold plate on the roof, as before.
 - **Block bonus.** The ring on the ground is a block; it warms toward gold as you take its buildings. When every building in it is yours: "Block complete!", its buildings can no longer give way or draw complaints, its people make 25% more money and belief, and the district calms down a little. The bottom-left panel has a "Block: 4 of 7 buildings yours" line.
-- **The stage moves now.** A bot that plays the real game went from 1 block of 51 in an hour to about 130 buildings and 3 whole blocks. What was holding it back:
+- **No more empty buildings to start with.** A third of the Slums stood abandoned and could only be taken by moving a believer in; they walled the cult in. Every building has people now; a fire or roaches can still empty one (`abandoned_start` in `data/districts.tres`).
+- **No cap on believers.** Converting used to stop when "the homes were full"; that rule is gone.
+- **The stage moves now.** A bot that plays the real game went from 1 block of 51 in an hour to about 150 buildings and 3 whole blocks, with missionaries alone. What was holding it back:
   - Believers kept leaving: the people of the empty buildings were squeezed in next door from the first minute, and crowded believers quit. Those homes now have room for them.
   - A sky-sign attempt cost 4 belief, which emptied the pool in ten minutes; it costs 1.
   - Awareness climbed to full within 15 minutes and stayed; it rises slower and fades faster (`rate` 0.08, `decay` 0.08). A building at the tip of your line gives way less often (2% a minute, was 5%).
@@ -17,7 +19,8 @@ Eilam's rule: you take single buildings, and a whole block pays a bonus. No new 
 - **Fading buildings** (the camera's see-through effect) were broken since 0.9.0: the building under the hand could fade, so the hand went through it and the tooltip and wheel landed on the one behind. Fixed. A faded building is a see-through dot pattern now, not real transparency (the depth of field wiped that out and brought it back as the camera moved), fades less (60%, was 85%) and only within 40 m of the camera (was 70). `fade_amount`, `fade_max_distance` in `data/hand_settings.tres`. Doors and roof props of a faded building still stay solid.
 - **Small fixes.** Landmark signs and other 3D text no longer vanish where the background is blurred. The city behind the opening briefing has its colours. Letting go of the mouse button over a HUD button no longer leaves a person stuck in the hand.
 - **For testing balance:** `godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,pray,preach,buy` plays the Slums at 8x with a simple bot and prints believers, buildings, blocks, money and awareness every two minutes.
-- Try it: train missionaries at the base, hold the button on a building next to yours and choose the sky sign (lived-in) or the dollar (empty). Watch the ring of the base's block turn gold.
+- **Documents.** `docs/GDD.md` and `docs/ART.md` open with Eilam's decisions of 2026-11-12 (the story is a god against the bureaucracy; one building at a time; feature freeze) and what each thread owes; the GDD lists the systems the game has that it did not describe.
+- Try it: train missionaries at the base, hold the button on a building next to yours and choose the sky sign. Watch the ring of the base's block turn gold.
 
 ## Pre-Alpha 0.9.0 (2026-11-12): The Slums on a Map Lab map
 The city is no longer a fixed grid: each stage's map is made in the browser Map Lab and loaded by the game.
