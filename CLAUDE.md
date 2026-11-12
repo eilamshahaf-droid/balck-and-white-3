@@ -180,18 +180,20 @@ Tunables: `data/planning.tres`.
 
 ### Who owns what
 
-The studio has three standing role threads. All code here belongs to the Programmer.
+The studio has four standing role threads. All code here belongs to the Programmer.
 
 | Area | Files | Owner thread |
 | --- | --- | --- |
-| Design, balance, research | `docs/GDD.md` | "מעצב המשחק" (Game Designer) |
+| Design, research | `docs/GDD.md` | "מעצב המשחק" (Game Designer) |
+| Balance: simulations before a system is coded, the numbers the Designer briefs | `tests/pace_sim.gd` findings, sim artifacts | "בודק איזון" (Balance Tester) |
 | All code, tests, builds, the `alpha` branch, the web export, `CLAUDE.md`, `CHANGELOG.md` | everything else | "המתכנת" (Programmer) |
 | Look, 3D assets, shaders' art direction, UI art | `docs/ART.md`, `assets/` | "האמן" (Artist) |
 
 The Programmer builds only what the Designer briefed or Eilam asked, and asks the Designer
 when the design is unclear.
 
-A session cannot message the other threads: the documents are the channel. Decisions by Eilam
+Role threads in the project can message each other; a session outside the project cannot, so
+for it the documents are the channel. Either way, decisions by Eilam
 go at the top of `docs/GDD.md` (section 0) and `docs/ART.md` the day they are made, with what
 each thread owes; read both before starting work.
 
