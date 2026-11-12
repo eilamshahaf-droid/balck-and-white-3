@@ -72,11 +72,9 @@ func chance(target: Resident, preacher: Resident, p: Vector3) -> float:
 	return clampf(c * maxf(1.0 + _population.miracles.proof_at(p), 0.0), 0.0, 1.0)
 
 
-## `preacher` tries once to win `target` over. Nobody converts while every home
-## is full. True if `target` became a believer.
+## `preacher` tries once to win `target` over. True if `target` became a believer.
 func attempt(target: Resident, preacher: Resident) -> bool:
-	if target.is_believer() or not target.alive \
-			or _population.believer_count >= _population.housing_capacity:
+	if target.is_believer() or not target.alive:
 		return false
 	var at := preacher.body.global_position if _population.has_body(preacher) \
 			else target.home.global_position

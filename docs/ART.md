@@ -4,6 +4,21 @@ The one living document for the look of the game. Owner: the Artist thread. Art 
 Older research (dollhouse-style, visual-style, hand-moodboard) is folded in here; the originals
 stay in the project's shared folder under `research/` and `style-refs/`.
 
+## Decisions by Eilam, 2026-11-12 (read first)
+
+- **The story is a god against the bureaucracy** (GDD section 0). "Grey to colour: freedom" below is therefore the main visual idea, not a side proposal: the status quo is grey, what the god frees gets colour. Whether gold stays the god's colour is open again.
+- **Buildings are taken one at a time; a whole block pays a bonus.** The game shows it with a gold plate on each roof of yours and a ring on the ground round each block that warms toward gold. Both are placeholders that break the rule below ("props, not tints"); the Artist owes the real look of "this building is with us" and "this block is complete".
+- **Feature freeze**: only the Slums, until its base is good.
+
+### What the Programmer's screenshots of 0.10.0 show (for the Artist)
+
+1. **The Slums do not look like the Slums.** The table below asks for faded browns, mustard, peeling teal and dim warm light; the game shows clean lilac-blue and peach boxes. This is the biggest gap.
+2. **The blur is too strong** at ordinary zoom: only a narrow band in the middle is sharp (`data/art_style.tres`: `dof_blur`, `tilt_blur`, `tilt_width`).
+3. **Scale.** The houses outside the map are about three times the size of the city's buildings, so the city reads as a small model in a field of giants. The map's edge is a hard dark square.
+4. **Text.** White help text over a bright sky is unreadable; landmark signs are huge from above.
+5. **Missing from this document:** any direction for the UI (HUD, wheels, icons, font), for the miracles' effects, for sound, and for people beyond coloured capsules (a comedy needs people you can read).
+6. **Where the effort goes.** Most of this document is facade realism (cornices, window pairs, the Cratial kit) that the god camera with its blur will not show. The problems above are all at the coarse level: palette, silhouette, scale, who holds what. The Cratial licence for shipping is still unchecked.
+
 ## The look
 
 Realistic objects, stylized like a toy or dollhouse miniature, seen from above like a diorama.
@@ -24,7 +39,6 @@ Realistic objects, stylized like a toy or dollhouse miniature, seen from above l
 | Role | Colour | Notes |
 | --- | --- | --- |
 | Cult / believers | gold `#FFC726` | belief, owned buildings, plates |
-| Zealots | orange `#FF7319` | |
 | Priests | white | drawn larger |
 | Core building beacon | violet `#9E4DD9` | |
 | Sky / shadows | cool blue-lilac | shadow tint `#D6CCF0` |
@@ -58,8 +72,8 @@ screenshot tells you where you are.
 | 6 | Financial | cold, tall, tidy | glass blue, steel, one gold accent | towers, banks | bank entrances, security cameras, plazas |
 | 7 | Old civic quarter | proud, stone, pompous | warm limestone, green copper roofs | City Hall, courts, monuments | bell tower, statues, flags, portico |
 
-The map lab/3D city currently still uses the old 9-district layout and names. The programmer
-maps these 7 onto it when the district system changes.
+The game has only the Slums for now (a Map Lab map, `data/maps/slums/`); the other six wait
+for the freeze to end.
 
 ## Residents (8 archetypes)
 
@@ -71,13 +85,13 @@ head/hat or prop shape when close.
 | Homeless | muted brown | shopping cart / blanket |
 | Blue collar | denim blue | hard hat |
 | Student | bright teal | backpack |
-| Retiree | lilac grey | cane |
-| Partier | hot pink | party hat |
+| Pensioner | lilac grey | cane |
+| Clubber | hot pink | party hat |
 | Pink collar | coral | name badge / apron |
 | White collar | pale grey-white | tie, briefcase |
 | Bohemian | olive green | beret / scarf |
 
-Believers get a gold ring or tint over the archetype colour; zealots orange. Exact values
+Believers get a gold ring or tint over the archetype colour. Exact values
 go in `data/people.tres` once the designer confirms the table.
 
 ## Grey to colour: freedom (proposed, not built)

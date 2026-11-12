@@ -54,8 +54,8 @@ var held: Node3D = null
 var hovered: Node3D = null
 ## Smoothed hand velocity; drives wind and throws.
 var hand_velocity := Vector3.ZERO
-## The building the hand is pointing at (kept solid by the camera).
-var pointed_building: Node3D = null
+## The one building under the cursor, not its whole unit (kept solid by the camera).
+var pointed_part: Node3D = null
 ## The hand carries a tool (a miracle): it can't pick anything up, and a short
 ## click uses the tool instead of tapping. Dragging still moves the city.
 var carrying_tool := false
@@ -164,7 +164,9 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	var hit := _raycast_mouse()
 	var first_wall := _raycast_mouse(LAYER_WORLD, false)
-	pointed_building = BuildingBox.building_of(first_wall.collider) if first_wall else null
+	pointed_part = null
+	if first_wall and BuildingBox.building_of(first_wall.collider):
+		pointed_part = first_wall.collider
 	# While holding, ride over streets and buildings only: hopping onto every tree
 	# crown or taxi roof under the cursor would jerk the held thing (and fling it).
 	var surface_hit := _raycast_mouse(LAYER_WORLD) if held else hit
@@ -212,14 +214,20 @@ func _notification(what: int) -> void:
 		_let_go()
 
 
+## The button coming up always ends what its press began, even over a HUD button or
+## panel that would swallow it: otherwise whatever the hand holds stays stuck to it.
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT \
+			and not event.pressed:
+		_on_release()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			_drawing = false
 			_trail.clear_points()
 			_on_press(event)
-		else:
-			_on_release()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		if event.pressed and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not held:
 			_drawing = true

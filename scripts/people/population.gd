@@ -15,8 +15,8 @@ extends Node
 ## the high priest win people over one attempt at a time (preaching, a
 ## Preaching child); a believer makes money by their wealth and, inside a
 ## staffed sermon house, belief by their faith, both times their needs
-## multiplier (Needs). Believers are capped by housing, and one whose livelihood
-## is not met may leave. Posts and training are staffing (Staffing), purchases
+## multiplier (Needs). One whose livelihood is not met (a crowded home) may
+## leave. Posts and training are staffing (Staffing), purchases
 ## for buildings are upgrades (BuildingUpgrades). A change of rank is announced
 ## with rank_changed.
 ##
@@ -62,8 +62,6 @@ var priest: Resident
 var believer_count := 0
 var prayer := 0.0
 var tithes := 0.0
-## How many believers the homes of the city hold; there can be no more believers than this.
-var housing_capacity := 0
 ## How many priests the cult has (the high priest, and whoever is trained).
 var priest_count := 0
 ## How many missionaries the cult has.
@@ -188,16 +186,19 @@ func resident_near(p: Vector3, radius: float) -> Resident:
 	return _street.resident_near(p, radius)
 
 
-## The building people can live in nearest to `p`.
-func home_near(p: Vector3) -> Node3D:
+## The building people can live in nearest to `p`; with `not_yours`, one the cult does
+## not hold (any home if it holds them all).
+func home_near(p: Vector3, not_yours := false) -> Node3D:
 	var best: Node3D = null
 	var best_d := INF
 	for b in _homes:
+		if not_yours and districts.owns(b):
+			continue
 		var d := b.global_position.distance_squared_to(p)
 		if d < best_d:
 			best_d = d
 			best = b
-	return best
+	return best if best or not not_yours else home_near(p)
 
 
 func move_home(r: Resident, building: Node3D) -> void:
@@ -206,11 +207,13 @@ func move_home(r: Resident, building: Node3D) -> void:
 		r.body.settle_at_home()
 
 
-## `r` moves out of their home to the nearest other one (bought out, scared off).
+## `r` moves out of their home to the nearest other one (bought out, scared off). Someone
+## who doesn't believe keeps clear of the cult's buildings, so pushing a neighbour out
+## never costs you the building next door.
 func evict(r: Resident) -> void:
 	var old := r.home
 	_homes.erase(old)
-	var new_home := home_near(old.global_position)
+	var new_home := home_near(old.global_position, not r.is_believer())
 	_homes.append(old)
 	if new_home == null:
 		return
@@ -345,11 +348,13 @@ func is_blockaded(building: Node3D) -> bool:
 ## What `r` makes for the cult per second while it counts: belief by their
 ## faith (in a staffed sermon house) and money by their wealth, times their needs.
 func belief_rate(r: Resident) -> float:
-	return U.belief_per_minute / 60.0 * r.faith * needs_multiplier(r)
+	return U.belief_per_minute / 60.0 * r.faith * needs_multiplier(r) \
+			* districts.block_bonus(r.home)
 
 
 func money_rate(r: Resident) -> float:
-	return U.money_per_minute / 60.0 * r.wealth * needs_multiplier(r)
+	return U.money_per_minute / 60.0 * r.wealth * needs_multiplier(r) \
+			* districts.block_bonus(r.home)
 
 
 func needs_multiplier(r: Resident) -> float:
@@ -407,6 +412,11 @@ func evacuate(building: Node3D, quiet := false) -> void:
 	if new_home == null:
 		return  # the whole city is going away (quitting the game)
 	var leaving: Array = _by_home.get(building, []).duplicate()
+	if quiet:
+		# The start district's empty buildings: their people have always lived next
+		# door, so that home has room for them and is not crowded from the first minute
+		# (crowded believers lose their livelihood and leave the cult).
+		_housing[new_home] = _housing.get(new_home, 0) + ceili(leaving.size() * _people.housing_slack)
 	for r: Resident in leaving:
 		_set_home(r, new_home)
 		if not _has_body(r):
@@ -635,9 +645,6 @@ func _capacity_of_home(building: Node3D) -> int:
 
 func _refresh_presence() -> void:
 	_vacate_work_buildings()
-	housing_capacity = 0
-	for home: Node3D in _homes:
-		housing_capacity += _capacity_of_home(home)
 	for b: Node3D in _presence:
 		_presence[b] = 0.0
 	believer_count = 0

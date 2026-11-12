@@ -8,10 +8,10 @@ extends Resource
 @export_group("Awareness")
 ## Per minute, awareness grows by rate x concentration: the most attempts on one
 ## building over all attempts (a thin line is 1, spread-out play is low).
-@export var rate := 0.15
+@export var rate := 0.08
 ## Per minute, awareness falls by decay x (decay_floor + the share of your buildings
 ## with at least two of yours next to them) x awareness.
-@export var decay := 0.05
+@export var decay := 0.08
 @export var decay_floor := 0.3
 ## Seconds over which attempts are counted for the concentration.
 @export var attempt_window := 60.0
@@ -31,7 +31,7 @@ extends Resource
 ## Per minute, a building of yours with at most fragile_neighbours of yours next to it
 ## (not the headquarters or a core) is lost with chance
 ## per_minute x (awareness + heat / heat_scale); revert_share of its believers stop believing.
-@export var fragility_per_minute := 0.05
+@export var fragility_per_minute := 0.02
 @export var fragile_neighbours := 1
 @export var fragility_heat_scale := 100.0
 @export_range(0.0, 1.0) var revert_share := 0.5

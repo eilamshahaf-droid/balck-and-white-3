@@ -2,22 +2,20 @@ class_name PlanBuilder
 extends RefCounted
 ## Builds a stage's map (CityPlan) into the city: the ground with its land colours,
 ## the streets as ribbons along their centre lines, every building turned to face its
-## street, and trees. The buildings of a unit (what the player takes) are one
-## "buildings" node, its largest building, plus parts (group "building_parts") that
-## point to it (BuildingBox.building_of), so every system that works on a building
-## works on the whole unit.
+## street, and trees. Every building is its own node in group "buildings" (what the
+## player takes); meta "block" is the map unit it stands in (a block or a run of one),
+## which Districts counts for the block bonus.
 
 const DoorScript := preload("res://scripts/door.gd")
 const TreeScript := preload("res://scripts/swaying_tree.gd")
 const BuildingVisual := preload("res://scripts/building_visual.gd")
-const PARTS := &"building_parts"
 const PALETTE: Array[Color] = [
 	Color(0.62, 0.6, 0.57), Color(0.5, 0.42, 0.36), Color(0.7, 0.68, 0.62),
 	Color(0.36, 0.45, 0.55), Color(0.45, 0.47, 0.5), Color(0.58, 0.5, 0.42),
 ]
 
-## The "buildings" node of each unit, by CityPlan unit index.
-var unit_nodes: Array[StaticBody3D] = []
+## Every building's node, by CityPlan building index.
+var building_nodes: Array[StaticBody3D] = []
 
 var _city: Node3D
 var _plan: CityPlan
@@ -36,7 +34,7 @@ func _init(city: Node3D, plan: CityPlan, settings: CitySettings) -> void:
 func build(layer_world: int, layer_props: int) -> void:
 	_build_ground_colours()
 	_build_streets()
-	_build_units(layer_world)
+	_build_buildings(layer_world)
 	_plant_trees(layer_props)
 
 
@@ -133,30 +131,12 @@ func _dashes(st: SurfaceTool, points: PackedVector2Array) -> void:
 
 # --- Buildings ---
 
-func _build_units(layer: int) -> void:
-	for u in _plan.units.size():
-		var members := _plan.units[u].buildings
-		var main := members[0]
-		for b in members:
-			if _volume(b) > _volume(main):
-				main = b
-		var node := _building(_plan.buildings[main], layer)
+func _build_buildings(layer: int) -> void:
+	for p in _plan.buildings:
+		var node := _building(p, layer)
 		node.add_to_group("buildings")
-		node.set_meta(&"unit", u)
-		unit_nodes.append(node)
-		var parts: Array[Node3D] = []
-		for b in members:
-			if b != main:
-				var part := _building(_plan.buildings[b], layer)
-				part.add_to_group(PARTS)
-				part.set_meta(&"building", node)
-				parts.append(part)
-		node.set_meta(&"parts", parts)
-
-
-func _volume(b: int) -> float:
-	var p := _plan.buildings[b]
-	return p.size.x * p.size.y * p.floors * p.storey
+		node.set_meta(&"block", p.unit)
+		building_nodes.append(node)
 
 
 ## One building: a box turned to its street, dressed in the Kenney facades, with a

@@ -4,10 +4,11 @@ extends Resource
 ## Open data/people.tres in Godot and change values in the Inspector.
 
 @export_group("Population")
-## Every home (a unit of the map) gets at least this many residents; each record stands
-## for a group of like people (the Designer: about 4 per unit). The total is that or
+## Every home (a building) gets at least this many residents; each record stands for a
+## group of like people. A building is yours once most of them believe, so this and the
+## family size set how many conversions a building takes. The total is that or
 ## resident_count, whichever is more.
-@export var min_residents_per_home := 3
+@export var min_residents_per_home := 1
 @export var resident_count := 200
 ## One resident in this many walks the streets at a time (at least one from
 ## every lived-in home); the rest are indoors. Each body on the street costs
@@ -16,7 +17,7 @@ extends Resource
 ## Seconds between one person going indoors and another coming out (out of view).
 @export var swap_interval := 0.5
 @export var family_size_min := 1
-@export var family_size_max := 4
+@export var family_size_max := 3
 ## Close friends per person: the ties belief will travel along.
 @export var friends_min := 2
 @export var friends_max := 5

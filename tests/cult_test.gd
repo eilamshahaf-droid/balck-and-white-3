@@ -2,8 +2,8 @@ extends Node
 ## Checks the Slums slice of the core loop in the real main scene: who lives in
 ## the start district, the high priest at the start building, the conversion
 ## formula, believers' output and needs, training, claiming next to your buildings,
-## awareness, fragility, the Vandalist and his arrest, condemnation, and capturing
-## the district.
+## awareness, fragility, the Vandalist and his arrest, condemnation, the block bonus,
+## and capturing the district.
 ##
 ## Run headless:
 ##   godot --headless --path . res://tests/cult_test.tscn
@@ -39,21 +39,21 @@ func _ready() -> void:
 	await _test_vandalist()
 	await _test_condemnation()
 	_test_landmarks()
+	await _test_block()
 	_test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
 
 
-## The Slums come from the Map Lab's stage file: about 50 units of a few buildings each,
-## and the base far enough from the core (the Designer's and Balance Tester's numbers).
+## The Slums come from the Map Lab's stage file: a few hundred buildings, each taken on
+## its own, in about 50 blocks, and the base far enough from the core.
 func _test_stage_map() -> void:
 	var city: City = _main
-	var units := _districts.buildings.size()
-	_check(units >= 40 and units <= 65, "the stage map has about 50 units (%d)" % units)
-	var parts := get_tree().get_nodes_in_group(PlanBuilder.PARTS).size()
-	_check(parts > units * 3, "units are made of several buildings (%d more)" % parts)
-	var part: Node3D = get_tree().get_nodes_in_group(PlanBuilder.PARTS)[0]
-	_check(_districts.index_of(BuildingBox.building_of(part)) >= 0, "a part answers for its unit")
+	var count := _districts.buildings.size()
+	var blocks := _districts.block_count()
+	_check(count >= 300, "every building of the stage map can be taken (%d)" % count)
+	_check(blocks >= 40 and blocks <= 65, "they stand in about 50 blocks (%d)" % blocks)
+	_check(get_tree().get_nodes_in_group("buildings").size() == count, "each is its own building")
 	var d := _districts.start_district()
 	var steps := {_districts.core_of(d): 0}
 	var todo: Array[int] = [_districts.core_of(d)]
@@ -63,8 +63,8 @@ func _test_stage_map() -> void:
 			if not steps.has(j):
 				steps[j] = steps[i] + 1
 				todo.append(j)
-	_check(steps.get(_districts.headquarters, 0) >= 4,
-			"the base is several units from the core (%d)" % steps.get(_districts.headquarters, 0))
+	_check(steps.get(_districts.headquarters, 0) >= 6,
+			"the base is several buildings from the core (%d)" % steps.get(_districts.headquarters, 0))
 	var walk := city.walk_from(city.nearest_node(_districts.start_building().global_position), 5)
 	_check(walk.size() >= 2, "people can walk the streets from the base")
 
@@ -296,12 +296,51 @@ func _test_landmarks() -> void:
 	_check(landmarks.marks_in(d) == 1, "City Hall can clean a mark off")
 
 
+## A block whose buildings are all yours is complete: its people make more, and its
+## buildings are safe from giving way.
+func _test_block() -> void:
+	var fragility: Fragility = _main.get_node("Fragility")
+	var block := _districts.block_of(_districts.headquarters)
+	var done := [false]
+	_districts.block_changed.connect(func(b: int, complete: bool) -> void:
+		done[0] = done[0] or (b == block and complete))
+	var members := _districts.block_members(block)
+	var hq := _districts.buildings[_districts.headquarters]
+	_check(is_equal_approx(_districts.block_bonus(hq), 1.0), "no bonus while the block is not all yours")
+	for i in members:
+		_believe_in(i)
+		if _districts.residents_in(i) == 0:
+			_move_believer_into(i, block)
+	await _frames(int(DS.tick * 60.0 * 3.0))
+	_check(_districts.block_held(block) == members.size(),
+			"every building of the base's block is yours (%d of %d)"
+			% [_districts.block_held(block), members.size()])
+	_check(done[0] and _districts.is_block_complete(block), "so the block is complete")
+	_check(is_equal_approx(_districts.block_bonus(hq), DS.block_output_bonus),
+			"its people make x%.2f" % DS.block_output_bonus)
+	var safe := true
+	for i in members:
+		safe = safe and not fragility.is_exposed(i)
+	_check(safe, "and none of its buildings can give way")
+
+
+## Someone from another block starts believing and moves into empty building `index`.
+func _move_believer_into(index: int, block: int) -> void:
+	for r: Resident in _population.residents:
+		var home := _districts.index_of(r.home)
+		if home >= 0 and _districts.block_of(home) != block and not r.is_believer() \
+				and _districts.residents_in(home) > 1:
+			_population.convert_to(r, Resident.Rank.BELIEVER)
+			_population.move_home(r, _districts.buildings[index])
+			return
+
+
 func _test_capture() -> void:
 	var d := _districts.start_district()
 	var got := [false]
 	_districts.district_controlled.connect(func(x: int) -> void: got[0] = got[0] or x == d)
 	var core := _districts.buildings[_districts.core_of(d)]
-	_districts.convert_near(core.global_position, 400)
+	_districts.convert_near(core.global_position, _districts.buildings.size())
 	_check(got[0] and _districts.is_controlled(d), "taking most of the Slums captures the district")
 
 

@@ -1,8 +1,8 @@
 class_name DistrictView
 extends Node3D
-## Shows who holds what: a gold plate on the roof of every building of yours (all the
-## buildings of a unit, which change hands together), and a ring on the ground round
-## each unit, so the player sees what they take; it turns gold once the unit is yours.
+## Shows who holds what: a gold plate on the roof of every building of yours, and a
+## ring on the ground round each block that warms toward gold as more of the block is
+## yours and is solid gold once it is complete (the block bonus).
 ## All MultiMeshes, so hundreds of roofs cost one draw call. The takeover marks (skull,
 ## dollar, sky sign) are campaign_marks.gd.
 
@@ -10,13 +10,14 @@ const S: DistrictSettings = preload("res://data/districts.tres")
 const ROOF_LIFT := 1.4      # above the roof modules (Kenney roofs stand about a metre proud of the box)
 const ROOF_INSET := 0.8     # plate size as a share of the roof
 const BORDER_LIFT := 0.08   # just above the asphalt
+const NOTE_LIFT := 14.0     # the "block complete" note floats this far up
+const PARTLY := 0.7         # how far toward gold a nearly complete block's ring goes
 
 var _roofs := MultiMesh.new()
 var _borders := MultiMesh.new()
 var _cores := MultiMesh.new()
 var _hidden := Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO)
-var _first_roof := PackedInt32Array()     # per building: its first roof plate
-var _first_strip := PackedInt32Array()    # per building: its first ring strip (one more at the end)
+var _first_strip := PackedInt32Array()    # per block: its first ring strip (one more at the end)
 
 @onready var districts: Districts = get_node("../Districts")
 
@@ -24,6 +25,7 @@ var _first_strip := PackedInt32Array()    # per building: its first ring strip (
 func _ready() -> void:
 	districts.layout_ready.connect(_build)
 	districts.building_changed.connect(_on_building_changed)
+	districts.block_changed.connect(_on_block_changed)
 	districts.district_controlled.connect(_on_district_controlled)
 	districts.core_changed.connect(_place_core)
 	get_node("../Decrees").decree_issued.connect(_on_decree_issued)
@@ -35,11 +37,7 @@ func _build() -> void:
 	plate.material = _unshaded(S.roof_color, false)
 	_roofs.transform_format = MultiMesh.TRANSFORM_3D
 	_roofs.mesh = plate
-	var roofs := 0
-	for b in districts.buildings:
-		_first_roof.append(roofs)
-		roofs += BuildingBox.pieces_of(b).size()
-	_roofs.instance_count = roofs
+	_roofs.instance_count = districts.buildings.size()
 	for i in _roofs.instance_count:
 		_roofs.set_instance_transform(i, _hidden)
 	_add_instance(_roofs)
@@ -52,8 +50,8 @@ func _build() -> void:
 	_borders.mesh = strip
 	var rings: Array[PackedVector2Array] = []
 	_first_strip = PackedInt32Array([0])
-	for b in districts.buildings:
-		rings.append(_ring(b))
+	for block in districts.block_count():
+		rings.append(_ring(block))
 		_first_strip.append(_first_strip[-1] + rings[-1].size())
 	_borders.instance_count = _first_strip[-1]
 	for i in rings.size():
@@ -89,21 +87,27 @@ func _on_building_changed(index: int, yours: bool) -> void:
 	for d in districts.district_count():
 		if districts.core_of(d) == index:
 			_place_core(d)
-	_colour_ring(index, S.controlled_border_color if yours else S.border_color)
+	_colour_block(districts.block_of(index))
 	var b: Node3D = districts.buildings[index]
-	var pieces: Array[Node3D] = BuildingBox.pieces_of(b) if b else []
-	var count := (_first_roof[index + 1] if index + 1 < _first_roof.size() else _roofs.instance_count) \
-			- _first_roof[index]
-	for k in count:
-		var at := _first_roof[index] + k
-		if not yours or k >= pieces.size() or not is_instance_valid(pieces[k]):
-			_roofs.set_instance_transform(at, _hidden)
-			continue
-		var piece := pieces[k]
-		var size := BuildingBox.size_of(piece)  # live: decrees add floors
-		var top := piece.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT)
-		var turn := piece.global_basis.orthonormalized() * Basis.from_scale(Vector3(size.x, 1.0, size.z) * ROOF_INSET)
-		_roofs.set_instance_transform(at, Transform3D(turn, top))
+	if not yours or b == null:
+		_roofs.set_instance_transform(index, _hidden)
+		return
+	var size := BuildingBox.size_of(b)  # live: decrees add floors
+	var top := b.global_position + Vector3.UP * (size.y / 2.0 + ROOF_LIFT)
+	var turn := b.global_basis.orthonormalized() * Basis.from_scale(Vector3(size.x, 1.0, size.z) * ROOF_INSET)
+	_roofs.set_instance_transform(index, Transform3D(turn, top))
+
+
+func _on_block_changed(block: int, complete: bool) -> void:
+	_colour_block(block)
+	if not complete:
+		return
+	var middle := Vector3.ZERO
+	var members := districts.block_members(block)
+	for i in members:
+		if districts.buildings[i]:
+			middle += districts.buildings[i].global_position / districts.block_size(block)
+	FloatingNote.pop(self, middle + Vector3.UP * NOTE_LIFT, S.block_note, S.controlled_border_color)
 
 
 ## +3 Floors lifts the roof, so the plate follows it.
@@ -113,17 +117,16 @@ func _on_decree_issued(_kind: StringName, building: Node3D) -> void:
 		_on_building_changed(i, districts.is_yours(i))
 
 
-func _on_district_controlled(d: int) -> void:
-	for i in districts.buildings.size():
-		if districts.district_of(i) == d:
-			_colour_ring(i, S.controlled_border_color)
+func _on_district_controlled(_d: int) -> void:
+	for block in districts.block_count():
+		_colour_block(block)
 
 
-## The ground round building `b` and the rest of its unit: the hull of their walls,
-## grown by the margin.
-func _ring(b: Node3D) -> PackedVector2Array:
+## The ground round `block`: the hull of its buildings' walls, grown by the margin.
+func _ring(block: int) -> PackedVector2Array:
 	var points := PackedVector2Array()
-	for piece in BuildingBox.pieces_of(b):
+	for i in districts.block_members(block):
+		var piece := districts.buildings[i]
 		var half := BuildingBox.size_of(piece) / 2.0 + Vector3.ONE * S.unit_ring_margin
 		for corner in [Vector3(-half.x, 0, -half.z), Vector3(half.x, 0, -half.z),
 				Vector3(half.x, 0, half.z), Vector3(-half.x, 0, half.z)]:
@@ -141,12 +144,25 @@ func _outline(index: int, ring: PackedVector2Array) -> void:
 		var mid := (a + b) / 2.0
 		var turn := Basis(Vector3.UP, -(b - a).angle()) * Basis.from_scale(Vector3(a.distance_to(b), 1.0, S.border_width))
 		_borders.set_instance_transform(_first_strip[index] + k, Transform3D(turn, Vector3(mid.x, BORDER_LIFT, mid.y)))
-	_colour_ring(index, S.border_color)
+	_colour_block(index)
 
 
-func _colour_ring(index: int, color: Color) -> void:
-	for k in range(_first_strip[index], _first_strip[index + 1]):
+## A block's ring: white, warming toward gold with the share of it that is yours, and
+## solid gold once it is complete or its district is yours.
+func _colour_block(block: int) -> void:
+	var held := float(districts.block_held(block)) / maxi(districts.block_size(block), 1)
+	var color := S.border_color.lerp(S.controlled_border_color, held * PARTLY)
+	if districts.is_block_complete(block) or districts.is_controlled(_district_of_block(block)):
+		color = S.controlled_border_color
+	for k in range(_first_strip[block], _first_strip[block + 1]):
 		_borders.set_instance_color(k, color)
+
+
+func _district_of_block(block: int) -> int:
+	for i in districts.block_members(block):
+		if districts.district_of(i) >= 0:
+			return districts.district_of(i)
+	return districts.start_district()
 
 
 func _add_instance(multimesh: MultiMesh) -> void:

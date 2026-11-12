@@ -171,6 +171,9 @@ func _step(c: Campaign) -> void:
 		c.blocked -= S.tick
 		c.stalled = "police roadblock"
 		return
+	if not districts.can_claim(districts.index_of(c.building)):
+		c.stalled = "must border a building of yours"
+		return
 	_top_up(c)
 	c.wait -= S.tick
 	if c.wait > 0.0:
@@ -307,10 +310,10 @@ func _mover_for(building: Node3D) -> Resident:
 	return best
 
 
-## Would building `i` stay yours with one believer fewer?
+## Would building `i` stay yours with one believer fewer? Not if that empties it.
 func _spare(i: int) -> bool:
 	var people := districts.residents_in(i) - 1
-	return people <= 0 or float(districts.believers_at(i) - 1) / people > districts.S.capture_share
+	return people > 0 and float(districts.believers_at(i) - 1) / people > districts.S.capture_share
 
 
 ## A building of yours with the Combat Training use, or null.
