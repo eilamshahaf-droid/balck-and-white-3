@@ -10,7 +10,7 @@ extends Resource
 @export var kinds: PackedStringArray = [
 	"Slums", "Workers", "Students", "Gentrification", "Nightlife", "Financial", "Old civic",
 ]
-## How well off a district of each kind is, same order: scales rent and shop income and
+## How well off a district of each kind is, same order: scales dues and shop income and
 ## what it costs to buy people out. The Slums are poor; the Financial district is rich.
 @export var wealth := PackedFloat32Array([0.4, 0.9, 1.0, 1.2, 1.0, 2.0, 1.5])
 ## How free each district of the stage map starts (0 grey and ruled .. 1 free), in map order. Not

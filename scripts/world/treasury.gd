@@ -100,7 +100,7 @@ func _net(building: Node3D, use: String, luxury: bool, levels: int) -> float:
 	var gain := 0.0
 	var upkeep := S.floor_upkeep * levels * levels
 	if use == "":
-		gain = S.rent_per_resident * districts.residents_in(i)
+		gain = S.dues_per_resident * districts.residents_in(i)
 	elif use == S.shop_use:
 		gain = S.shop_income + S.shop_income_per_believer * districts.believers_at(i)
 	else:

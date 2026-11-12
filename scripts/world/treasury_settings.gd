@@ -2,7 +2,8 @@ class_name TreasurySettings
 extends Resource
 ## Tunables for the cult's money (treasury.gd). Open data/treasury.tres in
 ## Godot and change values in the Inspector. Every building of yours earns or
-## costs money each second: rent while it has no use, upkeep once it has one
+## costs money each second: the Committee's dues (never "rent": the god is against
+## landlords) while it has no use, upkeep once it has one
 ## (except a shop, which earns), more upkeep for luxury and every floor level.
 ## District wealth (data/districts.tres) scales what a building earns.
 
@@ -25,11 +26,11 @@ extends Resource
 
 @export_group("Collection box")
 
-@export_group("Rent: a building of yours with no use")
-@export var rent_per_resident := 0.1        # money per second per resident
+@export_group("Dues: a building of yours with no use")
+@export var dues_per_resident := 0.03       # money per second per resident
 
 @export_group("Uses: a Change Use decree")
-## Every use but the shop costs upkeep instead of bringing rent in.
+## Every use but the shop costs upkeep instead of bringing dues in.
 @export var use_upkeep := 1.2               # money per second
 @export var shop_use := "Shop"
 @export var shop_income := 2.0              # money per second
