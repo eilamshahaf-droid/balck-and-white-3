@@ -65,6 +65,10 @@ func _describe(building: Node3D) -> String:
 		lines.append("Followers %d of %d" % [followers.count_of(i), followers.room_of(i)])
 		if followers.has_shop(i):
 			lines.append("Sellers %d of %d" % [followers.sellers_in(i), followers.shop_slots(i)])
+	elif districts.is_key(i):
+		lines[0] = districts.key_name(i)
+		lines.append("Key building: inspectors come from here")
+		lines.append("It will take more than a Rep")
 	elif districts.wants_you(i) and districts.can_claim(i):
 		lines.append("Wants you: set a Rep down here to manage it")
 	elif not districts.borders_yours(i):

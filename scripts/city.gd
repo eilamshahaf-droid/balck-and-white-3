@@ -92,6 +92,31 @@ func walk_from(n: int, steps: int) -> PackedInt32Array:
 	return path
 
 
+## The nodes of the shortest walk along the streets from node `from` to node `to`, both
+## included (fewest corners); just the two when the streets don't join them.
+func route(from: int, to: int) -> PackedInt32Array:
+	var came := PackedInt32Array()
+	came.resize(plan.nodes.size())
+	came.fill(-1)
+	came[from] = from
+	var todo := PackedInt32Array([from])
+	var at := 0
+	while at < todo.size() and came[to] < 0:
+		var n := todo[at]
+		at += 1
+		for next in plan.neighbours[n]:
+			if came[next] < 0:
+				came[next] = n
+				todo.append(next)
+	if came[to] < 0:
+		return PackedInt32Array([from, to])
+	var out := PackedInt32Array([to])
+	while out[out.size() - 1] != from:
+		out.append(came[out[out.size() - 1]])
+	out.reverse()
+	return out
+
+
 func random_node() -> int:
 	return rng.randi_range(0, plan.nodes.size() - 1)
 

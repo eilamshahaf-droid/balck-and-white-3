@@ -3,6 +3,19 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.16.0 (2026-11-13): round B, the inspectors, and paperwork as the shield
+Round B of Eilam's model: the city answers, and paperwork is what answers it back. Numbers are provisional, all in `data/inspectors.tres`.
+- **Key buildings.** Nine buildings spread over the Slums (the core and one in every four or five blocks) carry a red signboard with a name: Bureau of Forms, Permit Office, Licence Desk... Inspectors come out of them. A Rep can't take one; that is round C.
+- **Exposure** (a new card at the top) rises while Reps are at work and with every building taken, and fades slowly.
+- **Inspectors.** Every so often one walks the streets from the nearest key building to a Rep at a door, with "! INSPECTOR" over his head. When he arrives the Rep **shows papers**: it costs paperwork (25, up to twice that at full exposure). With no paperwork the Rep is sent home and is lost.
+- **The hand against him.** Lift an inspector and set him down far away, or throw him: he lies there a moment, gets up and walks back. After two and a half minutes out he gives up. So the hand saves paperwork.
+- **More exposure, more trouble**: up to four inspectors at once, more often, and from 35% exposure some of them **audit a building of yours** (never the Office, never one in a complete block). An audit costs paperwork by the building's size; with none the building is lost with its followers and its Manager, and keeps 60% of its bar.
+- **Security** now does something: each level makes that building's audit cheaper, and inspectors go for the least secure first.
+- **Bury the File** (the Office wheel): spend paperwork to cut the exposure by 25 points; it costs more each time (60, 90, 135...). When an inspector does get his way the exposure drops a little.
+- For balance (`pace_sim --bot=train,send,shop,upgrade,bury`, no hand, so every inspector arrives): after an hour 58 buildings (33%), 9 whole blocks, 671 followers; 67 demands paid, 3 buildings and 2 Reps lost; paperwork stays between 60 and 140 instead of piling up to 3,600. Money still piles up ($12,000): it needs a use.
+- Not done: nothing points to an inspector who is off screen, and key buildings look like any building with a sign.
+- Try it: send a Rep to a building and wait a minute and a half. When "! INSPECTOR" appears, pick him up and drop him across town, or let him come and watch the paperwork go.
+
 ## Pre-Alpha 0.15.0 (2026-11-13): round A of the new model, the economy
 Eilam's model of 2026-11-13 (GDD section 0, item 7), first of three rounds. Round B brings the danger (inspectors you can lift away), round C the goal (key buildings, the Fixer, the two ways to win). Numbers are provisional, all in `data/followers.tres`.
 - **Followers are a number.** Every building of yours has room for followers by its size (an ordinary one about 10, the Office 45). A building you take starts half full and fills by itself. They are one pool. No building is ever empty.

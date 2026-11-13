@@ -83,6 +83,8 @@ func why_not(building: Node3D) -> String:
 		return "not a building"
 	if districts.is_yours(i):
 		return "already yours"
+	if districts.is_key(i):
+		return "a key building: it will take more than a Rep"
 	if not districts.is_open(building):
 		return "opens in a later stage"
 	if not districts.borders_yours(i):
@@ -98,6 +100,23 @@ func marked() -> Array[Node3D]:
 	for c in _campaigns:
 		out.append(c.building)
 	return out
+
+
+## The Reps (or the Secretary) on the way to `building` or at its door.
+func reps_at(building: Node3D) -> Array[Resident]:
+	var found: Array[Resident] = []
+	var c := _campaign_on(building)
+	if c:
+		for a in c.agents:
+			if is_instance_valid(a) and a.on_errand:
+				found.append(a.resident)
+	return found
+
+
+## `rep` stops work and walks off (an inspector sent them home).
+func dismiss(rep: Resident) -> void:
+	if is_instance_valid(rep.body):
+		rep.body.end_errand()
 
 
 ## How many Reps stand at `building` now.

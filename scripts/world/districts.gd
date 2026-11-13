@@ -36,6 +36,9 @@ var buildings: Array[Node3D] = []
 var sizes := PackedVector3Array()
 ## The cult's first building: the start district's core.
 var headquarters := -1
+## The key buildings (about one per few blocks): inspectors come out of them. They can't
+## be taken yet (round C).
+var keys := PackedInt32Array()
 ## How free each district is (0..1); see DistrictSettings.independence.
 var independence := PackedFloat32Array()
 
@@ -55,6 +58,7 @@ var _block_members: Array[PackedInt32Array] = []
 var _block_standing := PackedInt32Array()   # per block: buildings not demolished
 var _block_held := PackedInt32Array()       # of them, yours
 var _block_complete := PackedByteArray()
+var _key := PackedByteArray()            # per building: 1 for a key building
 var _timer := 0.0
 
 @onready var city: City = get_parent()
@@ -165,7 +169,7 @@ func meter_of(index: int) -> float:
 ## Move building `index`'s takeover meter by `amount` (a rep at the door, the pull of
 ## your buildings next to it, or time wearing it down).
 func add_meter(index: int, amount: float) -> void:
-	if _yours[index] == 1 or _district_of[index] < 0:
+	if _yours[index] == 1 or _district_of[index] < 0 or _key[index] == 1:
 		return
 	var now := clampf(_meter[index] + amount, 0.0, 1.0)
 	if not is_equal_approx(now, _meter[index]):
@@ -227,9 +231,18 @@ func can_claim(index: int) -> bool:
 	var d := _district_of[index]
 	if index == headquarters:
 		return true
-	if d < 0 or _unlocked[d] == 0 or not borders_yours(index):
+	if d < 0 or _unlocked[d] == 0 or _key[index] == 1 or not borders_yours(index):
 		return false
 	return _core[d] != index or core_base(index) >= S.core_base_share
+
+
+func is_key(index: int) -> bool:
+	return _key[index] == 1
+
+
+## The name on key building `index`'s sign.
+func key_name(index: int) -> String:
+	return S.key_name(keys.find(index))
 
 
 ## Building `index` borders a standing building of yours.
@@ -448,8 +461,11 @@ func _collect() -> void:
 	_yours.fill(0)
 	_meter.resize(n)
 	_managed.resize(n)
+	_key.resize(n)
 	_find_borders()
 	_found_headquarters()
+	for d in count:
+		_find_keys(d)
 
 
 ## Which buildings border each other (next door or across a street, and across district
@@ -464,6 +480,40 @@ func _demolished() -> PackedByteArray:
 	for i in buildings.size():
 		out[i] = 1 if _district_of[i] < 0 else 0
 	return out
+
+
+## District `d`'s key buildings: its core, and the largest building of one block in every
+## blocks_per_key, each time the block farthest from those chosen so far, so they spread
+## over the district. Never in the base's block.
+func _find_keys(d: int) -> void:
+	if _core[d] < 0:
+		return
+	var blocks: Array[int] = []
+	var middles := {}
+	for block in _block_members.size():
+		var lead := _largest(_block_members[block], d)
+		if lead >= 0 and block != _block_of[headquarters] and block != _block_of[_core[d]]:
+			blocks.append(block)
+			middles[block] = buildings[lead].global_position
+	var chosen: Array[Vector3] = [buildings[_core[d]].global_position]
+	_key[_core[d]] = 1
+	keys.append(_core[d])
+	var wanted := roundi((blocks.size() + 2) / S.blocks_per_key)
+	while chosen.size() < wanted and not blocks.is_empty():
+		var far := -1
+		var far_d := -1.0
+		for block in blocks:
+			var nearest := INF
+			for p in chosen:
+				nearest = minf(nearest, p.distance_squared_to(middles[block]))
+			if nearest > far_d:
+				far_d = nearest
+				far = block
+		blocks.erase(far)
+		chosen.append(middles[far])
+		var index := _largest(_block_members[far], d)
+		_key[index] = 1
+		keys.append(index)
 
 
 ## Each district's core is the largest building of the block the stage map marks as

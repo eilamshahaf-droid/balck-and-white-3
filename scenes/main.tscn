@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=35 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -31,6 +31,8 @@
 [ext_resource type="Script" path="res://scripts/world/district_won.gd" id="60_won"]
 [ext_resource type="Script" path="res://scripts/world/district_progress.gd" id="63_progress"]
 [ext_resource type="Script" path="res://scripts/world/followers.gd" id="70_followers"]
+[ext_resource type="Script" path="res://scripts/inspection/inspectors.gd" id="71_inspectors"]
+[ext_resource type="Script" path="res://scripts/props/key_markers.gd" id="72_keys"]
 [ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 
 [node name="Main" type="Node3D"]
@@ -83,14 +85,27 @@ script = ExtResource("7_miracles")
 treasury = NodePath("../Treasury")
 districts = NodePath("../Districts")
 
+[node name="KeyMarkers" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
+script = ExtResource("72_keys")
+districts = NodePath("../Districts")
+
+[node name="Inspectors" type="Node3D" parent="." node_paths=PackedStringArray("districts", "campaigns", "population", "followers", "faith")]
+script = ExtResource("71_inspectors")
+districts = NodePath("../Districts")
+campaigns = NodePath("../Campaigns")
+population = NodePath("../Population")
+followers = NodePath("../Followers")
+faith = NodePath("../Faith")
+
 [node name="PriestMarker" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("41_priest")
 population = NodePath("../Population")
 
-[node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population", "campaigns")]
+[node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population", "campaigns", "inspectors")]
 script = ExtResource("40_notes")
 population = NodePath("../Population")
 campaigns = NodePath("../Campaigns")
+inspectors = NodePath("../Inspectors")
 
 [node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "treasury")]
 script = ExtResource("13_decrees")
@@ -98,7 +113,7 @@ faith = NodePath("../Faith")
 districts = NodePath("../Districts")
 treasury = NodePath("../Treasury")
 
-[node name="BuildingMenus" type="Node" parent="." node_paths=PackedStringArray("districts", "followers", "treasury", "faith", "population", "decrees")]
+[node name="BuildingMenus" type="Node" parent="." node_paths=PackedStringArray("districts", "followers", "treasury", "faith", "population", "decrees", "inspectors")]
 script = ExtResource("50_menus")
 districts = NodePath("../Districts")
 followers = NodePath("../Followers")
@@ -106,6 +121,7 @@ treasury = NodePath("../Treasury")
 faith = NodePath("../Faith")
 population = NodePath("../Population")
 decrees = NodePath("../Decrees")
+inspectors = NodePath("../Inspectors")
 
 [node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns", "menus", "districts")]
 script = ExtResource("8_tools")
@@ -184,7 +200,8 @@ script = ExtResource("5_help")
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: who is this (debug)    F1: debug panel
 Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building of yours: train, upgrades, floors, shop, loan    On a building next to yours: Send a Rep
-Lift a Rep and set them down at a door to take that building; keep the hand over a building at work and it goes faster"
+Lift a Rep and set them down at a door to take that building; keep the hand over a building at work and it goes faster
+Inspectors (red !) walk from key buildings to your Reps and want paperwork: lift one and set him down far away to buy time"
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0

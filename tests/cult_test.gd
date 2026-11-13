@@ -2,8 +2,9 @@ extends Node
 ## Checks the Slums slice of the core loop in the real main scene: the stage map, the
 ## Secretary at the main Office, followers as numbers and the roles that fill
 ## themselves, training a Rep under the cap, taking a building next to yours with a Rep
-## who stays as its Manager, the pull inside a block, shops, floors, the loan, losing a
-## building, the block bonus, and winning the district.
+## who stays as its Manager, the pull inside a block, shops, floors, the loan, key
+## buildings and inspectors (papers, audits, burying the file), the block bonus, and
+## winning the district.
 ##
 ## Run headless:
 ##   godot --headless --path . res://tests/cult_test.tscn
@@ -13,6 +14,7 @@ const MAIN := preload("res://scenes/main.tscn")
 const U: UnitSettings = preload("res://data/units.tres")
 const DS: DistrictSettings = preload("res://data/districts.tres")
 const F: FollowersSettings = preload("res://data/followers.tres")
+const I: InspectorSettings = preload("res://data/inspectors.tres")
 const PULL_MINUTES := 2.0
 const PLENTY := 100000.0
 
@@ -24,6 +26,8 @@ var _menus: BuildingMenus
 var _faith: Faith
 var _treasury: Treasury
 var _decrees: Decrees
+var _inspectors: Inspectors
+var _campaigns: Campaigns
 var _near := -1   # a building taken next to the headquarters by _test_taking
 var _failures := 0
 
@@ -38,6 +42,8 @@ func _ready() -> void:
 	_faith = _main.get_node("Faith")
 	_treasury = _main.get_node("Treasury")
 	_decrees = _main.get_node("Decrees")
+	_inspectors = _main.get_node("Inspectors")
+	_campaigns = _main.get_node("Campaigns")
 	await _frames(int(F.tick * 60.0) + 20)
 	_test_stage_map()
 	_test_start()
@@ -49,7 +55,9 @@ func _ready() -> void:
 	_test_pull()
 	_test_shop_and_floors()
 	_test_loan()
-	_test_losing()
+	_test_key_buildings()
+	await _test_inspector_and_rep()
+	_test_audit()
 	await _test_block()
 	await _test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
@@ -283,19 +291,109 @@ func _test_loan() -> void:
 			"banknotes from a miracle pay the loan off first")
 
 
-## A building that is lost takes its followers out of the pool and its Manager with it;
-## its meter stays part full.
-func _test_losing() -> void:
+## About one block in four or five has a key building, spread over the district; they
+## can't be taken by a Rep.
+func _test_key_buildings() -> void:
+	var d := _districts.start_district()
+	var keys := _districts.keys
+	_check(keys.size() >= 6 and keys.size() <= 12, "the Slums have about nine key buildings (%d)" % keys.size())
+	_check(keys.has(_districts.core_of(d)), "the core is one of them")
+	var in_base_block := false
+	var claimable := false
+	for k in keys:
+		in_base_block = in_base_block or _districts.block_of(k) == _districts.block_of(_districts.headquarters)
+		claimable = claimable or _districts.can_claim(k)
+	_check(not in_base_block, "none stands in the Office's block")
+	_check(not claimable and _campaigns.why_not(_districts.buildings[keys[0]]) != "",
+			"a Rep can't take a key building")
+	var city: City = _main
+	var from := city.nearest_node(_districts.buildings[keys[0]].global_position)
+	var to := city.nearest_node(_districts.start_building().global_position)
+	var route := city.route(from, to)
+	var joined := route[0] == from and route[route.size() - 1] == to
+	for n in route.size() - 1:
+		joined = joined and city.plan.neighbours[route[n]].has(route[n + 1])
+	_check(joined and route.size() > 2, "the streets join a key building to the Office (%d corners)" % route.size())
+
+
+## An inspector walks from a key building to a Rep at work. With paperwork the Rep shows
+## papers; with none the Rep is sent home. More exposure, more inspectors.
+func _test_inspector_and_rep() -> void:
+	_faith.exposure = 0.0
+	_check(_inspectors.allowed() == I.max_base, "with no exposure, %d inspector at a time" % I.max_base)
+	_faith.exposure = 1.0
+	_check(_inspectors.allowed() == I.max_base + I.max_extra,
+			"at full exposure, %d" % (I.max_base + I.max_extra))
+	_faith.exposure = 0.5
+	_faith.belief_pool = _inspectors.bury_cost()
+	var first := _inspectors.bury_cost()
+	_check(_inspectors.bury() and is_equal_approx(_faith.exposure, 0.5 - I.bury_exposure) \
+			and is_zero_approx(_faith.belief_pool), "burying the file costs paperwork and lowers exposure")
+	_check(_inspectors.bury_cost() > first, "and costs more the next time")
+	var rep: Resident = null
+	for r in _population.residents:
+		if r.rank == Resident.Rank.MISSIONARY and r.job == Resident.Job.FREE:
+			rep = r
+	var door: Node3D = null
+	for i in _districts.buildings.size():
+		if _districts.buildings[i] and not _districts.is_yours(i) and not _districts.wants_you(i) \
+				and _campaigns.why_not(_districts.buildings[i]) == "":
+			door = _districts.buildings[i]
+			break
+	if rep == null or door == null:
+		_check(false, "a free Rep and a door to send them to")
+		return
+	_population.bring_out(rep)
+	_population.canvasser_set_down.emit(rep, door)
+	_check(_campaigns.reps_at(door).has(rep), "a Rep set down at a door is at work there")
+	var inspector := _inspectors.send_to(door, false)
+	var start := inspector.global_position
+	await _frames(60)
+	_check(inspector.global_position.distance_to(start) > 1.0 and not inspector.arrived,
+			"an inspector leaves the nearest key building and walks the streets")
+	inspector.on_grabbed()
+	inspector.on_released(Vector3.ZERO)
+	_check(_inspectors.out.has(inspector) and not inspector.arrived, "the hand can lift him and set him down")
+	var cost := _inspectors.demand_cost()
+	_faith.belief_pool = cost + 5.0
+	inspector.arrived = true
+	_inspectors._arrive(inspector)
+	_check(is_equal_approx(_faith.belief_pool, 5.0) and rep.rank == Resident.Rank.MISSIONARY \
+			and _campaigns.reps_at(door).has(rep),
+			"when he arrives the Rep shows papers (%d paperwork) and works on" % roundi(cost))
+	_check(not _inspectors.out.has(inspector), "and the inspector leaves")
+	inspector = _inspectors.send_to(door, false)
+	inspector.arrived = true
+	_inspectors._arrive(inspector)
+	_check(rep.rank == Resident.Rank.RESIDENT and _campaigns.reps_at(door).is_empty(),
+			"with no paperwork the Rep is sent home")
+
+
+## An inspector audits a building of yours: paperwork passes it (less with Security);
+## with none it is lost, with its followers and its Manager, and keeps part of its meter.
+func _test_audit() -> void:
 	if _near < 0:
 		return
 	var b := _districts.buildings[_near]
+	var plain := _inspectors.audit_cost(_near)
+	_followers.upgrades.add(b, BuildingUpgrades.Kind.SECURITY)
+	var cost := _inspectors.audit_cost(_near)
+	_check(cost < plain, "Security makes an audit cheaper (%d to %d paperwork)" % [roundi(plain), roundi(cost)])
+	_faith.belief_pool = cost
+	var inspector := _inspectors.send_to(b, true)
+	inspector.arrived = true
+	_inspectors._arrive(inspector)
+	_check(_districts.is_yours(_near) and is_zero_approx(_faith.belief_pool),
+			"a building of yours passes its audit for paperwork")
 	var manager := _population.manager_of(b)
 	_followers.recount()
 	var pool := _followers.total
 	var there := _followers.count_of(_near)
-	_districts.lose(_near)
+	inspector = _inspectors.send_to(b, true)
+	inspector.arrived = true
+	_inspectors._arrive(inspector)
 	_check(not _districts.is_yours(_near) and is_equal_approx(_districts.meter_of(_near), DS.lost_meter),
-			"a lost building keeps %d%% of its meter" % roundi(DS.lost_meter * 100.0))
+			"with no paperwork it is lost, and keeps %d%% of its meter" % roundi(DS.lost_meter * 100.0))
 	_check(_followers.count_of(_near) == 0 and _followers.total == pool - there,
 			"its followers leave the pool")
 	_check(manager != null and manager.rank == Resident.Rank.RESIDENT \

@@ -1,7 +1,8 @@
 extends Label
 ## The numbers the player may see, as a row of cards along the top: paperwork (what
 ## training, decrees and miracles spend), money and what comes in, followers and how
-## many of them hold a role, Reps (free of the cap) and buildings of yours. Under
+## many of them hold a role, Reps (free of the cap), buildings of yours, and the
+## exposure with the inspectors out. Under
 ## them, what the hand holds.
 
 const REFRESH := 0.25   # seconds; the numbers don't need to change every frame
@@ -13,6 +14,7 @@ var _values: Array[Label] = []
 @onready var faith: Faith = get_node("../../Faith")
 @onready var tools: HandTools = get_node("../../HandTools")
 @onready var followers: Followers = get_node("../../Followers")
+@onready var inspectors: Inspectors = get_node("../../Inspectors")
 @onready var treasury: Treasury = get_node("../../Treasury")
 @onready var districts: Districts = get_node("../../Districts")
 @onready var population: Population = get_node("../../Population")
@@ -39,7 +41,7 @@ func _ready() -> void:
 	row.position = Vector2(0.0, -52.0)
 	add_child(row)
 	var titles := ["PAPERWORK", "MONEY", "FOLLOWERS", U.plural(Resident.Rank.MISSIONARY).to_upper(),
-			"BUILDINGS"]
+			"BUILDINGS", "EXPOSURE"]
 	for title: String in titles:
 		var card := PanelContainer.new()
 		var box := VBoxContainer.new()
@@ -68,6 +70,9 @@ func _process(delta: float) -> void:
 	_show(3, "%d free, %d of %d" % [population.free_rep_count, population.reps_out,
 			followers.rep_cap()])
 	_show(4, "%d" % districts.converted_buildings().size())
+	var count := inspectors.out.size()
+	_show(5, "%d%%" % roundi(faith.exposure * 100.0) if count == 0
+			else "%d%%  %d inspector%s out" % [roundi(faith.exposure * 100.0), count, "" if count == 1 else "s"])
 	var line := ""
 	if tools.charged != &"":
 		line = "In the hand: %s (click to cast, right-click to drop)" % String(tools.charged).capitalize()
