@@ -1,17 +1,20 @@
 class_name Campaigns
 extends Node
-## The three ways the player takes a building, by marking it (design doc,
-## Eilam's round of 2026-10-27). Skull, force: fighters from a Combat Training
-## building scare the non-believers out and move in. Dollar, buy: the cult buys
-## out non-believers one by one and believers move in. Sky sign, missionaries:
-## missionaries try to win the residents over at the door (Population.attempt). The building is
-## yours, by Districts' rule, once most of its residents believe; then the
-## campaign ends. Marks come from the building wheel.
+## How a building's takeover meter (Districts) is filled on purpose, and how a full one
+## is taken (Eilam's rule of 2026-11-13). Sky sign: reps at the door fill it, each at
+## their own pace, more reps faster; when it is full one of them takes the building over
+## and stays as its manager. Skull and dollar fill the same meter by force or by money
+## and leave the building wanting you, for a rep to come and manage. The hand starts the
+## sky sign by setting a rep down at a door; the wheel sends the nearest free one.
 
 signal campaign_started(building: Node3D, route: Route)
 signal campaign_ended(building: Node3D, route: Route, won: bool)
 ## A canvasser the hand set down at `building` can't work on it, and `why`.
 signal mark_refused(building: Node3D, why: String)
+## Reps are at work on `building` right now (once a step): the neighbours may notice.
+signal worked(building: Node3D)
+## `rep` took `building` over and manages it.
+signal taken(building: Node3D, rep: Resident)
 
 enum Route { FORCE, BUY, PREACH }
 
@@ -39,6 +42,9 @@ class Campaign:
 	var blocked := 0.0
 	## What holds it up, for the HUD ("" while it runs).
 	var stalled := ""
+	## Marked from the wheel: the nearest free rep is sent. A campaign the hand started
+	## has only the reps the hand set down.
+	var auto := false
 
 
 func _ready() -> void:
@@ -68,6 +74,7 @@ func mark(building: Node3D, route: Route) -> bool:
 	c = Campaign.new()
 	c.building = building
 	c.route = route
+	c.auto = true
 	_campaigns.append(c)
 	campaign_started.emit(building, route)
 	return true
@@ -105,11 +112,6 @@ func why_not(building: Node3D, route: Route) -> String:
 		Route.BUY:
 			if not treasury.can_afford(price_in(building)):
 				return "needs $%d" % roundi(price_in(building))
-		Route.PREACH:
-			if districts.residents_in(i) == 0:
-				return "nobody lives there"
-			if faith.belief_pool < S.preach_cost:
-				return "needs %d belief" % roundi(S.preach_cost)
 	return ""
 
 
@@ -169,17 +171,41 @@ func stalled_on(building: Node3D) -> String:
 	return c.stalled if c else ""
 
 
-## The hand set a canvasser down at `building`: that is the sky sign, with no wheel. The
-## nearest free canvassers answer the mark, so the one just set down is the first.
-func _on_canvasser_set_down(_r: Resident, building: Node3D) -> void:
-	if route_of(building) == Route.PREACH:
+## The hand set a rep (or the Secretary) down at `building`. One that already wants you
+## is taken on the spot; otherwise they start on its meter, joining whoever is at it.
+func _on_canvasser_set_down(r: Resident, building: Node3D) -> void:
+	var i := districts.index_of(building)
+	if i >= 0 and districts.wants_you(i) and r.rank == Resident.Rank.MISSIONARY \
+			and districts.can_claim(i):
+		clear(building)
+		_take(building, r)
 		return
-	var why := why_not(building, Route.PREACH)
-	if why != "":
-		mark_refused.emit(building, why)
+	var c := _campaign_on(building)
+	if c == null or c.route != Route.PREACH:
+		var why := why_not(building, Route.PREACH)
+		if why != "":
+			mark_refused.emit(building, why)
+			return
+		clear(building)
+		c = Campaign.new()
+		c.building = building
+		c.route = Route.PREACH
+		_campaigns.append(c)
+		campaign_started.emit(building, Route.PREACH)
+	if is_instance_valid(r.body) and not c.agents.has(r.body):
+		r.body.send_on_errand(_spot_outside(building, false), building.global_position, INF,
+				S.missionary_line, S.line_color)
+		c.agents.append(r.body)
+
+
+## `rep` takes `building` over and stays as its manager.
+func _take(building: Node3D, rep: Resident) -> void:
+	if not districts.take(districts.index_of(building)):
 		return
-	clear(building)
-	mark(building, Route.PREACH)
+	if is_instance_valid(rep.body):
+		rep.body.end_errand()
+	population.make_manager(rep, building)
+	taken.emit(building, rep)
 
 
 func _step(c: Campaign) -> void:
@@ -200,61 +226,46 @@ func _step(c: Campaign) -> void:
 	if not c.agents.any(func(a: Citizen) -> bool: return is_instance_valid(a) and a.errand_arrived):
 		c.stalled = "on the way" if not c.agents.is_empty() else "nobody free to go"
 		return
+	var i := districts.index_of(c.building)
 	match c.route:
 		Route.FORCE:
-			c.stalled = "" if _drive_out(c) else "nobody left to scare"
+			districts.add_meter(i, S.force_meter)
+			faith.exposure = minf(faith.exposure + S.force_exposure, 1.0)
 			# A luxurious training building trains faster.
 			var training := _training()
 			c.wait = S.force_interval / (treasury.speed_of(training) if training else 1.0)
 		Route.BUY:
-			if not treasury.can_afford(price_in(c.building)):
+			if not treasury.spend_money(price_in(c.building)):
 				c.stalled = "needs $%d" % roundi(price_in(c.building))
 				return
-			if _buy_out(c):
-				c.stalled = ""
+			districts.add_meter(i, S.buy_meter)
 			c.wait = S.buy_interval
 		Route.PREACH:
-			if faith.belief_pool < S.preach_cost:
-				c.stalled = "needs %d belief" % roundi(S.preach_cost)
-				return
-			var r := _doubter_in(c.building)
-			var preacher := _arrived_agent(c)
-			if r and preacher and faith.spend(S.preach_cost):
-				population.preaching.attempt(r, preacher)
-				c.stalled = ""
-			c.wait = S.preach_interval
-
-
-## A non-believer flees and a believer moves in.
-func _drive_out(c: Campaign) -> bool:
-	var r := _doubter_in(c.building)
-	if r:
-		population.evict(r)
-		faith.exposure = minf(faith.exposure + S.force_exposure, 1.0)
-	var mover := _mover_for(c.building)
-	if mover:
-		population.move_home(mover, c.building)
-	return r != null or mover != null
-
-
-func _buy_out(c: Campaign) -> bool:
-	var r := _doubter_in(c.building)
-	var mover := _mover_for(c.building)
-	if r == null and mover == null:
-		return false
-	treasury.spend_money(price_in(c.building))
-	if r:
-		population.evict(r)
-	if mover:
-		population.move_home(mover, c.building)
-	return true
+			var gain := 0.0
+			for a in c.agents:
+				if is_instance_valid(a) and a.errand_arrived:
+					gain += population.preaching.pace(c.building, a.resident)
+			districts.add_meter(i, gain * S.tick / S.rep_seconds)
+			worked.emit(c.building)
+	c.stalled = ""
+	if not districts.wants_you(i):
+		return
+	# Full: a rep at the door takes it over. Fighters, buyers and the Secretary can't
+	# manage a building, so theirs is left wanting you.
+	var rep := _arrived_rep(c)
+	if rep:
+		_take(c.building, rep)
+	else:
+		_end(c, false)
 
 
 ## Sends believers until the campaign has its crew: fighters start from the
 ## training building, the others from wherever they are.
 func _top_up(c: Campaign) -> void:
 	c.agents = c.agents.filter(func(a: Citizen) -> bool: return is_instance_valid(a) and a.on_errand)
-	var wanted: int = [S.fighters, S.buyers, S.missionaries][c.route]
+	if c.route == Route.PREACH and not (c.auto and c.agents.is_empty()):
+		return
+	var wanted: int = [S.fighters, S.buyers, 1][c.route]
 	var gym := _training() if c.route == Route.FORCE else null
 	if gym:
 		wanted = mini(wanted + floori(population.staffing.fighters_of(gym)), S.max_fighters)
@@ -298,44 +309,14 @@ func _spot_outside(building: Node3D, middle: bool) -> Vector3:
 	return spot
 
 
-## A crew member of `c` standing at the building, or null.
-func _arrived_agent(c: Campaign) -> Resident:
+## A rep of `c` standing at the building, or null (the Secretary doesn't count: he has
+## the Office to run).
+func _arrived_rep(c: Campaign) -> Resident:
 	for a in c.agents:
-		if is_instance_valid(a) and a.errand_arrived:
+		if is_instance_valid(a) and a.errand_arrived \
+				and a.resident.rank == Resident.Rank.MISSIONARY:
 			return a.resident
 	return null
-
-
-## A resident of `building` who doesn't believe, or null.
-func _doubter_in(building: Node3D) -> Resident:
-	for r: Resident in population.residents:
-		if r.home == building and not r.is_believer():
-			return r
-	return null
-
-
-## The nearest believer who can move into `building` without losing the
-## building they live in now.
-func _mover_for(building: Node3D) -> Resident:
-	var best: Resident = null
-	var best_d := INF
-	for r: Resident in population.residents:
-		if r.home == building or not r.is_believer() or r.home == null:
-			continue
-		var i := districts.index_of(r.home)
-		if i >= 0 and districts.is_yours(i) and not _spare(i):
-			continue
-		var d := r.home.global_position.distance_squared_to(building.global_position)
-		if d < best_d:
-			best_d = d
-			best = r
-	return best
-
-
-## Would building `i` stay yours with one believer fewer? Not if that empties it.
-func _spare(i: int) -> bool:
-	var people := districts.residents_in(i) - 1
-	return people > 0 and float(districts.believers_at(i) - 1) / people > districts.S.capture_share
 
 
 ## A building of yours with the Combat Training use, or null.

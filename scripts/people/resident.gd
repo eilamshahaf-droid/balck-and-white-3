@@ -12,7 +12,9 @@ extends RefCounted
 enum Rank { RESIDENT, BELIEVER, MISSIONARY, PRIEST, AGENT, HIGH_PRIEST }
 ## What a believer does for the cult: FREE believers have no post. PRAY and
 ## PRIEST staff a sermon house, SHOP staffs a shop, TRAIN is training in a sermon house.
-enum Job { FREE, PRAY, SHOP, PRIEST, TRAIN }
+## MANAGER: a rep who took a building over stays there and runs it; the building is yours
+## while it has one.
+enum Job { FREE, PRAY, SHOP, PRIEST, TRAIN, MANAGER }
 
 ## Index in Population.residents; -1 for a passer-by the city doesn't count.
 var id := -1

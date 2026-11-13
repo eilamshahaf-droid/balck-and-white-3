@@ -13,6 +13,7 @@ const DS: DistrictSettings = preload("res://data/districts.tres")
 @export var districts: Districts
 @export var population: Population
 @export var landmarks: Landmarks
+@export var campaigns: Campaigns
 
 var _level := PackedFloat32Array()
 var _spike_left := PackedFloat32Array()   # seconds of full awareness after a core attempt
@@ -30,7 +31,7 @@ class Martyr:
 func _ready() -> void:
 	districts.layout_ready.connect(_on_layout_ready, CONNECT_ONE_SHOT)
 	districts.block_changed.connect(_on_block_changed)
-	population.preaching.preached.connect(_on_preached)
+	campaigns.worked.connect(_on_worked)
 
 
 func _physics_process(delta: float) -> void:
@@ -144,13 +145,13 @@ func _on_layout_ready() -> void:
 	_spiked.resize(count)
 
 
-func _on_preached(_preacher: Resident, target: Resident, _converted: bool) -> void:
-	var i := districts.index_of(target.home)
+func _on_worked(building: Node3D) -> void:
+	var i := districts.index_of(building)
 	if i < 0:
 		return
 	_attempts[i] = _attempts.get(i, 0.0) + 1.0
 	var d := districts.district_of(i)
-	if districts.is_core(target.home) and not districts.is_yours(i) and _spiked[d] == 0:
+	if districts.is_core(building) and not districts.is_yours(i) and _spiked[d] == 0:
 		_spiked[d] = 1
 		_spike_left[d] = A.core_spike_minutes * 60.0
 

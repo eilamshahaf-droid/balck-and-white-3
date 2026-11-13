@@ -9,11 +9,11 @@ extends Resource
 ## believer, missionary, priest, special agent, high priest. Renaming the
 ## cult's words happens here, not in code.
 @export var rank_titles := PackedStringArray([
-	"Resident", "Member", "Canvasser", "Clerk", "Field Delegate", "Secretary",
+	"Resident", "Member", "Rep", "Clerk", "Fixer", "Secretary",
 ])
 ## The same, in the plural (the HUD's captions).
 @export var rank_plurals := PackedStringArray([
-	"Residents", "Members", "Canvassers", "Clerks", "Field Delegates", "Secretaries",
+	"Residents", "Members", "Reps", "Clerks", "Fixers", "Secretaries",
 ])
 ## Body colour per rank, same order (a resident keeps their own colour).
 @export var rank_colors := PackedColorArray([
@@ -34,17 +34,25 @@ extends Resource
 @export var attempt_interval := 20.0
 ## How far a street meeting reaches, in metres (loudspeakers widen it).
 @export var preach_reach := 14.0
+## The Office opens with this many followers living in it, ready to be trained.
+@export var start_followers := 4
 @export_group("Winning people over without being asked")
-## A building of yours wins over the buildings next to it in its own block, slowly: this
-## many tries a minute on each such neighbour, by how inviting it is (spread_low when its
-## members live badly, spread_high when they live well). Never across to another block.
-@export var spread_per_minute := 0.25
+## A building of yours pulls up the takeover meter of the buildings next to it in its own
+## block, slowly: this much of a full meter a minute on each such neighbour, by how
+## inviting it is (spread_low when its members live badly, spread_high when they live
+## well). Never across to another block.
+@export var spread_per_minute := 0.05
 @export var spread_low := 0.3
 @export var spread_high := 1.5
 ## The Office is the strongest building there is: it works on its block this many times
 ## as hard, which is what gets a new stage going.
 @export var office_spread := 4.0
 @export var spread_tick := 5.0   # seconds between rounds
+## A meter that no building of yours holds up sinks by this much a minute: slowly, so a
+## lost rep can be replaced before the work is gone.
+@export var meter_sink_per_minute := 0.05
+## What an ordinary Slums household makes of one approach; readiness is measured against it.
+@export var ordinary_chance := 0.3
 ## A street meeting rests the members around it by this much strain a round.
 @export var meeting_rest := 0.05
 @export_group("Converting: the core")

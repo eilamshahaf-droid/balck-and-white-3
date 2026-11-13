@@ -14,7 +14,7 @@ const U: UnitSettings = preload("res://data/units.tres")
 const DS: DistrictSettings = preload("res://data/districts.tres")
 const A: AwarenessSettings = preload("res://data/awareness.tres")
 const LS: LandmarkSettings = preload("res://data/landmarks.tres")
-const SPREAD_ROUNDS := 700
+const SPREAD_ROUNDS := 60
 
 var _main: Node3D
 var _population: Population
@@ -50,14 +50,15 @@ func _ready() -> void:
 	get_tree().quit(1 if _failures > 0 else 0)
 
 
-## The Slums come from the Map Lab's stage file: a few hundred buildings, each taken on
-## its own, in about 50 blocks, and the base far enough from the core.
+## The Slums come from the Map Lab's stage file: 100 to 200 large buildings (each needs
+## a rep of its own, so each is a decision), in blocks of three to six, and the base far
+## enough from the core.
 func _test_stage_map() -> void:
 	var city: City = _main
 	var count := _districts.buildings.size()
 	var blocks := _districts.block_count()
-	_check(count >= 300, "every building of the stage map can be taken (%d)" % count)
-	_check(blocks >= 40 and blocks <= 65, "they stand in about 50 blocks (%d)" % blocks)
+	_check(count >= 100 and count <= 200, "the stage map has 100 to 200 buildings (%d)" % count)
+	_check(blocks >= 30 and blocks <= 55, "they stand in about 40 blocks (%d)" % blocks)
 	_check(get_tree().get_nodes_in_group("buildings").size() == count, "each is its own building")
 	var d := _districts.start_district()
 	var steps := {_districts.core_of(d): 0}
@@ -83,7 +84,11 @@ func _test_start() -> void:
 	_check(_population.priest.rank == Resident.Rank.HIGH_PRIEST, "he has the high priest's rank")
 	_check(_population.priest.post == start, "he serves in the start building")
 	_check(start.is_in_group(Population.PRAYER_HOUSES), "the start building is a sermon house")
-	_check(_population.believer_count <= 1, "nobody else believes at the start")
+	var with_us := _population.residents.filter(
+			func(r: Resident) -> bool: return r.is_believer()).size()
+	_check(with_us == 1 + U.start_followers,
+			"the Office opens with %d followers (%d with the Secretary)"
+			% [U.start_followers, with_us])
 	_check(_districts.owns(start), "the start building is yours")
 	_check(_districts.is_unlocked(_districts.start_district()), "the start district is open")
 	if _districts.district_count() > 1:
@@ -110,12 +115,15 @@ func _test_chance() -> void:
 	var target := _resident_of("Homeless")
 	var priest := _population.priest
 	if target == null or priest == null:
-		_check(false, "a homeless resident to preach to")
+		_check(false, "a homeless resident to talk round")
 		return
-	# Homeless: curiosity H, skepticism L, anxiety L; the high priest's charisma H.
-	var expected := U.conversion_base * 0.8 * (1.0 - 0.2) * (1.0 - 0.5 * 0.2) * (1.0 + 0.3 * 0.8)
-	var got := _population.preaching.chance(target, priest, Vector3(9999, 0, 9999))
-	_check(absf(got - expected) < 0.001, "conversion chance matches the formula (%.3f)" % got)
+	# Homeless: curiosity H, skepticism L, anxiety L.
+	var expected := U.conversion_base * 0.8 * (1.0 - 0.2) * (1.0 - 0.5 * 0.2)
+	var got := _population.preaching.drift_chance(target)
+	_check(absf(got - expected) < 0.001, "a resident's readiness matches the formula (%.3f)" % got)
+	var pace := _population.preaching.pace(target.home, priest)
+	_check(pace > _population.preaching.receptive(target.home),
+			"the Secretary's charisma quickens a takeover (x%.2f)" % pace)
 
 
 func _test_output_and_needs() -> void:
@@ -182,11 +190,24 @@ func _test_borders() -> void:
 	if far < 0 or near < 0:
 		_check(false, "a lived-in building next to yours and one far away")
 		return
-	_believe_in(far)
-	_believe_in(near)
+	_check(not _districts.take(far) and not _districts.is_yours(far),
+			"a building far from yours can't be taken")
+	_districts.add_meter(near, 0.4)
+	_check(is_equal_approx(_districts.meter_of(near), 0.4) and not _districts.wants_you(near),
+			"a takeover meter fills part way")
+	_districts.add_meter(near, 1.0)
+	_check(_districts.wants_you(near) and not _districts.is_yours(near),
+			"a full meter means the building wants you, and is not yours yet")
+	var rep := _resident_of("Blue collar")
+	_population.convert_to(rep, Resident.Rank.MISSIONARY)
+	_population.canvasser_set_down.emit(rep, _districts.buildings[near])
 	await _frames(int(DS.tick * 60.0 * 3.0))
-	_check(not _districts.is_yours(far), "a believing building far from yours stays out of reach")
-	_check(_districts.is_yours(near), "a believing building bordering yours becomes yours")
+	_check(_districts.is_yours(near), "a rep set down at a building that wants you takes it")
+	_check(_population.manager_of(_districts.buildings[near]) == rep \
+			and rep.job == Resident.Job.MANAGER, "and stays as its manager")
+	_check(_population.believers_in(_districts.buildings[near]) \
+			== _population.residents_in(_districts.buildings[near]),
+			"its residents come over with it")
 	_near = near
 
 
@@ -217,8 +238,12 @@ func _test_fragility() -> void:
 	fragility.crumble(_near)
 	_check(not _districts.is_yours(_near), "a crumbling building is lost")
 	await _frames(int(DS.tick * 60.0 * 2.0))
-	_check(_districts.believers_at(_near) <= ceili(before / 2.0),
-			"half its believers stop believing (%d of %d left)" % [_districts.believers_at(_near), before])
+	_check(_districts.believers_at(_near) < before,
+			"its members drift off (%d of %d left)" % [_districts.believers_at(_near), before])
+	_check(_population.manager_of(_districts.buildings[_near]) == null,
+			"and it has no manager any more")
+	_check(is_equal_approx(_districts.meter_of(_near), DS.lost_meter),
+			"its meter falls to %d%%, not to nothing" % roundi(DS.lost_meter * 100.0))
 
 
 func _test_vandalist() -> void:
@@ -273,12 +298,6 @@ func _test_condemnation() -> void:
 	await _frames(int(60.0 * 7.0))
 	_check(condemnation.current() < 0 and _population.residents_in(_districts.buildings[target]) == lived,
 			"it reopens and its people come back (%d)" % lived)
-
-
-func _believe_in(index: int) -> void:
-	for r: Resident in _population.residents:
-		if r.home == _districts.buildings[index] and not r.is_believer():
-			_population.convert_to(r, Resident.Rank.BELIEVER)
 
 
 func _test_landmarks() -> void:
@@ -374,44 +393,25 @@ func _test_hand_orders() -> void:
 ## next to it in its own block. And a building of yours turned into a shop, which empties
 ## it, stays yours.
 func _test_spread_and_shop() -> void:
-	# A building of ours with a lived-in neighbour in its own block that is not ours yet.
-	for k in _districts.buildings.size():
-		if _districts.is_yours(k) or _districts.residents_in(k) == 0 \
-				or _districts.is_core(_districts.buildings[k]):
-			continue
-		var has_neighbour := false
-		for j in _districts.borders_of(k):
-			has_neighbour = has_neighbour or (not _districts.is_yours(j) \
-					and _districts.residents_in(j) > 0 \
-					and _districts.block_of(j) == _districts.block_of(k) \
-					and not _districts.is_core(_districts.buildings[j]))
-		if has_neighbour:
-			_districts.convert_near(_districts.buildings[k].global_position, 1)
-			break
-	await _frames(int(DS.tick * 60.0 * 2.0))
-	var held := {}
+	var before := PackedFloat32Array()
 	for i in _districts.buildings.size():
-		if _districts.is_yours(i):
-			held[i] = true
-	var before := {}
-	for r in _population.residents:
-		before[r] = r.is_believer()
-	# Many rounds at the game's own slow rate (about an hour of play).
+		before.append(_districts.meter_of(i))
+	# Many rounds at the game's own slow rate.
 	for round in SPREAD_ROUNDS:
 		_population.preaching._physics_process(U.spread_tick)
-	var came := 0
+	var rose := 0
 	var inside := true
-	for r in _population.residents:
-		if before[r] or not r.is_believer():
+	for j in _districts.buildings.size():
+		if _districts.buildings[j] == null or _districts.is_yours(j) \
+				or _districts.meter_of(j) <= before[j]:
 			continue
-		came += 1
-		var home := _districts.index_of(r.home)
+		rose += 1
 		var next_to_ours := false
-		for j in _districts.borders_of(home):
-			next_to_ours = next_to_ours or (held.has(j) \
-					and _districts.block_of(j) == _districts.block_of(home))
+		for i in _districts.borders_of(j):
+			next_to_ours = next_to_ours or (_districts.is_yours(i) \
+					and _districts.block_of(i) == _districts.block_of(j))
 		inside = inside and next_to_ours
-	_check(came > 0, "buildings of yours win neighbours over by themselves (%d came)" % came)
+	_check(rose > 0, "buildings of yours pull their neighbours' meters up (%d rose)" % rose)
 	_check(inside, "only next door, and only inside their own block")
 	var shop := -1
 	for i in _districts.buildings.size():
@@ -439,10 +439,10 @@ func _test_block() -> void:
 	var members := _districts.block_members(block)
 	var hq := _districts.buildings[_districts.headquarters]
 	_check(is_equal_approx(_districts.block_bonus(hq), 1.0), "no bonus while the block is not all yours")
-	for i in members:
-		_believe_in(i)
-		if _districts.residents_in(i) == 0:
-			_move_believer_into(i, block)
+	# Outward from the base: each can only be taken next to one already held.
+	for pass_ in members.size():
+		for i in members:
+			_districts.take(i)
 	await _frames(int(DS.tick * 60.0 * 3.0))
 	_check(_districts.block_held(block) == members.size(),
 			"every building of the base's block is yours (%d of %d)"
@@ -454,17 +454,6 @@ func _test_block() -> void:
 	for i in members:
 		safe = safe and not fragility.is_exposed(i)
 	_check(safe, "and none of its buildings can give way")
-
-
-## Someone from another block starts believing and moves into empty building `index`.
-func _move_believer_into(index: int, block: int) -> void:
-	for r: Resident in _population.residents:
-		var home := _districts.index_of(r.home)
-		if home >= 0 and _districts.block_of(home) != block and not r.is_believer() \
-				and _districts.residents_in(home) > 1:
-			_population.convert_to(r, Resident.Rank.BELIEVER)
-			_population.move_home(r, _districts.buildings[index])
-			return
 
 
 func _test_capture() -> void:

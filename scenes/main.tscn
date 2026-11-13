@@ -1,4 +1,4 @@
-[gd_scene load_steps=45 format=3]
+[gd_scene load_steps=46 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/faith.gd" id="4_faith"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5_hud"]
 [ext_resource type="Script" path="res://scripts/help_label.gd" id="5_help"]
+[ext_resource type="Script" path="res://scripts/mission_card.gd" id="5_mission"]
 [ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
 [ext_resource type="Script" path="res://scripts/hand_tools.gd" id="8_tools"]
 [ext_resource type="Script" path="res://scripts/debug_panel.gd" id="10_debug"]
@@ -184,11 +185,12 @@ awareness = NodePath("../Awareness")
 faith = NodePath("../Faith")
 treasury = NodePath("../Treasury")
 
-[node name="Awareness" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "landmarks")]
+[node name="Awareness" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "landmarks", "campaigns")]
 script = ExtResource("61_awareness")
 districts = NodePath("../Districts")
 population = NodePath("../Population")
 landmarks = NodePath("../Landmarks")
+campaigns = NodePath("../Campaigns")
 
 [node name="Landmarks" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
 script = ExtResource("65_landmarks")
@@ -236,18 +238,34 @@ script = ExtResource("10_debug")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="Help" type="Label" parent="HUD"]
+[node name="Mission" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("districts", "population", "campaigns", "progress")]
 offset_left = 12.0
 offset_top = 96.0
-offset_right = 900.0
-offset_bottom = 206.0
+offset_right = 412.0
+offset_bottom = 196.0
+script = ExtResource("5_mission")
+districts = NodePath("../../Districts")
+population = NodePath("../../Population")
+campaigns = NodePath("../../Campaigns")
+progress = NodePath("../../DistrictProgress")
+
+[node name="Help" type="Label" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -700.0
+offset_top = 10.0
+offset_right = -12.0
+offset_bottom = 120.0
+grow_horizontal = 0
+horizontal_alignment = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 5
 script = ExtResource("5_help")
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: who is this (debug)    F1: debug panel
 Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
-The hand lifts people and things (not trees). Where you set a member down is what they do. Only canvassers and the Secretary win people over; miracles help them."
+The hand lifts people and things (not trees). Where you set a member down is what they do. A Rep at a door takes the building over and stays as its Manager; miracles help them."
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
@@ -258,7 +276,7 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 5
 script = ExtResource("5_hud")
 
-[node name="District" type="Label" parent="HUD" node_paths=PackedStringArray("progress", "population", "campaigns")]
+[node name="District" type="Label" parent="HUD" node_paths=PackedStringArray("progress")]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -271,8 +289,6 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
 progress = NodePath("../../DistrictProgress")
-population = NodePath("../../Population")
-campaigns = NodePath("../../Campaigns")
 
 [node name="ArrestAlert" type="Label" parent="HUD" node_paths=PackedStringArray("arrests")]
 anchors_preset = 5

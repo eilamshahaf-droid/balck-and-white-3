@@ -1,10 +1,10 @@
 class_name Districts
 extends Node
 ## Knows the stage map's districts (CityPlan) and keeps who holds every building. Eilam's
-## rule: a building is yours once most of the people who live there believe
-## (Population's residents); an empty one is yours while a believer sits in on
-## it. Campaigns (campaigns.gd) are how the player tips a building: force, buying
-## or missionaries. The cult starts from its base (`headquarters`, always yours) at the
+## rule (2026-11-13): every building has a takeover meter; a rep at its door fills it
+## (Campaigns), your buildings next to it in its own block pull it up slowly (Preaching),
+## and when it is full a rep takes the building over and stays as its manager: it is
+## yours while it is managed. The cult starts from its base (`headquarters`, always yours) at the
 ## edge of the start district, a neglected place with empty, abandoned buildings, and
 ## works in toward the core in the middle. A district is yours once its bar is full
 ## (DistrictProgress: a wide following, key places, or both). Decrees ask owns(), so there
@@ -21,6 +21,8 @@ signal building_changed(index: int, yours: bool)
 signal district_controlled(district: int)
 ## Block `block` became complete (all its standing buildings are yours), or stopped being.
 signal block_changed(block: int, complete: bool)
+## Building `index`'s takeover meter moved (0 = nothing, 1 = it wants you).
+signal meter_changed(index: int, value: float)
 ## Every building was counted again (a few times a second).
 signal counted
 ## Building `index` stands empty for good now (start district, fire, roaches).
@@ -52,6 +54,8 @@ var _residents := PackedInt32Array()     # people who live there, counted every 
 var _believers := PackedInt32Array()     # of them, believers
 var _presence := PackedFloat32Array()    # believing presence (residents and sit-ins)
 var _graph := BuildingGraph.new()
+var _meter := PackedFloat32Array()        # per building: the takeover meter, 0..1
+var _managed := PackedByteArray()        # per building: a rep manages it, so it is yours
 var _block_of := PackedInt32Array()
 var _block_members: Array[PackedInt32Array] = []
 var _block_standing := PackedInt32Array()   # per block: buildings not demolished
@@ -81,8 +85,6 @@ func _physics_process(delta: float) -> void:
 		if _district_of[i] < 0:
 			continue
 		var mine := _holds(i)
-		if mine and _yours[i] == 0 and not can_claim(i):
-			mine = false
 		if mine != (_yours[i] == 1):
 			_set_side(i, mine)
 	counted.emit()
@@ -168,6 +170,38 @@ func is_yours(index: int) -> bool:
 	return _yours[index] == 1
 
 
+## How far building `index` is toward wanting you, 0..1.
+func meter_of(index: int) -> float:
+	return _meter[index]
+
+
+## Move building `index`'s takeover meter by `amount` (a rep at the door, the pull of
+## your buildings next to it, or time wearing it down).
+func add_meter(index: int, amount: float) -> void:
+	if _yours[index] == 1 or _district_of[index] < 0:
+		return
+	var now := clampf(_meter[index] + amount, 0.0, 1.0)
+	if not is_equal_approx(now, _meter[index]):
+		_meter[index] = now
+		meter_changed.emit(index, now)
+
+
+## Building `index` is not yours but wants you: it only needs a rep to manage it.
+func wants_you(index: int) -> bool:
+	return _yours[index] == 0 and _meter[index] >= 1.0
+
+
+## A rep takes building `index` over and manages it: it is yours from now on. False
+## when it can't be claimed yet (can_claim).
+func take(index: int) -> bool:
+	if _yours[index] == 1 or not can_claim(index):
+		return false
+	_managed[index] = 1
+	_meter[index] = 1.0
+	_set_side(index, true)
+	return true
+
+
 func block_count() -> int:
 	return _block_members.size()
 
@@ -249,7 +283,10 @@ func district_of(index: int) -> int:
 ## the next count says otherwise.
 func lose(index: int) -> void:
 	if _yours[index] == 1 and index != headquarters:
+		_managed[index] = 0
+		_meter[index] = S.lost_meter
 		_set_side(index, false)
+		meter_changed.emit(index, _meter[index])
 
 
 ## The buildings that building `index` borders (demolished ones included).
@@ -372,22 +409,17 @@ func convert_near(p: Vector3, count: int) -> void:
 	var chosen := {}
 	for i in order.slice(0, count):
 		chosen[buildings[i]] = true
+		_managed[i] = 1
+		_meter[i] = 1.0
 		_set_side(i, true)
 	for r: Resident in population.residents:
 		if chosen.has(r.home) and not r.is_believer():
 			population.convert_to(r, Resident.Rank.BELIEVER)
 
 
-## Most residents believe; an empty building, a believer sits in on it.
+## A building is yours while a rep manages it (the base always is).
 func _holds(i: int) -> bool:
-	if i == headquarters:
-		return true
-	if _residents[i] == 0:
-		# Nobody lives there to dispute it: an empty building of yours (turned into a shop
-		# or a branch, or closed for a while) stays yours.
-		return _yours[i] == 1 or _presence[i] > 0.0
-	var needed := S.core_capture_share if _core[_district_of[i]] == i else S.capture_share
-	return float(_believers[i]) / _residents[i] > needed
+	return i == headquarters or _managed[i] == 1
 
 
 func _count() -> void:
@@ -494,6 +526,8 @@ func _collect() -> void:
 	var n := buildings.size()
 	_yours.resize(n)
 	_yours.fill(0)
+	_meter.resize(n)
+	_managed.resize(n)
 	_abandoned.resize(n)
 	_abandoned.fill(0)
 	_residents.resize(n)

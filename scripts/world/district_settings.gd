@@ -45,6 +45,9 @@ extends Resource
 @export_range(0.0, 1.0) var core_base_share := 0.5
 @export var core_base_steps := 2
 
+## A building you lose keeps this much of its meter, so there is a window to send
+## another rep before it has to be won from the start.
+@export_range(0.0, 1.0) var lost_meter := 0.6
 @export_group("Borders and blocks")
 ## Buildings whose walls stand this close border each other (next door, or across a street).
 @export var border_gap := 12.0
@@ -63,14 +66,23 @@ extends Resource
 @export_group("The stage")
 ## The start screen: a title and the Secretary's briefing.
 @export var start_title := "Stage 1: The Slums"
-@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the Secretary (taking these minutes), a kettle.\n\nItem 1: City Hall has turned down our god's application to be recognised as a god. A form was missing. The Committee will appeal, street by street.\nItem 2: our office is at the edge of the Slums. Nobody is won over in the street: the Office and every building of ours bring their own block round, slowly, and canvassers set down at a door do it faster. Only next to a building we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 3: the district is ours when its bar is full. A wide membership that lives well fills it; so do the core in the middle and every landmark our Field Delegate marks. Either way alone is hard; together they leave us room.\nItem 4: the Hand places people. Where it sets a member down is what that member does. A worn-out member still goes, and lets everyone know.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
+@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the Secretary (taking these minutes), a kettle.\n\nItem 1: City Hall has turned down our god's application to be recognised as a god. A form was missing. The Committee will appeal, street by street.\nItem 2: our office is at the edge of the Slums. A Rep at a building's door fills the bar over it; when it is full the building is ours and the Rep stays to manage it, so every building needs a Rep of its own. Buildings next to ours in the same block come round by themselves, slowly, and then only need a Rep. Only next to a building we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 3: the district is ours when its bar is full. A wide membership that lives well fills it; so do the core in the middle and every landmark our Fixer marks. Either way alone is hard; together they leave us room.\nItem 4: the Hand places people. Where it sets a member down is what that member does. A worn-out member still goes, and lets everyone know.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
 @export var start_button := "Open the meeting"
-## What to do next, shown bottom left until the player is under way: with nobody but the
-## Secretary, with members but no canvasser, with canvassers idle, and with canvassers at work.
-@export var next_alone := "Start here: the Office wins its own block over by itself, slowly. To push, lift the Secretary (gold ring) and set him down at the door of a building next to the Office."
-@export var next_train := "Next: hold the button on the Office (gold roof) and train a Canvasser."
-@export var next_canvass := "Next: lift a Canvasser and set them down at the door of a building next to one of yours."
-@export var next_working := "Canvassers are at a door. A building is yours once most of its residents are with you; take a whole ring to complete the block."
+@export_group("Missions: the card that says what to do next")
+@export var mission_width := 380.0
+@export var mission_train := "Train a Rep"
+@export var mission_train_hint := "Hold the button on the Office (gold roof) and choose Train Rep. A Rep takes a building over and stays to manage it, so every building needs one."
+@export var mission_send := "Send your Rep to a building"
+@export var mission_send_hint := "Lift the Rep and set them down at the door of a building next to one of yours. Two Reps at one door work twice as fast."
+@export var mission_take := "Take the building"
+@export var mission_take_hint := "The bar over the building fills while a Rep is at its door. When it is full the building is yours and the Rep stays as its Manager."
+## The block mission starts once this many buildings are yours.
+@export var mission_block_from := 2
+@export var mission_block := "Complete the Office's block: %d of %d"
+@export var mission_block_hint := "Take every building in the ring round the Office. A complete block is safe and pays better; green bars are buildings that already want you and only need a Rep."
+@export var mission_district := "Fill the district's bar"
+@export var mission_district_hint := "Buildings of yours and key places fill it. Cross into the next block by sending a Rep to a door across the street."
+@export var mission_won := "The district is yours"
 ## The cult loses once it has had lose_after_believers believers and then has none
 ## at all (the high priest aside) for lose_minutes.
 @export var lose_after_believers := 8
@@ -99,6 +111,14 @@ extends Resource
 @export var border_color := Color(1.0, 1.0, 1.0, 0.85)
 @export var controlled_border_color := Color(1.0, 0.7, 0.0, 1.0)
 @export var border_width := 0.6
+## The takeover bar over a building: least width, thickness and depth (metres), the
+## widest it gets, how far above the roof, and its colours (filling, and full: it wants you).
+@export var meter_bar := Vector3(6.0, 1.0, 2.4)
+@export var meter_bar_max := 12.0
+@export var meter_bar_lift := 3.0
+@export var meter_back_color := Color(0.1, 0.1, 0.14)
+@export var meter_fill_color := Color(1.0, 0.75, 0.15)
+@export var meter_ready_color := Color(0.35, 0.9, 0.4)
 @export var unit_ring_margin := 1.5             # how far a unit's ring stands out from its walls
 
 

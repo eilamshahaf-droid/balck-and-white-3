@@ -68,7 +68,7 @@ func _process(delta: float) -> void:
 	_show(0, "%d" % floori(faith.belief_pool))
 	_show(1, "$%d  %+.1f/s" % [floori(treasury.money), treasury.income])
 	_show(2, "%d" % faith.believers)
-	_show(3, "%d" % population.missionary_count)
+	_show(3, "%d free of %d" % [population.free_rep_count, population.missionary_count])
 	_show(4, "%d" % population.priest_count)
 	_show(5, "%d" % districts.converted_buildings().size())
 	_show(6, "%d%%" % roundi(faith.exposure * 100.0))

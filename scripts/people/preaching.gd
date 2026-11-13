@@ -1,12 +1,9 @@
 class_name Preaching
 extends Node
-## How people are won over: at a door the player chose (the sky-sign campaigns call
-## `attempt`), and by themselves next to a building of yours in the same block
-## (`drift_chance`). Nobody is converted on the street. A child Population makes; it
-## asks Population who is who and converts through it.
-
-## A preacher tried to win someone over (`converted` if it worked).
-signal preached(preacher: Resident, target: Resident, converted: bool)
+## How buildings are won over: a rep at the door fills the building's takeover meter at
+## `pace` (Campaigns does the sending), and buildings of yours pull up their neighbours'
+## meters inside a block. Nobody is converted on the street. A child Population makes;
+## it asks Population who is who.
 
 const U: UnitSettings = preload("res://data/units.tres")
 
@@ -23,31 +20,34 @@ func setup(population: Population) -> void:
 	_rng.seed = 5
 
 
-## Nobody is won over on the street. A building of yours wins over its neighbours in
-## its own block, slowly, the more inviting it is (and the Office hardest of all); the
-## rest is canvassers at a door the player chose (Campaigns).
+## Nobody is won over on the street. Every building has a takeover meter (Districts):
+## a building of yours pulls up the meters of its neighbours in its own block, slowly,
+## the more inviting it is (the Office hardest of all), until they want you and only need
+## a rep to manage them. A meter nothing holds up sinks back, slowly.
 func _physics_process(delta: float) -> void:
 	_check_timer -= delta
 	if _check_timer > 0.0:
 		return
 	_check_timer = U.spread_tick
 	var districts := _population.districts
-	for i in districts.buildings.size():
-		var b := districts.buildings[i]
-		if b == null or not districts.is_yours(i):
+	var minutes := U.spread_tick / 60.0
+	for j in districts.buildings.size():
+		var target := districts.buildings[j]
+		if target == null or districts.is_yours(j):
 			continue
-		var tries := U.spread_per_minute * U.spread_tick / 60.0 \
-				* lerpf(U.spread_low, U.spread_high, _population.inviting(b))
-		if districts.is_base(b):
-			tries *= U.office_spread
-		for j in districts.borders_of(i):
-			if districts.buildings[j] == null or districts.is_yours(j) \
-					or districts.block_of(j) != districts.block_of(i) \
-					or _rng.randf() >= tries:
+		var pull := 0.0
+		for i in districts.borders_of(j):
+			var b := districts.buildings[i]
+			if b == null or not districts.is_yours(i) \
+					or districts.block_of(i) != districts.block_of(j):
 				continue
-			var target := _population.doubter_in(districts.buildings[j])
-			if target and _rng.randf() < drift_chance(target):
-				_population.convert_to(target, Resident.Rank.BELIEVER)
+			var one := U.spread_per_minute \
+					* lerpf(U.spread_low, U.spread_high, _population.inviting(b))
+			pull += one * U.office_spread if districts.is_base(b) else one
+		if pull > 0.0:
+			districts.add_meter(j, pull * minutes * receptive(target))
+		elif districts.meter_of(j) > 0.0:
+			districts.add_meter(j, -U.meter_sink_per_minute * minutes)
 
 
 ## Everyone who talks people round (canvassers and the Secretary, not while training)
@@ -60,40 +60,33 @@ func preachers() -> Array[Resident]:
 	return out
 
 
-## The chance that `preacher` wins `target` over in one attempt at `p`:
-## base x curiosity x (1 - skepticism) x (1 - anxiety_weight x anxiety)
-## x (1 + charisma_weight x charisma), times how willing the preacher is (an unwilling one
-## the hand ordered about does worse), times the preacher's sermon house upgrades
-## and 1 + the miracle proof at `p`, divided by core_difficulty for someone who lives in
-## a district's core building, and times the district's awareness and any martyr near
-## their home (Awareness.factor_for). Miracles never convert on their own.
-func chance(target: Resident, preacher: Resident, p: Vector3) -> float:
-	var c := U.conversion_base * target.curiosity * (1.0 - target.skepticism) \
-			* (1.0 - U.anxiety_weight * target.anxiety) \
-			* (1.0 + U.charisma_weight * preacher.charisma) * boost(preacher) \
-			* _population.effort_of(preacher)
-	if _population.districts.is_core(target.home):
-		c /= U.core_difficulty
-	if _population.awareness:
-		c *= _population.awareness.factor_for(target.home)
-	return clampf(c * maxf(1.0 + _population.miracles.proof_at(p), 0.0), 0.0, 1.0)
+## How readily the people of `building` come over, against an ordinary Slums household
+## (1): the average of what each resident's own character makes of an approach, less for
+## a core building and for an aware district (`drift_chance`).
+func receptive(building: Node3D) -> float:
+	var sum := 0.0
+	var n := 0
+	for r: Resident in _population.occupants_at_home(building):
+		sum += drift_chance(r)
+		n += 1
+	return sum / n / U.ordinary_chance if n > 0 else 1.0
 
 
-## `preacher` tries once to win `target` over. True if `target` became a believer.
-func attempt(target: Resident, preacher: Resident) -> bool:
-	if target.is_believer() or not target.alive:
-		return false
+## How fast `preacher` fills `building`'s meter at its door, as a share of the plain rate:
+## the residents' readiness, the preacher's charisma and willingness, and their branch's
+## upgrades and any miracle proof on the spot.
+func pace(building: Node3D, preacher: Resident) -> float:
 	var at := preacher.body.global_position if _population.has_body(preacher) \
-			else target.home.global_position
-	var won := _rng.randf() < chance(target, preacher, at)
-	if won:
-		_population.convert_to(target, Resident.Rank.BELIEVER)
-	preached.emit(preacher, target, won)
-	return won
+			else building.global_position
+	return receptive(building) * (1.0 + U.charisma_weight * preacher.charisma) \
+			* boost(preacher) * _population.effort_of(preacher) \
+			* maxf(1.0 + _population.miracles.proof_at(at), 0.0)
 
 
-## The chance that `target` comes over by themselves in one round of a neighbour's
-## influence: the same person, district and core as in `chance`, with nobody talking.
+## What `target`'s own character makes of one approach: base x curiosity x
+## (1 - skepticism) x (1 - anxiety_weight x anxiety), divided by core_difficulty for
+## someone who lives in a district's core building, times the district's awareness and
+## any martyr near their home (Awareness.factor_for).
 func drift_chance(target: Resident) -> float:
 	var c := U.conversion_base * target.curiosity * (1.0 - target.skepticism) \
 			* (1.0 - U.anxiety_weight * target.anxiety)

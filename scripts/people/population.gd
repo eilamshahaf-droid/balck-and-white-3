@@ -78,6 +78,8 @@ var seats := 0
 var over_seats := 0
 ## How many missionaries the cult has.
 var missionary_count := 0
+## Of them, how many are free to be sent (the rest manage a building or are training).
+var free_rep_count := 0
 ## How many special agents (Vandalists) the cult has, jailed ones included.
 var agent_count := 0
 ## The sermons preachers give; its signals tell the player where one is and whether
@@ -123,6 +125,7 @@ func _ready() -> void:
 	_street.set_down.connect(_on_set_down)
 	_street.stopped_occupying.connect(_on_stopped_occupying)
 	add_child(_street)
+	districts.building_changed.connect(_on_building_changed)
 	# The city builds its blocks in its own _ready, which runs after ours.
 	city.ready.connect(_populate, CONNECT_ONE_SHOT)
 
@@ -292,6 +295,52 @@ func revert_believers(building: Node3D, share: float) -> void:
 		convert_to(r, Resident.Rank.RESIDENT)
 
 
+## Rep `r` took `building` over: they stay inside and run it, and the people who live
+## there come over with the building.
+func make_manager(r: Resident, building: Node3D) -> void:
+	staffing.post(r, Resident.Job.MANAGER, building)
+	put_away(r)
+	for resident: Resident in _by_home.get(building, []):
+		if not resident.is_believer():
+			convert_to(resident, Resident.Rank.BELIEVER)
+	_count_ranks()
+
+
+## The people who live in `building`.
+func occupants_at_home(building: Node3D) -> Array:
+	return _by_home.get(building, [])
+
+
+## How far the furthest-along trainee for `rank` is, 0..1; 0 when nobody trains for it.
+func training_progress(rank: Resident.Rank) -> float:
+	var full := U.missionary_time if rank == Resident.Rank.MISSIONARY else U.priest_time
+	var best := 0.0
+	for r in residents:
+		if r.job == Resident.Job.TRAIN and r.training_for == rank:
+			best = maxf(best, 1.0 - r.training_left / full)
+	return best
+
+
+## The rep who manages `building`, or null.
+func manager_of(building: Node3D) -> Resident:
+	for r: Resident in staffing.members(building):
+		if r.job == Resident.Job.MANAGER:
+			return r
+	return null
+
+
+## A building that is lost has no manager any more, and its plain members drift off.
+func _on_building_changed(index: int, yours: bool) -> void:
+	var building := districts.buildings[index]
+	if yours or building == null:
+		return
+	var manager := manager_of(building)
+	if manager:
+		staffing.unassign(manager)
+		_count_ranks()
+	revert_believers(building, 1.0)
+
+
 ## Close `building` for a while (a condemnation notice): everyone who lives, sits or
 ## works there leaves for the nearest other home. Returns who lived there, for reopen.
 func close_building(building: Node3D) -> Array[Resident]:
@@ -456,7 +505,27 @@ func found_cult() -> void:
 	priest.fear = 0.0
 	convert_to(priest, Resident.Rank.HIGH_PRIEST)
 	staffing.post(priest, Resident.Job.PRIEST, start)
+	_gather_first_followers(start)
 	cult_founded.emit(start)
+
+
+## The Office opens with a few followers living in it, so there is someone to train: its
+## own residents, topped up from the homes nearest to it.
+func _gather_first_followers(start: Node3D) -> void:
+	var followers := 0
+	for r: Resident in _by_home[start]:
+		if r != priest:
+			convert_to(r, Resident.Rank.BELIEVER)
+			followers += 1
+	var others := residents.filter(func(r: Resident) -> bool:
+		return r.alive and r.home != start and not r.is_believer())
+	others.sort_custom(func(a: Resident, b: Resident) -> bool:
+		return a.home.global_position.distance_squared_to(start.global_position) \
+				< b.home.global_position.distance_squared_to(start.global_position))
+	for r: Resident in others.slice(0, maxi(U.start_followers - followers, 0)):
+		move_home(r, start)
+		convert_to(r, Resident.Rank.BELIEVER)
+	_housing[start] = maxi(_housing.get(start, 0), (_by_home[start] as Array).size())
 
 
 func _kill(r: Resident) -> void:
@@ -784,12 +853,15 @@ func _seat(dt: float) -> void:
 func _count_ranks() -> void:
 	priest_count = 0
 	missionary_count = 0
+	free_rep_count = 0
 	agent_count = 0
 	for r in residents:
 		if r.is_priest():
 			priest_count += 1
 		elif r.rank == Resident.Rank.MISSIONARY:
 			missionary_count += 1
+			if r.job == Resident.Job.FREE:
+				free_rep_count += 1
 		elif r.rank == Resident.Rank.AGENT and r.alive:
 			agent_count += 1
 
