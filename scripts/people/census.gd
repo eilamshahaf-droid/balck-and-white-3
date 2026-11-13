@@ -70,7 +70,6 @@ func _add_family(home: Node3D, max_size: int) -> void:
 		_give_archetype(r, kind)
 		r.work = pick_work(r.archetype)
 		r.color = Color.from_hsv(_rng.randf(), 0.45, 0.85)
-		r.comfort = r.wealth
 		r.has_phone = _rng.randf() < B.phone_chance
 		residents.append(r)
 		_set_home(r, home)

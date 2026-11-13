@@ -44,18 +44,7 @@ var faith := 0.5
 ## Scales converting; set by rank.
 var charisma := 0.0
 
-## The four needs, 0..1: how much of each this person has now (Needs reads them).
-var livelihood := 0.5
-var security := 0.5
-var pleasure := 0.5
-## How worn out by the hand's orders, 0..1 and past it: every order adds to it, more when
-## they did not want to go; it fades with time. Past PeopleSettings.strain_leave they quit.
-var strain := 0.0
-var meaning := 0.5
-
-## Hidden meters, 0..1. Comfort follows the home (livelihood); fear is what
-## force works on, and too much of it makes people move away.
-var comfort := 0.5
+## What a miracle that hurts leaves behind, 0..1.
 var fear := 0.0
 var color := Color.WHITE
 var job := Job.FREE

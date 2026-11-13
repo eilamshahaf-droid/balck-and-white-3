@@ -3,6 +3,20 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.15.0 (2026-11-13): round A of the new model, the economy
+Eilam's model of 2026-11-13 (GDD section 0, item 7), first of three rounds. Round B brings the danger (inspectors you can lift away), round C the goal (key buildings, the Fixer, the two ways to win). Numbers are provisional, all in `data/followers.tres`.
+- **Followers are a number.** Every building of yours has room for followers by its size (an ordinary one about 10, the Office 45). A building you take starts half full and fills by itself. They are one pool. No building is ever empty.
+- **Roles fill themselves from the pool.** Clerks at the main Office make **paperwork**, which replaces belief (training, floors, the loan and miracles cost it). Sellers in shops make money: each further seller in a shop brings in less and is paid the same, so only those worth their pay are taken on. The shop wheel shows what the next seller would bring and lets you add or let go of one.
+- **The main Office is the heart**: homes, a shop, the clerks' desks and all training.
+- **Reps under a cap.** Training a Rep costs 30 paperwork and one follower. Two Reps may be out at once; each Training Room at the Office adds one. A Rep who takes a building stays as its Manager and frees their place.
+- **Taking a building**: hold the button on a building next to yours and choose **Send a Rep**, or set a Rep down at its door. A bigger building takes longer. The skull and dollar marks are gone.
+- **The god's attention**: the building under the hand fills twice as fast, and so does training while the hand is on the Office.
+- **The building wheel**: Upgrades (Attraction, Security, and at the Office Bigger Shop, More Desks, Training Room), +Floors (more room), Open a Shop, and at the Office a **Loan**: 40 paperwork for $400 now and $500 owed, paid back from half the takings, or at once by the money miracle's banknotes.
+- **Removed**, as agreed: landmarks, murals and the Vandalist; awareness, heat, police roadblocks and arrests; City Hall's inspector and bulldozer; fragility, complaints and condemnation; seats and debt; street meetings; per-person needs; the facade, luxury and preserve decrees; wear from the hand's orders; the fire and roach miracles. Only Reps and the Secretary answer to the hand. Nothing can take a building back yet: that is round B.
+- The district bar is, for now, your share of the buildings (60% fills it); the core adds its part.
+- For balance (`pace_sim --bot=train,send,shop,upgrade`, no hand): after an hour 68 buildings (39%), 13 whole blocks, 867 followers, 6 Reps allowed. Paperwork and money pile up late (3,600 and $5,700): they have few sinks until rounds B and C.
+- Try it: follow the mission card. Train a Rep at the Office, hold the button on the building next door and choose Send a Rep, keep the hand over it, then open a shop there.
+
 ## Pre-Alpha 0.14.0 (2026-11-13): a Rep takes a building and stays to manage it
 Eilam's new model for taking the city, step 1 of 3 (the city's answer and the blocks' key buildings come next). Numbers are provisional.
 - **Every building has a takeover bar** over its roof. Set a **Rep** (the old Canvasser) down at its door and the bar fills, about a minute for one Rep on an ordinary building; two Reps fill it twice as fast. When it is full the building is yours and the Rep goes in as its **Manager**. So every building needs a Rep of its own, and Reps are what you run short of.

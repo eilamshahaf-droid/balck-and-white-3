@@ -36,7 +36,6 @@ extends Resource
 @export var repeat_cost_step := 0.5
 @export var repeat_memory := 120.0
 
-@export var scatter_radius := 18.0           # any miracle throws police officers this far clear, at size 1
 
 @export_group("Water: a cloud rains on one spot")
 @export var water_cost := 60.0               # belief; miracles are dear, to be used deliberately
@@ -49,29 +48,9 @@ extends Resource
 @export var water_proof := 0.2
 @export var water_cooldown := 5.0
 
-@export_group("Fire: a building, or the street, catches fire")
-@export var fire_cost := 50.0
-@export var fire_intensity := 0.7
-@export_range(-1.0, 1.0) var fire_situation := -0.5     # watching a building burn
-@export_range(0.0, 1.0) var fire_deniability := 0.6     # buildings do catch fire
-@export var fire_burn_time := 60.0           # seconds until a burning building is lost (water saves it before)
-@export var street_fire_size := 3.0          # metres across, for a fire on the street
-@export var fire_seen_from := 80.0
-@export var fire_proof := 0.2
-@export var fire_scare := 0.6                # fear the residents of a burning building feel
-@export var fire_cooldown := 20.0
-
 @export_group("Roaches: a building's residents flee")
-@export var roach_cost := 70.0
-@export var roach_intensity := 0.6
-@export_range(-1.0, 1.0) var roach_situation := -0.4   # disgusting, even to watch
-@export_range(0.0, 1.0) var roach_deniability := 0.7   # old buildings do have roaches
 @export var roach_time := 8.0                # seconds the swarm crawls over the walls
 @export var roach_count := 300
-@export var roach_seen_from := 40.0
-@export var roach_proof := 0.0               # nobody thanks a god for roaches
-@export var roach_scare := 1.0               # fear the residents of the building feel
-@export var roach_cooldown := 30.0
 
 @export_group("Money from the sky: banknotes rain on one spot")
 @export var money_cost := 90.0
@@ -113,8 +92,6 @@ extends Resource
 @export var frog_count := 220
 @export_range(0.0, 1.0) var frog_knock_chance := 0.3    # people hit by a frog and knocked down
 @export var frog_push := 5.0                 # how hard a frog knocks someone over (m/s)
-## Every building under the frogs, yours too, may be overrun and emptied.
-@export_range(0.0, 1.0) var frog_overrun_chance := 0.0
 @export var frog_seen_from := 90.0
 @export var frog_gather_radius := 40.0       # people this close come to gawk...
 @export var frog_gawkers := 25               # ...at most this many, at size 1
@@ -124,28 +101,15 @@ extends Resource
 @export var frog_proof_min := -0.6
 @export var frog_proof_max := 1.0
 @export var frog_cooldown := 40.0
-## Chance that the frogs wreck a police roadblock within their reach.
-@export_range(0.0, 1.0) var frog_roadblock_chance := 0.7
-
-@export_group("Saved from the fire: water puts out a burning building")
-@export var saved_intensity := 1.0
-@export_range(-1.0, 1.0) var saved_situation := 0.8     # the god saved our home
-@export_range(0.0, 1.0) var saved_deniability := 0.2   # rain on exactly one burning building
-@export var saved_seen_from := 60.0
-@export var saved_proof := 1.2               # the strongest proof: the god saved their home
 
 @export_group("High priest marker: so you can find him")
 @export var priest_ring_radius := 2.2        # metres, the ring on the ground around him
 @export var priest_ring_color := Color(1.0, 0.85, 0.3)
 @export var priest_label_pixel := 0.0011
 @export var priest_label_height := 4.5       # metres above his feet
-@export var sermon_ring_radius := 5.0        # metres, the ring around a preaching priest
-@export var sermon_calm_color := Color(1.0, 0.85, 0.3)
-@export var sermon_raid_color := Color(0.95, 0.25, 0.25)   # the ring once the police move in
 
 @export_group("Floating notes: who just came to believe")
 @export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once
-
 
 
 func is_offered(kind: StringName) -> bool:

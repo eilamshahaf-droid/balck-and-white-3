@@ -183,8 +183,8 @@ theme_override_constants/outline_size = 5
 script = ExtResource("5_help")
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: who is this (debug)    F1: debug panel
-Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
-The hand lifts people and things (not trees). Where you set a member down is what they do. A Rep at a door takes the building over and stays as its Manager; miracles help them."
+Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building of yours: train, upgrades, floors, shop, loan    On a building next to yours: Send a Rep
+Lift a Rep and set them down at a door to take that building; keep the hand over a building at work and it goes faster"
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
