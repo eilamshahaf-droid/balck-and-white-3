@@ -3,18 +3,20 @@ extends Node
 ## gets, so a balance change can be judged in minutes instead of hours of play.
 ##
 ## Run headless:
-##   godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,send,shop,upgrade
+##   godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,send,shop,upgrade,bury
 ## Bot habits (any mix): train = train a Rep whenever the cap, the pool and the paperwork
 ## allow, send = send Reps to buildings in reach (the fullest meters first), shop = open
 ## a shop in a building of yours when the money is there, upgrade = buy the Office's
-## Training Room, Desks and Shop in turn. It never uses the hand, a miracle or a loan,
-## so a player should do better than this.
+## Training Room, Desks and Shop in turn, bury = bury the file whenever the exposure is
+## past a half. It never uses the hand (so every inspector arrives), a miracle or a
+## loan, so a player should do better than this.
 
 const MAIN := preload("res://scenes/main.tscn")
 const SPEED := 8.0
 const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
 const SHOP_EVERY := 4         # one building in this many becomes a shop
+const BURY_FROM := 0.5
 const OFFICE_UPGRADES: Array[BuildingUpgrades.Kind] = [BuildingUpgrades.Kind.TRAINING,
 		BuildingUpgrades.Kind.DESKS, BuildingUpgrades.Kind.SHOP]
 
@@ -28,6 +30,9 @@ var _menus: BuildingMenus
 var _decrees: Decrees
 var _progress: DistrictProgress
 var _faith: Faith
+var _inspectors: Inspectors
+var _papers := 0
+var _reps_lost := 0
 var _habits := PackedStringArray()
 var _minutes := 40.0
 var _clock := 0.0
@@ -55,6 +60,10 @@ func _ready() -> void:
 	_decrees = _main.get_node("Decrees")
 	_progress = _main.get_node("DistrictProgress")
 	_faith = _main.get_node("Faith")
+	_inspectors = _main.get_node("Inspectors")
+	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
+	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
+	_inspectors.rep_sent_home.connect(func(_b: Node3D, _r: Resident) -> void: _reps_lost += 1)
 	_districts.building_changed.connect(_on_building_changed)
 	Engine.time_scale = SPEED
 	print("PACE SIM bot=%s" % ",".join(_habits))
@@ -72,13 +81,14 @@ func _physics_process(delta: float) -> void:
 	var blocks := 0
 	for b in _districts.block_count():
 		blocks += 1 if _districts.is_block_complete(b) else 0
-	print("PACE %3d min  followers %4d (%2d sellers %2d clerks)  reps %d/%d  buildings %3d (%2.0f%%, won %d lost %d)  blocks %2d  bar %3.0f%%  core %s  $%5.0f %+.1f/s  paperwork %4.0f %+.2f/s" % [
+	print("PACE %3d min  followers %4d (%2d sellers %2d clerks)  reps %d/%d  buildings %3d (%2.0f%%, won %d lost %d)  blocks %2d  bar %3.0f%%  core %s  $%5.0f %+.1f/s  paperwork %4.0f %+.2f/s  exposure %3.0f%%  paid %d  reps lost %d" % [
 			roundi(_clock / 60.0), _followers.total, _followers.sellers, _followers.clerks,
 			_population.reps_out, _followers.rep_cap(),
 			_districts.converted_buildings().size(), _districts.share(d) * 100.0, _won, _lost,
 			blocks, _progress.value(d) * 100.0,
 			"yes" if _districts.is_yours(_districts.core_of(d)) else "no",
-			_treasury.money, _treasury.income, _faith.belief_pool, _followers.paperwork_rate])
+			_treasury.money, _treasury.income, _faith.belief_pool, _followers.paperwork_rate,
+			_faith.exposure * 100.0, _papers, _reps_lost])
 	if _clock >= _minutes * 60.0 or _districts.is_controlled(d):
 		print("PACE SIM END: %s" % ("district won" if _districts.is_controlled(d) else "time up"))
 		get_tree().quit()
@@ -95,6 +105,8 @@ func _act() -> void:
 	var office := _districts.start_building()
 	if _habits.has("train"):
 		_menus.choose(&"train_rep", office)
+	if _habits.has("bury") and _faith.exposure >= BURY_FROM:
+		_inspectors.bury()
 	if _habits.has("upgrade"):
 		var kind := OFFICE_UPGRADES[_bought % OFFICE_UPGRADES.size()]
 		if _menus.choose(StringName("upgrade_%d" % kind), office):

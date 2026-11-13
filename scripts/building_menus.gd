@@ -24,6 +24,7 @@ const LOOKS := {
 @export var faith: Faith
 @export var population: Population
 @export var decrees: Decrees
+@export var inspectors: Inspectors
 
 
 ## The slices for `building`: the first wheel, or the second one for `group`
@@ -54,6 +55,8 @@ func items(building: Node3D, group := &"") -> Array[Dictionary]:
 	if districts.is_base(building):
 		out.append(_slice(&"loan", "Loan $%d" % roundi(F.loan_money), Color(0.8, 0.62, 0.45),
 				_why_not_loan(), "%d paperwork, pay back $%d" % [roundi(F.loan_paperwork), roundi(F.loan_owed)]))
+		out.append(_slice(&"bury", "Bury the File", Color(0.7, 0.7, 0.78),
+				inspectors.why_not_bury(), "%d paperwork: less exposure" % roundi(inspectors.bury_cost())))
 	return out
 
 
@@ -66,6 +69,7 @@ func choose(id: StringName, building: Node3D) -> bool:
 		&"floors": return decrees.issue(&"floors", building)
 		&"open_shop": return decrees.issue(&"use", building)
 		&"loan": return treasury.borrow()
+		&"bury": return inspectors.bury()
 		&"seller_more", &"seller_less":
 			followers.change_sellers(i, 1 if id == &"seller_more" else -1)
 			return true

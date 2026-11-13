@@ -35,6 +35,19 @@ extends Resource
 ## A building you lose keeps this much of its meter, so there is a window to send
 ## another rep before it has to be won from the start.
 @export_range(0.0, 1.0) var lost_meter := 0.6
+@export_group("Key buildings")
+## One block in this many has a key building.
+@export var blocks_per_key := 4.5
+## The names on their signs, in the order they are chosen (the core first).
+@export var key_names := PackedStringArray(["Bureau of Forms", "Permit Office",
+		"Licence Desk", "Zoning Board", "Records Annex", "Noise Bureau", "Stamp Office",
+		"Queue Management", "Parking Authority", "Department of Departments"])
+@export var key_board_color := Color(0.45, 0.12, 0.12)
+@export var key_board_width := 14.0
+@export var key_board_height := 2.6
+@export var key_label_font_size := 64
+@export var key_label_color := Color(1.0, 0.95, 0.85)
+
 @export_group("Borders and blocks")
 ## Buildings whose walls stand this close border each other (next door, or across a street).
 @export var border_gap := 12.0
@@ -107,3 +120,7 @@ func start_independence(count: int) -> PackedFloat32Array:
 
 func minute_for(d: int) -> String:
 	return captured_minutes[d % captured_minutes.size()] if not captured_minutes.is_empty() else ""
+
+
+func key_name(k: int) -> String:
+	return key_names[k % key_names.size()] if k >= 0 else ""

@@ -49,6 +49,11 @@ func end_report(subject: Node3D) -> void:
 	_events.erase(subject)
 
 
+## Raise (or lower) how much the city has noticed, kept in 0..1.
+func add_exposure(amount: float) -> void:
+	exposure = clampf(exposure + amount, 0.0, 1.0)
+
+
 ## Take belief from the pool. Returns false (and takes nothing) if there isn't enough.
 func spend(amount: float) -> bool:
 	if amount > belief_pool:
