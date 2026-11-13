@@ -26,7 +26,6 @@ const U: UnitSettings = preload("res://data/units.tres")
 var _people: PeopleSettings = load("res://data/people.tres")
 
 var city: Node3D
-var police: Police
 ## Used by the god's hand: heavier things lag and swing more when held.
 var mass := 1.0
 var fall_gravity := _people.gravity
@@ -576,22 +575,9 @@ func _pick_next_target() -> void:
 	# Everyone has a neighbourhood: believers gather where they live.
 	var next: int = city.random_neighbor(grid, _came_from)
 	for attempt in 4:
-		if city.node_position(next).distance_to(city.node_position(home)) <= _people.home_range \
-				and not _street_closed(grid, next):
+		if city.node_position(next).distance_to(city.node_position(home)) <= _people.home_range:
 			break
 		next = city.random_neighbor(grid, _came_from)
-	if _street_closed(grid, next):
-		# Every way out is shut for now: wait a beat at this corner.
-		_pause = randf_range(_people.notice_pause_min, _people.notice_pause_max)
-		return
 	_came_from = grid
 	grid = next
 	target = city.node_position(grid) + lane_offset
-
-
-## Is the street between two corners shut by a roadblock?
-func _street_closed(from: int, to: int) -> bool:
-	if police == null:
-		return false
-	var mid: Vector3 = (city.node_position(from) + city.node_position(to)) / 2.0
-	return police.is_closed_at(mid)

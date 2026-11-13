@@ -19,25 +19,12 @@ extends Resource
 
 @export_group("Who holds a building")
 @export var tick := 0.5                     # seconds between counts
-## Share of a building's residents who must believe for it to be yours.
-@export_range(0.0, 1.0) var capture_share := 0.5
-## A district's core building (the one nearest its middle) is harder: this share of its
-## residents must believe. Once it is yours, City Hall and the police leave the district alone.
-@export_range(0.0, 1.0) var core_capture_share := 0.75
 ## A following that holds this share of a district's buildings fills its bar alone
 ## (at middling welfare, with no key place).
 @export_range(0.0, 1.0) var control_share := 0.6
 @export_group("Winning a district: one bar, two sources")
-## The following (the share of buildings that are yours over control_share) counts this
-## much when your believers live badly, and this much when they live well.
-@export var welfare_low := 0.85
-@export var welfare_high := 1.15
 ## What holding the district's core adds to the bar, and each marked landmark.
 @export_range(0.0, 1.0) var core_points := 0.25
-@export_range(0.0, 1.0) var landmark_points := 0.12
-## The following alone fills at most this much of the bar, so a district always needs
-## some key places (the Balance Tester's sim: about 10 minutes' worth, at least 2 marks).
-@export_range(0.0, 1.0) var following_max := 0.7
 @export var progress_tick := 1.0   # seconds between looks at the bar
 @export_group("Who holds a building: the core")
 ## A district's core can only become yours once this share of the buildings within
@@ -51,17 +38,8 @@ extends Resource
 @export_group("Borders and blocks")
 ## Buildings whose walls stand this close border each other (next door, or across a street).
 @export var border_gap := 12.0
-## What the believers living in a block that is all yours make, times this.
-@export var block_output_bonus := 1.25
-## A completed block calms its district: awareness drops by this, once.
-@export var block_awareness_drop := 0.1
 @export var block_note := "Block complete!"
 @export_group("Start district")
-## Abandoned buildings stand empty: whoever moves in holds them. None at the start
-## (Eilam, 2026-11-12: a wall of empty buildings only blocks the cult's way); a building
-## is still abandoned when a fire or roaches empty it.
-@export_range(0.0, 1.0) var abandoned_start := 0.0      # share of the start district's buildings
-@export_range(0.0, 1.0) var abandoned_elsewhere := 0.0  # scattered through the rest of the city
 
 @export_group("The stage")
 ## The start screen: a title and the Secretary's briefing.
@@ -83,13 +61,6 @@ extends Resource
 @export var mission_district := "Fill the district's bar"
 @export var mission_district_hint := "Buildings of yours and key places fill it. Cross into the next block by sending a Rep to a door across the street."
 @export var mission_won := "The district is yours"
-## The cult loses once it has had lose_after_believers believers and then has none
-## at all (the high priest aside) for lose_minutes.
-@export var lose_after_believers := 8
-@export var lose_minutes := 3.0
-@export var lose_title := "The Committee has dissolved"
-@export var lose_line := "Minutes, final item: attendance zero. The kettle has been repossessed. Meeting closed."
-@export var retry_button := "Try again"
 
 @export_group("District captured")
 ## The screen when a district is yours; %s is the district's name.

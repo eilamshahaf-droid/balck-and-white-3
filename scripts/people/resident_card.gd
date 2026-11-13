@@ -105,17 +105,8 @@ func _describe(r: Resident) -> String:
 		_names(r.family, true), _names(r.friends, false)]
 	text += "\nAnxiety %d  Sociability %d  Curiosity %d  Skepticism %d" % [
 		_pct(r.anxiety), _pct(r.sociability), _pct(r.curiosity), _pct(r.skepticism)]
-	text += "\nWealth %d  Connections %d  Faith %d  Fear %d" % [
-		_pct(r.wealth), _pct(r.connections), _pct(r.faith), _pct(r.fear)]
-	if r.is_believer() and r.archetype:
-		var a := population.archetypes()
-		var t := r.archetype
-		text += "\nNeeds (met): livelihood %d  security %d  pleasure %d  meaning %d" % [
-			_pct(Needs.met(r.livelihood, a.value(t.livelihood_desire))),
-			_pct(Needs.met(r.security, a.value(t.security_desire))),
-			_pct(Needs.met(r.pleasure, a.value(t.pleasure_desire))),
-			_pct(Needs.met(r.meaning, a.value(t.meaning_desire)))]
-		text += "\nOutput x%.2f" % population.needs_multiplier(r)
+	text += "\nWealth %d  Connections %d  Faith %d" % [
+		_pct(r.wealth), _pct(r.connections), _pct(r.faith)]
 	if r.job == Resident.Job.TRAIN:
 		text += "\nTraining to be a %s: %d s left" % [
 			U.title(r.training_for).to_lower(), ceili(r.training_left)]

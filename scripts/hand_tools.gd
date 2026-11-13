@@ -1,3 +1,4 @@
+class_name HandTools
 extends Node
 ## The god's two wheels, on top of the hand's movement (god_hand.gd).
 ##

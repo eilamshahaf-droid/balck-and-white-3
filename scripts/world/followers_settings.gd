@@ -9,7 +9,7 @@ extends Resource
 @export_group("Room and growth")
 ## A building's room for followers: its volume over this (cubic metres per place), and
 ## never fewer than room_min.
-@export var volume_per_place := 260.0
+@export var volume_per_place := 130.0
 @export var room_min := 4
 ## A building just taken starts with this share of its room filled.
 @export_range(0.0, 1.0) var start_share := 0.5

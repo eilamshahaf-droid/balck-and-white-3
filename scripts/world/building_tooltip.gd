@@ -9,7 +9,7 @@ const S: DistrictSettings = preload("res://data/districts.tres")
 const RAY_LENGTH := 2000.0
 
 @export var districts: Districts
-@export var treasury: Treasury
+@export var followers: Followers
 @export var decrees: Decrees
 @export var population: Population
 @export var camera: Camera3D
@@ -54,19 +54,17 @@ func _describe(building: Node3D) -> String:
 	if i < 0:
 		return ""
 	var use := decrees.use_of(building)
-	var kind := use if use != "" else "Apartments"
+	var kind := "The Office" if districts.is_base(building) else (use if use != "" else "Homes")
 	var d := districts.district_at(building.global_position)
 	var lines := PackedStringArray()
 	lines.append("%s%s" % [kind, "  (core of %s)" % districts.district_name(d) if districts.core_of(d) == i else ""])
-	var staff := population.staffing.staff_count(building, Resident.Job.PRAY) \
-			+ population.staffing.staff_count(building, Resident.Job.PRIEST)
-	if staff > 0:
-		lines.append("Staff %d, yields %.1f" % [staff, population.yield_of(building)])
 	if districts.is_yours(i):
 		var manager := population.manager_of(building)
-		var net := treasury.net_of(building)
-		lines.append("Yours. %s" % ("Manager: " + manager.full_name() if manager else "The Office"))
-		lines.append("%s $%.1f/s" % ["Earns" if net >= 0.0 else "Costs", absf(net)])
+		if manager:
+			lines.append("Manager: " + manager.full_name())
+		lines.append("Followers %d of %d" % [followers.count_of(i), followers.room_of(i)])
+		if followers.has_shop(i):
+			lines.append("Sellers %d of %d" % [followers.sellers_in(i), followers.shop_slots(i)])
 	elif districts.wants_you(i) and districts.can_claim(i):
 		lines.append("Wants you: set a Rep down here to manage it")
 	elif not districts.borders_yours(i):

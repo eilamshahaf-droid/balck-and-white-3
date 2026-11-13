@@ -1,10 +1,8 @@
 extends Label
-## The meters the player may see, as a row of cards along the top: belief (what
-## miracles and missionaries spend), money (what buying and decrees spend, and
-## what comes in), believers, missionaries, priests,
-## buildings of yours and exposure. Under them, the
-## miracle power under the hand and what the hand holds. Belief itself stays
-## hidden (B shows it, for debugging).
+## The numbers the player may see, as a row of cards along the top: paperwork (what
+## training, decrees and miracles spend), money and what comes in, followers and how
+## many of them hold a role, Reps (free of the cap) and buildings of yours. Under
+## them, what the hand holds.
 
 const REFRESH := 0.25   # seconds; the numbers don't need to change every frame
 const U: UnitSettings = preload("res://data/units.tres")
@@ -12,9 +10,9 @@ const U: UnitSettings = preload("res://data/units.tres")
 var _timer := 0.0
 var _values: Array[Label] = []
 
-@onready var faith: Node = get_node("../../Faith")
-@onready var tools: Node = get_node("../../HandTools")
-@onready var miracles: Node = get_node("../../Miracles")
+@onready var faith: Faith = get_node("../../Faith")
+@onready var tools: HandTools = get_node("../../HandTools")
+@onready var followers: Followers = get_node("../../Followers")
 @onready var treasury: Treasury = get_node("../../Treasury")
 @onready var districts: Districts = get_node("../../Districts")
 @onready var population: Population = get_node("../../Population")
@@ -40,9 +38,8 @@ func _ready() -> void:
 	row.add_theme_constant_override(&"separation", 8)
 	row.position = Vector2(0.0, -52.0)
 	add_child(row)
-	var titles := ["BELIEF", "MONEY", U.plural(Resident.Rank.BELIEVER).to_upper(),
-			U.plural(Resident.Rank.MISSIONARY).to_upper(),
-			U.plural(Resident.Rank.PRIEST).to_upper(), "BUILDINGS", "EXPOSURE"]
+	var titles := ["PAPERWORK", "MONEY", "FOLLOWERS", U.plural(Resident.Rank.MISSIONARY).to_upper(),
+			"BUILDINGS"]
 	for title: String in titles:
 		var card := PanelContainer.new()
 		var box := VBoxContainer.new()
@@ -65,16 +62,15 @@ func _process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = REFRESH
-	_show(0, "%d" % floori(faith.belief_pool))
+	_show(0, "%d  %+.1f/s" % [floori(faith.belief_pool), followers.paperwork_rate])
 	_show(1, "$%d  %+.1f/s" % [floori(treasury.money), treasury.income])
-	_show(2, "%d" % faith.believers)
-	_show(3, "%d free of %d" % [population.free_rep_count, population.missionary_count])
-	_show(4, "%d" % population.priest_count)
-	_show(5, "%d" % districts.converted_buildings().size())
-	_show(6, "%d%%" % roundi(faith.exposure * 100.0))
-	var line := "Miracle power here: %d%%" % roundi(miracles.power_here * 100.0)
+	_show(2, "%d  (%d sellers, %d clerks)" % [followers.total, followers.sellers, followers.clerks])
+	_show(3, "%d free, %d of %d" % [population.free_rep_count, population.reps_out,
+			followers.rep_cap()])
+	_show(4, "%d" % districts.converted_buildings().size())
+	var line := ""
 	if tools.charged != &"":
-		line += "    In the hand: %s (click to cast, right-click to drop)" % String(tools.charged).capitalize()
+		line = "In the hand: %s (click to cast, right-click to drop)" % String(tools.charged).capitalize()
 	if text != line:
 		text = line
 

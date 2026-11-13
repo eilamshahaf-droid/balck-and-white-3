@@ -36,6 +36,8 @@ var _timer := 0.0
 func _ready() -> void:
 	districts.layout_ready.connect(_on_layout_ready, CONNECT_ONE_SHOT)
 	districts.building_changed.connect(_on_building_changed)
+	decrees.decree_issued.connect(func(_kind: StringName, _building: Node3D) -> void: recount())
+	upgrades.upgraded.connect(func(_building: Node3D, _kind: BuildingUpgrades.Kind) -> void: recount())
 
 
 func _physics_process(delta: float) -> void:
@@ -90,6 +92,12 @@ func take_one() -> bool:
 	total -= 1
 	changed.emit()
 	return true
+
+
+## Count the pool and hand the roles out again now (a shop opened, a slot was added).
+func recount() -> void:
+	_fill_roles()
+	changed.emit()
 
 
 ## Is there a shop in building `index`: one opened by a decree, or the main Office's own.

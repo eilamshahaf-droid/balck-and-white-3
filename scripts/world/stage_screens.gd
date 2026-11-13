@@ -1,29 +1,17 @@
 class_name StageScreens
 extends CanvasLayer
-## The start and end of the Slums stage: a briefing from the Secretary when the game
-## opens (the world waits behind it), and the lose screen when the cult has dissolved
-## (it had believers, then none for a while). Winning is DistrictWon's screen.
-
-## The cult has dissolved.
-signal lost
+## The start of the Slums stage: a briefing from the Secretary when the game opens (the
+## world waits behind it). Winning is DistrictWon's screen; the stage has no way to lose
+## until round B brings the danger.
 
 const S: DistrictSettings = preload("res://data/districts.tres")
 
-@export var population: Population
-
 var _start: PanelContainer
-var _lose: PanelContainer
-var _ever_enough := false
-var _empty_for := 0.0
-var _timer := 0.0
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_start = _panel(S.start_title, S.start_briefing, S.start_button, _begin)
-	_lose = _panel(S.lose_title, S.lose_line, S.retry_button,
-			func() -> void: get_tree().reload_current_scene())
-	_lose.visible = false
 	if not _wants_briefing():
 		_start.visible = false
 		return
@@ -31,24 +19,6 @@ func _ready() -> void:
 	await get_tree().create_timer(0.5).timeout
 	if _start.visible:
 		get_tree().paused = true
-
-
-func _physics_process(delta: float) -> void:
-	_timer -= delta
-	if _timer > 0.0 or _lose.visible or get_tree().paused:
-		return
-	_timer = 1.0
-	var others := population.believer_count - (1 if population.priest else 0)
-	if others >= S.lose_after_believers:
-		_ever_enough = true
-	if not _ever_enough or others > 0:
-		_empty_for = 0.0
-		return
-	_empty_for += 1.0
-	if _empty_for >= S.lose_minutes * 60.0:
-		_lose.visible = true
-		get_tree().paused = true
-		lost.emit()
 
 
 func _begin() -> void:

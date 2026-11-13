@@ -144,10 +144,9 @@ script = ExtResource("20_marks")
 campaigns = NodePath("../Campaigns")
 districts = NodePath("../Districts")
 
-[node name="StageScreens" type="CanvasLayer" parent="." node_paths=PackedStringArray("population")]
+[node name="StageScreens" type="CanvasLayer" parent="."]
 layer = 6
 script = ExtResource("66_stage")
-population = NodePath("../Population")
 
 [node name="DistrictProgress" type="Node" parent="." node_paths=PackedStringArray("districts")]
 script = ExtResource("63_progress")
@@ -210,10 +209,10 @@ theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
 progress = NodePath("../../DistrictProgress")
 
-[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "treasury", "decrees", "population", "camera")]
+[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera")]
 script = ExtResource("22_tooltip")
 districts = NodePath("../../Districts")
-treasury = NodePath("../../Treasury")
+followers = NodePath("../../Followers")
 decrees = NodePath("../../Decrees")
 population = NodePath("../../Population")
 camera = NodePath("../../CameraRig/Camera3D")
@@ -223,5 +222,4 @@ layer = 5
 script = ExtResource("60_won")
 districts = NodePath("../Districts")
 
-[connection signal="building_abandoned" from="Miracles" to="Districts" method="mark_abandoned"]
 [connection signal="cult_founded" from="Population" to="CameraRig" method="start_at"]

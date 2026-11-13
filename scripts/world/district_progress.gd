@@ -1,11 +1,9 @@
 class_name DistrictProgress
 extends Node
-## How far along each open district is toward being yours: one bar with two sources
-## (Eilam's rule). A wide following fills it: the share of the district's buildings that
-## are yours, worth more the better your believers live. Key places fill it too: the
-## district's core once it is yours, and every landmark that carries a mark. Either alone
-## is hard (most of the district, or every key place and a fair area besides); together
-## they give the player room to choose. When the bar is full the district is won.
+## How far along each open district is toward being yours: one bar. Until round C
+## brings the key buildings and the two ways to win, it is the share of the district's
+## buildings that are yours against the share that wins it, plus a part for its core.
+## When the bar is full the district is won.
 
 ## District `district`'s bar moved (1 = won).
 signal changed(district: int, value: float)
@@ -13,8 +11,6 @@ signal changed(district: int, value: float)
 const S: DistrictSettings = preload("res://data/districts.tres")
 
 @export var districts: Districts
-@export var landmarks: Landmarks
-@export var population: Population
 
 var _values := PackedFloat32Array()
 var _timer := 0.0
@@ -43,16 +39,12 @@ func value(d: int) -> float:
 	return following(d) + key_places(d)
 
 
-## What the following gives: the share of the buildings that are yours against the share
-## that wins the district alone, times how well your believers live; never more than
-## following_max of the bar.
+## What your buildings give: their share of the district against the share that wins it.
 func following(d: int) -> float:
-	return minf(districts.share(d) / S.control_share
-			* lerpf(S.welfare_low, S.welfare_high, population.welfare), S.following_max)
+	return districts.share(d) / S.control_share
 
 
-## What the key places give: the core, and each marked landmark.
+## What the key places give: the district's core, once it is yours.
 func key_places(d: int) -> float:
 	var core := districts.core_of(d)
-	var held := S.core_points if core >= 0 and districts.is_yours(core) else 0.0
-	return held + S.landmark_points * landmarks.marks_in(d)
+	return S.core_points if core >= 0 and districts.is_yours(core) else 0.0

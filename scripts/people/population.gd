@@ -87,6 +87,12 @@ func make_manager(r: Resident, building: Node3D) -> void:
 	_count_ranks()
 
 
+## Someone living in a building of yours starts training at `building` for `rank`.
+func start_training(rank: Resident.Rank, building: Node3D) -> void:
+	staffing.train(recruit(building.global_position), rank, building)
+	_count_ranks()
+
+
 ## How far the furthest-along trainee for `rank` is, 0..1; 0 when nobody trains for it.
 func training_progress(rank: Resident.Rank) -> float:
 	var full := U.missionary_time if rank == Resident.Rank.MISSIONARY else U.agent_time

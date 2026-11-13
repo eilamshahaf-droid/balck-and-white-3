@@ -48,7 +48,6 @@ static func redecorate(building: Node3D) -> void:
 	var size := BuildingBox.size_of(building)
 	var foot := -size.y / 2.0
 	for side: float in [1.0, -1.0]:
-		var face := side * (size.z / 2.0 + 0.05)
 		var yaw := 0.0 if side > 0.0 else PI
 		var use: String = building.get_meta(&"decree_use", "")
 		if use != "":

@@ -1,17 +1,12 @@
 class_name CampaignMarks
 extends Node3D
-## The takeover marks over the buildings: a skull (force), a dollar (buy) or a
-## sky sign (missionaries) floating above the roof, with how many residents
-## believe so far underneath ("3 / 7 believe"). Only marked buildings have one,
-## so a Sprite3D and a Label3D each are cheap. They shrink as the camera comes
-## in, so a close-up isn't covered by a 12 m dollar sign.
+## A mark over every building Reps were sent to: a sign floating above the roof with
+## how full its meter is and what holds the work up underneath. Only those buildings
+## have one, so a Sprite3D and a Label3D each are cheap. They shrink as the camera comes
+## in, so a close-up isn't covered by a 12 m sign.
 
 const S: CampaignSettings = preload("res://data/campaigns.tres")
-const ICONS: Array[Texture2D] = [
-	preload("res://assets/icons/mark_force.png"),
-	preload("res://assets/icons/mark_buy.png"),
-	preload("res://assets/icons/mark_preach.png"),
-]
+const ICON: Texture2D = preload("res://assets/icons/mark_preach.png")
 const LIFT := 14.0          # metres above the roof
 const ICON_PIXEL := 0.05    # metres per icon pixel (256 px = 12.8 m)
 
@@ -28,9 +23,9 @@ func _ready() -> void:
 	districts.counted.connect(_refresh)
 
 
-func _on_started(building: Node3D, route: Campaigns.Route) -> void:
+func _on_started(building: Node3D) -> void:
 	var icon := Sprite3D.new()
-	icon.texture = ICONS[route]
+	icon.texture = ICON
 	icon.pixel_size = ICON_PIXEL
 	icon.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	icon.shaded = false
@@ -52,7 +47,7 @@ func _on_started(building: Node3D, route: Campaigns.Route) -> void:
 	set_process(true)
 
 
-func _on_ended(building: Node3D, _route: Campaigns.Route, _won: bool) -> void:
+func _on_ended(building: Node3D, _won: bool) -> void:
 	var label: Label3D = _marks.get(building)
 	if label:
 		label.get_parent().queue_free()

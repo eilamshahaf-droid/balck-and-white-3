@@ -99,7 +99,7 @@ func _train(rank: Resident.Rank, building: Node3D) -> bool:
 	var cost := F.rep_paperwork if rank == Resident.Rank.MISSIONARY else F.fixer_paperwork
 	if not faith.spend(cost) or not followers.take_one():
 		return false
-	population.staffing.train(population.recruit(building.global_position), rank, building)
+	population.start_training(rank, building)
 	return true
 
 
