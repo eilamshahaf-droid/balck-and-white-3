@@ -184,11 +184,12 @@ awareness = NodePath("../Awareness")
 faith = NodePath("../Faith")
 treasury = NodePath("../Treasury")
 
-[node name="Awareness" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "landmarks")]
+[node name="Awareness" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "landmarks", "campaigns")]
 script = ExtResource("61_awareness")
 districts = NodePath("../Districts")
 population = NodePath("../Population")
 landmarks = NodePath("../Landmarks")
+campaigns = NodePath("../Campaigns")
 
 [node name="Landmarks" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
 script = ExtResource("65_landmarks")

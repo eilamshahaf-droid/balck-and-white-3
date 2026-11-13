@@ -45,6 +45,9 @@ extends Resource
 @export_range(0.0, 1.0) var core_base_share := 0.5
 @export var core_base_steps := 2
 
+## A building you lose keeps this much of its meter, so there is a window to send
+## another rep before it has to be won from the start.
+@export_range(0.0, 1.0) var lost_meter := 0.6
 @export_group("Borders and blocks")
 ## Buildings whose walls stand this close border each other (next door, or across a street).
 @export var border_gap := 12.0

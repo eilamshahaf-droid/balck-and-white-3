@@ -142,7 +142,6 @@ extends Resource
 @export var sermon_ring_radius := 5.0        # metres, the ring around a preaching priest
 @export var sermon_calm_color := Color(1.0, 0.85, 0.3)
 @export var sermon_raid_color := Color(0.95, 0.25, 0.25)   # the ring once the police move in
-@export var priest_preach_mark_time := 4.0   # seconds "preaching..." stays after he talks
 
 @export_group("Floating notes: who just came to believe")
 @export var notes_per_second := 4.0          # at most this many "+ Believer" notes at once

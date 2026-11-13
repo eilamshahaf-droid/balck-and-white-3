@@ -17,6 +17,7 @@ const SPEED := 8.0
 const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
 const MARKS := 2
+const REPS_READY := 2   # train while fewer free reps than this
 const PRAYING := 4
 const LANDMARK_MARKS := 3
 const MARK_SLACK := 60.0      # game seconds to walk there and back
@@ -92,7 +93,7 @@ func _on_building_changed(_index: int, yours: bool) -> void:
 
 
 func _act() -> void:
-	if _habits.has("train") and _population.missionary_count * 3 < _population.believer_count:
+	if _habits.has("train") and _population.free_rep_count < REPS_READY:
 		for r in _population.residents:
 			if r.rank == Resident.Rank.BELIEVER and r.job == Resident.Job.FREE \
 					and _population.staffing.train(r, Resident.Rank.MISSIONARY,
@@ -106,17 +107,27 @@ func _act() -> void:
 				break
 	if _habits.has("delegate"):
 		_send_delegate(base)
+	for b in _campaigns.marked():
+		if not _districts.can_claim(_districts.index_of(b)):
+			_campaigns.clear(b)   # its border was lost: don't wait on it
 	if _campaigns.marked().size() >= MARKS:
 		return
+	# Buildings that already want us first: they only need a rep.
+	var order: Array[int] = []
 	for i in _districts.buildings.size():
+		if _districts.buildings[i] and not _districts.is_yours(i):
+			order.append(i)
+	order.sort_custom(func(a: int, b: int) -> bool:
+		return _districts.meter_of(a) > _districts.meter_of(b))
+	for i in order:
 		var b := _districts.buildings[i]
-		if b == null or _districts.is_yours(i) or _campaigns.route_of(b) >= 0:
+		if _campaigns.route_of(b) >= 0:
 			continue
-		var empty := _districts.residents_in(i) == 0
-		if empty and _habits.has("buy") and _campaigns.why_not(b, Campaigns.Route.BUY) == "":
+		if _habits.has("buy") and not _districts.wants_you(i) \
+				and _campaigns.why_not(b, Campaigns.Route.BUY) == "":
 			_campaigns.mark(b, Campaigns.Route.BUY)
 			return
-		if not empty and _habits.has("preach") \
+		if _habits.has("preach") and _population.free_rep_count > 0 \
 				and _campaigns.why_not(b, Campaigns.Route.PREACH) == "":
 			_campaigns.mark(b, Campaigns.Route.PREACH)
 			return
