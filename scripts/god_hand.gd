@@ -1,3 +1,4 @@
+class_name GodHand
 extends Node3D
 ## The god's hand is the whole interface, as in Black & White.
 ##

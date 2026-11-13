@@ -1,144 +1,150 @@
 class_name BuildingMenus
 extends Node
-## The second wheels of a building of yours: the upgrades for its kind (home,
-## sermon house or workplace), posts for free believers in sermon houses and
-## shops, and training missionaries and priests in sermon houses. Prices and effects live in Population and
-## Treasury; this only builds the slices and carries out the choice.
+## What the wheel of a building of yours offers (HandTools draws it and reports the
+## choice). The first wheel: upgrades, more floors, the shop, and at the main Office
+## training and a loan. "Upgrades" and "Shop" open a second wheel. Every slice says
+## what it costs, or why it can't be had.
 
+const F: FollowersSettings = preload("res://data/followers.tres")
 const U: UnitSettings = preload("res://data/units.tres")
-
-## What each upgrade is called on the wheel, and what it does.
-const UPGRADE_INFO := {
-	BuildingUpgrades.Kind.ELEVATOR: ["Elevator", "comfort up", Color(0.6, 0.85, 1.0)],
-	BuildingUpgrades.Kind.ROOF_GARDEN: ["Roof Garden", "comfort up", Color(0.55, 0.9, 0.5)],
-	BuildingUpgrades.Kind.CAMERAS: ["Cameras", "fear up", Color(0.9, 0.5, 0.45)],
-	BuildingUpgrades.Kind.GATE: ["Gate", "fear up", Color(0.75, 0.45, 0.7)],
-	BuildingUpgrades.Kind.LOUDSPEAKER: ["Loudspeaker", "meetings reach further", Color(1.0, 0.85, 0.4)],
-	BuildingUpgrades.Kind.BANNERS: ["Banners", "talks land better", Color(0.85, 0.5, 0.9)],
-	BuildingUpgrades.Kind.LECTURE_HALL: ["Lecture Hall", "talks land better", Color(0.6, 0.75, 1.0)],
-	BuildingUpgrades.Kind.STOREFRONT: ["Storefront", "shop income", Color(0.95, 0.7, 0.35)],
-	BuildingUpgrades.Kind.GYM: ["Training Hall", "trains fighters", Color(0.9, 0.45, 0.4)],
-	BuildingUpgrades.Kind.REAL_ESTATE: ["Real Estate", "cheaper buying nearby", Color(0.5, 0.8, 0.6)],
-	BuildingUpgrades.Kind.SEMINARY: ["Seminary", "trains clerks", Color(0.95, 0.95, 1.0)],
-	BuildingUpgrades.Kind.RESTAURANT: ["Restaurant", "comfort up", Color(1.0, 0.75, 0.5)],
-}
-## Post slices: the job, and the rank of who takes it.
-const POSTS := {
-	&"pray": [Resident.Job.PRAY, Resident.Rank.BELIEVER],
-	&"serve": [Resident.Job.PRIEST, Resident.Rank.PRIEST],
-	&"shop": [Resident.Job.SHOP, Resident.Rank.BELIEVER],
-}
-## Training slices: what each turns someone into.
-const TRAINING := {
-	&"missionary": Resident.Rank.MISSIONARY,
-	&"priest": Resident.Rank.PRIEST,
-	&"agent": Resident.Rank.AGENT,
+const D: DecreeSettings = preload("res://data/decrees.tres")
+const Kind := BuildingUpgrades.Kind
+## Name, what it does, and colour of each upgrade.
+const LOOKS := {
+	Kind.ATTRACTION: ["Attraction", "followers come faster", Color(0.55, 0.9, 0.5)],
+	Kind.SECURITY: ["Security", "harder to turn back", Color(0.9, 0.5, 0.45)],
+	Kind.SHOP: ["Bigger Shop", "room for more sellers", Color(0.95, 0.7, 0.35)],
+	Kind.DESKS: ["More Desks", "room for more clerks", Color(0.95, 0.95, 1.0)],
+	Kind.TRAINING: ["Training Room", "one more Rep at a time", Color(0.6, 0.75, 1.0)],
 }
 
-@export var population: Population
+@export var districts: Districts
+@export var followers: Followers
 @export var treasury: Treasury
+@export var faith: Faith
+@export var population: Population
+@export var decrees: Decrees
 
 
-## Does `building` take free believers as staff?
-func has_posts(building: Node3D) -> bool:
-	return building.is_in_group(Population.PRAYER_HOUSES) or building.is_in_group(Population.SHOPS) \
-			or population.districts.is_base(building)
+## The slices for `building`: the first wheel, or the second one for `group`
+## (&"upgrades" or &"shop").
+func items(building: Node3D, group := &"") -> Array[Dictionary]:
+	var i := districts.index_of(building)
+	match group:
+		&"upgrades": return _upgrade_items(building, i)
+		&"shop": return _shop_items(i)
+	var out: Array[Dictionary] = []
+	if districts.is_base(building):
+		out.append(_slice(&"train_rep", "Train " + U.title(Resident.Rank.MISSIONARY),
+				U.color(Resident.Rank.MISSIONARY), why_not_train(Resident.Rank.MISSIONARY),
+				"%d paperwork" % roundi(F.rep_paperwork)))
+		out.append(_slice(&"train_fixer", "Train " + U.title(Resident.Rank.AGENT),
+				U.color(Resident.Rank.AGENT), why_not_train(Resident.Rank.AGENT),
+				"%d paperwork" % roundi(F.fixer_paperwork)))
+	out.append({"id": &"upgrades", "label": "Upgrades", "color": Color(0.6, 0.85, 1.0),
+			"note": "$%d each" % roundi(followers.upgrades.cost(building))})
+	out.append(_slice(&"floors", "+%d Floors" % D.floors_per_decree, Color(0.95, 0.7, 0.35),
+			_why_not_decree(&"floors", building), decrees.price(&"floors", building)))
+	if followers.has_shop(i):
+		out.append({"id": &"shop", "label": "Shop", "color": Color(0.5, 0.9, 0.55),
+				"note": "%d of %d sellers" % [followers.sellers_in(i), followers.shop_slots(i)]})
+	else:
+		out.append(_slice(&"open_shop", "Open a Shop", Color(0.5, 0.9, 0.55),
+				_why_not_decree(&"use", building), decrees.price(&"use", building)))
+	if districts.is_base(building):
+		out.append(_slice(&"loan", "Loan $%d" % roundi(F.loan_money), Color(0.8, 0.62, 0.45),
+				_why_not_loan(), "%d paperwork, pay back $%d" % [roundi(F.loan_paperwork), roundi(F.loan_owed)]))
+	return out
 
 
-## The upgrades this kind of building can buy (a home, a sermon house, a workplace).
-func upgrade_items(building: Node3D) -> Array[Dictionary]:
-	var cost := population.upgrades.cost(building)
-	var items: Array[Dictionary] = []
-	for kind in population.upgrades.kinds_for(building):
-		var info: Array = UPGRADE_INFO[kind]
-		var bought := population.upgrades.count_of(building, kind)
-		items.append({"id": StringName(str(kind)), "label": info[0], "effect": info[1],
-				"color": info[2], "enabled": treasury.can_afford(cost),
-				"note": "$%d%s" % [roundi(cost), " (x%d)" % bought if bought > 0 else ""]})
-	return items
-
-
-func post_items(building: Node3D) -> Array[Dictionary]:
-	var p := building.global_position
-	var believers := population.free_members(p).size()
-	var items: Array[Dictionary] = []
-	if building.is_in_group(Population.PRAYER_HOUSES):
-		items.append(_post_item(&"pray", "Send to the Branch", Color(1.0, 0.88, 0.5), believers))
-		var priests := population.free_members(p, Resident.Rank.PRIEST).size()
-		items.append(_post_item(&"serve", "Serve as " + U.title(Resident.Rank.PRIEST),
-				U.color(Resident.Rank.PRIEST), priests))
-	for id: StringName in TRAINING:
-		var rank: Resident.Rank = TRAINING[id]
-		var here := population.districts.is_base(building) if rank == Resident.Rank.AGENT \
-				else building.is_in_group(Population.PRAYER_HOUSES)
-		if here:
-			var free := population.staffing.trainees_for(rank, building).size()
-			var item := _post_item(id, "Train " + U.title(rank), U.color(rank), free)
-			if not population.staffing.can_train(rank, building):
-				item.enabled = false
-				match rank:
-					Resident.Rank.PRIEST: item.note = "not here"
-					Resident.Rank.AGENT:
-						item.note = "needs %d members" % U.agent_unlock_believers \
-								if population.believer_count < U.agent_unlock_believers \
-								else "%d at most" % U.max_agents
-					_: item.note = "house full"
-			elif not treasury.can_afford(_training_cost(rank)):
-				item.enabled = false
-				item.note = "needs $%d" % roundi(_training_cost(rank))
-			items.append(item)
-	if building.is_in_group(Population.SHOPS):
-		items.append(_post_item(&"shop", "Work Here", Color(0.5, 0.9, 0.55), believers))
-	return items
-
-
-## Buy the upgrade `id` (an `Upgrade` value as text) for `building` if there is money for it.
-func buy_upgrade(id: StringName, building: Node3D) -> bool:
-	var kind := int(String(id)) as BuildingUpgrades.Kind
-	var cost := population.upgrades.cost(building)
-	if not population.upgrades.kinds_for(building).has(kind) or not treasury.can_afford(cost):
-		return false
-	treasury.spend_money(cost)
-	population.upgrade(building, kind)
-	return true
-
-
-## Send the nearest free member, wherever they are, to the post or training `id` in `building`.
-func send_to_post(id: StringName, building: Node3D) -> bool:
-	var p := building.global_position
-	if TRAINING.has(id):
-		var rank: Resident.Rank = TRAINING[id]
-		if not treasury.can_afford(_training_cost(rank)):
-			return false
-		for r in population.staffing.trainees_for(rank, building):
-			if population.staffing.train(r, rank, building):
-				treasury.spend_money(_training_cost(rank))
-				return true
-		return false
-	if not POSTS.has(id):
-		return false
-	var job: Resident.Job = POSTS[id][0]
-	for r in population.free_members(p, POSTS[id][1]):
-		if population.staffing.assign(r, job, building):
+## Carry out slice `id` on `building`. True when something was done.
+func choose(id: StringName, building: Node3D) -> bool:
+	var i := districts.index_of(building)
+	match id:
+		&"train_rep": return _train(Resident.Rank.MISSIONARY, building)
+		&"train_fixer": return _train(Resident.Rank.AGENT, building)
+		&"floors": return decrees.issue(&"floors", building)
+		&"open_shop": return decrees.issue(&"use", building)
+		&"loan": return treasury.borrow()
+		&"seller_more", &"seller_less":
+			followers.change_sellers(i, 1 if id == &"seller_more" else -1)
+			return true
+	for kind: Kind in followers.kinds_for(i):
+		if id == _upgrade_id(kind) and treasury.spend_money(followers.upgrades.cost(building)):
+			followers.upgrades.add(building, kind)
 			return true
 	return false
 
 
-func _training_cost(rank: Resident.Rank) -> float:
-	match rank:
-		Resident.Rank.PRIEST:
-			# The Secretary counts among the priests but was never trained.
-			var clerks := maxi(population.priest_count - 1, 0)
-			return U.priest_cost * pow(1.0 + U.priest_cost_growth, clerks)
-		Resident.Rank.AGENT: return U.agent_cost
-	return 0.0
+## Why nobody can start training for `rank` now; "" when one can.
+func why_not_train(rank: Resident.Rank) -> String:
+	var rep := rank == Resident.Rank.MISSIONARY
+	if rep and population.reps_out >= followers.rep_cap():
+		return "%d of %d Reps out: one must take a building first" \
+				% [population.reps_out, followers.rep_cap()]
+	if not rep and population.agent_count + population.staffing.training_for(rank) >= F.fixer_cap:
+		return "%d at most" % F.fixer_cap
+	if followers.idle() <= 0:
+		return "no follower to spare"
+	var cost := F.rep_paperwork if rep else F.fixer_paperwork
+	if faith.belief_pool < cost:
+		return "needs %d paperwork" % roundi(cost)
+	return ""
 
 
-func _post_item(id: StringName, label: String, color: Color, free: int) -> Dictionary:
-	var title: String = U.title(Resident.Rank.BELIEVER).to_lower()
-	if TRAINING.has(id):
-		title = U.title(Staffing.trainee_rank(TRAINING[id])).to_lower()
-	elif POSTS.has(id):
-		title = U.title(POSTS[id][1]).to_lower()
-	return {"id": id, "label": label, "color": color, "enabled": free > 0,
-			"note": "%d %s%s ready" % [free, title, "" if free == 1 else "s"]}
+## One follower leaves the pool and starts training at `building`.
+func _train(rank: Resident.Rank, building: Node3D) -> bool:
+	if why_not_train(rank) != "":
+		return false
+	var cost := F.rep_paperwork if rank == Resident.Rank.MISSIONARY else F.fixer_paperwork
+	if not faith.spend(cost) or not followers.take_one():
+		return false
+	population.staffing.train(population.recruit(building.global_position), rank, building)
+	return true
+
+
+func _upgrade_items(building: Node3D, i: int) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var cost := followers.upgrades.cost(building)
+	for kind: Kind in followers.kinds_for(i):
+		var look: Array = LOOKS[kind]
+		out.append({"id": _upgrade_id(kind), "label": look[0], "color": look[2],
+				"note": "$%d  (level %d)" % [roundi(cost), followers.upgrades.level(building, kind)],
+				"effect": look[1], "enabled": treasury.can_afford(cost)})
+	return out
+
+
+func _shop_items(i: int) -> Array[Dictionary]:
+	var working := followers.sellers_in(i)
+	var slots := followers.shop_slots(i)
+	var more := "shop is full" if working >= slots \
+			else ("no follower to spare" if followers.idle() <= 0 else "")
+	return [
+		_slice(&"seller_more", "One More Seller", Color(0.5, 0.9, 0.55), more,
+				"next brings $%+.2f/s" % followers.next_seller_net(i)),
+		_slice(&"seller_less", "One Seller Fewer", Color(0.9, 0.55, 0.45),
+				"nobody works here" if working <= 0 else "", "%d of %d at work" % [working, slots]),
+	]
+
+
+func _why_not_decree(kind: StringName, building: Node3D) -> String:
+	if decrees.is_done(kind, building):
+		return "done"
+	return "" if decrees.can_afford(kind, building) else "needs " + decrees.price(kind, building)
+
+
+func _why_not_loan() -> String:
+	if treasury.owed > 0.0:
+		return "$%d still owed" % ceili(treasury.owed)
+	return "" if treasury.can_borrow() else "needs %d paperwork" % roundi(F.loan_paperwork)
+
+
+## A slice that is greyed out with `why` when it can't be chosen, and shows `price`
+## when it can.
+func _slice(id: StringName, label: String, color: Color, why: String, price: String) -> Dictionary:
+	return {"id": id, "label": label, "color": color, "note": why if why != "" else price,
+			"enabled": why == ""}
+
+
+func _upgrade_id(kind: Kind) -> StringName:
+	return StringName("upgrade_%d" % kind)
