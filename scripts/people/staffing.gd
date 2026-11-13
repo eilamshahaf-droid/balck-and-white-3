@@ -144,9 +144,9 @@ func staff_count(building: Node3D, job := Resident.Job.FREE) -> int:
 
 ## Who could start training for `rank` in `building`: free people of the rank
 ## below within `radius` of it, and those praying there.
-func trainees_for(rank: Resident.Rank, building: Node3D, radius: float) -> Array[Resident]:
+func trainees_for(rank: Resident.Rank, building: Node3D) -> Array[Resident]:
 	var from := trainee_rank(rank)
-	var out := _population.free_believers_near(building.global_position, radius, from)
+	var out := _population.free_members(building.global_position, from)
 	for r: Resident in members(building):
 		if r.job == Resident.Job.PRAY and r.rank == from:
 			out.append(r)

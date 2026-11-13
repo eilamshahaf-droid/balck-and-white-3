@@ -54,7 +54,7 @@ func _describe(building: Node3D) -> String:
 	if i < 0:
 		return ""
 	var use := decrees.use_of(building)
-	var kind := use if use != "" else ("Apartments" if districts.residents_in(i) > 0 else "Empty building")
+	var kind := use if use != "" else "Apartments"
 	var d := districts.district_at(building.global_position)
 	var lines := PackedStringArray()
 	lines.append("%s%s" % [kind, "  (core of %s)" % districts.district_name(d) if districts.core_of(d) == i else ""])

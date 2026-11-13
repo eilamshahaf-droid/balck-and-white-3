@@ -34,7 +34,7 @@ extends Resource
 @export var attempt_interval := 20.0
 ## How far a street meeting reaches, in metres (loudspeakers widen it).
 @export var preach_reach := 14.0
-## The Office opens with this many followers living in it, ready to be trained.
+## The Office opens with at least this many followers living in it, ready to be trained.
 @export var start_followers := 4
 @export_group("Winning people over without being asked")
 ## A building of yours pulls up the takeover meter of the buildings next to it in its own

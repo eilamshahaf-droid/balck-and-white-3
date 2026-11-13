@@ -389,16 +389,21 @@ func convert_to(r: Resident, rank: Resident.Rank) -> void:
 	rank_changed.emit(r, old, rank)
 
 
-## People of `rank` on the street within `radius` of `p` who have no post yet.
-func free_believers_near(p: Vector3, radius: float,
-		rank := Resident.Rank.BELIEVER) -> Array[Resident]:
+## Everyone of `rank` with no post yet, wherever they are (on the street or at home),
+## nearest to `p` first: any member can be called to a post or to training, not only one
+## who happens to stand by the building.
+func free_members(p: Vector3, rank := Resident.Rank.BELIEVER) -> Array[Resident]:
 	var out: Array[Resident] = []
-	for c in _street.bodies:
-		var r := c.resident
-		if r.job == Resident.Job.FREE and r.rank == rank \
-				and c.global_position.distance_to(p) < radius:
+	for r in residents:
+		if r.alive and r.job == Resident.Job.FREE and r.rank == rank and r.home != null:
 			out.append(r)
+	out.sort_custom(func(a: Resident, b: Resident) -> bool:
+		return _where(a).distance_squared_to(p) < _where(b).distance_squared_to(p))
 	return out
+
+
+func _where(r: Resident) -> Vector3:
+	return r.body.global_position if _has_body(r) else r.home.global_position
 
 
 ## A police roadblock stops what a building produces while it stands.
@@ -510,21 +515,15 @@ func found_cult() -> void:
 
 
 ## The Office opens with a few followers living in it, so there is someone to train: its
-## own residents, topped up from the homes nearest to it.
+## own residents, and new households moving in until there are enough. Nobody is taken
+## from the neighbours: no building is ever left empty.
 func _gather_first_followers(start: Node3D) -> void:
-	var followers := 0
+	while (_by_home[start] as Array).size() < U.start_followers + 1:
+		_census.add_household(start)
+	residents = _census.residents
 	for r: Resident in _by_home[start]:
 		if r != priest:
 			convert_to(r, Resident.Rank.BELIEVER)
-			followers += 1
-	var others := residents.filter(func(r: Resident) -> bool:
-		return r.alive and r.home != start and not r.is_believer())
-	others.sort_custom(func(a: Resident, b: Resident) -> bool:
-		return a.home.global_position.distance_squared_to(start.global_position) \
-				< b.home.global_position.distance_squared_to(start.global_position))
-	for r: Resident in others.slice(0, maxi(U.start_followers - followers, 0)):
-		move_home(r, start)
-		convert_to(r, Resident.Rank.BELIEVER)
 	_housing[start] = maxi(_housing.get(start, 0), (_by_home[start] as Array).size())
 
 
@@ -761,27 +760,6 @@ func _footprint(building: Node3D) -> Rect2:
 	return Rect2()
 
 
-## Shops and prayer houses have no residents: whoever lives in a building
-## that became one moves to the nearest home.
-func _vacate_work_buildings() -> void:
-	for b: Node3D in _by_home.keys():
-		if b == _headquarters or (_by_home[b] as Array).is_empty():
-			continue
-		if not (b.is_in_group(SHOPS) or b.is_in_group(PRAYER_HOUSES)):
-			continue
-		_homes.erase(b)
-		var new_home := home_near(b.global_position)
-		if new_home == null:
-			return
-		# They take their room with them: turning a building into a shop must not
-		# crowd the neighbours and drive your own members out.
-		_housing[new_home] = _housing.get(new_home, 0) + _housing.get(b, 0)
-		for r: Resident in (_by_home[b] as Array).duplicate():
-			_set_home(r, new_home)
-			if _has_body(r):
-				r.body.move_out()
-
-
 ## 0 for a home with room, up to 1 at twice its capacity.
 func _crowding(building: Node3D) -> float:
 	var cap := _capacity_of_home(building)
@@ -795,7 +773,6 @@ func _capacity_of_home(building: Node3D) -> int:
 
 
 func _refresh_presence() -> void:
-	_vacate_work_buildings()
 	for b: Node3D in _presence:
 		_presence[b] = 0.0
 	believer_count = 0
@@ -874,4 +851,6 @@ func _feel(r: Resident, dt: float) -> void:
 	r.fear = maxf(r.fear - _people.fear_decay * dt, 0.0)
 	if r.fear > _people.flee_fear and r != priest:
 		r.fear *= 0.5
-		evict(r)
+		# The last one in a building stays put: no building is ever left empty.
+		if (_by_home.get(r.home, []) as Array).size() > 1:
+			evict(r)
