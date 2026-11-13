@@ -209,13 +209,12 @@ each thread owes; read both before starting work.
   verbs are stamp (your own rules) and tear (no rules). No signatures or petition.
 - `docs/GDD.md` is a copy of the Designer's page (the link is at its top). If Eilam says the
   design changed and the copy has not, read the page with the Artifact tool and sync the copy.
-- **The takeover model (2026-11-13, GDD section 0 item 7):** every building has a meter
-  (`Districts.meter_of`, `add_meter`, `wants_you`, `take`); a Rep (`MISSIONARY`) at its door
-  fills it (`Campaigns`, `Preaching.pace`); when full the Rep takes it and stays as its Manager
-  (`Job.MANAGER`, `Population.make_manager`, `manager_of`); a building is yours while managed.
-  Buildings next to yours in a block fill by themselves and then only need a Rep. Built: step 1.
-  Next: step 2, exposure and losing Reps; step 3, each block's key building, the Fixer (`AGENT`:
-  guard or breach) and the two ways to win. The map has about 170 large buildings on purpose.
+- **The model (2026-11-13, GDD section 0 item 7) is the game now**; anything older that
+  disagrees is void. Followers are a number per building in one pool; roles (seller, clerk) are
+  slots that fill themselves; a Rep (`MISSIONARY`, capped) fills a building's meter and stays as
+  its Manager; money from shops, paperwork from clerks; the main Office is the heart; key
+  buildings send inspectors and become offices; only Reps, the Fixer and the Secretary are
+  lifted by the hand. Built in three rounds: A the economy, B the danger, C the goal.
 - Buildings are taken one at a time; a whole block pays a bonus.
 - The system has three layers (GDD section 13): a base that no stage changes, branches the player
   balances by style, and a stage profile of numbers. A later stage is harder by its numbers
