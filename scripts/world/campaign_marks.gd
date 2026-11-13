@@ -82,8 +82,7 @@ func _place(building: Node3D) -> void:
 	var top := building.global_position.y + BuildingBox.size_of(building).y / 2.0
 	label.get_parent().global_position = Vector3(building.global_position.x, top + LIFT, building.global_position.z)
 	var i := districts.index_of(building)
-	var people := districts.residents_in(i)
-	var text := "%d / %d believe" % [districts.believers_at(i), people] if people > 0 else "empty"
+	var text := "%d%%" % floori(districts.meter_of(i) * 100.0)
 	var stalled := campaigns.stalled_on(building)
 	if stalled != "":
 		text += "\n" + stalled

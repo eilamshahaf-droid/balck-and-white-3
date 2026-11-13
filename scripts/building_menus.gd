@@ -5,7 +5,6 @@ extends Node
 ## shops, and training missionaries and priests in sermon houses. Prices and effects live in Population and
 ## Treasury; this only builds the slices and carries out the choice.
 
-const S: HandSettings = preload("res://data/hand_settings.tres")
 const U: UnitSettings = preload("res://data/units.tres")
 
 ## What each upgrade is called on the wheel, and what it does.
@@ -61,11 +60,11 @@ func upgrade_items(building: Node3D) -> Array[Dictionary]:
 
 func post_items(building: Node3D) -> Array[Dictionary]:
 	var p := building.global_position
-	var believers := population.free_believers_near(p, S.staff_reach).size()
+	var believers := population.free_members(p).size()
 	var items: Array[Dictionary] = []
 	if building.is_in_group(Population.PRAYER_HOUSES):
 		items.append(_post_item(&"pray", "Send to the Branch", Color(1.0, 0.88, 0.5), believers))
-		var priests := population.free_believers_near(p, S.staff_reach, Resident.Rank.PRIEST).size()
+		var priests := population.free_members(p, Resident.Rank.PRIEST).size()
 		items.append(_post_item(&"serve", "Serve as " + U.title(Resident.Rank.PRIEST),
 				U.color(Resident.Rank.PRIEST), priests))
 	for id: StringName in TRAINING:
@@ -73,7 +72,7 @@ func post_items(building: Node3D) -> Array[Dictionary]:
 		var here := population.districts.is_base(building) if rank == Resident.Rank.AGENT \
 				else building.is_in_group(Population.PRAYER_HOUSES)
 		if here:
-			var free := population.staffing.trainees_for(rank, building, S.staff_reach).size()
+			var free := population.staffing.trainees_for(rank, building).size()
 			var item := _post_item(id, "Train " + U.title(rank), U.color(rank), free)
 			if not population.staffing.can_train(rank, building):
 				item.enabled = false
@@ -104,14 +103,14 @@ func buy_upgrade(id: StringName, building: Node3D) -> bool:
 	return true
 
 
-## Send a free believer from the street nearby to the post or training `id` in `building`.
+## Send the nearest free member, wherever they are, to the post or training `id` in `building`.
 func send_to_post(id: StringName, building: Node3D) -> bool:
 	var p := building.global_position
 	if TRAINING.has(id):
 		var rank: Resident.Rank = TRAINING[id]
 		if not treasury.can_afford(_training_cost(rank)):
 			return false
-		for r in population.staffing.trainees_for(rank, building, S.staff_reach):
+		for r in population.staffing.trainees_for(rank, building):
 			if population.staffing.train(r, rank, building):
 				treasury.spend_money(_training_cost(rank))
 				return true
@@ -119,7 +118,7 @@ func send_to_post(id: StringName, building: Node3D) -> bool:
 	if not POSTS.has(id):
 		return false
 	var job: Resident.Job = POSTS[id][0]
-	for r in population.free_believers_near(p, S.staff_reach, POSTS[id][1]):
+	for r in population.free_members(p, POSTS[id][1]):
 		if population.staffing.assign(r, job, building):
 			return true
 	return false

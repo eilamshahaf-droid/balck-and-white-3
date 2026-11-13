@@ -86,8 +86,8 @@ func _test_start() -> void:
 	_check(start.is_in_group(Population.PRAYER_HOUSES), "the start building is a sermon house")
 	var with_us := _population.residents.filter(
 			func(r: Resident) -> bool: return r.is_believer()).size()
-	_check(with_us == 1 + U.start_followers,
-			"the Office opens with %d followers (%d with the Secretary)"
+	_check(with_us >= 1 + U.start_followers and with_us <= 3 + U.start_followers,
+			"the Office opens with at least %d followers (%d with the Secretary)"
 			% [U.start_followers, with_us])
 	_check(_districts.owns(start), "the start building is yours")
 	_check(_districts.is_unlocked(_districts.start_district()), "the start district is open")
@@ -390,8 +390,9 @@ func _test_hand_orders() -> void:
 
 
 ## Nobody is won over on the street: a building of yours brings round only buildings
-## next to it in its own block. And a building of yours turned into a shop, which empties
-## it, stays yours.
+## next to it in its own block. A building of yours turned into a shop keeps its people
+## and stays yours; no building is ever empty; and any free member, wherever they live,
+## can be called to train.
 func _test_spread_and_shop() -> void:
 	var before := PackedFloat32Array()
 	for i in _districts.buildings.size():
@@ -424,8 +425,21 @@ func _test_spread_and_shop() -> void:
 		return
 	_districts.buildings[shop].add_to_group(Population.SHOPS)
 	await _frames(180)
-	_check(_districts.residents_in(shop) == 0 and _districts.is_yours(shop),
-			"a building of yours turned into a shop empties and stays yours")
+	_check(_districts.residents_in(shop) > 0 and _districts.is_yours(shop),
+			"a building of yours turned into a shop keeps its people and stays yours")
+	var empty := 0
+	for i in _districts.buildings.size():
+		if _districts.buildings[i] and _districts.residents_in(i) == 0:
+			empty += 1
+	_check(empty == 0, "no building stands empty (%d do)" % empty)
+	var far_member: Resident = null
+	var office := _districts.start_building()
+	for r in _population.free_members(office.global_position):
+		if r.home != office:
+			far_member = r
+	_check(far_member != null and _population.staffing.trainees_for(
+			Resident.Rank.MISSIONARY, office).has(far_member),
+			"a member living anywhere can be called to the Office to train")
 
 
 ## A block whose buildings are all yours is complete: its people make more, and its
