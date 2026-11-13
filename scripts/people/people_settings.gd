@@ -55,115 +55,12 @@ extends Resource
 @export var presence_refresh := 0.5
 
 @export_group("Comfort and fear")
-## Comfort drifts toward a home's comfort at this rate per second. A home's
-## comfort starts at its residents' average wealth; decrees and events add to it.
-@export var comfort_rate := 0.01
-## Fear fades by this much per second.
-@export var fear_decay := 0.004
 ## Fear a miracle that hurt someone adds, times its intensity and how bad it was.
 @export var fear_per_harm := 0.5
-## Above this fear a resident moves to another home; their fear halves.
-@export_range(0.0, 1.0) var flee_fear := 0.85
-
-@export_group("Jobs")
-## Free believers can be given a post. A building takes one person per this many
-## cubic metres (footprint times height), at least one, so a tower holds far
-## more than a shed; priests are limited on top of that.
-@export var staff_volume := 1500.0
-@export var priest_slots := 2
-## A sermon house has room for at least this many staff and trainees, however small.
-@export var sermon_house_places := 8
-## Frightened believers fight harder: a takeover by force is times 1 + this *
-## the fear of the believers there, and the police need that much more heat.
-@export var fear_force_bonus := 0.5
-@export var fear_defense_bonus := 1.0
-
-@export_group("Upgrades")
-## Every upgrade or added floor bought for a building costs more than the last
-## one there: base * growth ^ purchases so far. Treasury charges it.
-@export var upgrade_base_cost := 200.0
-@export var upgrade_cost_growth := 1.5
-## Elevator and roof garden raise the residents' comfort; cameras and a gate scare them.
-@export_range(0.0, 1.0) var upgrade_comfort := 0.1
-@export_range(0.0, 1.0) var upgrade_fear := 0.15
-## Each purchase also adds this many places to the building.
-@export var slots_per_purchase := 2
-
-@export_group("The hand's orders: set someone down at a building and they act")
-## What an order adds to a person's strain: when they go gladly, and when they don't.
-@export var order_strain := 0.1
-@export var forced_strain := 0.3
-## Strain that fades per minute.
-@export var strain_fade_per_minute := 0.1
-## A person goes gladly while their welfare (0..1) less their strain is at least this.
-@export_range(0.0, 1.0) var willing_at := 0.45
-## What an unwilling person's work is worth at the very worst (talking people round,
-## making belief); it rises to 1 as they come round.
-@export_range(0.0, 1.0) var min_effort := 0.4
-## Past this strain they have had enough and leave.
-@export var strain_leave := 1.0
-## What the neighbours' awareness rises by when they see someone hauled off unwilling.
-@export var forced_awareness := 0.02
-@export var willing_lines := PackedStringArray(["On it.", "Gladly.", "Say no more."])
-@export var unwilling_lines := PackedStringArray([
-	"...if I must.", "Again? Fine.", "Noted. In the minutes.", "I had plans, you know.",
-])
-@export var quit_line := "That's it. I resign."
-@export var willing_color := Color(1.0, 0.9, 0.5)
-@export var unwilling_color := Color(0.85, 0.6, 0.55)
-
-@export_group("Housing")
-## A home holds its starting residents times this; past that it is crowded.
-@export var housing_slack := 1.3
-## Comfort lost at twice the capacity (scaled by how crowded the home is). Shops
-## and prayer houses have no residents, so converting one crowds the homes around.
-@export_range(0.0, 1.0) var crowding_penalty := 0.5
-
-## Sermon house upgrades: each loudspeaker widens the reach of its preachers, each
-## lecture hall raises their chance to convert, by this share.
-@export var loudspeaker_reach := 0.25
-@export var lecture_hall_strength := 0.25
-## Each banner raises the chance of its sermon house's preachers by this share.
-@export var banner_strength := 0.2
-## Workplace upgrades: each storefront raises the shop's output, each gym turns
-## the staff into this many fighters per person (see fighters_of), each real
-## estate office takes this share off buying nearby (down to buy_discount_floor).
-@export var storefront_output := 0.3
-@export var gym_fighters := 1.0
-@export_range(0.0, 1.0) var real_estate_discount := 0.15
-@export_range(0.0, 1.0) var buy_discount_floor := 0.4
-
-@export_group("Fire")
-## A building burns down with its people inside: each one indoors dies with this chance.
-@export_range(0.0, 1.0) var fire_death_chance := 0.5
-
 
 @export_group("Preachers")
-## Seconds between checks on who is due to preach (each preacher's own pace is
-## UnitSettings.attempt_interval).
-@export var preach_check := 1.0
 ## Priests and the high priest are drawn this many times larger, so the crowd can pick them out.
 @export var priest_scale := 1.5
-
-@export_group("Sermons")
-## A preacher stops to preach this often (seconds apart) and for this long; a crowd
-## of up to crowd_size people within crowd_reach gathers in a ring around them.
-@export var sermon_interval := 25.0
-@export var sermon_time := 15.0
-@export var crowd_size := 12
-@export var crowd_reach := 40.0
-@export var crowd_radius := 3.0
-## A full crowd makes the preacher try this much more often (1 + this at crowd_size).
-@export var crowd_boost := 1.0
-@export var sermon_line := "Amen!"
-@export var crowd_line_color := Color(1.0, 0.95, 0.7)
-## Hidden chance that the police break up a sermon, on a street where nobody
-## believes and on one where everybody does; safety counts believers within safety_radius.
-@export_range(0.0, 1.0) var raid_chance_unsafe := 0.15
-@export_range(0.0, 1.0) var raid_chance_safe := 0.02
-@export var safety_radius := 60.0
-## After a raid the same preacher is left alone this many seconds.
-@export var raid_cooldown := 180.0
 
 @export_group("Dancing")
 ## People sent on an errand to dance (a block party) bob this high, this fast, and turn.
@@ -172,8 +69,6 @@ extends Resource
 @export var dance_spin := 2.5
 
 @export_group("Fleeing")
-## When a building is evacuated (roaches), its residents this close to it run out.
-@export var flee_reach := 60.0
 ## How far they run before calming down, in metres, and for how long they hurry.
 @export var flee_distance := 50.0
 @export var flee_time := 6.0

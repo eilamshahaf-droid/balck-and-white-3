@@ -1,4 +1,4 @@
-[gd_scene load_steps=46 format=3]
+[gd_scene load_steps=33 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -14,7 +14,6 @@
 [ext_resource type="Script" path="res://scripts/people/resident_card.gd" id="12_card"]
 [ext_resource type="Script" path="res://scripts/world/districts.gd" id="13_districts"]
 [ext_resource type="Script" path="res://scripts/world/district_view.gd" id="14_district_view"]
-[ext_resource type="Script" path="res://scripts/government/government.gd" id="15_government"]
 [ext_resource type="Script" path="res://scripts/world/district_hud.gd" id="16_district_hud"]
 [ext_resource type="Script" path="res://scripts/world/surroundings.gd" id="17_surroundings"]
 [ext_resource type="Script" path="res://scripts/decrees.gd" id="13_decrees"]
@@ -22,26 +21,16 @@
 [ext_resource type="Script" path="res://scripts/props/state_props.gd" id="21_state_props"]
 [ext_resource type="Script" path="res://scripts/props/type_markers.gd" id="22_type_markers"]
 [ext_resource type="Script" path="res://scripts/props/core_markers.gd" id="23_core_markers"]
-[ext_resource type="Script" path="res://scripts/props/upgrade_markers.gd" id="24_upgrade_markers"]
 [ext_resource type="Script" path="res://scripts/world/treasury.gd" id="18_treasury"]
 [ext_resource type="Script" path="res://scripts/world/campaigns.gd" id="19_campaigns"]
 [ext_resource type="Script" path="res://scripts/world/campaign_marks.gd" id="20_marks"]
-[ext_resource type="Script" path="res://scripts/government/police.gd" id="21_police"]
 [ext_resource type="Script" path="res://scripts/world/building_tooltip.gd" id="22_tooltip"]
-[ext_resource type="Script" path="res://scripts/government/police_arrests.gd" id="23_arrests"]
-[ext_resource type="Script" path="res://scripts/government/arrest_alert.gd" id="24_alert"]
 [ext_resource type="Script" path="res://scripts/conversion_notes.gd" id="40_notes"]
 [ext_resource type="Script" path="res://scripts/priest_marker.gd" id="41_priest"]
-[ext_resource type="Script" path="res://scripts/heat.gd" id="14_heat"]
 [ext_resource type="Script" path="res://scripts/building_menus.gd" id="50_menus"]
-[ext_resource type="Script" path="res://scripts/sermon_alerts.gd" id="51_alerts"]
 [ext_resource type="Script" path="res://scripts/world/district_won.gd" id="60_won"]
-[ext_resource type="Script" path="res://scripts/world/awareness.gd" id="61_awareness"]
-[ext_resource type="Script" path="res://scripts/world/fragility.gd" id="62_fragility"]
 [ext_resource type="Script" path="res://scripts/world/district_progress.gd" id="63_progress"]
-[ext_resource type="Script" path="res://scripts/world/murals.gd" id="63_murals"]
-[ext_resource type="Script" path="res://scripts/government/condemnation.gd" id="64_condemnation"]
-[ext_resource type="Script" path="res://scripts/world/landmarks.gd" id="65_landmarks"]
+[ext_resource type="Script" path="res://scripts/world/followers.gd" id="70_followers"]
 [ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 
 [node name="Main" type="Node3D"]
@@ -65,10 +54,6 @@ city_props = NodePath("../CityProps")
 districts = NodePath("../Districts")
 decrees = NodePath("../Decrees")
 
-[node name="UpgradeMarkers" type="Node3D" parent="." node_paths=PackedStringArray("population")]
-script = ExtResource("24_upgrade_markers")
-population = NodePath("../Population")
-
 [node name="CoreMarkers" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
 script = ExtResource("23_core_markers")
 districts = NodePath("../Districts")
@@ -80,65 +65,53 @@ decrees = NodePath("../Decrees")
 [node name="Surroundings" type="Node3D" parent="."]
 script = ExtResource("17_surroundings")
 
-[node name="Population" type="Node" parent="." node_paths=PackedStringArray("miracles", "police", "districts", "awareness")]
-miracles = NodePath("../Miracles")
-police = NodePath("../Police")
+[node name="Population" type="Node" parent="." node_paths=PackedStringArray("districts", "hand")]
 script = ExtResource("11_population")
 districts = NodePath("../Districts")
-awareness = NodePath("../Awareness")
+hand = NodePath("../GodHand")
 
-[node name="Faith" type="Node" parent="." node_paths=PackedStringArray("population")]
+[node name="Faith" type="Node" parent="." node_paths=PackedStringArray("followers")]
 script = ExtResource("4_faith")
-population = NodePath("../Population")
-
-[node name="Heat" type="Node" parent="." node_paths=PackedStringArray("population")]
-script = ExtResource("14_heat")
-population = NodePath("../Population")
+followers = NodePath("../Followers")
 
 [node name="GodHand" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
 script = ExtResource("3_hand")
 districts = NodePath("../Districts")
 
-[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("population", "treasury", "districts", "police", "arrests")]
+[node name="Miracles" type="Node" parent="." node_paths=PackedStringArray("treasury", "districts")]
 script = ExtResource("7_miracles")
-population = NodePath("../Population")
 treasury = NodePath("../Treasury")
 districts = NodePath("../Districts")
-police = NodePath("../Police")
-arrests = NodePath("../Arrests")
 
 [node name="PriestMarker" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("41_priest")
 population = NodePath("../Population")
-
-[node name="SermonAlerts" type="Node" parent="." node_paths=PackedStringArray("population", "camera")]
-script = ExtResource("51_alerts")
-population = NodePath("../Population")
-camera = NodePath("../CameraRig")
 
 [node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population", "campaigns")]
 script = ExtResource("40_notes")
 population = NodePath("../Population")
 campaigns = NodePath("../Campaigns")
 
-[node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "miracles", "districts", "treasury", "population")]
+[node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "treasury")]
 script = ExtResource("13_decrees")
 faith = NodePath("../Faith")
-miracles = NodePath("../Miracles")
 districts = NodePath("../Districts")
 treasury = NodePath("../Treasury")
-population = NodePath("../Population")
 
-[node name="BuildingMenus" type="Node" parent="." node_paths=PackedStringArray("population", "treasury")]
+[node name="BuildingMenus" type="Node" parent="." node_paths=PackedStringArray("districts", "followers", "treasury", "faith", "population", "decrees")]
 script = ExtResource("50_menus")
-population = NodePath("../Population")
+districts = NodePath("../Districts")
+followers = NodePath("../Followers")
 treasury = NodePath("../Treasury")
+faith = NodePath("../Faith")
+population = NodePath("../Population")
+decrees = NodePath("../Decrees")
 
-[node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns", "menus", "population")]
+[node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns", "menus", "districts")]
 script = ExtResource("8_tools")
 campaigns = NodePath("../Campaigns")
 menus = NodePath("../BuildingMenus")
-population = NodePath("../Population")
+districts = NodePath("../Districts")
 
 [node name="ResidentCard" type="CanvasLayer" parent="."]
 script = ExtResource("12_card")
@@ -149,89 +122,35 @@ script = ExtResource("13_districts")
 [node name="DistrictView" type="Node3D" parent="."]
 script = ExtResource("14_district_view")
 
-[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "population", "districts", "decrees", "police")]
+[node name="Treasury" type="Node" parent="." node_paths=PackedStringArray("faith", "followers")]
 script = ExtResource("18_treasury")
 faith = NodePath("../Faith")
+followers = NodePath("../Followers")
+
+[node name="Followers" type="Node" parent="." node_paths=PackedStringArray("districts", "decrees")]
+script = ExtResource("70_followers")
 districts = NodePath("../Districts")
 decrees = NodePath("../Decrees")
-police = NodePath("../Police")
-population = NodePath("../Population")
 
-[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "treasury", "decrees")]
+[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "followers", "hand")]
 script = ExtResource("19_campaigns")
 districts = NodePath("../Districts")
 population = NodePath("../Population")
-faith = NodePath("../Faith")
-treasury = NodePath("../Treasury")
-decrees = NodePath("../Decrees")
+followers = NodePath("../Followers")
+hand = NodePath("../GodHand")
 
 [node name="CampaignMarks" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts")]
 script = ExtResource("20_marks")
 campaigns = NodePath("../Campaigns")
 districts = NodePath("../Districts")
 
-[node name="Police" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts", "faith", "heat")]
-script = ExtResource("21_police")
-campaigns = NodePath("../Campaigns")
-districts = NodePath("../Districts")
-faith = NodePath("../Faith")
-heat = NodePath("../Heat")
-
-[node name="Arrests" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts", "awareness", "faith", "treasury")]
-script = ExtResource("23_arrests")
-population = NodePath("../Population")
-districts = NodePath("../Districts")
-awareness = NodePath("../Awareness")
-faith = NodePath("../Faith")
-treasury = NodePath("../Treasury")
-
-[node name="Awareness" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "landmarks", "campaigns")]
-script = ExtResource("61_awareness")
-districts = NodePath("../Districts")
-population = NodePath("../Population")
-landmarks = NodePath("../Landmarks")
-campaigns = NodePath("../Campaigns")
-
-[node name="Landmarks" type="Node3D" parent="." node_paths=PackedStringArray("districts")]
-script = ExtResource("65_landmarks")
-districts = NodePath("../Districts")
-
-[node name="StageScreens" type="CanvasLayer" parent="." node_paths=PackedStringArray("population")]
+[node name="StageScreens" type="CanvasLayer" parent="."]
 layer = 6
 script = ExtResource("66_stage")
-population = NodePath("../Population")
 
-[node name="Fragility" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "awareness", "heat")]
-script = ExtResource("62_fragility")
-districts = NodePath("../Districts")
-population = NodePath("../Population")
-awareness = NodePath("../Awareness")
-heat = NodePath("../Heat")
-
-[node name="DistrictProgress" type="Node" parent="." node_paths=PackedStringArray("districts", "landmarks", "population")]
+[node name="DistrictProgress" type="Node" parent="." node_paths=PackedStringArray("districts")]
 script = ExtResource("63_progress")
 districts = NodePath("../Districts")
-landmarks = NodePath("../Landmarks")
-population = NodePath("../Population")
-
-[node name="Murals" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts", "awareness", "treasury", "arrests", "landmarks")]
-script = ExtResource("63_murals")
-population = NodePath("../Population")
-districts = NodePath("../Districts")
-awareness = NodePath("../Awareness")
-treasury = NodePath("../Treasury")
-arrests = NodePath("../Arrests")
-landmarks = NodePath("../Landmarks")
-
-[node name="Condemnation" type="Node3D" parent="." node_paths=PackedStringArray("districts", "population", "awareness", "faith")]
-script = ExtResource("64_condemnation")
-districts = NodePath("../Districts")
-population = NodePath("../Population")
-awareness = NodePath("../Awareness")
-faith = NodePath("../Faith")
-
-[node name="Government" type="Node" parent="."]
-script = ExtResource("15_government")
 
 [node name="DebugPanel" type="CanvasLayer" parent="."]
 script = ExtResource("10_debug")
@@ -264,8 +183,8 @@ theme_override_constants/outline_size = 5
 script = ExtResource("5_help")
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: who is this (debug)    F1: debug panel
-Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building: decrees and takeover marks    Right-drag a circle: water
-The hand lifts people and things (not trees). Where you set a member down is what they do. A Rep at a door takes the building over and stays as its Manager; miracles help them."
+Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building of yours: train, upgrades, floors, shop, loan    On a building next to yours: Send a Rep
+Lift a Rep and set them down at a door to take that building; keep the hand over a building at work and it goes faster"
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
@@ -290,23 +209,10 @@ theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
 progress = NodePath("../../DistrictProgress")
 
-[node name="ArrestAlert" type="Label" parent="HUD" node_paths=PackedStringArray("arrests")]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -380.0
-offset_top = 220.0
-offset_right = 380.0
-offset_bottom = 280.0
-grow_horizontal = 2
-horizontal_alignment = 1
-script = ExtResource("24_alert")
-arrests = NodePath("../../Arrests")
-
-[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "treasury", "decrees", "population", "camera")]
+[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera")]
 script = ExtResource("22_tooltip")
 districts = NodePath("../../Districts")
-treasury = NodePath("../../Treasury")
+followers = NodePath("../../Followers")
 decrees = NodePath("../../Decrees")
 population = NodePath("../../Population")
 camera = NodePath("../../CameraRig/Camera3D")
@@ -316,5 +222,4 @@ layer = 5
 script = ExtResource("60_won")
 districts = NodePath("../Districts")
 
-[connection signal="building_abandoned" from="Miracles" to="Districts" method="mark_abandoned"]
 [connection signal="cult_founded" from="Population" to="CameraRig" method="start_at"]

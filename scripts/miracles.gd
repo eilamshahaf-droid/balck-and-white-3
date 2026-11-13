@@ -1,13 +1,11 @@
 class_name Miracles
 extends Node
-## Casts the miracles: water, fire, roaches, money, block party, rain of frogs.
+## Casts the miracles: water, money, block party, rain of frogs.
 ##
-## Every miracle spends belief from the pool and is reported to the witnesses
-## (faith.gd), who react to it. A miracle converts nobody by itself: it leaves
-## proof on the spot (miracle_proof.gd) that makes preachers there convert
-## more often. Each has a job: gather a crowd (Block Party, Rain of Frogs), save a
-## burning building (Water), clear a building (Fire, Roaches), or bring money.
-## Casting one again soon costs more, and each needs a moment before the next.
+## Every miracle spends paperwork from the pool (until miracles get their own stock) and
+## is reported to the witnesses (faith.gd), who react to it. A miracle never touches a
+## building: it works on people and the street (a crowd gathers, people dance, banknotes
+## fall). Casting one again soon costs more, and each needs a moment before the next.
 ##
 ## A miracle's power comes from the believers near the spot it is cast on:
 ## among them it is bigger, lasts longer and costs less; among skeptics it is
@@ -17,8 +15,6 @@ const M = preload("res://data/miracles.tres")
 const B = preload("res://data/balance.tres")
 const Sfx = preload("res://scripts/sfx.gd")
 const RainScript = preload("res://scripts/rain.gd")
-const FireScript = preload("res://scripts/fire.gd")
-const RoachScript = preload("res://scripts/roaches.gd")
 const MoneyScript = preload("res://scripts/money_rain.gd")
 const PartyScript = preload("res://scripts/block_party.gd")
 const FrogScript = preload("res://scripts/frog_rain.gd")
@@ -27,25 +23,14 @@ const FrogScript = preload("res://scripts/frog_rain.gd")
 signal miracle_cast(kind: StringName, miracle: Node3D)
 ## A miracle could not be cast: &"no_belief", &"cooling" or &"no_target".
 signal miracle_failed(reason: StringName)
-## A building burned out or was overrun by roaches or frogs: its people have
-## left for good.
-signal building_abandoned(building: Node3D)
-## Water put out a burning building in time.
-signal building_saved(building: Node3D)
-
 const RAY_LENGTH := 3000.0
 const LAYER_WORLD := 1
-const FIRE_SNAP := 15.0       # metres: water cast this close to a fire goes onto it
-const BUILDING_SNAP := 3.0    # metres: fire cast this close to a building sets it alight
 
-@export var population: Population
 ## Where money from the sky goes. Optional until the money system is in the scene.
 @export var treasury: Treasury
 @export var districts: Districts
-@export var police: Police
-@export var arrests: PoliceArrests
 
-@onready var faith: Node = get_node("../Faith")
+@onready var faith: Faith = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
 @onready var city: Node3D = get_parent()
 @onready var hand: Node3D = get_node("../GodHand")
@@ -60,8 +45,6 @@ var _proof := MiracleProof.new()
 func wheel_items() -> Array[Dictionary]:
 	var all: Array[Dictionary] = [
 		{"id": &"water", "label": "Water", "color": Color(0.45, 0.7, 1.0), "cost": cost(&"water")},
-		{"id": &"fire", "label": "Fire", "color": Color(1.0, 0.5, 0.2), "cost": cost(&"fire")},
-		{"id": &"roaches", "label": "Roaches", "color": Color(0.6, 0.42, 0.25), "cost": cost(&"roaches")},
 		{"id": &"money", "label": "Money", "color": Color(0.55, 0.85, 0.45), "cost": cost(&"money")},
 		{"id": &"party", "label": "Block Party", "color": Color(1.0, 0.45, 0.85), "cost": cost(&"party")},
 		{"id": &"frogs", "label": "Rain of Frogs", "color": Color(0.4, 0.8, 0.3), "cost": cost(&"frogs")},
@@ -76,8 +59,6 @@ func cost(kind: StringName, power := -1.0) -> float:
 	var scale := lerpf(M.weak_cost, M.strong_cost, power) * _proof.cost_scale(kind)
 	match kind:
 		&"water": return M.water_cost * scale
-		&"fire": return M.fire_cost * scale
-		&"roaches": return M.roach_cost * scale
 		&"money": return M.money_cost * scale
 		&"party": return M.party_cost * scale
 		&"frogs": return M.frog_cost * scale
@@ -114,33 +95,22 @@ func _physics_process(delta: float) -> void:
 		hand.set_power(power_here)
 
 
-## Cast `kind` at the spot under `screen_pos`. Water aimed near a fire (within
-## `screen_radius` pixels) goes onto the fire: that is what the god meant.
-func cast_at_screen(kind: StringName, screen_pos: Vector2, screen_radius := 40.0) -> void:
+## Cast `kind` at the spot under `screen_pos`.
+func cast_at_screen(kind: StringName, screen_pos: Vector2) -> void:
 	var camera := get_viewport().get_camera_3d()
 	var from := camera.project_ray_origin(screen_pos)
 	var query := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(screen_pos) * RAY_LENGTH, LAYER_WORLD)
 	query.exclude = rig.faded_rids()
 	var hit := city.get_world_3d().direct_space_state.intersect_ray(query)
-	var building: Node3D = BuildingBox.building_of(hit.collider) if hit else null
 	var target: Vector3 = hit.position if hit else Vector3.INF
-	if kind == &"water":
-		var fire := _fire_near(camera, screen_pos, screen_radius * 1.3)
-		if fire:
-			target = fire.global_position
 	if target == Vector3.INF:
 		miracle_failed.emit(&"no_target")
 		return
-	cast(kind, target, building)
+	cast(kind, target)
 
 
-## Cast `kind` at `ground`; `building` is the building there, if any.
-func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
-	if kind == &"roaches" and building == null:
-		building = _building_near(ground, BUILDING_SNAP)  # roaches need walls to come out of
-		if building == null:
-			miracle_failed.emit(&"no_target")
-			return
+## Cast `kind` at `ground`.
+func cast(kind: StringName, ground: Vector3) -> void:
 	if _proof.ready_in(kind) > 0.0:
 		miracle_failed.emit(&"cooling")
 		return
@@ -153,13 +123,9 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 	var miracle: Node3D
 	match kind:
 		&"water": miracle = _water(ground, size, length)
-		&"fire": miracle = _fire(ground, building, size, length)
-		&"roaches": miracle = _roaches(building, size, length)
 		&"money": miracle = _money(ground, power, size, length)
 		&"party": miracle = _party(ground, size, length)
 		&"frogs": miracle = _frogs(ground, size, length)
-	if arrests:
-		arrests.scatter_near(ground, M.scatter_radius * size)  # any miracle throws officers clear
 	_proof.used(kind, _cooldown(kind))
 	if kind != &"frogs":  # the frogs decide their own proof
 		_proof.leave(miracle.global_position, M.proof_radius * size, _proof_strength(kind))
@@ -169,8 +135,6 @@ func cast(kind: StringName, ground: Vector3, building: Node3D) -> void:
 func _cooldown(kind: StringName) -> float:
 	match kind:
 		&"water": return M.water_cooldown
-		&"fire": return M.fire_cooldown
-		&"roaches": return M.roach_cooldown
 		&"money": return M.money_cooldown
 		&"party": return M.party_cooldown
 		&"frogs": return M.frog_cooldown
@@ -180,17 +144,12 @@ func _cooldown(kind: StringName) -> float:
 func _proof_strength(kind: StringName) -> float:
 	match kind:
 		&"water": return M.water_proof
-		&"fire": return M.fire_proof
-		&"roaches": return M.roach_proof
 		&"money": return M.money_proof
 		&"party": return M.party_proof
 	return 0.0
 
 
 func _water(ground: Vector3, size: float, length: float) -> Node3D:
-	var fire := _burning_near(ground, FIRE_SNAP)
-	if fire:
-		ground = fire.global_position  # rain next to a fire was meant for the fire
 	var rain: Node3D = RainScript.new()
 	city.add_child(rain)
 	rain.start(ground, size, length)
@@ -198,52 +157,6 @@ func _water(ground: Vector3, size: float, length: float) -> Node3D:
 	faith.report(rain, &"see_rain", M.water_intensity, B.spectacle_situation, M.rain_time * length, true,
 			M.water_deniability, rain.helped(), M.rain_seen_from)
 	return rain
-
-
-func _fire(ground: Vector3, building: Node3D, size: float, length: float) -> Node3D:
-	if building == null:
-		building = _building_near(ground, BUILDING_SNAP)  # fire at a wall's foot takes the building
-	var fire: Node3D
-	if building:
-		fire = set_alight(building, length)
-		population.scare(building, M.fire_scare)
-	else:
-		fire = FireScript.new()
-		city.add_child(fire)
-		fire.ignite_spot(ground, M.street_fire_size * size)
-		fire.burn_time = M.fire_burn_time * length
-	faith.report(fire, &"see_fire", M.fire_intensity, M.fire_situation, 4.0, true,
-			M.fire_deniability, [], M.fire_seen_from)
-	return fire
-
-
-## Set `building` on fire, or a burnt-out one again (the fire miracle's effect).
-## `length` scales how long it burns.
-func set_alight(building: Node3D, length := 1.0) -> Node3D:
-	var fire := fire_on(building)
-	if fire:
-		fire.rekindle()  # the building stays charred
-	else:
-		fire = FireScript.new()
-		city.add_child(fire)
-		var size := BuildingBox.size_of(building)
-		fire.ignite(building, size)
-		fire.endangered = _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 3.0)
-		fire.burned_down.connect(_on_burned.bind(building))  # a burnt building stands empty
-		fire.put_out.connect(_on_saved.bind(building, fire))
-	fire.burn_time = M.fire_burn_time * length
-	return fire
-
-
-func _roaches(building: Node3D, size: float, length: float) -> Node3D:
-	var swarm: Node3D = RoachScript.new()
-	city.add_child(swarm)
-	swarm.infest(building, size, length)
-	population.scare(building, M.roach_scare)
-	faith.report(swarm, &"see_roaches", M.roach_intensity, M.roach_situation, M.roach_time * length, true,
-			M.roach_deniability, [], M.roach_seen_from)
-	_abandon(building)
-	return swarm
 
 
 func _money(ground: Vector3, power: float, size: float, length: float) -> Node3D:
@@ -301,12 +214,6 @@ func _frogs(ground: Vector3, size: float, length: float) -> Node3D:
 		var spot := ground + Vector3(cos(a), 0.0, sin(a)) * radius * randf_range(0.6, 1.0)
 		c.send_on_errand(spot, ground, M.frog_time * length,
 				M.frog_lines[randi() % M.frog_lines.size()], Color(0.6, 0.95, 0.45))
-	for b in _buildings_near(ground, radius):
-		if randf() < M.frog_overrun_chance:
-			FloatingNote.pop(city, _roof(b), "Overrun by frogs!", Color(0.5, 0.9, 0.35))
-			_abandon(b)
-	if police and randf() < M.frog_roadblock_chance:
-		police.break_near(ground, radius)
 	var luck := randf()
 	var situation := lerpf(M.frog_situation_min, M.frog_situation_max, luck)
 	_proof.leave(ground, M.proof_radius * size, lerpf(M.frog_proof_min, M.frog_proof_max, luck))
@@ -315,87 +222,12 @@ func _frogs(ground: Vector3, size: float, length: float) -> Node3D:
 	return frogs
 
 
-## Water put the fire out before the building was lost: its people saw the god
-## save their home.
-func _on_saved(building: Node3D, fire: Node3D) -> void:
-	if not is_instance_valid(building) or fire.lost:
-		return
-	FloatingNote.pop(city, _roof(building), "Saved!", Color(1.0, 0.85, 0.3))
-	var size := BuildingBox.size_of(building)
-	var helped: Array = fire.endangered.filter(func(c): return is_instance_valid(c))
-	for c in _people_near(building.global_position, maxf(size.x, size.z) / 2.0 + 6.0):
-		if not c in helped:
-			helped.append(c)
-	_proof.leave(building.global_position, M.proof_radius, M.saved_proof)
-	faith.report(fire, &"see_saved", M.saved_intensity, M.saved_situation, 3.0, true,
-			M.saved_deniability, helped, M.saved_seen_from)
-	building_saved.emit(building)
-
-
-func _roof(building: Node3D) -> Vector3:
-	return building.global_position + Vector3.UP * (BuildingBox.size_of(building).y / 2.0 + 3.0)
-
-
-func _on_burned(building: Node3D) -> void:
-	if is_instance_valid(building):
-		_abandon(building, true)
-
-
-## `building` is emptied; a fire that burnt it down also kills some indoors.
-func _abandon(building: Node3D, burnt := false) -> void:
-	if burnt:
-		population.burn_down(building)
-	else:
-		population.evacuate(building)
-	building_abandoned.emit(building)
-
-
-func _fire_near(camera: Camera3D, screen_pos: Vector2, radius: float) -> Node3D:
-	var best: Node3D = null
-	var best_d := radius
-	for fire in get_tree().get_nodes_in_group("fires"):
-		if fire.is_burning() and not camera.is_position_behind(fire.global_position):
-			var d := camera.unproject_position(fire.global_position).distance_to(screen_pos)
-			if d < best_d:
-				best_d = d
-				best = fire
-	return best
-
-
-func _burning_near(p: Vector3, radius: float) -> Node3D:
-	var best: Node3D = null
-	var best_d := radius
-	for fire in get_tree().get_nodes_in_group("fires"):
-		var d := Vector2(fire.global_position.x - p.x, fire.global_position.z - p.z).length()
-		if fire.is_burning() and d < best_d:
-			best_d = d
-			best = fire
-	return best
-
-
 func _buildings_near(p: Vector3, radius: float) -> Array[Node3D]:
 	var out: Array[Node3D] = []
 	for b in get_tree().get_nodes_in_group("buildings"):
 		if Vector2(b.global_position.x - p.x, b.global_position.z - p.z).length() < radius:
 			out.append(b)
 	return out
-
-
-func _building_near(p: Vector3, margin: float) -> Node3D:
-	for b in get_tree().get_nodes_in_group("buildings"):
-		var half := BuildingBox.size_of(b) / 2.0 + Vector3.ONE * margin
-		var d: Vector3 = (p - b.global_position).abs()
-		if d.x < half.x and d.z < half.z:
-			return b
-	return null
-
-
-## The fire on `building`, burning or burnt out (null if it never burned).
-func fire_on(building: Node3D) -> Node3D:
-	for fire in get_tree().get_nodes_in_group("fires"):
-		if fire.building == building:
-			return fire
-	return null
 
 
 func _people_near(p: Vector3, radius: float) -> Array:

@@ -1,7 +1,7 @@
 extends RefCounted
-## What the divine decrees do to a building's body and look: new floors, a
-## luxury lobby, banners, a new use and a preservation plaque. Placeholder
-## boxes and labels built in code, so real models can replace them here alone.
+## What the decrees do to a building's body and look: new floors, and a roof sign for
+## a shop. Placeholder boxes and labels built in code, so real models can replace them
+## here alone.
 ## Every look is rebuilt from the building's decree metas (see decrees.gd).
 
 const D: DecreeSettings = preload("res://data/decrees.tres")
@@ -12,9 +12,6 @@ const DECOR := &"decree_decor"
 const SEED := &"visual_seed"
 const GROWTH := &"growth_tween"
 const GOLD := Color(1.0, 0.8, 0.3)
-const MARBLE := Color(0.95, 0.93, 0.88)
-const PENTHOUSE := Color(0.55, 0.85, 1.0)
-const BRONZE := Color(0.6, 0.42, 0.25)
 const LABEL_PIXEL := 0.02   # metres per label pixel
 
 static var _materials := {}
@@ -51,32 +48,16 @@ static func redecorate(building: Node3D) -> void:
 	var size := BuildingBox.size_of(building)
 	var foot := -size.y / 2.0
 	for side: float in [1.0, -1.0]:
-		var face := side * (size.z / 2.0 + 0.05)
 		var yaw := 0.0 if side > 0.0 else PI
-		if building.get_meta(&"decree_luxury", false):
-			_box(building, Vector3(size.x * 0.5, 0.3, 2.6), Vector3(0, foot + 3.4, side * (size.z / 2.0 + 1.3)), _mat(GOLD, true))
-			_box(building, Vector3(size.x * 0.45, 3.0, 0.2), Vector3(0, foot + 1.7, face), _mat(MARBLE, false))
-		if building.get_meta(&"decree_facade", false):
-			var count := maxi(1, roundi(size.x / 5.0))
-			for i in count:
-				var x := (i + 0.5) / count * size.x - size.x / 2.0
-				_box(building, Vector3(1.4, size.y * 0.55, 0.1), Vector3(x, foot + size.y * 0.55, face + side * 0.1), _mat(D.facade_color, false))
-			_box(building, Vector3(size.x, 0.35, 0.2), Vector3(0, -foot - 0.4, face + side * 0.1), _mat(Color(1.0, 0.9, 0.6), true))
 		var use: String = building.get_meta(&"decree_use", "")
 		if use != "":
 			# A rooftop sign, so the god can read it from up high.
 			var name := use.to_upper()
 			var fit := clampi(roundi(size.x * 0.9 / (name.length() * 0.6 * LABEL_PIXEL)), 40, 160)
 			_label(building, name, Vector3(0, -foot + 3.0, size.z * 0.4 + side * 0.2), yaw, fit, GOLD)
-		if building.get_meta(&"decree_preserve", false):
-			_label(building, "PRESERVED\nForm 12-B", Vector3(size.x * 0.3, foot + 2.0, face + side * 0.05), yaw, 40, BRONZE)
 	if building.get_meta(&"decree_use", "") != "":
 		_box(building, Vector3(size.x * 0.9, 4.0, 0.3), Vector3(0, -foot + 3.0, size.z * 0.4), _mat(Color(0.2, 0.15, 0.25), false))
-	if building.get_meta(&"decree_luxury", false):
-		var top := -foot
-		_box(building, Vector3(size.x * 0.6, 3.5, size.z * 0.6), Vector3(0, top + 1.75, 0), _mat(PENTHOUSE, false))
-		_box(building, Vector3(size.x + 0.4, 0.8, 0.4), Vector3(0, top + 0.4, size.z / 2.0), _mat(GOLD, true))
-		_box(building, Vector3(size.x + 0.4, 0.8, 0.4), Vector3(0, top + 0.4, -size.z / 2.0), _mat(GOLD, true))
+
 
 
 static func _rebuild_visual(building: Node3D, size: Vector3) -> MeshInstance3D:

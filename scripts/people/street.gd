@@ -13,8 +13,6 @@ signal stopped_occupying(c: Citizen)
 
 
 var bodies: Array[Citizen] = []
-## Bodies avoid streets this has shut with a roadblock.
-var police: Police
 
 # Loaded at run time: a parse-time preload would load the element scripts before
 # their class_name is registered and break the typed arrays.
@@ -95,7 +93,6 @@ func resident_near(p: Vector3, radius: float) -> Resident:
 func _spawn(r: Resident) -> void:
 	var c := Citizen.new()
 	c.city = _city
-	c.police = police
 	c.resident = r
 	c.collision_layer = _city.LAYER_CITIZENS
 	c.collision_mask = _city.LAYER_WORLD

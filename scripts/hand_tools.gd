@@ -1,33 +1,32 @@
+class_name HandTools
 extends Node
 ## The god's two wheels, on top of the hand's movement (god_hand.gd).
 ##
-## Hold the left button still for a moment: a wheel opens around the hand.
-## On a building it is the building wheel: divine decrees on your own
-## buildings, and the three takeover marks (force, buy, missionaries) on
-## everyone else's. Anywhere else, the miracle wheel. The hand stays in the
-## middle and points where the mouse goes; letting go signs the decree or
-## marks the building (choosing the mark it already has calls it off), or
-## puts the miracle in the hand (a glowing orb in the palm). It fills the hand: nothing can be picked up meanwhile.
-## The next short click (or long press), on the ground or a building, casts
-## it there; a right click puts it away. Dragging still moves the city. A circle drawn with the right button casts water straight away.
+## Hold the left button still for a moment: a wheel opens around the hand. On a building
+## of yours it is the building wheel (BuildingMenus: upgrades, floors, the shop, and at
+## the main Office training and a loan); on anyone else's, "Send a Rep". Anywhere else,
+## the miracle wheel. The hand stays in the middle and points where the mouse goes;
+## letting go picks the slice, or puts the miracle in the hand (a glowing orb in the
+## palm). It fills the hand: nothing can be picked up meanwhile. The next short click (or
+## long press), on the ground or a building, casts it there; a right click puts it away.
+## Dragging still moves the city. A circle drawn with the right button casts water
+## straight away.
 
 const RadialWheel = preload("res://scripts/radial_wheel.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
-enum Mode { NONE, MIRACLES, BUILDING, USES, UPGRADES, POSTS }
+enum Mode { NONE, MIRACLES, BUILDING, SECOND }
 
-## The takeover marks on the wheel, by slice id.
-const MARKS := {&"force": Campaigns.Route.FORCE, &"buy": Campaigns.Route.BUY,
-		&"preach": Campaigns.Route.PREACH}
+## Slices of the building wheel that open a second wheel.
+const GROUPS: Array[StringName] = [&"upgrades", &"shop"]
 
 @export var campaigns: Campaigns
 @export var menus: BuildingMenus
-@export var population: Population
+@export var districts: Districts
 
 @onready var hand: Node3D = get_node("../GodHand")
 @onready var miracles: Miracles = get_node("../Miracles")
-@onready var faith: Node = get_node("../Faith")
-@onready var decrees: Decrees = get_node("../Decrees")
+@onready var faith: Faith = get_node("../Faith")
 
 var _wheel: RadialWheel
 var _mode := Mode.NONE
@@ -42,7 +41,6 @@ var _colors := {}   # miracle id -> colour
 
 
 func _ready() -> void:
-	hand.owned_building_double_clicked.connect(_on_double_click)
 	var layer := CanvasLayer.new()
 	layer.layer = 10  # above the HUD and the art style's screen pass
 	add_child(layer)
@@ -77,7 +75,7 @@ func _ready() -> void:
 	hand.long_pressed.connect(_open)
 	hand.tool_clicked.connect(_cast_charged)
 	hand.right_clicked.connect(func(): _charge(&""))
-	hand.circle_drawn.connect(func(at: Vector2, radius: float): miracles.cast_at_screen(&"water", at, radius))
+	hand.circle_drawn.connect(func(at: Vector2, _radius: float): miracles.cast_at_screen(&"water", at))
 
 
 ## The window lost focus with a wheel open: its button-up will never come.
@@ -119,7 +117,7 @@ func _open(hit: Dictionary, at: Vector2) -> void:
 		var items: Array[Dictionary] = miracles.wheel_items()
 		for item in items:
 			var wait: float = miracles.ready_in(item.id)
-			var price := "%d belief" % roundi(item.cost)
+			var price := "%d paperwork" % roundi(item.cost)
 			item.note = "ready in %ds" % ceili(wait) if wait > 0.0 else price
 			item.enabled = wait <= 0.0 and faith.belief_pool >= item.cost
 		_wheel.open(at, items)
@@ -133,44 +131,26 @@ func _choose() -> void:
 			Mode.MIRACLES:
 				_charge(id)
 			Mode.BUILDING:
-				if building and MARKS.has(id):
-					campaigns.mark(building, MARKS[id])
+				if building and id == &"send":
+					campaigns.send(building)
 					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
-				elif building and id in [&"upgrades", &"posts"]:
-					_mode = Mode.UPGRADES if id == &"upgrades" else Mode.POSTS
-					var second: Array[Dictionary] = menus.upgrade_items(building) \
-							if id == &"upgrades" else menus.post_items(building)
-					_wheel.open(_wheel.center, second)
+				elif building and GROUPS.has(id):
+					# A second wheel in the same place; the next click picks from it.
+					_mode = Mode.SECOND
+					_wheel.open(_wheel.center, menus.items(building, id))
 					return
-				elif building and id == &"use":
-					# Which use: a second wheel in the same place; the next click picks.
-					_mode = Mode.USES
-					_wheel.open(_wheel.center, decrees.use_items(building))
-					return
-				elif building:
-					decrees.issue(id, building)
-			Mode.UPGRADES:
-				if building and menus.buy_upgrade(id, building):
+				elif building and menus.choose(id, building):
 					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
-			Mode.POSTS:
-				if building and menus.send_to_post(id, building):
+			Mode.SECOND:
+				if building and menus.choose(id, building):
 					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
-			Mode.USES:
-				if building:
-					decrees.issue(&"use", building, String(id))
 	_close()
-
-
-## A double-click on a building of yours: every believer there is let go.
-func _on_double_click(building: Node3D) -> void:
-	population.dismiss_believers(building)
-	Sfx.play(get_tree(), building.global_position, &"chime", 0.5)
 
 
 func _close() -> void:
 	_wheel.visible = false
 	_wheel.set_process(false)
-	if _mode in [Mode.BUILDING, Mode.USES, Mode.UPGRADES, Mode.POSTS] and is_instance_valid(_target.collider):
+	if _mode in [Mode.BUILDING, Mode.SECOND] and is_instance_valid(_target.collider):
 		_set_outline(BuildingBox.building_of(_target.collider), false)
 	_target = {}
 	_mode = Mode.NONE
@@ -178,8 +158,7 @@ func _close() -> void:
 
 
 func _cast_charged(hit: Dictionary) -> void:
-	var building: Node3D = BuildingBox.building_of(hit.collider)
-	miracles.cast(charged, hit.position, building)
+	miracles.cast(charged, hit.position)
 	_charge(&"")
 
 
@@ -193,29 +172,16 @@ func _charge(kind: StringName) -> void:
 		Sfx.play(get_tree(), hand.global_position, &"chime", 0.4)
 
 
-## Decrees on your own building; the takeover marks on anyone else's. The
-## mark a building already has reads "call off".
+## The building wheel of your own building; "Send a Rep" on anyone else's (it reads
+## "call back" while Reps are at it).
 func _building_items(building: Node3D) -> Array[Dictionary]:
-	if decrees.is_yours(building):
-		var yours := decrees.wheel_items(building)
-		yours.append({"id": &"upgrades", "label": "Upgrades", "color": Color(0.6, 0.85, 1.0),
-				"note": "$%d" % roundi(population.upgrades.cost(building))})
-		if menus.has_posts(building):
-			yours.append({"id": &"posts", "label": "Staff", "color": Color(0.95, 0.85, 0.6),
-					"note": "%d working" % population.staffing.staff_count(building)})
-		return yours
-	var items: Array[Dictionary] = [
-		{"id": &"force", "label": "Skull: Force", "color": Color(0.85, 0.3, 0.3)},
-		{"id": &"buy", "label": "$: Buy", "color": Color(0.4, 0.8, 0.4)},
-		{"id": &"preach", "label": "Send a Rep", "color": Color(0.5, 0.75, 1.0)},
-	]
-	var current := campaigns.route_of(building)
-	for item in items:
-		var route: Campaigns.Route = MARKS[item.id]
-		var why := campaigns.why_not(building, route)
-		item.note = "call off" if route == current else ("go" if why == "" else why)
-		item.enabled = route == current or why == ""
-	return items
+	if districts.owns(building):
+		return menus.items(building)
+	var why := campaigns.why_not(building)
+	var sent := campaigns.is_sent(building)
+	return [{"id": &"send", "label": "Send a Rep", "color": Color(0.5, 0.75, 1.0),
+			"note": "call back" if sent else ("go" if why == "" else why),
+			"enabled": sent or why == ""}]
 
 
 func _set_outline(building: Node3D, on: bool) -> void:

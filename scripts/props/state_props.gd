@@ -37,7 +37,6 @@ func _ready() -> void:
 	_s = load(SETTINGS_PATH)
 	await city_props.dressed
 	districts.building_changed.connect(_on_building_changed)
-	districts.building_abandoned.connect(_on_building_abandoned)
 	if decrees:
 		decrees.decree_issued.connect(_on_decree_issued)
 	var touched := {}
@@ -61,15 +60,11 @@ func _on_building_changed(index: int, _yours: bool) -> void:
 		refresh(building)
 
 
-func _on_building_abandoned(index: int) -> void:
-	refresh(districts.buildings[index])
-
-
 func _on_decree_issued(kind: StringName, building: Node3D) -> void:
 	if kind == &"floors":
 		# Redress once the new floors have risen.
 		await get_tree().create_timer(D.grow_time).timeout
-	elif kind != &"luxury":
+	else:
 		return
 	if is_instance_valid(building):
 		refresh(building)
@@ -86,22 +81,11 @@ func _on_building_gone(building: Node3D) -> void:
 func _dress(building: Node3D, touched: Dictionary) -> void:
 	_undress(building, touched)
 	var size := BuildingBox.size_of(building)
-	var index := districts.index_of(building)
-	var abandoned := index >= 0 and districts.is_abandoned(index)
-	var luxury: bool = building.get_meta(&"decree_luxury", false)
 	var wealth := districts.wealth_of(districts.district_at(building.global_position))
 	# The same building always draws the same windows.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = building.get_instance_id()
-	if abandoned:
-		_on_windows(building, size, _s.boarded_window, _s.boarded_share, rng,
-				_s.window_middle - PropModel.of(_s.boarded_window).size.y / 2.0, touched)
-		_rubble(building, size, rng, touched)
-	elif luxury:
-		_on_windows(building, size, _s.flower_box, _s.luxury_flower_chance, rng, _s.sill_height,
-				touched)
-		_planters(building, size, touched)
-	elif wealth < _s.poor_wealth:
+	if wealth < _s.poor_wealth:
 		_on_windows(building, size, _s.laundry, _s.laundry_chance, rng, _s.laundry_height, touched)
 	else:
 		_on_windows(building, size, _s.flower_box, _s.flower_chance * wealth, rng, _s.sill_height,
@@ -127,27 +111,6 @@ func _on_windows(building: Node3D, size: Vector3, kind: PropKind, chance: float,
 					continue
 				var frame := CityProps.window_frame(building, size, side, f, c, height)
 				_add(building, kind, frame * wall, touched)
-
-
-func _rubble(building: Node3D, size: Vector3, rng: RandomNumberGenerator,
-		touched: Dictionary) -> void:
-	# At a corner, clear of the door near the middle of the front.
-	var side := -1.0 if rng.randf() < 0.5 else 1.0
-	var x := (size.x / 2.0 - PropModel.of(_s.rubble).size.x / 2.0 - 0.5) * signf(rng.randf() - 0.5)
-	var at := _ground(building, size) + Vector3(x, 0.0, side * (size.z / 2.0 + _s.wall_gap))
-	var turn := Basis(Vector3.UP, rng.randf() * TAU)
-	_add(building, _s.rubble, Transform3D(turn, at) * PropModel.of(_s.rubble).offset, touched)
-
-
-func _planters(building: Node3D, size: Vector3, touched: Dictionary) -> void:
-	# Either side of decree_looks.gd's canopy, which is half the front wide.
-	var model := PropModel.of(_s.planter)
-	var out := _s.wall_gap + model.size.z / 2.0
-	for side: float in [-1.0, 1.0]:
-		for across: float in [-1.0, 1.0]:
-			var x := across * (size.x * 0.25 + model.size.x / 2.0 + 0.3)
-			var at := _ground(building, size) + Vector3(x, 0.0, side * (size.z / 2.0 + out))
-			_add(building, _s.planter, Transform3D(Basis.IDENTITY, at) * model.offset, touched)
 
 
 func _banner(building: Node3D, size: Vector3, touched: Dictionary) -> void:

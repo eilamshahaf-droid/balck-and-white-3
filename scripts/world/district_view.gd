@@ -52,14 +52,26 @@ func _build() -> void:
 	_borders.transform_format = MultiMesh.TRANSFORM_3D
 	_borders.use_colors = true
 	_borders.mesh = strip
-	var rings: Array[PackedVector2Array] = []
+	var edges := PackedVector2Array()   # two points per strip, block after block
+	var strips := 0
 	_first_strip = PackedInt32Array([0])
 	for block in districts.block_count():
-		rings.append(_ring(block))
-		_first_strip.append(_first_strip[-1] + rings[-1].size())
+		for ring in _rings(block):
+			for k in ring.size():
+				edges.append(ring[k])
+				edges.append(ring[(k + 1) % ring.size()])
+				strips += 1
+		_first_strip.append(strips)
 	_borders.instance_count = _first_strip[-1]
-	for i in rings.size():
-		_outline(i, rings[i])
+	for k in _borders.instance_count:
+		var a := edges[k * 2]
+		var b := edges[k * 2 + 1]
+		var mid := (a + b) / 2.0
+		var turn := Basis(Vector3.UP, -(b - a).angle()) \
+				* Basis.from_scale(Vector3(a.distance_to(b), 1.0, S.border_width))
+		_borders.set_instance_transform(k, Transform3D(turn, Vector3(mid.x, BORDER_LIFT, mid.y)))
+	for block in districts.block_count():
+		_colour_block(block)
 	_add_instance(_borders)
 
 	var slab := BoxMesh.new()
@@ -166,29 +178,33 @@ func _on_district_controlled(_d: int) -> void:
 		_colour_block(block)
 
 
-## The ground round `block`: the hull of its buildings' walls, grown by the margin.
-func _ring(block: int) -> PackedVector2Array:
-	var points := PackedVector2Array()
+## The ground round `block`: the outline of its buildings' walls grown by the margin and
+## merged where they meet. It hugs the buildings, so a block on a bend doesn't draw a line
+## across the street and through its neighbours (a hull did). One outline per group of
+## buildings that touch; a block may have a few.
+func _rings(block: int) -> Array[PackedVector2Array]:
+	var merged: Array[PackedVector2Array] = []
 	for i in districts.block_members(block):
 		var piece := districts.buildings[i]
 		var half := BuildingBox.size_of(piece) / 2.0 + Vector3.ONE * S.unit_ring_margin
+		var shape := PackedVector2Array()
 		for corner in [Vector3(-half.x, 0, -half.z), Vector3(half.x, 0, -half.z),
 				Vector3(half.x, 0, half.z), Vector3(-half.x, 0, half.z)]:
 			var p: Vector3 = piece.global_transform * corner
-			points.append(Vector2(p.x, p.z))
-	var hull := Geometry2D.convex_hull(points)
-	hull.resize(hull.size() - 1)   # the hull repeats its first point at the end
-	return hull
-
-
-func _outline(index: int, ring: PackedVector2Array) -> void:
-	for k in ring.size():
-		var a := ring[k]
-		var b := ring[(k + 1) % ring.size()]
-		var mid := (a + b) / 2.0
-		var turn := Basis(Vector3.UP, -(b - a).angle()) * Basis.from_scale(Vector3(a.distance_to(b), 1.0, S.border_width))
-		_borders.set_instance_transform(_first_strip[index] + k, Transform3D(turn, Vector3(mid.x, BORDER_LIFT, mid.y)))
-	_colour_block(index)
+			shape.append(Vector2(p.x, p.z))
+		# Fold the new footprint into every outline it overlaps.
+		var rest: Array[PackedVector2Array] = []
+		for other in merged:
+			var joined := Geometry2D.merge_polygons(shape, other)
+			var outer := joined.filter(func(poly: PackedVector2Array) -> bool:
+				return not Geometry2D.is_polygon_clockwise(poly))
+			if outer.size() == 1:
+				shape = outer[0]
+			else:
+				rest.append(other)
+		rest.append(shape)
+		merged = rest
+	return merged
 
 
 ## A block's ring: white, warming toward gold with the share of it that is yours, and
