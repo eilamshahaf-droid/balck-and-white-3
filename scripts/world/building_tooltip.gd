@@ -58,20 +58,23 @@ func _describe(building: Node3D) -> String:
 	var d := districts.district_at(building.global_position)
 	var lines := PackedStringArray()
 	lines.append("%s%s" % [kind, "  (core of %s)" % districts.district_name(d) if districts.core_of(d) == i else ""])
-	var of := "%d of %d" % [population.believers_in(building), population.residents_in(building)]
-	lines.append("%s believe" % of)
-	var staff := population.staffing.staff_count(building)
+	var staff := population.staffing.staff_count(building, Resident.Job.PRAY) \
+			+ population.staffing.staff_count(building, Resident.Job.PRIEST)
 	if staff > 0:
 		lines.append("Staff %d, yields %.1f" % [staff, population.yield_of(building)])
-	elif building.is_in_group(Decrees.PRAYER_HOUSES):
-		lines.append("Yields %.1f belief/s" % population.yield_of(building))
 	if districts.is_yours(i):
+		var manager := population.manager_of(building)
 		var net := treasury.net_of(building)
-		lines.append("Yours: %s $%.1f/s" % ["earns" if net >= 0.0 else "costs", absf(net)])
+		lines.append("Yours. %s" % ("Manager: " + manager.full_name() if manager else "The Office"))
+		lines.append("%s $%.1f/s" % ["Earns" if net >= 0.0 else "Costs", absf(net)])
+	elif districts.wants_you(i) and districts.can_claim(i):
+		lines.append("Wants you: set a Rep down here to manage it")
 	elif not districts.borders_yours(i):
-		lines.append("Not yours, and too far: it must border a building of yours")
+		lines.append("Too far: it must border a building of yours")
 	elif not districts.can_claim(i):
-		lines.append("Not yours: take the buildings around it first")
+		lines.append("Take the buildings around it first")
+	elif districts.meter_of(i) > 0.0:
+		lines.append("Takeover %d%%: keep a Rep at its door" % floori(districts.meter_of(i) * 100.0))
 	else:
-		lines.append("Not yours")
+		lines.append("Set a Rep down at its door to take it")
 	return "\n".join(lines)

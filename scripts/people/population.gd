@@ -311,6 +311,16 @@ func occupants_at_home(building: Node3D) -> Array:
 	return _by_home.get(building, [])
 
 
+## How far the furthest-along trainee for `rank` is, 0..1; 0 when nobody trains for it.
+func training_progress(rank: Resident.Rank) -> float:
+	var full := U.missionary_time if rank == Resident.Rank.MISSIONARY else U.priest_time
+	var best := 0.0
+	for r in residents:
+		if r.job == Resident.Job.TRAIN and r.training_for == rank:
+			best = maxf(best, 1.0 - r.training_left / full)
+	return best
+
+
 ## The rep who manages `building`, or null.
 func manager_of(building: Node3D) -> Resident:
 	for r: Resident in staffing.members(building):

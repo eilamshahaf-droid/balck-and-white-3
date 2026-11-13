@@ -76,7 +76,7 @@ The scene is small; most nodes are built in code at startup.
 | `Condemnation` | `government/condemnation.gd` (+ `condemnation_notice.gd`) | Complaints from loud buildings of yours raise awareness; at `condemn_at` a notice, then `Population.close_building` for `close_minutes` and `reopen_building`. The hand can tear the notice off for belief. Replaces the inspector in `GovernmentSettings.condemn_kinds` (the Slums). |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts, hidden until F1. Not part of the game. |
-| `HUD` | `hud.gd` (+ `help_label.gd`) | The numbers the player may see, and the controls folded into one hint line (H opens them). |
+| `HUD` | `hud.gd` (+ `help_label.gd`, `mission_card.gd`) | The numbers the player may see, the controls folded into one hint line (H opens them), and `MissionCard`: the one thing to do next with a progress bar (texts in `data/districts.tres`, "Missions"). |
 
 World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`,
 `door.gd`, `litter.gd`, `pigeon.gd`.
@@ -209,14 +209,21 @@ each thread owes; read both before starting work.
   verbs are stamp (your own rules) and tear (no rules). No signatures or petition.
 - `docs/GDD.md` is a copy of the Designer's page (the link is at its top). If Eilam says the
   design changed and the copy has not, read the page with the Artifact tool and sync the copy.
+- **The takeover model (2026-11-13, GDD section 0 item 7):** every building has a meter
+  (`Districts.meter_of`, `add_meter`, `wants_you`, `take`); a Rep (`MISSIONARY`) at its door
+  fills it (`Campaigns`, `Preaching.pace`); when full the Rep takes it and stays as its Manager
+  (`Job.MANAGER`, `Population.make_manager`, `manager_of`); a building is yours while managed.
+  Buildings next to yours in a block fill by themselves and then only need a Rep. Built: step 1.
+  Next: step 2, exposure and losing Reps; step 3, each block's key building, the Fixer (`AGENT`:
+  guard or breach) and the two ways to win. The map has about 170 large buildings on purpose.
 - Buildings are taken one at a time; a whole block pays a bonus.
 - The system has three layers (GDD section 13): a base that no stage changes, branches the player
   balances by style, and a stage profile of numbers. A later stage is harder by its numbers
   (residents, buildings, reactions), never by new rules; before a second stage, the per-stage
   numbers move into one profile per stage.
-- Names on screen (set B; the code keeps the old identifiers): `BELIEVER` is a Member,
-  `MISSIONARY` a Canvasser, `PRIEST` a Clerk, `HIGH_PRIEST` the Secretary, `AGENT` the Field
-  Delegate, the cult is the Committee, a prayer house is a Branch (`data/units.tres`).
+- Names on screen (the code keeps the old identifiers): `BELIEVER` is a Member, `MISSIONARY`
+  a Rep (a Manager once in a building), `PRIEST` a Clerk, `HIGH_PRIEST` the Secretary, `AGENT`
+  the Fixer, the cult is the Committee, a prayer house is a Branch (`data/units.tres`).
 - The hand places people: where it sets someone down, and who they are, is what they do
   (`Population._on_set_down`, `_take_order`, `willingness`, `effort_of`, `Resident.strain`); an
   unwilling one still goes, at a price. Prefer this to adding wheel slices.

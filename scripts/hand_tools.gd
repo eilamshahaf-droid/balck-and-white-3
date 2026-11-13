@@ -207,7 +207,7 @@ func _building_items(building: Node3D) -> Array[Dictionary]:
 	var items: Array[Dictionary] = [
 		{"id": &"force", "label": "Skull: Force", "color": Color(0.85, 0.3, 0.3)},
 		{"id": &"buy", "label": "$: Buy", "color": Color(0.4, 0.8, 0.4)},
-		{"id": &"preach", "label": "Sky Sign: Canvassers", "color": Color(0.5, 0.75, 1.0)},
+		{"id": &"preach", "label": "Send a Rep", "color": Color(0.5, 0.75, 1.0)},
 	]
 	var current := campaigns.route_of(building)
 	for item in items:

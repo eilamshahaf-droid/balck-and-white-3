@@ -32,19 +32,33 @@ Where this disagrees with the text below, this wins.
    - **Willingness.** Someone who lives well goes gladly and gives full effort. Someone neglected or worn out by orders still goes, with a penalty in three parts, all approved: their work is worth less; it wears them further and after a few such orders they leave; and the neighbours who see it raise the district's awareness.
    - This is the dial between the two ways: moving people like pieces is fast and wears them down, and a following that lives well acts by itself.
 6. **Names (Eilam chose set B, 2026-11-12; in the game since 0.12.0).** Believer: Member. Missionary: Canvasser. Priest: Clerk. High priest: the Secretary, who is also the narrator of the minutes. Special agent: Field Delegate. The cult: the Committee. Sermon house: Branch. The text of sections 1 to 12 still uses the old names.
-7. **How people come over (Eilam, after playing 0.12; built in 0.13.0).**
+7. **The takeover model (Eilam, 2026-11-13; this replaces "most of a building's residents" and items below where they disagree). Step 1 is built in 0.14.0.**
+   - **A converter is sent to a building; the building has a meter; when it is full the building is yours and the converter becomes its manager.** The converter is the **Rep**; in a building, its **Manager**. So a building costs a Rep, and you cannot take everything.
+   - **A building that already wants you** (it came round by itself next to your buildings, inside a block) only needs a Rep sent to manage it: no time, no danger.
+   - **Danger (step 2, not built).** While a Rep works, the city, by how exposed you are, tries to stop them. The player can step in, upgrade with the special coins, or send several Reps to work faster. If the Rep is caught, arrested or driven off he is lost and a new one must be trained. The meter does not reset: it sinks slowly, so there is a window to send another.
+   - **The main building, the Office**, makes paperwork and money, comes with a few followers, and is where decrees are stamped, characters upgraded and Reps trained. The first mission is to train a follower as a Rep and send them to a building.
+   - **Exposure.** Every building taken raises it. A complete block is protected. You may take buildings in your block or in neighbouring blocks: taking next door raises exposure more, taking in a neighbouring block less. So there are two ways: tight (protected blocks, the city notices fast) and spread (less notice, no block protection).
+   - **Each block has one small key building** (a City Hall desk, a civic group): it is what stops your Reps, fines you, talks your followers into leaving and turns your buildings back. Taken, it becomes a special building of yours: one that trains Reps, or one that makes paperwork, besides the Office. (Step 3, not built.)
+   - **Turning back.** Your buildings can be turned back by the civic group, by neglect and exploitation until people leave, or both; a wilder player must always watch for it, or upgrade the building against it (cameras and a guard, or your portrait in every flat).
+   - **Other buildings** take upgrades (a shop and the like) that balance money, welfare or fear. Kept simple for now.
+   - **Winning.** Every key building taken moves you on: 80% of them wins the narrow way; 30% of them with 60% of the district's people wins the wide way.
+   - **The agent (the Fixer; Eilam approved the Programmer's proposal).** A Rep cannot take a key building; the Fixer is the answer to it, in one of two postings: **guard** (stands in a block: Reps there are safer and your buildings cannot be turned back) or **breach** (goes at the block's key building and weakens it so Reps can finish). Few Fixers, so it is a choice between holding and pushing. Each district's Fixer is a different type. The Vandalist and street art are dropped.
+   - **Fewer, larger buildings**: 100 to 150 a district in blocks of four to six, so each one is a decision (the Slums now has 174).
+   - **UX: show, don't write.** One mission card with a progress bar; the meter on the building itself with its state; an icon over a Rep; a danger alert that flies the camera there; a short card over a building instead of fixed paragraphs.
+   - Build order: (1) Rep, meter, Manager and the mission card; (2) exposure, capture and loss of a Rep; (3) key buildings, the Fixer and the two ways to win.
+8. **How people come over (Eilam, after playing 0.12; built in 0.13.0; the meter of item 7 now carries it).**
    - **Not in the street.** Converting passers-by felt pointless. The street is to get another job later; for now a street meeting only rests worn-out members.
    - **At a door the player chose**: the residents of a building, by canvassers set down there.
    - **Or by themselves, slowly, and only inside a block**: buildings of yours bring their neighbours round by how free and inviting they are. One block never works on another, so growth is orderly and the player decides where to cross.
    - **The first building, the Office, is the most capable**: it gets the game going by itself (it works on its block four times as hard) and the Secretary canvasses in person.
    - **No abandoned or empty buildings** anywhere in the game: a building is won by winning its residents, nothing else.
-8. **Paperwork and miracles (Eilam, 2026-11-12; not built yet).**
+9. **Paperwork and miracles (Eilam, 2026-11-12; not built yet).**
    - **Paperwork replaces belief** as the resource. Branches make it; it buys everything official: stamping your own rules on a building, objecting to a notice, bail, training.
    - **A miracle cannot move the bureaucracy.** It works on people and the physical world only: it never takes a building, fills the bar, cancels a notice or frees anyone. It gathers a crowd, lifts spirits, distracts officers and inspectors.
    - **Miracles do not cost paperwork.** They come from a small stock (about three) that refills slowly.
    - **City Hall answers every miracle with a form**: a dry notice and a fine ("unlicensed precipitation"). That is the price and the joke.
    - Open: the list of miracles and powers that fit this. The Programmer's candidates: Block Party (keeps), Rain of Frogs (a distraction), a smell of fresh bread that brings residents to their doors, a yawn that sends officers to sleep for a minute, a sunbeam on one canvasser, pigeons over a camera, every phone ringing at once.
-9. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
+10. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
 
 ---
 

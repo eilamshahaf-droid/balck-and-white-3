@@ -9,11 +9,11 @@ extends Resource
 ## believer, missionary, priest, special agent, high priest. Renaming the
 ## cult's words happens here, not in code.
 @export var rank_titles := PackedStringArray([
-	"Resident", "Member", "Canvasser", "Clerk", "Field Delegate", "Secretary",
+	"Resident", "Member", "Rep", "Clerk", "Fixer", "Secretary",
 ])
 ## The same, in the plural (the HUD's captions).
 @export var rank_plurals := PackedStringArray([
-	"Residents", "Members", "Canvassers", "Clerks", "Field Delegates", "Secretaries",
+	"Residents", "Members", "Reps", "Clerks", "Fixers", "Secretaries",
 ])
 ## Body colour per rank, same order (a resident keeps their own colour).
 @export var rank_colors := PackedColorArray([

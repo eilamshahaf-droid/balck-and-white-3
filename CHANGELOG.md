@@ -3,6 +3,19 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.14.0 (2026-11-13): a Rep takes a building and stays to manage it
+Eilam's new model for taking the city, step 1 of 3 (the city's answer and the blocks' key buildings come next). Numbers are provisional.
+- **Every building has a takeover bar** over its roof. Set a **Rep** (the old Canvasser) down at its door and the bar fills, about a minute for one Rep on an ordinary building; two Reps fill it twice as fast. When it is full the building is yours and the Rep goes in as its **Manager**. So every building needs a Rep of its own, and Reps are what you run short of.
+- **A building that wants you** has a full green bar: buildings next to yours in the same block come round by themselves, slowly (the Office pulls four times as hard). Such a building only needs a Rep set down at it; it is taken on the spot.
+- **A lost building keeps 60% of its bar**, and a bar nothing holds up sinks slowly, so there is time to send another Rep.
+- **The Office opens with four followers** living in it, ready to be trained. The first mission is to train one as a Rep.
+- **A smaller city of larger buildings**: 174 buildings (was 417), about twice the size, in 41 blocks of three to six, so each building is a decision. The map is regenerated (`data/maps/slums/stage.json`).
+- **A mission card** (top left) says the one thing to do next, with a progress bar: train a Rep, send them to a building, take it, complete the Office's block, fill the district's bar. It replaces the paragraph of hints. The bottom-left text is three short lines, and the card over a building says its state in one line ("Wants you: set a Rep down here", "Takeover 55%", "Yours. Manager: ...").
+- **Names**: Canvasser is **Rep**, a Rep in a building is its **Manager**, the Field Delegate is the **Fixer**.
+- The skull and dollar marks fill the same bar by force or by money and leave the building wanting you. The HUD shows free Reps of all Reps.
+- For balance: the bot (one Rep per building, two at work at a time) holds 25 buildings and 5 whole blocks after an hour. The seats rule of 0.13.1 was tuned for the old model and needs another look, as does awareness (the city's answer is rebuilt in step 2).
+- Try it: follow the mission card. Train a Rep at the Office, lift them, set them down at the door of the building next door, and watch the bar.
+
 ## Pre-Alpha 0.13.1 (2026-11-12): balance from the Designer and the Balance Tester
 All numbers are provisional, and each is in a `.tres`. They were checked over about 20 bot runs of 90 minutes.
 - **The district bar.** The core is worth 25% and each landmark mark 12%. A following alone fills at most 70%, so a district always needs some key places.
