@@ -19,7 +19,6 @@ signal taken(building: Node3D, rep: Resident)
 const S: CampaignSettings = preload("res://data/campaigns.tres")
 const F: FollowersSettings = preload("res://data/followers.tres")
 const SIDEWALK_GAP := 1.5   # metres out from the wall
-const SECRETARY_LAST := 1.0e9   # added to his distance, so any free Rep is nearer
 
 @export var districts: Districts
 @export var population: Population
@@ -102,7 +101,7 @@ func marked() -> Array[Node3D]:
 	return out
 
 
-## The Reps (or the Secretary) on the way to `building` or at its door.
+## The Reps on the way to `building` or at its door.
 func reps_at(building: Node3D) -> Array[Resident]:
 	var found: Array[Resident] = []
 	var c := _campaign_on(building)
@@ -140,7 +139,7 @@ func seconds_for(building: Node3D) -> float:
 	return S.rep_seconds * clampf(float(room) / S.ordinary_room, S.size_factor_min, S.size_factor_max)
 
 
-## The hand set a Rep (or the Secretary) down at `building`. One that already wants you
+## The hand set a Rep down at `building`. One that already wants you
 ## is taken on the spot; otherwise they start on its meter, joining whoever is at it.
 func _on_canvasser_set_down(r: Resident, building: Node3D) -> void:
 	var i := districts.index_of(building)
@@ -156,9 +155,13 @@ func _on_canvasser_set_down(r: Resident, building: Node3D) -> void:
 			mark_refused.emit(building, why)
 			return
 		c = _start(building)
-	if is_instance_valid(r.body) and not c.agents.has(r.body):
+	if not is_instance_valid(r.body):
+		return
+	# Lifted from this very door and set down again: the errand ended in the hand.
+	if not r.body.on_errand:
 		r.body.send_on_errand(_spot_outside(building), building.global_position, INF,
 				S.missionary_line, S.line_color)
+	if not c.agents.has(r.body):
 		c.agents.append(r.body)
 
 
@@ -189,15 +192,19 @@ func _step(c: Campaign) -> void:
 		c.stalled = "must border a building of yours"
 		return
 	c.agents = c.agents.filter(func(a: Citizen) -> bool: return is_instance_valid(a) and a.on_errand)
-	if c.agents.is_empty() and c.auto:
+	if c.agents.is_empty():
+		# A door the hand set a Rep at is dropped once the Rep is gone; one marked from
+		# the wheel waits for the next free Rep.
+		if not c.auto:
+			_end(c, false)
+			return
 		_send_nearest(c)
 	var working := 0
 	var rep: Resident = null
 	for a in c.agents:
 		if a.errand_arrived:
 			working += 1
-			if a.resident.rank == Resident.Rank.MISSIONARY:
-				rep = a.resident
+			rep = a.resident
 	if working == 0:
 		c.stalled = "on the way" if not c.agents.is_empty() else "needs a Rep"
 		return
@@ -206,28 +213,19 @@ func _step(c: Campaign) -> void:
 	districts.add_meter(i, working * attention * S.tick / seconds_for(c.building))
 	if not districts.wants_you(i):
 		return
-	# Full: a Rep at the door takes it over. The Secretary has the Office to run, so
-	# work he did alone leaves the building wanting you.
-	if rep:
-		_take(c.building, rep)
-	else:
-		_end(c, false)
+	_take(c.building, rep)
 
 
-## The nearest free Rep goes to the door; with none trained yet, the Secretary himself.
+## The nearest free Rep goes to the door; with none free the building waits for one.
 func _send_nearest(c: Campaign) -> void:
 	var best: Citizen = null
 	var best_d := INF
 	var from := c.building.global_position
 	for r: Resident in population.residents:
-		var free_rep := r.rank == Resident.Rank.MISSIONARY and r.job == Resident.Job.FREE
-		if not (free_rep or r == population.priest) or not is_instance_valid(r.body) \
-				or not r.body.can_answer():
+		if r.rank != Resident.Rank.MISSIONARY or r.job != Resident.Job.FREE \
+				or not is_instance_valid(r.body) or not r.body.can_answer():
 			continue
 		var d := r.body.global_position.distance_squared_to(from)
-		# Any Rep before the Secretary.
-		if r == population.priest:
-			d += SECRETARY_LAST
 		if d < best_d:
 			best_d = d
 			best = r.body

@@ -175,9 +175,7 @@ func _arrive(inspector: Inspector) -> void:
 			else:
 				var rep := reps[0]
 				campaigns.dismiss(rep)
-				# The Secretary can't be sent home for good: he walks back to the Office.
-				if rep != population.priest:
-					population.convert_to(rep, Resident.Rank.RESIDENT)
+				population.convert_to(rep, Resident.Rank.RESIDENT)
 				faith.add_exposure(-I.satisfied_exposure)
 				rep_sent_home.emit(b, rep)
 	_remove(inspector)

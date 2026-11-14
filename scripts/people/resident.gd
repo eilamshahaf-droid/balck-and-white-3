@@ -69,9 +69,9 @@ func is_believer() -> bool:
 	return rank >= Rank.BELIEVER
 
 
-## Missionaries and the high priest win people over.
+## Only a Rep works on a building; the Secretary stays at the Office.
 func preaches() -> bool:
-	return rank == Rank.MISSIONARY or rank == Rank.HIGH_PRIEST
+	return rank == Rank.MISSIONARY
 
 
 ## Priests and the high priest serve in a sermon house, drawn larger.

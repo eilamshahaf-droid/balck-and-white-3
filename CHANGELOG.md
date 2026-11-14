@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.16.2 (2026-11-14): the Secretary stays at the Office
+- **The Secretary no longer walks to marked buildings**, and setting him down at a door does nothing: he could fill a bar but never take the building, which only confused. Only Reps work on buildings. A building marked with "Send a Rep" while no Rep is free shows "needs a Rep" and gets the next one that is.
+- Fix: a Rep lifted from the door he was working at and set down there again goes back to work (he could be left standing).
+- A door the hand set a Rep at is dropped when that Rep leaves; a door marked from the wheel keeps waiting for the next free Rep.
+- Try it: mark a building before training anyone. Nobody comes until a Rep is trained.
+
 ## Pre-Alpha 0.16.1 (2026-11-14): fix, a takeover bar stuck at 99%
 - **Fix: a building's bar could stop a hair under full and stay yellow at 99% for ever**, with a Rep at the door or not. The meter treated "almost full" as "no change" and never took the last step, so the building never came to want you. Found from Eilam's screenshot; a test now covers it.
 - Try it: the building next to the Office fills to a green bar by itself in a few minutes; a Rep at a door always finishes.
