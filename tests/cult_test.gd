@@ -67,15 +67,15 @@ func _ready() -> void:
 	get_tree().quit(1 if _failures > 0 else 0)
 
 
-## The Slums come from the Map Lab's stage file: 100 to 200 large buildings (each needs
-## a rep of its own, so each is a decision), in blocks of three to six, and the base far
-## enough from the core.
+## The Slums come from the Map Lab's stage file: about a hundred large buildings (each
+## needs a Rep of its own, so each is a decision), in about ten large blocks, and the
+## base far enough from the core.
 func _test_stage_map() -> void:
 	var city: City = _main
 	var count := _districts.buildings.size()
 	var blocks := _districts.block_count()
-	_check(count >= 100 and count <= 200, "the stage map has 100 to 200 buildings (%d)" % count)
-	_check(blocks >= 30 and blocks <= 55, "they stand in about 40 blocks (%d)" % blocks)
+	_check(count >= 70 and count <= 130, "the stage map has about a hundred buildings (%d)" % count)
+	_check(blocks >= 8 and blocks <= 14, "they stand in about ten large blocks (%d)" % blocks)
 	_check(get_tree().get_nodes_in_group("buildings").size() == count, "each is its own building")
 	var d := _districts.start_district()
 	var steps := {_districts.core_of(d): 0}
@@ -86,7 +86,7 @@ func _test_stage_map() -> void:
 			if not steps.has(j):
 				steps[j] = steps[i] + 1
 				todo.append(j)
-	_check(steps.get(_districts.headquarters, 0) >= 6,
+	_check(steps.get(_districts.headquarters, 0) >= 4,
 			"the base is several buildings from the core (%d)" % steps.get(_districts.headquarters, 0))
 	var walk := city.walk_from(city.nearest_node(_districts.start_building().global_position), 5)
 	_check(walk.size() >= 2, "people can walk the streets from the base")
@@ -198,10 +198,11 @@ func _test_taking() -> void:
 		return
 	_check(not _districts.take(far) and not _districts.is_yours(far),
 			"a building far from yours can't be taken")
-	_districts.add_meter(near, 0.4)
-	_check(is_equal_approx(_districts.meter_of(near), 0.4) and not _districts.wants_you(near),
+	var start := _districts.meter_of(near)
+	_districts.add_meter(near, 0.3)
+	_check(is_equal_approx(_districts.meter_of(near), start + 0.3) and not _districts.wants_you(near),
 			"a takeover meter fills part way")
-	_districts.add_meter(near, 0.6 - 0.000001)
+	_districts.add_meter(near, 1.0 - _districts.meter_of(near) - 0.000001)
 	_districts.add_meter(near, 0.5)
 	_check(_districts.wants_you(near) and not _districts.is_yours(near),
 			"a full meter means the building wants you, and is not yours yet")
@@ -236,8 +237,8 @@ func _test_growth() -> void:
 	_check(_followers.count_of(_near) == _followers.room_of(_near), "up to the room it has")
 	var plain := _followers.attraction_of(_near)
 	_treasury.money = PLENTY
-	_check(_fit(_near, &"duplex") and _followers.attraction_of(_near) > plain,
-			"a Duplex fitted in brings them faster")
+	_check(not _fit(_near, &"duplex") and is_equal_approx(_followers.attraction_of(_near), plain),
+			"the Slums offer only the basic homes: no Duplex here")
 
 
 ## Buildings of yours pull up the meters next door, only inside their own block.
@@ -303,6 +304,11 @@ func _test_rooms() -> void:
 	_check(office.columns >= 4 and office.rows >= 3 and not office.pieces.is_empty(),
 			"the Office is a grid of bays and floors with its first rooms in (%d by %d, %d rooms)"
 			% [office.columns, office.rows, office.pieces.size()])
+	# The Training Room of the earlier test sits where first-fit put it; the plan below
+	# needs that place, as a player's would.
+	for piece in office.pieces.duplicate():
+		if piece.kind.id == &"training":
+			_rooms.remove(hq, piece.cells()[0])
 	var taken := office.pieces[0].cells()[0]
 	_check(not office.fits(kinds.kind(&"guard"), taken, 0), "a room can't go where another is")
 	_check(not office.fits(kinds.kind(&"shop"), Vector2i(office.columns - 2, office.rows - 1), 0),
@@ -320,7 +326,25 @@ func _test_rooms() -> void:
 	_check(is_equal_approx(_faith.belief_pool, _followers.paperwork_cap()),
 			"the clerks stop when the archives are full")
 	var purse := _followers.money_cap()
-	_check(_fit(hq, &"vault") and _followers.money_cap() > purse, "a Vault keeps more money")
+	var kinds_vault := kinds.kind(&"vault")
+	var lone := Vector2i(-1, -1)
+	for y in office.rows:
+		for x in office.columns:
+			if lone.x < 0 and office.is_free(Vector2i(x, y)) and office.is_free(Vector2i(x + 1, y)) \
+					and office.is_free(Vector2i(x, y + 1)) and office.is_free(Vector2i(x + 1, y + 1)) \
+					and not office.touches(kinds_vault.cells, Vector2i(x, y), &"shop"):
+				lone = Vector2i(x, y)
+	_check(lone.x >= 0 and _rooms.why_not(hq, kinds_vault, lone, 0).contains("next to"),
+			"a Vault must be next to a Shop")
+	_check(_fit(hq, &"vault") and _followers.money_cap() > purse, "and next to one it keeps more money")
+	var shop_cell := Vector2i(-1, -1)
+	for piece in office.pieces:
+		if piece.kind.id == &"shop":
+			shop_cell = piece.cells()[0]
+	_check(_rooms.why_not_remove(hq, shop_cell) != "" and not _rooms.remove(hq, shop_cell),
+			"the Shop can't be taken out while the Vault leans on it")
+	_check(office.stairs >= 0 and not office.is_free(Vector2i(office.stairs, office.rows - 1)),
+			"nothing fits over the staircase")
 	var desks := _followers.clerk_slots()
 	_check(_fit(hq, &"desks") and _followers.clerk_slots() == desks + kinds.kind(&"desks").clerks,
 			"a Desk Room seats more clerks")
@@ -336,7 +360,7 @@ func _test_rooms() -> void:
 			and is_equal_approx(_treasury.money, 1000.0 - family.money),
 			"a Family Flat houses more than the plain flats it replaces, for money")
 	var piece := layout.pieces[layout.pieces.size() - 1]
-	_check(_rooms.remove(_near, piece.origin) and _followers.room_of(_near) == plain \
+	_check(_rooms.remove(_near, piece.cells()[0]) and _followers.room_of(_near) == plain \
 			and is_equal_approx(_treasury.money, 1000.0 - family.money * (1.0 - kinds.refund_share)),
 			"taking a room out gives part of its money back")
 

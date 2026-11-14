@@ -16,10 +16,10 @@ followers = 3
 [sub_resource type="Resource" id="Kind_1"]
 script = ExtResource("2")
 id = &"tenement"
-title = "Tenement"
+title = "Row Flat"
 note = "houses 5"
 color = Color(0.9, 0.6, 0.2, 1)
-cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)])
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
 money = 110.0
 followers = 5
 
@@ -33,6 +33,7 @@ cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
 money = 150.0
 attraction = 0.5
 followers = 1
+tier = 1
 
 [sub_resource type="Resource" id="Kind_3"]
 script = ExtResource("2")
@@ -43,6 +44,7 @@ color = Color(0.4, 0.85, 0.4, 1)
 cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 1)])
 money = 200.0
 attraction = 1.0
+tier = 1
 
 [sub_resource type="Resource" id="Kind_4"]
 script = ExtResource("2")
@@ -82,24 +84,26 @@ office_only = true
 script = ExtResource("2")
 id = &"archive"
 title = "Archive"
-note = "keeps 150 paperwork more"
+note = "keeps 150 paperwork more, next to a Desk Room"
 color = Color(0.7, 0.6, 0.9, 1)
 cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)])
 money = 150.0
 paperwork_cap = 150.0
 office_only = true
+needs_next = &"desks"
 
 [sub_resource type="Resource" id="Kind_8"]
 script = ExtResource("2")
 id = &"vault"
 title = "Vault"
-note = "keeps $1500 more"
+note = "keeps $1500 more, next to a Shop"
 color = Color(0.75, 0.75, 0.5, 1)
 cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
 money = 250.0
 paperwork = 20.0
 money_cap = 1500.0
 office_only = true
+needs_next = &"shop"
 
 [sub_resource type="Resource" id="Kind_9"]
 script = ExtResource("2")

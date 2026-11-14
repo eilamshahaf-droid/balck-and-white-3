@@ -13,6 +13,16 @@ extends Resource
 @export var max_columns := 7
 @export var min_rows := 2
 @export var max_rows := 12
+## The highest tier of room this stage offers (the Slums teach with the basic ones).
+@export var max_tier := 0
+## Every building has a staircase from the ground to the roof, in this column counted
+## from the middle (0) outward; nothing can be fitted over it.
+@export var stairs_from_middle := 0
+@export var stairs_color := Color(0.2, 0.2, 0.24)
+@export var stairs_line_color := Color(0.6, 0.6, 0.66)
+## The main Office is raised to at least this many floors when the game starts, so the
+## heart of the Committee has room to plan in.
+@export var office_min_rows := 6
 ## Followers a cell with no room in it houses (a plain flat).
 @export var followers_per_cell := 1
 
@@ -22,8 +32,8 @@ extends Resource
 @export var base_money_cap := 1200.0
 ## The share of a room's money that comes back when it is taken out.
 @export_range(0.0, 1.0) var refund_share := 0.5
-## The rooms the main Office opens with: kind id, column, row, quarter turns.
-@export var office_start: Array[String] = ["desks 0 0 0", "shop 2 0 0"]
+## The rooms the main Office opens with, each fitted into the first place it goes.
+@export var office_start: Array[StringName] = [&"desks", &"shop"]
 
 @export_group("Editor")
 @export var cell_pixels := 76.0

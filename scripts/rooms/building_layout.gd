@@ -19,6 +19,8 @@ class Piece:
 
 var columns := 0
 var rows := 0
+## The column the staircase runs up, ground to roof: nothing fits over it.
+var stairs := 0
 var pieces: Array[Piece] = []
 
 
@@ -36,10 +38,43 @@ func fits(kind: RoomKind, origin: Vector2i, turns: int) -> bool:
 	var grounded := false
 	for c in kind.turned(turns):
 		var cell := origin + c
-		if cell.x < 0 or cell.y < 0 or cell.x >= columns or cell.y >= rows or piece_at(cell):
+		if not is_free(cell):
 			return false
 		grounded = grounded or cell.y == 0
-	return grounded or not kind.ground_only
+	if kind.ground_only and not grounded:
+		return false
+	return kind.needs_next == &"" or touches(kind.turned(turns), origin, kind.needs_next)
+
+
+## `cell` is inside the grid, off the stairs and has no room in it.
+func is_free(cell: Vector2i) -> bool:
+	return cell.x >= 0 and cell.y >= 0 and cell.x < columns and cell.y < rows \
+			and cell.x != stairs and piece_at(cell) == null
+
+
+## Would `cells` placed at `origin` share a side with a room of kind `id`. The stairs
+## don't come between: rooms on either side of them are next to each other.
+func touches(cells: Array[Vector2i], origin: Vector2i, id: StringName) -> bool:
+	for c in cells:
+		for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var next := origin + c + step
+			if next.x == stairs:
+				next += step
+			var other := piece_at(next)
+			if other and other.kind.id == id:
+				return true
+	return false
+
+
+## The rooms that need `piece` beside them and have no other of its kind to lean on.
+func leaning_on(piece: Piece) -> Array[Piece]:
+	var out: Array[Piece] = []
+	pieces.erase(piece)
+	for p in pieces:
+		if p.kind.needs_next == piece.kind.id and not touches(p.kind.turned(p.turns), p.origin, piece.kind.id):
+			out.append(p)
+	pieces.append(piece)
+	return out
 
 
 func add(kind: RoomKind, origin: Vector2i, turns: int) -> Piece:
@@ -56,4 +91,4 @@ func free_cells() -> int:
 	var used := 0
 	for p in pieces:
 		used += p.kind.cells.size()
-	return columns * rows - used
+	return (columns - 1) * rows - used
