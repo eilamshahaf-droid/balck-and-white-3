@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3]
+[gd_scene load_steps=38 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -33,6 +33,9 @@
 [ext_resource type="Script" path="res://scripts/world/followers.gd" id="70_followers"]
 [ext_resource type="Script" path="res://scripts/inspection/inspectors.gd" id="71_inspectors"]
 [ext_resource type="Script" path="res://scripts/props/key_markers.gd" id="72_keys"]
+[ext_resource type="Script" path="res://scripts/rooms/rooms.gd" id="73_rooms"]
+[ext_resource type="Script" path="res://scripts/rooms/room_editor.gd" id="74_editor"]
+[ext_resource type="Script" path="res://scripts/pause.gd" id="75_pause"]
 [ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 
 [node name="Main" type="Node3D"]
@@ -143,8 +146,16 @@ script = ExtResource("18_treasury")
 faith = NodePath("../Faith")
 followers = NodePath("../Followers")
 
-[node name="Followers" type="Node" parent="." node_paths=PackedStringArray("districts", "decrees")]
+[node name="Rooms" type="Node" parent="." node_paths=PackedStringArray("districts", "treasury", "faith", "decrees")]
+script = ExtResource("73_rooms")
+districts = NodePath("../Districts")
+treasury = NodePath("../Treasury")
+faith = NodePath("../Faith")
+decrees = NodePath("../Decrees")
+
+[node name="Followers" type="Node" parent="." node_paths=PackedStringArray("districts", "decrees", "rooms")]
 script = ExtResource("70_followers")
+rooms = NodePath("../Rooms")
 districts = NodePath("../Districts")
 decrees = NodePath("../Decrees")
 
@@ -199,9 +210,10 @@ theme_override_constants/outline_size = 5
 script = ExtResource("5_help")
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: who is this (debug)    F1: debug panel
-Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building of yours: train, upgrades, floors, shop, loan    On a building next to yours: Send a Rep
+Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building of yours: rooms, floors, sellers, and at the Office training, loan, bury the file    On a building next to yours: Send a Rep
 Lift a Rep and set them down at a door to take that building; keep the hand over a building at work and it goes faster
-Inspectors (red !) walk from key buildings to your Reps and want paperwork: lift one and set him down far away to buy time"
+Inspectors (red !) walk from key buildings to your Reps and want paperwork: lift one and set him down far away to buy time
+Space: pause (the hand, the wheels and the room editor still work)"
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
@@ -233,6 +245,21 @@ followers = NodePath("../../Followers")
 decrees = NodePath("../../Decrees")
 population = NodePath("../../Population")
 camera = NodePath("../../CameraRig/Camera3D")
+
+[node name="RoomEditor" type="CanvasLayer" parent="." node_paths=PackedStringArray("rooms", "menus", "districts", "followers", "treasury", "faith")]
+script = ExtResource("74_editor")
+rooms = NodePath("../Rooms")
+menus = NodePath("../BuildingMenus")
+districts = NodePath("../Districts")
+followers = NodePath("../Followers")
+treasury = NodePath("../Treasury")
+faith = NodePath("../Faith")
+
+[node name="Pause" type="CanvasLayer" parent="." node_paths=PackedStringArray("keep_awake", "screens")]
+layer = 7
+script = ExtResource("75_pause")
+keep_awake = [NodePath("../CameraRig"), NodePath("../GodHand"), NodePath("../HandTools"), NodePath("../RoomEditor"), NodePath("../HUD")]
+screens = NodePath("../StageScreens")
 
 [node name="DistrictWon" type="CanvasLayer" parent="." node_paths=PackedStringArray("districts")]
 layer = 5

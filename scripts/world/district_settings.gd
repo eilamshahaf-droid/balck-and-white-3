@@ -70,7 +70,7 @@ extends Resource
 @export var mission_block := "Complete the Office's block: %d of %d"
 @export var mission_block_hint := "Take every building in the ring round the Office. A complete block draws followers faster; green bars are buildings that already want you and only need a Rep."
 @export var mission_district := "Fill the district's bar"
-@export var mission_district_hint := "Every building of yours fills it. More followers mean more sellers and clerks: open shops for money, and upgrade the Office for more Reps."
+@export var mission_district_hint := "Every building of yours fills it. Hold the button on a building of yours and choose Rooms: fit in shops for money, and in the Office desk rooms, archives and training rooms."
 @export var mission_won := "The district is yours"
 
 @export_group("District captured")

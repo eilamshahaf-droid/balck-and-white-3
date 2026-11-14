@@ -28,6 +28,7 @@ var _treasury: Treasury
 var _decrees: Decrees
 var _inspectors: Inspectors
 var _campaigns: Campaigns
+var _rooms: Rooms
 var _near := -1   # a building taken next to the headquarters by _test_taking
 var _failures := 0
 
@@ -44,6 +45,7 @@ func _ready() -> void:
 	_decrees = _main.get_node("Decrees")
 	_inspectors = _main.get_node("Inspectors")
 	_campaigns = _main.get_node("Campaigns")
+	_rooms = _main.get_node("Rooms")
 	await _frames(int(F.tick * 60.0) + 20)
 	_test_stage_map()
 	_test_start()
@@ -55,6 +57,7 @@ func _ready() -> void:
 	_test_pull()
 	_test_shop_and_floors()
 	_test_loan()
+	_test_rooms()
 	_test_key_buildings()
 	await _test_inspector_and_rep()
 	_test_audit()
@@ -170,9 +173,10 @@ func _test_training() -> void:
 			"Reps can be trained up to the cap (%d)" % _followers.rep_cap())
 	_check(_menus.why_not_train(Resident.Rank.MISSIONARY) != "" \
 			and not _menus.choose(&"train_rep", office), "and no further")
-	_followers.upgrades.add(office, BuildingUpgrades.Kind.TRAINING)
-	_check(_menus.why_not_train(Resident.Rank.MISSIONARY) == "",
-			"a Training Room at the Office raises the cap by one")
+	_treasury.money = PLENTY
+	_check(_fit(_districts.headquarters, &"training") \
+			and _menus.why_not_train(Resident.Rank.MISSIONARY) == "",
+			"a Training Room fitted into the Office raises the cap by one")
 
 
 ## A building is taken only next to one of yours: its meter fills, and a Rep set down at
@@ -231,8 +235,9 @@ func _test_growth() -> void:
 	_followers._grow(PLENTY)
 	_check(_followers.count_of(_near) == _followers.room_of(_near), "up to the room it has")
 	var plain := _followers.attraction_of(_near)
-	_followers.upgrades.add(b, BuildingUpgrades.Kind.ATTRACTION)
-	_check(_followers.attraction_of(_near) > plain, "an Attraction upgrade brings them faster")
+	_treasury.money = PLENTY
+	_check(_fit(_near, &"duplex") and _followers.attraction_of(_near) > plain,
+			"a Duplex fitted in brings them faster")
 
 
 ## Buildings of yours pull up the meters next door, only inside their own block.
@@ -265,15 +270,12 @@ func _test_shop_and_floors() -> void:
 	_faith.belief_pool = PLENTY
 	_treasury.money = PLENTY
 	var sellers := _followers.sellers
-	_check(not _followers.has_shop(_near) and _decrees.issue(&"use", b) and _followers.has_shop(_near),
-			"a building of yours opens a shop")
+	_check(not _followers.has_shop(_near) and _fit(_near, &"shop") and _followers.has_shop(_near),
+			"a Shop fitted into a building of yours opens there")
 	_check(_districts.is_yours(_near) and _followers.count_of(_near) > 0,
 			"and stays yours, with its followers")
 	_check(_followers.sellers > sellers and _followers.sellers_in(_near) > 0,
 			"followers from the pool take its slots (%d sellers)" % _followers.sellers_in(_near))
-	var slots := _followers.shop_slots(_near)
-	_followers.upgrades.add(b, BuildingUpgrades.Kind.SHOP)
-	_check(_followers.shop_slots(_near) > slots, "a Bigger Shop has more slots")
 	var room := _followers.room_of(_near)
 	_check(_decrees.issue(&"floors", b) and _followers.room_of(_near) > room,
 			"more floors make room for more followers (%d to %d)" % [room, _followers.room_of(_near)])
@@ -290,6 +292,53 @@ func _test_loan() -> void:
 	_treasury.add_money(F.loan_owed + 10.0)
 	_check(is_zero_approx(_treasury.owed) and is_equal_approx(_treasury.money, F.loan_money + 10.0),
 			"banknotes from a miracle pay the loan off first")
+
+
+## Every building of yours is a grid of bays and floors. An empty place is a plain flat;
+## rooms of different shapes are fitted in for money, and set what the Committee can keep.
+func _test_rooms() -> void:
+	var hq := _districts.headquarters
+	var kinds := _rooms.settings
+	var office := _rooms.layout_of(hq)
+	_check(office.columns >= 4 and office.rows >= 3 and not office.pieces.is_empty(),
+			"the Office is a grid of bays and floors with its first rooms in (%d by %d, %d rooms)"
+			% [office.columns, office.rows, office.pieces.size()])
+	var taken := office.pieces[0].cells()[0]
+	_check(not office.fits(kinds.kind(&"guard"), taken, 0), "a room can't go where another is")
+	_check(not office.fits(kinds.kind(&"shop"), Vector2i(office.columns - 2, office.rows - 1), 0),
+			"a Shop must touch the ground floor")
+	_check(not office.fits(kinds.kind(&"archive"), Vector2i(office.columns - 1, office.rows - 2), 0) \
+			and kinds.kind(&"archive").turned(1).size() == 3,
+			"a room must fit inside the grid, and can be turned")
+	_treasury.money = PLENTY
+	_faith.belief_pool = PLENTY
+	var cap := _followers.paperwork_cap()
+	_check(is_equal_approx(cap, kinds.base_paperwork_cap), "paperwork can be kept up to %d" % roundi(cap))
+	_check(_fit(hq, &"archive") and _followers.paperwork_cap() > cap, "an Archive keeps more")
+	_faith.belief_pool = _followers.paperwork_cap() - 0.01
+	_faith._physics_process(5.0)
+	_check(is_equal_approx(_faith.belief_pool, _followers.paperwork_cap()),
+			"the clerks stop when the archives are full")
+	var purse := _followers.money_cap()
+	_check(_fit(hq, &"vault") and _followers.money_cap() > purse, "a Vault keeps more money")
+	var desks := _followers.clerk_slots()
+	_check(_fit(hq, &"desks") and _followers.clerk_slots() == desks + kinds.kind(&"desks").clerks,
+			"a Desk Room seats more clerks")
+	if _near < 0:
+		return
+	_check(_rooms.why_not(_near, kinds.kind(&"desks"), Vector2i.ZERO, 0) != "",
+			"office rooms go only in an office")
+	var layout := _rooms.layout_of(_near)
+	var plain := _followers.room_of(_near)
+	_treasury.money = 1000.0
+	var family := kinds.kind(&"family")
+	_check(_fit(_near, &"family") and _followers.room_of(_near) == plain + family.followers - family.cells.size() \
+			and is_equal_approx(_treasury.money, 1000.0 - family.money),
+			"a Family Flat houses more than the plain flats it replaces, for money")
+	var piece := layout.pieces[layout.pieces.size() - 1]
+	_check(_rooms.remove(_near, piece.origin) and _followers.room_of(_near) == plain \
+			and is_equal_approx(_treasury.money, 1000.0 - family.money * (1.0 - kinds.refund_share)),
+			"taking a room out gives part of its money back")
 
 
 ## About one block in four or five has a key building, spread over the district; they
@@ -384,9 +433,10 @@ func _test_audit() -> void:
 		return
 	var b := _districts.buildings[_near]
 	var plain := _inspectors.audit_cost(_near)
-	_followers.upgrades.add(b, BuildingUpgrades.Kind.SECURITY)
+	_treasury.money = PLENTY
+	_fit(_near, &"guard")
 	var cost := _inspectors.audit_cost(_near)
-	_check(cost < plain, "Security makes an audit cheaper (%d to %d paperwork)" % [roundi(plain), roundi(cost)])
+	_check(cost < plain, "a Guard Room makes an audit cheaper (%d to %d paperwork)" % [roundi(plain), roundi(cost)])
 	_faith.belief_pool = cost
 	var inspector := _inspectors.send_to(b, true)
 	inspector.arrived = true
@@ -451,6 +501,11 @@ func _test_capture() -> void:
 func _campaign_tick() -> float:
 	var settings: CampaignSettings = load("res://data/campaigns.tres")
 	return settings.tick
+
+
+## Fit room `id` into the first place of building `index` it goes.
+func _fit(index: int, id: StringName) -> bool:
+	return _rooms.place_anywhere(index, _rooms.settings.kind(id))
 
 
 ## Everyone in training finishes now.

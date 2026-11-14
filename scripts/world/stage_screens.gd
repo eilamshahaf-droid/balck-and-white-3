@@ -21,6 +21,11 @@ func _ready() -> void:
 		get_tree().paused = true
 
 
+## The briefing is up.
+func is_open() -> bool:
+	return _start.visible
+
+
 func _begin() -> void:
 	_start.visible = false
 	get_tree().paused = false

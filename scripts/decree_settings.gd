@@ -16,7 +16,5 @@ extends Resource
 @export var grow_time := 2.5                 # seconds the growth takes on screen
 
 @export_group("Open a shop")
-@export var use_cost := 25.0                 # paperwork
-@export var use_money := 80.0
 ## The name on the roof sign, and the key the shop props are listed under.
 @export var shop_use := "Shop"

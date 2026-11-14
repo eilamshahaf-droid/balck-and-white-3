@@ -66,6 +66,17 @@ Where this disagrees with the text below, this wins.
 
 ---
 
+8. **Rooms: the vertical plan of a building (Eilam, 2026-11-14). Built in steps; step 1 is in 0.17.0.**
+   - Every building of yours is a grid of bays and floors that the player can plan with rooms. Rooms come as shapes (tetris-like, they can be turned) that must be fitted in; the game is both the price (money and paperwork) and the fitting, and to fit more the building must grow (floors).
+   - It must work when ignored: a building fills itself with plain flats, and the player touches only the buildings they care to. Later: dictate one building's plan to similar buildings.
+   - In a special building (an office): offices that make paperwork, **paperwork stores** (paperwork can't be kept without end, only as far as the stores go), training rooms and so on. Money has a ceiling too. The dilemma moves from balancing money to a system of resources with ceilings that the player makes efficient, to afford dear things later or to keep a reserve.
+   - In a house: an elevator adds comfort and takes the place of flats; luxury two-floor flats house fewer and are needed in rich districts, where the demand for comfort is higher.
+   - What draws the buildings next to yours is how impressive the building is: some kinds of room next to each other raise the impression; the same goes for security, raised by the right combination of rooms. (Not built: step 3.)
+   - Rooms are to have models of their own, so planning is also decorating (the Artist; not built: coloured blocks for now).
+   - Pausing is the player's own (Space): the editor never stops time by itself.
+   - The map may shrink a good deal to suit this (not done yet).
+   - This replaces the upgrade tracks of item 7 (attraction, security, shop, desks, training are rooms now) and the "open a shop" decree (a shop is a room).
+
 ## 1. Pitch
 
 You play a god nobody asked for, in a modern city that denies you. Your cult is tiny and chased by the authorities. Its Secretary narrates everything in deadpan meeting minutes, with ranks, paid courses and paperwork that satirise cults without copying any real one.

@@ -310,7 +310,8 @@ func _on_press(event: InputEventMouseButton) -> void:
 	_press_time = _time()
 	_press_pos = event.position
 	_press_hit = hit
-	_press_target = null if carrying_tool else _pick_target(hit)
+	# While the player has the game paused nothing can be lifted: the city stands still.
+	_press_target = null if carrying_tool or get_tree().paused else _pick_target(hit)
 	# Over empty sky the city can still be grabbed: the grip goes on the street plane.
 	_press = Press.PENDING_OBJECT if _press_target else Press.PENDING_GROUND
 
