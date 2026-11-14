@@ -16,7 +16,7 @@ extends Node
 signal rank_changed(resident: Resident, old: Resident.Rank, new: Resident.Rank)
 ## The game is set up: the Secretary is at the main Office, `building`.
 signal cult_founded(building: Node3D)
-## The hand set a Rep (or the Secretary) down at `building`, which is not yours.
+## The hand set a Rep down at `building`, which is not yours.
 signal canvasser_set_down(resident: Resident, building: Node3D)
 
 ## Group of buildings with a shop (a Change Use decree).
@@ -129,7 +129,7 @@ func _populate() -> void:
 	found_cult.call_deferred()
 
 
-## The hand set someone down at a building. A Rep or the Secretary at a building that is
+## The hand set someone down at a building. A Rep at a building that is
 ## not yours goes to work on it; nobody else takes orders.
 func _on_set_down(c: Citizen) -> void:
 	var r := c.resident

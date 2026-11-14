@@ -344,6 +344,13 @@ func _test_inspector_and_rep() -> void:
 	if rep == null or door == null:
 		_check(false, "a free Rep and a door to send them to")
 		return
+	_population.bring_out(_population.priest)
+	_campaigns.send(door)
+	await _frames(int(_campaign_tick() * 60.0) + 5)
+	_check(_campaigns.is_sent(door) and not _campaigns.reps_at(door).has(_population.priest) \
+			and not _population.priest.body.on_errand,
+			"the Secretary is never sent to a marked building")
+	_campaigns.clear(door)
 	_population.bring_out(rep)
 	_population.canvasser_set_down.emit(rep, door)
 	_check(_campaigns.reps_at(door).has(rep), "a Rep set down at a door is at work there")
@@ -439,6 +446,11 @@ func _test_capture() -> void:
 		if _districts.buildings[i] and _population.residents_in(_districts.buildings[i]) == 0:
 			empty += 1
 	_check(empty == 0, "no building stands empty (%d do)" % empty)
+
+
+func _campaign_tick() -> float:
+	var settings: CampaignSettings = load("res://data/campaigns.tres")
+	return settings.tick
 
 
 ## Everyone in training finishes now.
