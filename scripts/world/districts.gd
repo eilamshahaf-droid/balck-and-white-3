@@ -59,6 +59,7 @@ var _block_standing := PackedInt32Array()   # per block: buildings not demolishe
 var _block_held := PackedInt32Array()       # of them, yours
 var _block_complete := PackedByteArray()
 var _key := PackedByteArray()            # per building: 1 for a key building
+var _key_open := PackedByteArray()       # per building: 1 once the Fixer opened it
 var _timer := 0.0
 
 @onready var city: City = get_parent()
@@ -169,7 +170,7 @@ func meter_of(index: int) -> float:
 ## Move building `index`'s takeover meter by `amount` (a rep at the door, the pull of
 ## your buildings next to it, or time wearing it down).
 func add_meter(index: int, amount: float) -> void:
-	if _yours[index] == 1 or _district_of[index] < 0 or _key[index] == 1:
+	if _yours[index] == 1 or _district_of[index] < 0 or _locked(index):
 		return
 	var now := clampf(_meter[index] + amount, 0.0, 1.0)
 	# Compared exactly: "about equal" would leave a meter a hair under full for ever.
@@ -232,13 +233,38 @@ func can_claim(index: int) -> bool:
 	var d := _district_of[index]
 	if index == headquarters:
 		return true
-	if d < 0 or _unlocked[d] == 0 or _key[index] == 1 or not borders_yours(index):
-		return false
-	return _core[d] != index or core_base(index) >= S.core_base_share
+	return d >= 0 and _unlocked[d] == 1 and not _locked(index) and borders_yours(index)
 
 
 func is_key(index: int) -> bool:
 	return _key[index] == 1
+
+
+## The Fixer has opened key building `index`: a Rep can take it.
+func is_key_open(index: int) -> bool:
+	return _key_open[index] == 1
+
+
+func open_key(index: int) -> void:
+	if _key[index] == 1 and _key_open[index] == 0:
+		_key_open[index] = 1
+		meter_changed.emit(index, _meter[index])
+
+
+## The share of district `d`'s key buildings that are yours.
+func key_share(d: int) -> float:
+	var all := 0
+	var held := 0
+	for k in keys:
+		if _district_of[k] == d:
+			all += 1
+			held += _yours[k]
+	return float(held) / maxi(all, 1)
+
+
+## A key building the Fixer has not opened yet.
+func _locked(index: int) -> bool:
+	return _key[index] == 1 and _key_open[index] == 0
 
 
 ## The name on key building `index`'s sign.
@@ -361,7 +387,7 @@ func remove_building(building: Node3D) -> void:
 func convert_near(p: Vector3, count: int) -> void:
 	var order: Array[int] = []
 	for i in buildings.size():
-		if _district_of[i] >= 0 and _yours[i] == 0:
+		if _district_of[i] >= 0 and _yours[i] == 0 and not _locked(i):
 			order.append(i)
 	order.sort_custom(func(a: int, b: int) -> bool:
 		return buildings[a].global_position.distance_squared_to(p) < buildings[b].global_position.distance_squared_to(p))
@@ -463,6 +489,7 @@ func _collect() -> void:
 	_meter.resize(n)
 	_managed.resize(n)
 	_key.resize(n)
+	_key_open.resize(n)
 	_find_borders()
 	_found_headquarters()
 	for d in count:

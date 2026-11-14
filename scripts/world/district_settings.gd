@@ -19,12 +19,14 @@ extends Resource
 
 @export_group("Who holds a building")
 @export var tick := 0.5                     # seconds between counts
-## A following that holds this share of a district's buildings fills its bar alone
-## (at middling welfare, with no key place).
+## The share of a district's people that must follow you for the freedom way to win
+## (with key_part_share of its key buildings).
 @export_range(0.0, 1.0) var control_share := 0.6
-@export_group("Winning a district: one bar, two sources")
-## What holding the district's core adds to the bar, and each marked landmark.
-@export_range(0.0, 1.0) var core_points := 0.25
+@export_group("Winning a district: two ways")
+## Control: this share of the district's key buildings wins it alone.
+@export_range(0.0, 1.0) var key_win_share := 0.8
+## Freedom: this share of the key buildings, together with control_share of the people.
+@export_range(0.0, 1.0) var key_part_share := 0.3
 @export var progress_tick := 1.0   # seconds between looks at the bar
 @export_group("Who holds a building: the core")
 ## A district's core can only become yours once this share of the buildings within
@@ -48,6 +50,25 @@ extends Resource
 @export var key_label_font_size := 64
 @export var key_label_color := Color(1.0, 0.95, 0.85)
 
+@export_group("Key buildings: the Fixer opens them")
+@export var breach_tick := 1.0
+## Actions the Fixer must carry out at a key building before a Rep can take it, and
+## their names in order (they wrap round).
+@export var breach_actions := 3
+@export var breach_action_names := PackedStringArray(["Copy the keys", "Lose the file",
+		"Change the locks"])
+## Paperwork to start an action, seconds it takes, and the exposure it adds.
+@export var breach_action_paperwork := 40.0
+@export var breach_action_seconds := 40.0
+@export var breach_action_exposure := 0.07
+## Paperwork a minute the Fixer costs while he stands at a key building.
+@export var breach_presence_paperwork := 12.0
+@export var breach_line := "Nothing to see here."
+@export var breach_line_color := Color(0.75, 0.6, 1.0)
+@export var breach_open_note := "Open: send a Rep"
+@export var breach_label_font_size := 34
+@export var breach_label_pixel_size := 0.0012
+
 @export_group("Borders and blocks")
 ## Buildings whose walls stand this close border each other (next door, or across a street).
 @export var border_gap := 12.0
@@ -69,8 +90,8 @@ extends Resource
 @export var mission_block_from := 2
 @export var mission_block := "Complete the Office's block: %d of %d"
 @export var mission_block_hint := "Take every building in the ring round the Office. A complete block draws followers faster; green bars are buildings that already want you and only need a Rep."
-@export var mission_district := "Fill the district's bar"
-@export var mission_district_hint := "Every building of yours fills it. Hold the button on a building of yours and choose Rooms: fit in shops for money, and in the Office desk rooms, archives and training rooms."
+@export var mission_district := "Win the district"
+@export var mission_district_hint := "Two ways to win, shown bottom left: most of the key buildings (train a Fixer to open them), or a few of them and most of the people. Plan your buildings with Rooms to house more followers."
 @export var mission_won := "The district is yours"
 
 @export_group("District captured")
@@ -124,3 +145,7 @@ func minute_for(d: int) -> String:
 
 func key_name(k: int) -> String:
 	return key_names[k % key_names.size()] if k >= 0 else ""
+
+
+func breach_action(step: int) -> String:
+	return breach_action_names[step % breach_action_names.size()]

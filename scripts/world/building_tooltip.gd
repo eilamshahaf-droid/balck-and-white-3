@@ -68,7 +68,8 @@ func _describe(building: Node3D) -> String:
 	elif districts.is_key(i):
 		lines[0] = districts.key_name(i)
 		lines.append("Key building: inspectors come from here")
-		lines.append("It will take more than a Rep")
+		lines.append("Open: send a Rep to take it" if districts.is_key_open(i)
+				else "The Fixer must open it before a Rep can take it")
 	elif districts.wants_you(i) and districts.can_claim(i):
 		lines.append("Wants you: set a Rep down here to manage it")
 	elif not districts.borders_yours(i):

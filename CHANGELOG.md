@@ -3,6 +3,19 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.20.0 (2026-11-14): stairs in flights, homes for workers, upkeep, and the Fixer opens key buildings
+Eilam's four points (GDD section 0, item 12). Numbers are provisional.
+- **Stairs climb in flights.** Every floor has one stairs place; the staircase goes up two floors in one column and then moves to another, at the edges too. Every building has its own, so every plan is different. Floors you add get new flights on top.
+- **People work where they live.** A shop puts to work no more sellers than its building houses, and desks no more clerks: a Market for four needs homes for four in the same building. The room editor says "homes here for only 2".
+- **Rooms that cost money to run**, a minute: the Guard Room $18, and two new ones below. When the upkeep can't be paid the dearest room **closes** (dark, "closed", a note over the building) and gives nothing; it opens again once there is $150.
+- **Four new rooms**: Corner Shop (1 place, 1 seller), Market (3 in a row, 4 sellers), Stock Room (1 place by a shop: its sellers bring a quarter more, $15 a minute), and the **Laundry Room**, the utility of Spin Cycle Flats (2 places, draws followers faster, $30 a minute). The palette shows only what the building can take.
+- **The Fixer has a job.** Train him at the Office (80 paperwork), then hold the button on a key building next to yours and choose **Send the Fixer**, or set him down there. He carries out three actions (Copy the keys, Lose the file, Change the locks): each costs 40 paperwork to start, takes 40 seconds (less under your hand) and adds 7 points of exposure, and he costs 12 paperwork a minute while he stands there. With no paperwork he waits. Then the building is **open** and a Rep takes it like any other.
+- **A key building of yours is an office**: desk rooms, archives, vaults and training rooms fit into it, and it stops sending inspectors.
+- **The two ways to win are in** (bottom left): 80% of the key buildings, or 30% of them and 60% of the people. The district bar shows the way that is further along.
+- For balance (bot `train,send,shop,upgrade,bury,fixer`, no hand): after an hour 32 buildings (33%), 166 followers, 1 key building of 9, the bar at 42%; 8 buildings and 2 Reps lost. Paperwork is the short resource now: Reps, inspectors, the file and the Fixer all want it.
+- Not done: the Fixer is not chased by inspectors; no elevator or advanced homes yet; the planner inside the building itself; outside decorations.
+- Try it: open Rooms on the Office and look at the stairs. Fit a Laundry Room and watch the money rate. Train a Fixer and send him to the red-signed building nearest your buildings.
+
 ## Pre-Alpha 0.19.0 (2026-11-14): the district is won by people, not by buildings
 Eilam's rule for the majority.
 - **The district bar counts people.** Your share is your followers out of everyone who lives in the district: your followers, plus the residents of every building that is not yours. 60% of the people wins it (the core adds its part, as before).

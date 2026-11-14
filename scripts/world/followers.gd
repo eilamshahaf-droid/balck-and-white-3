@@ -143,13 +143,32 @@ func sellers_in(index: int) -> int:
 
 ## What the next seller in building `index` would add, money a second, after pay.
 func next_seller_net(index: int) -> float:
-	return F.seller_income * pow(F.seller_falloff, _staff[index]) - F.seller_pay
+	var boost := 1.0 + rooms.totals_of(index).shop_boost if districts.is_yours(index) else 1.0
+	return F.seller_income * boost * pow(F.seller_falloff, _staff[index]) - F.seller_pay
+
+
+## Sellers building `index`'s shops can put to work. People work where they live: no
+## more than the followers the building houses, after its clerks.
+func sellers_possible(index: int) -> int:
+	return mini(shop_slots(index), floori(_count[index]) - clerks_in(index))
+
+
+## Clerks at the desks of building `index`: no more than live there.
+func clerks_in(index: int) -> int:
+	if not districts.is_yours(index):
+		return 0
+	return mini(rooms.totals_of(index).clerks, floori(_count[index]))
+
+
+## Money a second the upkeep of your rooms costs.
+func upkeep_rate() -> float:
+	return rooms.upkeep() / 60.0
 
 
 ## The player allows one seller more (`step` 1) or fewer (-1) in building `index`'s shop
 ## than now; from then on that shop keeps to the player's number.
 func change_sellers(index: int, step: int) -> void:
-	_limit[index] = clampi(_staff[index] + step, 0, shop_slots(index))
+	_limit[index] = clampi(_staff[index] + step, 0, sellers_possible(index))
 	_fill_roles()
 	changed.emit()
 
@@ -246,15 +265,18 @@ func _pull(minutes: float) -> void:
 			districts.add_meter(j, -F.sink_per_minute * minutes)
 
 
-## Count the pool and hand out the roles: clerks first, then sellers, one at a time to
-## the shop where the next one brings in the most, while that is worth the pay (or up to
-## the number the player set for that shop).
+## Count the pool and hand out the roles. People work in the building they live in:
+## clerks first, at its desks, then sellers, one at a time to the shop where the next one
+## brings in the most, while that is worth the pay (or up to the number the player set
+## for that shop).
 func _fill_roles() -> void:
 	total = 0
 	for i in _count.size():
 		if districts.is_yours(i):
 			total += floori(_count[i])
-	clerks = mini(clerk_slots(), total)
+	clerks = 0
+	for i in _count.size():
+		clerks += clerks_in(i)
 	var free := total - clerks
 	_staff.fill(0)
 	sellers = 0
@@ -263,7 +285,7 @@ func _fill_roles() -> void:
 		var best := -1
 		var best_net := -INF
 		for i in _count.size():
-			if _staff[i] >= shop_slots(i):
+			if _staff[i] >= sellers_possible(i):
 				continue
 			var net := next_seller_net(i)
 			var wanted := _staff[i] < _limit[i] if _limit[i] != AUTO else net >= 0.0

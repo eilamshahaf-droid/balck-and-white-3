@@ -9,6 +9,8 @@ class Piece:
 	var kind: RoomKind
 	var origin := Vector2i.ZERO
 	var turns := 0
+	## Closed for want of upkeep: it gives nothing until there is money again.
+	var open := true
 
 	func cells() -> Array[Vector2i]:
 		var out: Array[Vector2i] = []
@@ -19,8 +21,9 @@ class Piece:
 
 var columns := 0
 var rows := 0
-## The column the staircase runs up, ground to roof: nothing fits over it.
-var stairs := 0
+## The staircase: its column on every floor. It climbs two floors at a time and may
+## change column between flights, so every plan goes round it. Nothing fits over it.
+var stairs := PackedInt32Array()
 var pieces: Array[Piece] = []
 
 
@@ -49,7 +52,11 @@ func fits(kind: RoomKind, origin: Vector2i, turns: int) -> bool:
 ## `cell` is inside the grid, off the stairs and has no room in it.
 func is_free(cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < columns and cell.y < rows \
-			and cell.x != stairs and piece_at(cell) == null
+			and not is_stairs(cell) and piece_at(cell) == null
+
+
+func is_stairs(cell: Vector2i) -> bool:
+	return cell.y >= 0 and cell.y < stairs.size() and stairs[cell.y] == cell.x
 
 
 ## Would `cells` placed at `origin` share a side with a room of kind `id`. The stairs
@@ -58,10 +65,10 @@ func touches(cells: Array[Vector2i], origin: Vector2i, id: StringName) -> bool:
 	for c in cells:
 		for step: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
 			var next := origin + c + step
-			if next.x == stairs:
+			if is_stairs(next):
 				next += step
 			var other := piece_at(next)
-			if other and other.kind.id == id:
+			if other and other.open and other.kind.is_a(id):
 				return true
 	return false
 
@@ -71,7 +78,8 @@ func leaning_on(piece: Piece) -> Array[Piece]:
 	var out: Array[Piece] = []
 	pieces.erase(piece)
 	for p in pieces:
-		if p.kind.needs_next == piece.kind.id and not touches(p.kind.turned(p.turns), p.origin, piece.kind.id):
+		if p.kind.needs_next != &"" and piece.kind.is_a(p.kind.needs_next) \
+				and not touches(p.kind.turned(p.turns), p.origin, p.kind.needs_next):
 			out.append(p)
 	pieces.append(piece)
 	return out
@@ -91,4 +99,4 @@ func free_cells() -> int:
 	var used := 0
 	for p in pieces:
 		used += p.kind.cells.size()
-	return (columns - 1) * rows - used
+	return columns * rows - stairs.size() - used

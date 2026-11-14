@@ -18,6 +18,8 @@ signal rank_changed(resident: Resident, old: Resident.Rank, new: Resident.Rank)
 signal cult_founded(building: Node3D)
 ## The hand set a Rep down at `building`, which is not yours.
 signal canvasser_set_down(resident: Resident, building: Node3D)
+## The hand set the Fixer down at `building`, which is not yours.
+signal fixer_set_down(resident: Resident, building: Node3D)
 
 ## Group of buildings with a shop (a Change Use decree).
 const SHOPS := &"shops"
@@ -130,13 +132,17 @@ func _populate() -> void:
 
 
 ## The hand set someone down at a building. A Rep at a building that is
-## not yours goes to work on it; nobody else takes orders.
+## not yours goes to work on it, the Fixer at a key building; nobody else takes orders.
 func _on_set_down(c: Citizen) -> void:
 	var r := c.resident
-	if not r.preaches():
+	if not r.preaches() and r.rank != Resident.Rank.AGENT:
 		return
 	var building := _place_at(r.body.global_position)
-	if building and not districts.owns(building):
+	if building == null or districts.owns(building):
+		return
+	if r.rank == Resident.Rank.AGENT:
+		fixer_set_down.emit(r, building)
+	else:
 		canvasser_set_down.emit(r, building)
 
 

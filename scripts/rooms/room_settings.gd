@@ -15,9 +15,9 @@ extends Resource
 @export var max_rows := 12
 ## The highest tier of room this stage offers (the Slums teach with the basic ones).
 @export var max_tier := 0
-## Every building has a staircase from the ground to the roof, in this column counted
-## from the middle (0) outward; nothing can be fitted over it.
-@export var stairs_from_middle := 0
+## Every building has a staircase, one place on every floor, that climbs this many
+## floors in one column before it changes column.
+@export var stairs_flight := 2
 @export var stairs_color := Color(0.2, 0.2, 0.24)
 @export var stairs_line_color := Color(0.6, 0.6, 0.66)
 ## The main Office is raised to at least this many floors when the game starts, so the
@@ -25,6 +25,12 @@ extends Resource
 @export var office_min_rows := 6
 ## Followers a cell with no room in it houses (a plain flat).
 @export var followers_per_cell := 1
+
+@export_group("Upkeep")
+## Seconds between rounds of reopening rooms that closed for want of upkeep.
+@export var upkeep_tick := 5.0
+## A closed room opens again once there is this much money.
+@export var reopen_money := 150.0
 
 @export_group("Stores")
 ## What can be kept with no Archive and no Vault.
@@ -41,6 +47,7 @@ extends Resource
 @export var grid_color := Color(0.1, 0.1, 0.14)
 @export var ok_color := Color(0.4, 1.0, 0.5, 0.55)
 @export var bad_color := Color(1.0, 0.3, 0.3, 0.55)
+@export var closed_shade := 0.35
 @export var backdrop_color := Color(0.06, 0.06, 0.09, 0.95)
 @export var outline_color := Color(0.04, 0.04, 0.06)
 @export var outline_width := 3.0
