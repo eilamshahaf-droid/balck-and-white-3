@@ -15,6 +15,8 @@ const TEXT_SIZE := 16
 const SMALL_SIZE := 13
 const REMOVE := -2
 const NOTHING := -1
+const POINTER: Array[Vector2] = [Vector2(0, 0), Vector2(0, 24), Vector2(6, 18), Vector2(11, 28),
+		Vector2(15, 26), Vector2(10, 16), Vector2(18, 16)]
 
 @export var rooms: Rooms
 @export var menus: BuildingMenus
@@ -28,6 +30,7 @@ var _index := -1
 var _picked := NOTHING   # index into the kinds, REMOVE, or NOTHING
 var _turns := 0
 var _hover := Vector2i(-1, -1)
+var _pointer := Vector2.ZERO
 var _font: Font = ThemeDB.fallback_font
 
 @onready var _s: RoomSettings = rooms.settings
@@ -59,21 +62,14 @@ func open(building: Node3D) -> void:
 	_picked = NOTHING
 	_turns = 0
 	visible = true
-	# The hand hides the system pointer over the city; here it is what the player aims with.
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_pointer = _board.get_local_mouse_position()
 	_board.queue_redraw()
 
 
 func close() -> void:
 	visible = false
 	_index = -1
-	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 
-
-## Coming back to the window, the hand hides the pointer again: show it while open.
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_IN and visible:
-		(func() -> void: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE).call_deferred()
 
 
 func is_open() -> bool:
@@ -87,10 +83,9 @@ func _on_building_changed(index: int, yours: bool) -> void:
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		var cell := _cell_at(event.position)
-		if cell != _hover:
-			_hover = cell
-			_board.queue_redraw()
+		_hover = _cell_at(event.position)
+		_pointer = event.position
+		_board.queue_redraw()
 	elif event is InputEventMouseButton and event.pressed:
 		match event.button_index:
 			MOUSE_BUTTON_LEFT:
@@ -203,6 +198,7 @@ func _draw_board() -> void:
 	var button := _close_rect()
 	_board.draw_rect(button, Color(1, 1, 1, 0.14))
 	_text(button.position + Vector2(48.0, 29.0), "Close", TEXT_SIZE, Color.WHITE)
+	_draw_pointer()
 
 
 ## A dark line on every side of `cell` where its room ends, so two rooms of one kind
@@ -277,6 +273,17 @@ func _draw_totals() -> void:
 			"The Committee: paperwork up to %d, money up to $%d, %d Reps at a time, %d desks" % [
 			roundi(followers.paperwork_cap()), roundi(followers.money_cap()), followers.rep_cap(),
 			followers.clerk_slots()], SMALL_SIZE, Color(1, 1, 1, 0.75))
+
+
+## The game hides the system pointer (the hand stands in for it, and here the hand is
+## behind this screen), so the editor draws its own, last, over everything.
+func _draw_pointer() -> void:
+	var arrow := PackedVector2Array()
+	for p: Vector2 in POINTER:
+		arrow.append(_pointer + p)
+	_board.draw_colored_polygon(arrow, Color.WHITE)
+	arrow.append(arrow[0])
+	_board.draw_polyline(arrow, Color.BLACK, 2.0)
 
 
 func _text(at: Vector2, line: String, size: int, color: Color) -> void:
