@@ -165,7 +165,7 @@ func _measure(layout: BuildingLayout, index: int) -> void:
 	var size := BuildingBox.size_of(districts.buildings[index])
 	layout.columns = clampi(roundi(size.x / settings.bay_width), settings.min_columns, settings.max_columns)
 	layout.rows = clampi(roundi(size.y / settings.floor_height), settings.min_rows, settings.max_rows)
-	layout.stairs = clampi(layout.columns / 2 + settings.stairs_from_middle, 0, layout.columns - 1)
+	layout.stairs = clampi(floori(layout.columns / 2.0) + settings.stairs_from_middle, 0, layout.columns - 1)
 
 
 func _furnish_office(layout: BuildingLayout) -> void:
