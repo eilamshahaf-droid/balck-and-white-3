@@ -1,0 +1,118 @@
+[gd_resource type="Resource" script_class="RoomSettings" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/room_settings.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/rooms/room_kind.gd" id="2"]
+
+[sub_resource type="Resource" id="Kind_0"]
+script = ExtResource("2")
+id = &"family"
+title = "Family Flat"
+note = "houses 3"
+color = Color(0.95, 0.8, 0.25, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)])
+money = 60.0
+followers = 3
+
+[sub_resource type="Resource" id="Kind_1"]
+script = ExtResource("2")
+id = &"tenement"
+title = "Tenement"
+note = "houses 5"
+color = Color(0.9, 0.6, 0.2, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1)])
+money = 110.0
+followers = 5
+
+[sub_resource type="Resource" id="Kind_2"]
+script = ExtResource("2")
+id = &"duplex"
+title = "Duplex"
+note = "houses 1, draws followers"
+color = Color(0.3, 0.8, 0.85, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
+money = 150.0
+attraction = 0.5
+followers = 1
+
+[sub_resource type="Resource" id="Kind_3"]
+script = ExtResource("2")
+id = &"common"
+title = "Common Room"
+note = "draws followers faster"
+color = Color(0.4, 0.85, 0.4, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(2, 1)])
+money = 200.0
+attraction = 1.0
+
+[sub_resource type="Resource" id="Kind_4"]
+script = ExtResource("2")
+id = &"guard"
+title = "Guard Room"
+note = "cheaper audits"
+color = Color(0.85, 0.3, 0.3, 1)
+cells = Array[Vector2i]([Vector2i(0, 0)])
+money = 120.0
+security = 1
+
+[sub_resource type="Resource" id="Kind_5"]
+script = ExtResource("2")
+id = &"shop"
+title = "Shop"
+note = "2 sellers, ground floor"
+color = Color(0.95, 0.45, 0.6, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)])
+money = 150.0
+paperwork = 20.0
+sellers = 2
+ground_only = true
+
+[sub_resource type="Resource" id="Kind_6"]
+script = ExtResource("2")
+id = &"desks"
+title = "Desk Room"
+note = "2 clerks"
+color = Color(0.92, 0.92, 1.0, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2), Vector2i(1, 0)])
+money = 180.0
+paperwork = 30.0
+clerks = 2
+office_only = true
+
+[sub_resource type="Resource" id="Kind_7"]
+script = ExtResource("2")
+id = &"archive"
+title = "Archive"
+note = "keeps 150 paperwork more"
+color = Color(0.7, 0.6, 0.9, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)])
+money = 150.0
+paperwork_cap = 150.0
+office_only = true
+
+[sub_resource type="Resource" id="Kind_8"]
+script = ExtResource("2")
+id = &"vault"
+title = "Vault"
+note = "keeps $1500 more"
+color = Color(0.75, 0.75, 0.5, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
+money = 250.0
+paperwork = 20.0
+money_cap = 1500.0
+office_only = true
+
+[sub_resource type="Resource" id="Kind_9"]
+script = ExtResource("2")
+id = &"training"
+title = "Training Room"
+note = "one more Rep at a time"
+color = Color(0.45, 0.6, 1.0, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(1, 1)])
+money = 300.0
+paperwork = 40.0
+reps = 1
+office_only = true
+
+[resource]
+script = ExtResource("1")
+kinds = Array[ExtResource("2")]([SubResource("Kind_0"), SubResource("Kind_1"), SubResource("Kind_2"), SubResource("Kind_3"), SubResource("Kind_4"), SubResource("Kind_5"), SubResource("Kind_6"), SubResource("Kind_7"), SubResource("Kind_8"), SubResource("Kind_9")])

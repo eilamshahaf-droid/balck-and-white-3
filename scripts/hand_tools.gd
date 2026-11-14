@@ -3,7 +3,7 @@ extends Node
 ## The god's two wheels, on top of the hand's movement (god_hand.gd).
 ##
 ## Hold the left button still for a moment: a wheel opens around the hand. On a building
-## of yours it is the building wheel (BuildingMenus: upgrades, floors, the shop, and at
+## of yours it is the building wheel (BuildingMenus: rooms, floors, the sellers, and at
 ## the main Office training and a loan); on anyone else's, "Send a Rep". Anywhere else,
 ## the miracle wheel. The hand stays in the middle and points where the mouse goes;
 ## letting go picks the slice, or puts the miracle in the hand (a glowing orb in the
@@ -18,7 +18,7 @@ const Sfx = preload("res://scripts/sfx.gd")
 enum Mode { NONE, MIRACLES, BUILDING, SECOND }
 
 ## Slices of the building wheel that open a second wheel.
-const GROUPS: Array[StringName] = [&"upgrades", &"shop"]
+const GROUPS: Array[StringName] = [&"shop"]
 
 @export var campaigns: Campaigns
 @export var menus: BuildingMenus

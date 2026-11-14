@@ -6,8 +6,8 @@ extends Node
 ##   godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,send,shop,upgrade,bury
 ## Bot habits (any mix): train = train a Rep whenever the cap, the pool and the paperwork
 ## allow, send = send Reps to buildings in reach (the fullest meters first), shop = open
-## a shop in a building of yours when the money is there, upgrade = buy the Office's
-## Training Room, Desks and Shop in turn, bury = bury the file whenever the exposure is
+## a shop in a building of yours when the money is there, upgrade = fit a Training Room,
+## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this.
 
@@ -17,8 +17,7 @@ const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
 const SHOP_EVERY := 4         # one building in this many becomes a shop
 const BURY_FROM := 0.5
-const OFFICE_UPGRADES: Array[BuildingUpgrades.Kind] = [BuildingUpgrades.Kind.TRAINING,
-		BuildingUpgrades.Kind.DESKS, BuildingUpgrades.Kind.SHOP]
+const OFFICE_ROOMS: Array[StringName] = [&"training", &"desks", &"archive", &"vault"]
 
 var _main: Node3D
 var _population: Population
@@ -31,6 +30,7 @@ var _decrees: Decrees
 var _progress: DistrictProgress
 var _faith: Faith
 var _inspectors: Inspectors
+var _rooms: Rooms
 var _papers := 0
 var _reps_lost := 0
 var _habits := PackedStringArray()
@@ -61,6 +61,7 @@ func _ready() -> void:
 	_progress = _main.get_node("DistrictProgress")
 	_faith = _main.get_node("Faith")
 	_inspectors = _main.get_node("Inspectors")
+	_rooms = _main.get_node("Rooms")
 	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
 	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
 	_inspectors.rep_sent_home.connect(func(_b: Node3D, _r: Resident) -> void: _reps_lost += 1)
@@ -108,15 +109,16 @@ func _act() -> void:
 	if _habits.has("bury") and _faith.exposure >= BURY_FROM:
 		_inspectors.bury()
 	if _habits.has("upgrade"):
-		var kind := OFFICE_UPGRADES[_bought % OFFICE_UPGRADES.size()]
-		if _menus.choose(StringName("upgrade_%d" % kind), office):
+		var kind := _rooms.settings.kind(OFFICE_ROOMS[_bought % OFFICE_ROOMS.size()])
+		if _rooms.place_anywhere(_districts.headquarters, kind):
 			_bought += 1
 	if _habits.has("shop"):
 		var held := _districts.converted_buildings()
 		var shops := get_tree().get_nodes_in_group(Population.SHOPS).size()
 		if shops < held.size() / SHOP_EVERY:
 			for b in held:
-				if not _followers.has_shop(_districts.index_of(b)) and _menus.choose(&"open_shop", b):
+				if not _followers.has_shop(_districts.index_of(b)) \
+						and _rooms.place_anywhere(_districts.index_of(b), _rooms.settings.kind(&"shop")):
 					break
 	if not _habits.has("send"):
 		return

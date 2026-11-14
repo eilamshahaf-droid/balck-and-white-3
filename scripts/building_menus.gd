@@ -1,22 +1,16 @@
 class_name BuildingMenus
 extends Node
 ## What the wheel of a building of yours offers (HandTools draws it and reports the
-## choice). The first wheel: upgrades, more floors, the shop, and at the main Office
-## training and a loan. "Upgrades" and "Shop" open a second wheel. Every slice says
-## what it costs, or why it can't be had.
+## choice). The first wheel: rooms (opens the editor), more floors, the sellers of its
+## shop, and at the main Office training, a loan and burying the file. "Sellers" opens a
+## second wheel. Every slice says what it costs, or why it can't be had.
+
+## The player asked to plan the rooms of `building`.
+signal rooms_requested(building: Node3D)
 
 const F: FollowersSettings = preload("res://data/followers.tres")
 const U: UnitSettings = preload("res://data/units.tres")
 const D: DecreeSettings = preload("res://data/decrees.tres")
-const Kind := BuildingUpgrades.Kind
-## Name, what it does, and colour of each upgrade.
-const LOOKS := {
-	Kind.ATTRACTION: ["Attraction", "followers come faster", Color(0.55, 0.9, 0.5)],
-	Kind.SECURITY: ["Security", "harder to turn back", Color(0.9, 0.5, 0.45)],
-	Kind.SHOP: ["Bigger Shop", "room for more sellers", Color(0.95, 0.7, 0.35)],
-	Kind.DESKS: ["More Desks", "room for more clerks", Color(0.95, 0.95, 1.0)],
-	Kind.TRAINING: ["Training Room", "one more Rep at a time", Color(0.6, 0.75, 1.0)],
-}
 
 @export var districts: Districts
 @export var followers: Followers
@@ -27,12 +21,10 @@ const LOOKS := {
 @export var inspectors: Inspectors
 
 
-## The slices for `building`: the first wheel, or the second one for `group`
-## (&"upgrades" or &"shop").
+## The slices for `building`: the first wheel, or the second one for `group` (&"shop").
 func items(building: Node3D, group := &"") -> Array[Dictionary]:
 	var i := districts.index_of(building)
 	match group:
-		&"upgrades": return _upgrade_items(building, i)
 		&"shop": return _shop_items(i)
 	var out: Array[Dictionary] = []
 	if districts.is_base(building):
@@ -42,16 +34,13 @@ func items(building: Node3D, group := &"") -> Array[Dictionary]:
 		out.append(_slice(&"train_fixer", "Train " + U.title(Resident.Rank.AGENT),
 				U.color(Resident.Rank.AGENT), why_not_train(Resident.Rank.AGENT),
 				"%d paperwork" % roundi(F.fixer_paperwork)))
-	out.append({"id": &"upgrades", "label": "Upgrades", "color": Color(0.6, 0.85, 1.0),
-			"note": "$%d each" % roundi(followers.upgrades.cost(building))})
+	out.append({"id": &"rooms", "label": "Rooms", "color": Color(0.6, 0.85, 1.0),
+			"note": "room for %d followers" % followers.room_of(i)})
 	out.append(_slice(&"floors", "+%d Floors" % D.floors_per_decree, Color(0.95, 0.7, 0.35),
 			_why_not_decree(&"floors", building), decrees.price(&"floors", building)))
 	if followers.has_shop(i):
-		out.append({"id": &"shop", "label": "Shop", "color": Color(0.5, 0.9, 0.55),
-				"note": "%d of %d sellers" % [followers.sellers_in(i), followers.shop_slots(i)]})
-	else:
-		out.append(_slice(&"open_shop", "Open a Shop", Color(0.5, 0.9, 0.55),
-				_why_not_decree(&"use", building), decrees.price(&"use", building)))
+		out.append({"id": &"shop", "label": "Sellers", "color": Color(0.5, 0.9, 0.55),
+				"note": "%d of %d at work" % [followers.sellers_in(i), followers.shop_slots(i)]})
 	if districts.is_base(building):
 		out.append(_slice(&"loan", "Loan $%d" % roundi(F.loan_money), Color(0.8, 0.62, 0.45),
 				_why_not_loan(), "%d paperwork, pay back $%d" % [roundi(F.loan_paperwork), roundi(F.loan_owed)]))
@@ -67,15 +56,13 @@ func choose(id: StringName, building: Node3D) -> bool:
 		&"train_rep": return _train(Resident.Rank.MISSIONARY, building)
 		&"train_fixer": return _train(Resident.Rank.AGENT, building)
 		&"floors": return decrees.issue(&"floors", building)
-		&"open_shop": return decrees.issue(&"use", building)
+		&"rooms":
+			rooms_requested.emit(building)
+			return true
 		&"loan": return treasury.borrow()
 		&"bury": return inspectors.bury()
 		&"seller_more", &"seller_less":
 			followers.change_sellers(i, 1 if id == &"seller_more" else -1)
-			return true
-	for kind: Kind in followers.kinds_for(i):
-		if id == _upgrade_id(kind) and treasury.spend_money(followers.upgrades.cost(building)):
-			followers.upgrades.add(building, kind)
 			return true
 	return false
 
@@ -105,17 +92,6 @@ func _train(rank: Resident.Rank, building: Node3D) -> bool:
 		return false
 	population.start_training(rank, building)
 	return true
-
-
-func _upgrade_items(building: Node3D, i: int) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	var cost := followers.upgrades.cost(building)
-	for kind: Kind in followers.kinds_for(i):
-		var look: Array = LOOKS[kind]
-		out.append({"id": _upgrade_id(kind), "label": look[0], "color": look[2],
-				"note": "$%d  (level %d)" % [roundi(cost), followers.upgrades.level(building, kind)],
-				"effect": look[1], "enabled": treasury.can_afford(cost)})
-	return out
 
 
 func _shop_items(i: int) -> Array[Dictionary]:
@@ -148,7 +124,3 @@ func _why_not_loan() -> String:
 func _slice(id: StringName, label: String, color: Color, why: String, price: String) -> Dictionary:
 	return {"id": id, "label": label, "color": color, "note": why if why != "" else price,
 			"enabled": why == ""}
-
-
-func _upgrade_id(kind: Kind) -> StringName:
-	return StringName("upgrade_%d" % kind)

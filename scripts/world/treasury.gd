@@ -33,7 +33,8 @@ func _physics_process(delta: float) -> void:
 		var paid := minf(gain * F.loan_repay_share, owed)
 		owed -= paid
 		gain -= paid
-	money += gain
+	# The takings stop at what the vaults hold; a loan or a miracle may go over.
+	money = maxf(money, minf(money + gain, followers.money_cap()))
 	money_changed.emit(money)
 
 

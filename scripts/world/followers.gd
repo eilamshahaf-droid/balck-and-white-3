@@ -17,8 +17,8 @@ const AUTO := -1
 
 @export var districts: Districts
 @export var decrees: Decrees
+@export var rooms: Rooms
 
-var upgrades := BuildingUpgrades.new()
 ## Everyone in the pool, and how many of them have a role.
 var total := 0
 var sellers := 0
@@ -37,7 +37,7 @@ func _ready() -> void:
 	districts.layout_ready.connect(_on_layout_ready, CONNECT_ONE_SHOT)
 	districts.building_changed.connect(_on_building_changed)
 	decrees.decree_issued.connect(func(_kind: StringName, _building: Node3D) -> void: recount())
-	upgrades.upgraded.connect(func(_building: Node3D, _kind: BuildingUpgrades.Kind) -> void: recount())
+	rooms.changed.connect(func(_index: int) -> void: recount())
 
 
 func _physics_process(delta: float) -> void:
@@ -51,24 +51,21 @@ func _physics_process(delta: float) -> void:
 	changed.emit()
 
 
-## How many followers building `index` has room for: by its size (floors add room).
+## How many followers building `index` has room for: by its rooms (floors add rows).
 func room_of(index: int) -> int:
-	var b := districts.buildings[index]
-	if b == null:
+	if districts.buildings[index] == null:
 		return 0
-	var size := BuildingBox.size_of(b)
-	return maxi(roundi(size.x * size.y * size.z / F.volume_per_place), F.room_min)
+	return rooms.room_of(index)
 
 
 func count_of(index: int) -> int:
 	return floori(_count[index])
 
 
-## How fast followers come to building `index`, 1 = plain: its Attraction upgrades and a
-## complete block.
+## How fast followers come to building `index`, 1 = plain: the rooms that draw them
+## and a complete block.
 func attraction_of(index: int) -> float:
-	var b := districts.buildings[index]
-	var out := 1.0 + F.attraction_step * upgrades.level(b, BuildingUpgrades.Kind.ATTRACTION)
+	var out := 1.0 + rooms.totals_of(index).attraction
 	return out + (F.block_attraction if districts.in_complete_block(index) else 0.0)
 
 
@@ -100,20 +97,16 @@ func recount() -> void:
 	changed.emit()
 
 
-## Is there a shop in building `index`: one opened by a decree, or the main Office's own.
+## Is there a shop in building `index` of yours.
 func has_shop(index: int) -> bool:
-	var b := districts.buildings[index]
-	return b != null and districts.is_yours(index) \
-			and (districts.is_base(b) or b.is_in_group(Population.SHOPS))
+	return shop_slots(index) > 0
 
 
-## Slots for sellers in building `index`'s shop.
+## Slots for sellers in building `index`'s shops.
 func shop_slots(index: int) -> int:
-	if not has_shop(index):
+	if districts.buildings[index] == null or not districts.is_yours(index):
 		return 0
-	var b := districts.buildings[index]
-	var base := F.office_shop_slots if districts.is_base(b) else F.shop_slots
-	return base + F.shop_slots_per_level * upgrades.level(b, BuildingUpgrades.Kind.SHOP)
+	return rooms.totals_of(index).sellers
 
 
 ## Sellers at work in building `index` now.
@@ -134,27 +127,44 @@ func change_sellers(index: int, step: int) -> void:
 	changed.emit()
 
 
-## Desks for clerks at the main Office.
+## Desks for clerks, in every desk room you have.
 func clerk_slots() -> int:
-	var office := districts.start_building()
-	return F.clerk_slots + F.clerk_slots_per_level * upgrades.level(office, BuildingUpgrades.Kind.DESKS)
+	var n := 0
+	for i in _count.size():
+		if districts.is_yours(i):
+			n += rooms.totals_of(i).clerks
+	return n
 
 
 ## Reps the player may have out at once.
 func rep_cap() -> int:
-	return F.rep_cap + upgrades.level(districts.start_building(), BuildingUpgrades.Kind.TRAINING)
+	var n := F.rep_cap
+	for i in _count.size():
+		if districts.is_yours(i):
+			n += rooms.totals_of(i).reps
+	return n
 
 
-## The upgrades building `index` can buy, by what it is.
-func kinds_for(index: int) -> Array[BuildingUpgrades.Kind]:
-	var kinds: Array[BuildingUpgrades.Kind] = [
-			BuildingUpgrades.Kind.ATTRACTION, BuildingUpgrades.Kind.SECURITY]
-	if has_shop(index):
-		kinds.append(BuildingUpgrades.Kind.SHOP)
-	if districts.is_base(districts.buildings[index]):
-		kinds.append(BuildingUpgrades.Kind.DESKS)
-		kinds.append(BuildingUpgrades.Kind.TRAINING)
-	return kinds
+## How secure building `index` is (its guard rooms).
+func security_of(index: int) -> int:
+	return rooms.totals_of(index).security
+
+
+## How much paperwork, and how much money, can be kept.
+func paperwork_cap() -> float:
+	var cap := rooms.settings.base_paperwork_cap
+	for i in _count.size():
+		if districts.is_yours(i):
+			cap += rooms.totals_of(i).paperwork_cap
+	return cap
+
+
+func money_cap() -> float:
+	var cap := rooms.settings.base_money_cap
+	for i in _count.size():
+		if districts.is_yours(i):
+			cap += rooms.totals_of(i).money_cap
+	return cap
 
 
 func _on_layout_ready() -> void:
@@ -182,8 +192,9 @@ func _grow(minutes: float) -> void:
 		if not districts.is_yours(i):
 			continue
 		var room := float(room_of(i))
-		if _count[i] < room:
-			_count[i] = minf(_count[i] + F.growth_per_minute * attraction_of(i) * minutes, room)
+		# Rooms that house fewer were fitted in: the followers over the room move out.
+		_count[i] = minf(_count[i] + F.growth_per_minute * attraction_of(i) * minutes, room) \
+				if _count[i] < room else room
 
 
 ## Buildings of yours raise the meters of their neighbours in their own block; a meter

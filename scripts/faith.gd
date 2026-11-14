@@ -64,7 +64,8 @@ func spend(amount: float) -> bool:
 
 func _physics_process(delta: float) -> void:
 	exposure = maxf(exposure - B.exposure_decay * delta, 0.0)
-	belief_pool += _prayer * delta
+	# What the clerks make stops at what the archives hold; a gift may go over.
+	belief_pool = maxf(belief_pool, minf(belief_pool + _prayer * delta, followers.paperwork_cap()))
 	for subject in _events.keys():
 		_events[subject].time_left -= delta
 		if not is_instance_valid(subject) or _events[subject].time_left <= 0.0:

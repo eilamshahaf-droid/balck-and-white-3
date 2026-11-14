@@ -64,8 +64,10 @@ func _process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = REFRESH
-	_show(0, "%d  %+.1f/s" % [floori(faith.belief_pool), followers.paperwork_rate])
-	_show(1, "$%d  %+.1f/s" % [floori(treasury.money), treasury.income])
+	_show(0, "%d of %d  %+.1f/s" % [floori(faith.belief_pool), roundi(followers.paperwork_cap()),
+			followers.paperwork_rate])
+	_show(1, "$%d of %d  %+.1f/s" % [floori(treasury.money), roundi(followers.money_cap()),
+			treasury.income])
 	_show(2, "%d  (%d sellers, %d clerks)" % [followers.total, followers.sellers, followers.clerks])
 	_show(3, "%d free, %d of %d" % [population.free_rep_count, population.reps_out,
 			followers.rep_cap()])

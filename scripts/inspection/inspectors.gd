@@ -77,7 +77,7 @@ func demand_cost() -> float:
 
 ## Paperwork an audit of building `index` of yours costs: by its room, less with Security.
 func audit_cost(index: int) -> float:
-	var security := followers.upgrades.level(districts.buildings[index], BuildingUpgrades.Kind.SECURITY)
+	var security := followers.security_of(index)
 	return I.audit_paperwork * maxf(followers.room_of(index) / I.ordinary_room, 1.0) \
 			/ (1.0 + I.security_step * security)
 
@@ -145,7 +145,7 @@ func _open_to_audit() -> Array[Node3D]:
 		if b == null or not districts.is_yours(i) or districts.is_base(b) \
 				or districts.in_complete_block(i) or _is_target(b):
 			continue
-		var security := followers.upgrades.level(b, BuildingUpgrades.Kind.SECURITY)
+		var security := followers.security_of(i)
 		if security < least:
 			least = security
 			found.clear()

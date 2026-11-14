@@ -3,6 +3,22 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.17.0 (2026-11-14): rooms, the vertical plan of a building
+Eilam's idea, step 1 (GDD section 0, item 8). Numbers are provisional, all in `data/rooms.tres`.
+- **Every building of yours is a grid** of bays and floors (the Office is 6 by 5, an ordinary building about 3 by 4). Hold the button on it and choose **Rooms**.
+- **An empty place is a plain flat** that houses one follower, so a building you never open works as before. You can ignore the whole thing.
+- **Rooms are shapes you fit in**, for money and sometimes paperwork; turn one with the right button or the wheel. Ten kinds:
+  - anywhere: Family Flat (2 places, houses 3), Tenement (an L of 3, houses 5), Duplex (2 high, houses 1, draws followers), Common Room (an S of 4, draws followers faster), Guard Room (1, cheaper audits), Shop (2 wide, on the ground floor, 2 sellers);
+  - only in the Office: Desk Room (an L of 4, 2 clerks), Archive (3 high), Vault (2 by 2), Training Room (a T, one more Rep at a time).
+- **Paperwork and money have ceilings now**: 150 paperwork and $1,200 with nothing built; each Archive keeps 150 more, each Vault $1,500 more. The clerks and the shops stop at the ceiling (a loan or a miracle can go over). The top cards show "78 of 150".
+- **More floors make more rows**, so the +Floors decree is how a full building gets room for more.
+- **Taking a room out** gives half its money back. A building that is lost loses its rooms.
+- This **replaces the Upgrades wheel** (attraction, security, bigger shop, desks, training room are rooms now) and the Open a Shop decree (a shop is a room; the sign goes up by itself).
+- **Space pauses the game**; the hand, the camera, the wheels and the room editor go on working, so you can plan in peace. The editor never pauses by itself. While paused nothing can be lifted.
+- For balance (the same bot, which only fits four rooms into the Office and a shop into every fourth building): after an hour 47 buildings (27%), 9 whole blocks, 552 followers; money stops at its $2,700 ceiling instead of piling up to $12,000, paperwork at 300.
+- Not done yet: rooms next to each other raising impression or security, the elevator, copying a plan to similar buildings, a smaller map, models for the rooms (they are coloured blocks).
+- Try it: hold the button on the Office, choose Rooms, pick the Archive, turn it, fit it in. Then fit a Shop into the first building you take.
+
 ## Pre-Alpha 0.16.2 (2026-11-14): the Secretary stays at the Office
 - **The Secretary no longer walks to marked buildings**, and setting him down at a door does nothing: he could fill a bar but never take the building, which only confused. Only Reps work on buildings. A building marked with "Send a Rep" while no Rep is free shows "needs a Rep" and gets the next one that is.
 - Fix: a Rep lifted from the door he was working at and set down there again goes back to work (he could be left standing).
