@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.19.0 (2026-11-14): the district is won by people, not by buildings
+Eilam's rule for the majority.
+- **The district bar counts people.** Your share is your followers out of everyone who lives in the district: your followers, plus the residents of every building that is not yours. 60% of the people wins it (the core adds its part, as before).
+- **Followers you make room for count in the total too.** If you hold 100 and build room for 50 more, the district has 50 more people as well, so growing inside your own buildings moves your share less and less. To grow for real you take more buildings.
+- The bottom-left line shows it: "69 of its 564 people follow you (12%, 60% wins it)".
+- For balance (the same bot, no hand): after an hour 45 buildings (46%), 225 followers, 2 whole blocks, the bar at 66%; 34 demands paid, 5 buildings and 3 Reps lost.
+- Try it: watch the bottom-left line while a building fills up, then fit Row Flats into it and watch both numbers rise.
+
 ## Pre-Alpha 0.18.0 (2026-11-14): fewer and bigger blocks, stairs, rooms that need neighbours
 From Eilam's planner document (GDD section 0, items 9 and 10). Numbers are provisional.
 - **A smaller city of bigger blocks**: 97 buildings (was 174) in nine blocks of 8 to 13 buildings, plus the core. A block is now a real goal. Every block but the Office's own has a **key building** (nine in all), and a block counts as complete without it.

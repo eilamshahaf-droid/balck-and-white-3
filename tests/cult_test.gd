@@ -509,6 +509,16 @@ func _test_capture() -> void:
 	var progress: DistrictProgress = _main.get_node("DistrictProgress")
 	_check(progress.value(d) < 1.0 and not _districts.is_controlled(d),
 			"the district's bar is not full yet (%d%%)" % roundi(progress.value(d) * 100.0))
+	var share := _followers.people_share(d)
+	var people := _followers.people_in(d)
+	var mine := _followers.followers_in(d)
+	_check(share > 0.0 and share < 0.5 and is_equal_approx(share, float(mine) / people),
+			"your followers are %d of the district's %d people" % [mine, people])
+	_followers._grow(PLENTY)
+	_followers.recount()
+	var grown := _followers.followers_in(d) - mine
+	_check(grown > 0 and _followers.people_in(d) == people + grown,
+			"followers you make room for count among the district's people too (+%d both)" % grown)
 	var got := [false]
 	_districts.district_controlled.connect(func(x: int) -> void: got[0] = got[0] or x == d)
 	var core := _districts.buildings[_districts.core_of(d)]

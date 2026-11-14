@@ -152,6 +152,14 @@ func _first_fit(layout: BuildingLayout, kind: RoomKind) -> Vector3i:
 	return Vector3i(0, 0, -1)
 
 
+## Followers building `index` would hold with no rooms fitted: what lives in a building
+## that is not yours.
+func plain_room(index: int) -> int:
+	var layout := BuildingLayout.new()
+	_measure(layout, index)
+	return layout.free_cells() * settings.followers_per_cell
+
+
 func _free(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> bool:
 	var layout := layout_of(index)
 	for c in kind.turned(turns):
