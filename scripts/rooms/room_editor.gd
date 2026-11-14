@@ -119,7 +119,7 @@ func _click(at: Vector2) -> void:
 
 
 func _allowed(kind: RoomKind) -> bool:
-	return rooms.is_office(_index) or not kind.office_only
+	return rooms.offers(_index, kind)
 
 
 # --- Layout ---
@@ -175,12 +175,15 @@ func _draw_board() -> void:
 	_text(Vector2(MARGIN, 52.0), "%s: rooms  (%d bays, %d floors)" % [title, layout.columns, layout.rows],
 			TITLE_SIZE, Color.WHITE)
 	_text(Vector2(MARGIN, 80.0),
-			"Pick a room, turn it with the right button or the wheel, click a free place. An empty place is a plain flat. Esc closes.",
+			"Pick a room, turn it with the right button or the wheel, click a free place. An empty place is a plain flat; nothing goes over the stairs. Esc closes.",
 			SMALL_SIZE, Color(1, 1, 1, 0.7))
 	for y in layout.rows:
 		for x in layout.columns:
 			var rect := _cell_rect(Vector2i(x, y)).grow(-1.5)
-			_board.draw_rect(rect, _s.flat_color)
+			if x == layout.stairs:
+				_draw_stairs(rect)
+			else:
+				_board.draw_rect(rect, _s.flat_color)
 	for piece in layout.pieces:
 		var cells := piece.cells()
 		for cell in cells:
@@ -199,6 +202,19 @@ func _draw_board() -> void:
 	_board.draw_rect(button, Color(1, 1, 1, 0.14))
 	_text(button.position + Vector2(48.0, 29.0), "Close", TEXT_SIZE, Color.WHITE)
 	_draw_pointer()
+
+
+## One floor of the staircase: a flight going up, turning back on the next floor.
+func _draw_stairs(rect: Rect2) -> void:
+	_board.draw_rect(rect, _s.stairs_color)
+	var steps := 5
+	var rising_right := (roundi(rect.position.y / rect.size.y) % 2) == 0
+	for k in steps:
+		var x0 := rect.position.x + rect.size.x * k / steps
+		var x1 := rect.position.x + rect.size.x * (k + 1) / steps
+		var level := float(k + 1) / steps if rising_right else float(steps - k) / steps
+		var y := rect.end.y - rect.size.y * level
+		_board.draw_line(Vector2(x0, y), Vector2(x1, y), _s.stairs_line_color, 2.0)
 
 
 ## A dark line on every side of `cell` where its room ends, so two rooms of one kind
@@ -221,13 +237,17 @@ func _draw_ghost() -> void:
 		if piece:
 			for cell in piece.cells():
 				_board.draw_rect(_cell_rect(cell).grow(-1.5), _s.bad_color)
+			var stuck := rooms.why_not_remove(_index, _hover)
+			if stuck != "":
+				_text(_grid_origin() + Vector2(0.0, -12.0), stuck, TEXT_SIZE, _s.bad_color.lightened(0.3))
 		return
 	var kind := _s.kinds[_picked]
 	var why := rooms.why_not(_index, kind, _hover, _turns)
 	var layout := rooms.layout_of(_index)
 	for c in kind.turned(_turns):
 		var cell := _hover + c
-		if cell.x >= 0 and cell.y >= 0 and cell.x < layout.columns and cell.y < layout.rows:
+		if cell.x >= 0 and cell.y >= 0 and cell.x < layout.columns and cell.y < layout.rows \
+				and cell.x != layout.stairs:
 			_board.draw_rect(_cell_rect(cell).grow(-1.5), _s.ok_color if why == "" else _s.bad_color)
 	if why != "":
 		_text(_grid_origin() + Vector2(0.0, -12.0), why, TEXT_SIZE, _s.bad_color.lightened(0.3))
@@ -248,7 +268,8 @@ func _draw_palette() -> void:
 			price += " + %d paperwork" % roundi(kind.paperwork)
 		_text(rect.position + Vector2(64.0, 21.0), "%s   %s" % [kind.title, price], TEXT_SIZE,
 				Color(1, 1, 1, shade))
-		_text(rect.position + Vector2(64.0, 41.0), kind.note if allowed else "only in an office",
+		_text(rect.position + Vector2(64.0, 41.0),
+				kind.note if allowed else ("only in an office" if kind.office_only else "not in this district"),
 				SMALL_SIZE, Color(1, 1, 1, 0.65 * shade))
 	var remove := _palette_rect(_s.kinds.size())
 	_board.draw_rect(remove, Color(1, 0.4, 0.4, 0.3 if _picked == REMOVE else 0.12))

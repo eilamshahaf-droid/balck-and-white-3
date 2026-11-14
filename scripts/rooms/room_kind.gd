@@ -26,6 +26,11 @@ extends Resource
 @export var security := 0
 
 @export_group("Where it fits")
+## 0 basic, 1 advanced, 2 luxury: a stage offers homes up to its own tier
+## (RoomSettings.max_tier). Office rooms are always offered.
+@export var tier := 0
+## It must touch (side by side or one above the other) a room of this kind; &"" for none.
+@export var needs_next := &""
 ## Only in an office (today: the main Office).
 @export var office_only := false
 ## One of its cells must be on the ground floor.

@@ -3,6 +3,19 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.18.0 (2026-11-14): fewer and bigger blocks, stairs, rooms that need neighbours
+From Eilam's planner document (GDD section 0, items 9 and 10). Numbers are provisional.
+- **A smaller city of bigger blocks**: 97 buildings (was 174) in nine blocks of 8 to 13 buildings, plus the core. A block is now a real goal. Every block but the Office's own has a **key building** (nine in all), and a block counts as complete without it.
+- **A staircase in every building**: one column, ground to roof, that nothing can be fitted over. Every plan goes round it.
+- **Rooms that need a neighbour**: an Archive must touch a Desk Room, a Vault must touch a Shop (the stairs don't come between). A room that another leans on can't be taken out. The editor says which rule stops you.
+- **The Slums teach with the basic homes only**: Family Flat (2 places, houses 3) and Row Flat (3 in a row, houses 5). The Duplex and the Common Room are advanced and show greyed out, "not in this district". The puzzle is in the Office: desks, archive, vault and training room in a grid of 5 bays by 6 floors with the stairs up the middle.
+- **The Office starts six floors high**, so there is room to plan.
+- The room editor **draws its own pointer** (0.17.2).
+- Exposure from work and from takings is doubled, to suit the smaller map.
+- For balance (the same bot, no hand): after an hour 35 buildings (36%), 2 whole blocks, 175 followers, 39 demands paid, 3 buildings and 1 Rep lost; money sits at its $1,200 ceiling (the bot never fits a Vault), paperwork runs short late. Before the exposure change the bot filled the district bar by minute 56: the bar is still the placeholder (share of buildings) and should probably count whole blocks until round C.
+- Not done: upkeep and utility blocks (elevator, energy), fear that keeps residents in, the outside decorations, the planner inside the building itself, copying a plan to similar buildings.
+- Try it: open Rooms on the Office and try to fit an Archive, a Vault and a Training Room round the stairs.
+
 ## Pre-Alpha 0.17.2 (2026-11-14): fix, the pointer on top of the room editor
 - **Fix: the pointer was behind the room editor.** The editor now draws its own arrow over everything, so it no longer depends on the browser showing the system pointer.
 - Eilam's document on the building planner is in `docs/GDD.md` (section 0, item 9): the target the rooms are built toward.

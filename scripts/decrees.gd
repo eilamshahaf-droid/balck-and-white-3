@@ -60,6 +60,13 @@ func issue(kind: StringName, building: Node3D) -> bool:
 	return true
 
 
+## Raise `building` by `floors` at no cost and outside the decree's limit (the main
+## Office at the start of the game).
+func raise_free(building: Node3D, floors: int) -> void:
+	DecreeLooks.grow(building, floors)
+	decree_issued.emit(&"floors", building)
+
+
 ## `building` now has a shop in it (or no longer): its sign goes up or comes down.
 func show_shop(building: Node3D, on: bool) -> void:
 	if on == (use_of(building) == D.shop_use):

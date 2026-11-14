@@ -515,6 +515,8 @@ func _find_keys(d: int) -> void:
 		var index := _largest(_block_members[far], d)
 		_key[index] = 1
 		keys.append(index)
+		# A block is complete without its key building, which a Rep can't take.
+		_block_standing[far] -= 1
 
 
 ## Each district's core is the largest building of the block the stage map marks as

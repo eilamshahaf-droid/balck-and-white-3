@@ -92,6 +92,12 @@ Where this disagrees with the text below, this wins.
    - **Shapes by tier**: basic (1, 2 wide, 3 wide, 2 high); advanced (L of 3, S, T, 3 high, L of 4); luxury (a plus, a C, 2 by 3, 4 high, a fat L, a long S). The more advanced the block, the harder the shape: space becomes a difficulty curve next to price and upkeep.
    - **Key points** (about nine a district, each with a block area round it): breaking into one takes special talents, trained in a special training room; then actions can be done there, for money and paperwork, and they raise attention. The upkeep of a wide majority hinders the talents and the other way round, so the player takes fewer of one or the other. A key point taken becomes a new office that makes the paperwork needed for special upkeep and special moves, to take more of them. (This is round C of item 7.)
 
+10. **Fewer, weightier blocks; the Slums teach (Eilam, 2026-11-14, on the two questions of item 9). Built in 0.18.0.**
+   - Each block is to matter more and there are to be fewer of them: completing a block should be hard and should take planning the buildings right. The Slums map is now about a hundred buildings in nine large blocks (8 to 13 buildings) plus the core; every block but the Office's own has a key building, and a block is complete without it.
+   - The Slums are the teaching stage: only the basic home blocks there. The puzzle comes from the building's special blocks and from the offices, which are needed for training and for making and keeping paperwork. Advanced and luxury homes and demanding residents wait for later districts (the tiers are in the data).
+   - Built with it: the fixed staircase in every building, and the first neighbour rules (an Archive next to a Desk Room, a Vault next to a Shop; a room others lean on can't be taken out).
+   - Open for the Designer and the Balance Tester: on the smaller map the bot with no hand reaches 60% of the placeholder district bar (36% of the buildings) in an hour while completing only two blocks, after exposure from work and takings was doubled for the smaller map. The bar should probably count complete blocks until round C replaces it.
+
 ## 1. Pitch
 
 You play a god nobody asked for, in a modern city that denies you. Your cult is tiny and chased by the authorities. Its Secretary narrates everything in deadpan meeting minutes, with ranks, paid courses and paperwork that satirise cults without copying any real one.

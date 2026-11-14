@@ -36,8 +36,8 @@ extends Resource
 ## another rep before it has to be won from the start.
 @export_range(0.0, 1.0) var lost_meter := 0.6
 @export_group("Key buildings")
-## One block in this many has a key building.
-@export var blocks_per_key := 4.5
+## One block in this many has a key building (1: every block but the Office's own).
+@export var blocks_per_key := 1.0
 ## The names on their signs, in the order they are chosen (the core first).
 @export var key_names := PackedStringArray(["Bureau of Forms", "Permit Office",
 		"Licence Desk", "Zoning Board", "Records Annex", "Noise Bureau", "Stamp Office",

@@ -7,9 +7,9 @@ extends Resource
 
 @export_group("Exposure")
 ## Exposure each Rep at work on a building adds, per minute.
-@export var work_exposure_per_minute := 0.016
+@export var work_exposure_per_minute := 0.03
 ## Exposure a building taken adds, once.
-@export var take_exposure := 0.015
+@export var take_exposure := 0.03
 ## Exposure that goes away when an inspector gets his way (a Rep sent home, a building
 ## lost): City Hall is satisfied for a while.
 @export var satisfied_exposure := 0.12
