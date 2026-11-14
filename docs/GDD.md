@@ -100,6 +100,13 @@ Where this disagrees with the text below, this wins.
 
 11. **The majority is counted in people (Eilam, 2026-11-14). Built in 0.19.0.** The district's people are your followers plus the residents of every building that is not yours. Followers you make room for are counted in the total as well: with 100 followers, room for 50 more adds 50 to the district too, so it stays balanced and to grow you must take more buildings. This is the "60% of the district's people" of item 7's second way to win; the bar uses it now (with the core's part) until round C adds the key buildings.
 
+12. **Stairs in flights, people work where they live, upkeep, and the Fixer at key buildings (Eilam, 2026-11-14). Built in 0.20.0.**
+   - **Stairs.** Every floor has one stairs place. A stairs place has another above it or below it, not both: the staircase climbs in flights of two floors and each flight may stand in another column, at the edges too, so buildings are more interesting to plan. (As built: a single floor left over at the top goes on in the column below it, a flight of three.)
+   - **Shops need homes.** A shop needs as many homes in its building as it has workers: a shop for four needs flats for four. With fewer, fewer work and the shop does not pay. (As built the same holds for clerks at desks: people work in the building they live in.)
+   - **The Fixer.** He is sent to key buildings and carries out actions there that cost paperwork and are needed to open the building for conversion; they raise the exposure, and as long as he is there he costs paperwork. (As built: three actions of 40 paperwork and 40 seconds each, +7 exposure each, 12 paperwork a minute while he stands there; an opened key building is taken by a Rep like any other and becomes an office of yours.)
+   - **Running costs.** Some rooms cost money to run, and there are more kinds, among them one utility that belongs to the Slums and costs upkeep. (As built: the Laundry Room, the utility of Spin Cycle Flats, draws followers for $30 a minute; the Guard Room $18; the Stock Room, by a shop, makes its sellers bring a quarter more for $15; also a Corner Shop of one place and a Market of three. With no money the dearest room closes until there is money again.)
+   - With key buildings takeable, the two ways to win of item 7 are in: 80% of the key buildings, or 30% of them and 60% of the people (item 11).
+
 ## 1. Pitch
 
 You play a god nobody asked for, in a modern city that denies you. Your cult is tiny and chased by the authorities. Its Secretary narrates everything in deadpan meeting minutes, with ranks, paid courses and paperwork that satirise cults without copying any real one.

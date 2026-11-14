@@ -9,6 +9,9 @@ extends Node
 
 ## Building `index`'s rooms changed.
 signal changed(index: int)
+## A room of building `index` closed for want of upkeep, or opened again.
+signal room_closed(index: int, kind: RoomKind)
+signal room_reopened(index: int, kind: RoomKind)
 
 ## What one building's rooms add up to.
 class Totals:
@@ -20,6 +23,9 @@ class Totals:
 	var attraction := 0.0
 	var paperwork_cap := 0.0
 	var money_cap := 0.0
+	var shop_boost := 0.0
+	## Money a minute its open rooms cost to run.
+	var upkeep := 0.0
 
 
 @export var districts: Districts
@@ -32,11 +38,57 @@ var settings: RoomSettings = load("res://data/rooms.tres")
 
 var _layouts := {}   # building index -> BuildingLayout
 var _totals := {}    # building index -> Totals
+var _timer := 0.0
 
 
 func _ready() -> void:
 	districts.building_changed.connect(_on_building_changed)
 	decrees.decree_issued.connect(_on_decree_issued)
+	treasury.ran_dry.connect(close_dearest)
+
+
+## Rooms that closed open again, the cheapest first, once there is money.
+func _physics_process(delta: float) -> void:
+	_timer -= delta
+	if _timer > 0.0:
+		return
+	_timer = settings.upkeep_tick
+	if treasury.money < settings.reopen_money:
+		return
+	var best: BuildingLayout.Piece = null
+	var where := -1
+	for index: int in _layouts:
+		for p: BuildingLayout.Piece in (_layouts[index] as BuildingLayout).pieces:
+			if not p.open and (best == null or p.kind.upkeep < best.kind.upkeep):
+				best = p
+				where = index
+	if best:
+		best.open = true
+		_count(where)
+		room_reopened.emit(where, best.kind)
+
+
+## Money a minute all your open rooms cost to run.
+func upkeep() -> float:
+	var sum := 0.0
+	for index: int in _totals:
+		sum += (_totals[index] as Totals).upkeep
+	return sum
+
+
+## There is no money for the upkeep: the room that costs most to run closes.
+func close_dearest() -> void:
+	var worst: BuildingLayout.Piece = null
+	var where := -1
+	for index: int in _layouts:
+		for p: BuildingLayout.Piece in (_layouts[index] as BuildingLayout).pieces:
+			if p.open and p.kind.upkeep > 0.0 and (worst == null or p.kind.upkeep > worst.kind.upkeep):
+				worst = p
+				where = index
+	if worst:
+		worst.open = false
+		_count(where)
+		room_closed.emit(where, worst.kind)
 
 
 ## The rooms of building `index` of yours (made on first use).
@@ -59,9 +111,10 @@ func totals_of(index: int) -> Totals:
 	return _totals[index]
 
 
-## Rooms of the office kinds go only in an office: today the main Office.
+## Rooms of the office kinds go only in an office: the main Office, and every key
+## building you have taken.
 func is_office(index: int) -> bool:
-	return index == districts.headquarters
+	return index == districts.headquarters or districts.is_key(index)
 
 
 ## Why `kind`, turned `turns`, can't go at `origin` in building `index`; "" when it can.
@@ -77,7 +130,7 @@ func why_not(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> String
 		if not _free(index, kind, origin, turns):
 			return "does not fit there"
 		if kind.needs_next != &"" and not layout.touches(kind.turned(turns), origin, kind.needs_next):
-			return "must be next to a %s" % settings.kind(kind.needs_next).title
+			return "must be next to a %s" % String(kind.needs_next).capitalize()
 		return "must touch the ground floor"
 	if not treasury.can_afford(kind.money):
 		return "needs $%d" % roundi(kind.money)
@@ -144,9 +197,10 @@ func room_of(index: int) -> int:
 ## The first place `kind` goes in `layout`, from the ground floor up: column, row and
 ## quarter turns, or turns -1 when there is none.
 func _first_fit(layout: BuildingLayout, kind: RoomKind) -> Vector3i:
-	for y in layout.rows:
-		for x in layout.columns:
-			for turns in 4:
+	# As drawn before turned: a shop lies along the street when it can.
+	for turns in 4:
+		for y in layout.rows:
+			for x in layout.columns:
 				if layout.fits(kind, Vector2i(x, y), turns):
 					return Vector3i(x, y, turns)
 	return Vector3i(0, 0, -1)
@@ -173,7 +227,25 @@ func _measure(layout: BuildingLayout, index: int) -> void:
 	var size := BuildingBox.size_of(districts.buildings[index])
 	layout.columns = clampi(roundi(size.x / settings.bay_width), settings.min_columns, settings.max_columns)
 	layout.rows = clampi(roundi(size.y / settings.floor_height), settings.min_rows, settings.max_rows)
-	layout.stairs = clampi(floori(layout.columns / 2.0) + settings.stairs_from_middle, 0, layout.columns - 1)
+	_climb(layout, index)
+
+
+## Carry the staircase of building `index` up to its top floor: a flight of
+## stairs_flight floors in one column, the next in another. Floors already climbed keep
+## their place (rooms were fitted round them); a single floor left over at the top goes
+## on in the column below it.
+func _climb(layout: BuildingLayout, index: int) -> void:
+	while layout.stairs.size() < layout.rows:
+		var level := layout.stairs.size()
+		var below := layout.stairs[level - 1] if level > 0 else -1
+		if layout.rows - level < settings.stairs_flight and below >= 0:
+			layout.stairs.append(below)
+			continue
+		var column := absi(hash(Vector2i(index, level))) % layout.columns
+		if column == below:
+			column = (column + 1) % layout.columns
+		for k in mini(settings.stairs_flight, layout.rows - level):
+			layout.stairs.append(column)
 
 
 func _furnish_office(layout: BuildingLayout) -> void:
@@ -187,6 +259,10 @@ func _furnish_office(layout: BuildingLayout) -> void:
 func _count(index: int) -> void:
 	var t := Totals.new()
 	for p: BuildingLayout.Piece in (_layouts[index] as BuildingLayout).pieces:
+		if not p.open:
+			continue
+		t.shop_boost += p.kind.shop_boost
+		t.upkeep += p.kind.upkeep
 		t.followers += p.kind.followers
 		t.clerks += p.kind.clerks
 		t.sellers += p.kind.sellers

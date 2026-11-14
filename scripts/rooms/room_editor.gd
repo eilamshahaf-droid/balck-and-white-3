@@ -7,7 +7,7 @@ extends CanvasLayer
 ## have models.
 
 const PALETTE_WIDTH := 330.0
-const ROW := 58.0
+const ROW := 52.0
 const MINI := 11.0
 const MARGIN := 28.0
 const TITLE_SIZE := 26
@@ -31,6 +31,7 @@ var _picked := NOTHING   # index into the kinds, REMOVE, or NOTHING
 var _turns := 0
 var _hover := Vector2i(-1, -1)
 var _pointer := Vector2.ZERO
+var _shown: Array[RoomKind] = []   # the kinds on offer for this building, in palette order
 var _font: Font = ThemeDB.fallback_font
 
 @onready var _s: RoomSettings = rooms.settings
@@ -59,6 +60,10 @@ func _input(event: InputEvent) -> void:
 
 func open(building: Node3D) -> void:
 	_index = districts.index_of(building)
+	_shown.clear()
+	for kind in _s.kinds:
+		if rooms.offers(_index, kind):
+			_shown.append(kind)
 	_picked = NOTHING
 	_turns = 0
 	visible = true
@@ -101,12 +106,12 @@ func _click(at: Vector2) -> void:
 	if _close_rect().has_point(at):
 		close()
 		return
-	for k in _s.kinds.size():
+	for k in _shown.size():
 		if _palette_rect(k).has_point(at):
-			_picked = k if _allowed(_s.kinds[k]) else NOTHING
+			_picked = k
 			_turns = 0
 			return
-	if _palette_rect(_s.kinds.size()).has_point(at):
+	if _palette_rect(_shown.size()).has_point(at):
 		_picked = REMOVE
 		return
 	var cell := _cell_at(at)
@@ -115,11 +120,7 @@ func _click(at: Vector2) -> void:
 	if _picked == REMOVE:
 		rooms.remove(_index, cell)
 	elif _picked >= 0:
-		rooms.place(_index, _s.kinds[_picked], cell, _turns)
-
-
-func _allowed(kind: RoomKind) -> bool:
-	return rooms.offers(_index, kind)
+		rooms.place(_index, _shown[_picked], cell, _turns)
 
 
 # --- Layout ---
@@ -180,19 +181,21 @@ func _draw_board() -> void:
 	for y in layout.rows:
 		for x in layout.columns:
 			var rect := _cell_rect(Vector2i(x, y)).grow(-1.5)
-			if x == layout.stairs:
-				_draw_stairs(rect)
+			if layout.is_stairs(Vector2i(x, y)):
+				_draw_stairs(rect, y)
 			else:
 				_board.draw_rect(rect, _s.flat_color)
 	for piece in layout.pieces:
 		var cells := piece.cells()
+		var color := piece.kind.color if piece.open else piece.kind.color.darkened(1.0 - _s.closed_shade)
 		for cell in cells:
 			# No gap between its own cells: a room reads as one shape.
-			_board.draw_rect(_cell_rect(cell), piece.kind.color)
+			_board.draw_rect(_cell_rect(cell), color)
 		for cell in cells:
 			_outline(cell, cells)
 		_text(_cell_rect(piece.origin + piece.kind.turned(piece.turns)[0]).position + Vector2(5.0, 17.0),
-				piece.kind.title, SMALL_SIZE, _s.grid_color)
+				piece.kind.title if piece.open else piece.kind.title + " (closed)", SMALL_SIZE,
+				_s.grid_color if piece.open else Color.WHITE)
 	_draw_ghost()
 	_draw_palette()
 	_draw_totals()
@@ -205,15 +208,15 @@ func _draw_board() -> void:
 
 
 ## One floor of the staircase: a flight going up, turning back on the next floor.
-func _draw_stairs(rect: Rect2) -> void:
+func _draw_stairs(rect: Rect2, level: int) -> void:
 	_board.draw_rect(rect, _s.stairs_color)
 	var steps := 5
-	var rising_right := (roundi(rect.position.y / rect.size.y) % 2) == 0
+	var rising_right := level % 2 == 0
 	for k in steps:
 		var x0 := rect.position.x + rect.size.x * k / steps
 		var x1 := rect.position.x + rect.size.x * (k + 1) / steps
-		var level := float(k + 1) / steps if rising_right else float(steps - k) / steps
-		var y := rect.end.y - rect.size.y * level
+		var height := float(k + 1) / steps if rising_right else float(steps - k) / steps
+		var y := rect.end.y - rect.size.y * height
 		_board.draw_line(Vector2(x0, y), Vector2(x1, y), _s.stairs_line_color, 2.0)
 
 
@@ -241,40 +244,35 @@ func _draw_ghost() -> void:
 			if stuck != "":
 				_text(_grid_origin() + Vector2(0.0, -12.0), stuck, TEXT_SIZE, _s.bad_color.lightened(0.3))
 		return
-	var kind := _s.kinds[_picked]
+	var kind := _shown[_picked]
 	var why := rooms.why_not(_index, kind, _hover, _turns)
 	var layout := rooms.layout_of(_index)
 	for c in kind.turned(_turns):
 		var cell := _hover + c
 		if cell.x >= 0 and cell.y >= 0 and cell.x < layout.columns and cell.y < layout.rows \
-				and cell.x != layout.stairs:
+				and not layout.is_stairs(cell):
 			_board.draw_rect(_cell_rect(cell).grow(-1.5), _s.ok_color if why == "" else _s.bad_color)
 	if why != "":
 		_text(_grid_origin() + Vector2(0.0, -12.0), why, TEXT_SIZE, _s.bad_color.lightened(0.3))
 
 
 func _draw_palette() -> void:
-	for k in _s.kinds.size():
-		var kind := _s.kinds[k]
+	for k in _shown.size():
+		var kind := _shown[k]
 		var rect := _palette_rect(k)
-		var allowed := _allowed(kind)
 		_board.draw_rect(rect, Color(1, 1, 1, 0.22 if k == _picked else 0.08))
-		var shade := 1.0 if allowed else 0.35
 		for c in kind.turned(_turns if k == _picked else 0):
-			var at := rect.position + Vector2(8.0 + c.x * MINI, rect.size.y - 10.0 - (c.y + 1) * MINI)
-			_board.draw_rect(Rect2(at, Vector2(MINI - 1.0, MINI - 1.0)), kind.color * Color(1, 1, 1, shade))
+			var at := rect.position + Vector2(8.0 + c.x * MINI, rect.size.y - 8.0 - (c.y + 1) * MINI)
+			_board.draw_rect(Rect2(at, Vector2(MINI - 1.0, MINI - 1.0)), kind.color)
 		var price := "$%d" % roundi(kind.money)
 		if kind.paperwork > 0.0:
 			price += " + %d paperwork" % roundi(kind.paperwork)
-		_text(rect.position + Vector2(64.0, 21.0), "%s   %s" % [kind.title, price], TEXT_SIZE,
-				Color(1, 1, 1, shade))
-		_text(rect.position + Vector2(64.0, 41.0),
-				kind.note if allowed else ("only in an office" if kind.office_only else "not in this district"),
-				SMALL_SIZE, Color(1, 1, 1, 0.65 * shade))
-	var remove := _palette_rect(_s.kinds.size())
+		_text(rect.position + Vector2(64.0, 20.0), "%s   %s" % [kind.title, price], TEXT_SIZE, Color.WHITE)
+		_text(rect.position + Vector2(64.0, 38.0), kind.note, SMALL_SIZE, Color(1, 1, 1, 0.65))
+	var remove := _palette_rect(_shown.size())
 	_board.draw_rect(remove, Color(1, 0.4, 0.4, 0.3 if _picked == REMOVE else 0.12))
-	_text(remove.position + Vector2(64.0, 21.0), "Take a room out", TEXT_SIZE, Color.WHITE)
-	_text(remove.position + Vector2(64.0, 41.0), "%d%% of its money back" % roundi(_s.refund_share * 100.0),
+	_text(remove.position + Vector2(64.0, 20.0), "Take a room out", TEXT_SIZE, Color.WHITE)
+	_text(remove.position + Vector2(64.0, 38.0), "%d%% of its money back" % roundi(_s.refund_share * 100.0),
 			SMALL_SIZE, Color(1, 1, 1, 0.65))
 
 
@@ -283,6 +281,10 @@ func _draw_totals() -> void:
 	var line := "Room for %d followers (%d live here)" % [followers.room_of(_index), followers.count_of(_index)]
 	if t.sellers > 0:
 		line += "     Sellers %d of %d" % [followers.sellers_in(_index), t.sellers]
+		if followers.sellers_possible(_index) < t.sellers:
+			line += " (homes here for only %d)" % followers.sellers_possible(_index)
+	if t.upkeep > 0.0:
+		line += "     Upkeep $%d a minute" % roundi(t.upkeep)
 	if t.clerks > 0:
 		line += "     Desks %d" % t.clerks
 	if t.attraction > 0.0:

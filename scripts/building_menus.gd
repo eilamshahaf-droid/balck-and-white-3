@@ -33,7 +33,7 @@ func items(building: Node3D, group := &"") -> Array[Dictionary]:
 				"%d paperwork" % roundi(F.rep_paperwork)))
 		out.append(_slice(&"train_fixer", "Train " + U.title(Resident.Rank.AGENT),
 				U.color(Resident.Rank.AGENT), why_not_train(Resident.Rank.AGENT),
-				"%d paperwork" % roundi(F.fixer_paperwork)))
+				"%d paperwork: opens key buildings" % roundi(F.fixer_paperwork)))
 	out.append({"id": &"rooms", "label": "Rooms", "color": Color(0.6, 0.85, 1.0),
 			"note": "room for %d followers" % followers.room_of(i)})
 	out.append(_slice(&"floors", "+%d Floors" % D.floors_per_decree, Color(0.95, 0.7, 0.35),

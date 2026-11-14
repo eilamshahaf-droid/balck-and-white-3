@@ -6,6 +6,8 @@ extends Node
 ## miracle's banknotes) goes to it first.
 
 signal money_changed(money: float)
+## The upkeep of the rooms can't be paid: one of them must close.
+signal ran_dry
 
 const S: TreasurySettings = preload("res://data/treasury.tres")
 const F: FollowersSettings = preload("res://data/followers.tres")
@@ -27,14 +29,22 @@ func _physics_process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = S.tick
-	income = followers.money_rate
+	income = followers.money_rate - followers.upkeep_rate()
+	if income < 0.0 and money + income * S.tick <= 0.0:
+		money = 0.0
+		ran_dry.emit()
+		money_changed.emit(money)
+		return
 	var gain := income * S.tick
 	if owed > 0.0 and gain > 0.0:
 		var paid := minf(gain * F.loan_repay_share, owed)
 		owed -= paid
 		gain -= paid
-	# The takings stop at what the vaults hold; a loan or a miracle may go over.
-	money = maxf(money, minf(money + gain, followers.money_cap()))
+	if gain < 0.0:
+		money += gain
+	else:
+		# The takings stop at what the vaults hold; a loan or a miracle may go over.
+		money = maxf(money, minf(money + gain, followers.money_cap()))
 	money_changed.emit(money)
 
 

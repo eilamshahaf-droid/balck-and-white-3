@@ -61,6 +61,8 @@ func _ready() -> void:
 	_test_key_buildings()
 	await _test_inspector_and_rep()
 	_test_audit()
+	_test_shop_homes_and_upkeep()
+	await _test_fixer()
 	await _test_block()
 	await _test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
@@ -343,8 +345,16 @@ func _test_rooms() -> void:
 			shop_cell = piece.cells()[0]
 	_check(_rooms.why_not_remove(hq, shop_cell) != "" and not _rooms.remove(hq, shop_cell),
 			"the Shop can't be taken out while the Vault leans on it")
-	_check(office.stairs >= 0 and not office.is_free(Vector2i(office.stairs, office.rows - 1)),
-			"nothing fits over the staircase")
+	var flights_ok := office.stairs.size() == office.rows
+	var turns := 0
+	for y in office.rows:
+		flights_ok = flights_ok and not office.is_free(Vector2i(office.stairs[y], y))
+		if y > 0 and office.stairs[y] != office.stairs[y - 1]:
+			turns += 1
+			# A flight is at least two floors: the floor below a turn is not itself a turn.
+			flights_ok = flights_ok and y >= 2 and office.stairs[y - 1] == office.stairs[y - 2]
+	_check(flights_ok and turns >= 1,
+			"every floor has one stairs place, in flights of two floors that change column (%d turns)" % turns)
 	var desks := _followers.clerk_slots()
 	_check(_fit(hq, &"desks") and _followers.clerk_slots() == desks + kinds.kind(&"desks").clerks,
 			"a Desk Room seats more clerks")
@@ -379,7 +389,7 @@ func _test_key_buildings() -> void:
 		claimable = claimable or _districts.can_claim(k)
 	_check(not in_base_block, "none stands in the Office's block")
 	_check(not claimable and _campaigns.why_not(_districts.buildings[keys[0]]) != "",
-			"a Rep can't take a key building")
+			"a Rep can't take a key building before the Fixer opens it")
 	var city: City = _main
 	var from := city.nearest_node(_districts.buildings[keys[0]].global_position)
 	var to := city.nearest_node(_districts.start_building().global_position)
@@ -482,6 +492,102 @@ func _test_audit() -> void:
 			and _population.manager_of(b) == null, "and its Manager is lost")
 
 
+## A seller lives over the shop: no more sellers than the building houses. Rooms with
+## upkeep cost money a minute, and close when there is none.
+func _test_shop_homes_and_upkeep() -> void:
+	var hq := _districts.headquarters
+	_treasury.money = PLENTY
+	_faith.belief_pool = PLENTY
+	_followers._grow(PLENTY)
+	_followers.recount()
+	var slots := _followers.shop_slots(hq)
+	var desks := _rooms.totals_of(hq).clerks
+	_followers._count[hq] = desks + 1.0
+	_followers.recount()
+	_check(slots >= 2 and _followers.clerks_in(hq) == desks and _followers.sellers_in(hq) == 1 \
+			and _followers.sellers_possible(hq) == 1,
+			"people work where they live: with homes for %d, %d clerks and 1 seller of %d"
+			% [desks + 1, desks, slots])
+	_followers._grow(PLENTY)
+	_followers.recount()
+	_check(_followers.sellers_in(hq) == slots, "with homes enough every seller's place is filled")
+	var plain := _followers.next_seller_net(hq)
+	var rate := _followers.upkeep_rate()
+	# The Vault of the earlier test took the place beside the shop.
+	for piece in _rooms.layout_of(hq).pieces.duplicate():
+		if piece.kind.id == &"vault":
+			_rooms.remove(hq, piece.cells()[0])
+	var stocked := _fit(hq, &"stock")
+	_check(stocked and _followers.next_seller_net(hq) > plain and _followers.upkeep_rate() > rate,
+			"a Stock Room by a shop makes its sellers bring more, for upkeep (fitted: %s)" % stocked)
+	var laundry := _rooms.settings.kind(&"laundry")
+	var draw := _followers.attraction_of(hq)
+	_check(_fit(hq, &"laundry") and is_equal_approx(_followers.attraction_of(hq), draw + laundry.attraction),
+			"a Laundry Room, the Slums' utility, draws followers faster")
+	_treasury.money = 0.5
+	var income := _followers.money_rate
+	_followers.money_rate = 0.0
+	_treasury._physics_process(10.0)
+	_check(is_equal_approx(_followers.attraction_of(hq), draw) and is_zero_approx(_treasury.money),
+			"with no money for upkeep the dearest room closes and gives nothing")
+	_followers.money_rate = income
+	_treasury.money = PLENTY
+	_rooms._physics_process(_rooms.settings.upkeep_tick + 1.0)
+	_check(is_equal_approx(_followers.attraction_of(hq), draw + laundry.attraction),
+			"and opens again when there is money")
+
+
+## The Fixer opens a key building: actions that cost paperwork and raise exposure, and
+## paperwork for as long as he is there. Then a Rep can take it, and it is an office.
+func _test_fixer() -> void:
+	var breaches: Breaches = _main.get_node("Breaches")
+	var office := _districts.start_building()
+	var key := -1
+	var gap := INF
+	for k in _districts.keys:
+		var d2 := _districts.buildings[k].global_position.distance_squared_to(office.global_position)
+		if k != _districts.core_of(_districts.start_district()) and d2 < gap:
+			gap = d2
+			key = k
+	var b := _districts.buildings[key]
+	# The buildings round it are taken first: the Fixer works from a building of yours.
+	for round in 12:
+		if not _districts.borders_yours(key):
+			_districts.convert_near(b.global_position, 2)
+	_check(breaches.why_not(b) != "" and not breaches.send(b), "with no Fixer nobody can be sent")
+	_faith.belief_pool = PLENTY
+	_check(_menus.choose(&"train_fixer", office), "a Fixer is trained at the Office")
+	_finish_training()
+	_check(_population.agent_count == 1 and breaches.send(b) and breaches.target == b,
+			"and sent to a key building next to yours")
+	breaches.fixer.body.global_position = breaches._door_of(b)
+	breaches.fixer.body._errand_route.clear()   # he is there: no walk to wait for
+	await _frames(5)
+	_faith.belief_pool = 0.0
+	breaches._physics_process(DS.breach_tick)
+	_check(breaches.stalled != "" and breaches.actions_done(b) == 0, "with no paperwork the Fixer waits")
+	_faith.belief_pool = 1000.0
+	_faith.exposure = 0.0
+	breaches._physics_process(DS.breach_tick)
+	_check(_faith.belief_pool < 1000.0 - DS.breach_action_paperwork + 0.01 \
+			and is_equal_approx(_faith.exposure, DS.breach_action_exposure),
+			"an action costs paperwork and raises the exposure")
+	var before := _faith.belief_pool
+	breaches._physics_process(DS.breach_tick)
+	_check(_faith.belief_pool < before, "and the Fixer costs paperwork for as long as he is there")
+	for step in int(DS.breach_actions * DS.breach_action_seconds / DS.breach_tick) + DS.breach_actions:
+		breaches._physics_process(DS.breach_tick)
+	_check(_districts.is_key_open(key) and breaches.target == null and _campaigns.why_not(b) == "",
+			"after %d actions the key building is open to a Rep" % DS.breach_actions)
+	var share := _districts.key_share(_districts.start_district())
+	_check(_districts.take(key) and _rooms.is_office(key) \
+			and _districts.key_share(_districts.start_district()) > share,
+			"taken, it is an office of yours and counts toward the win")
+	_treasury.money = PLENTY
+	_faith.belief_pool = PLENTY
+	_check(_fit(key, &"desks"), "so a Desk Room can be fitted into it")
+
+
 ## A block whose buildings are all yours is complete: followers come to it faster.
 func _test_block() -> void:
 	var hq := _districts.headquarters
@@ -509,6 +615,9 @@ func _test_capture() -> void:
 	var progress: DistrictProgress = _main.get_node("DistrictProgress")
 	_check(progress.value(d) < 1.0 and not _districts.is_controlled(d),
 			"the district's bar is not full yet (%d%%)" % roundi(progress.value(d) * 100.0))
+	_check(progress.value(d) >= progress.control(d) and progress.value(d) >= progress.freedom(d) \
+			and progress.freedom(d) <= 0.5 + 0.5 * _followers.people_share(d) / DS.control_share + 0.001,
+			"the bar is the better of the two ways: key buildings, or a few of them and the people")
 	var share := _followers.people_share(d)
 	var people := _followers.people_in(d)
 	var mine := _followers.followers_in(d)
@@ -523,6 +632,11 @@ func _test_capture() -> void:
 	_districts.district_controlled.connect(func(x: int) -> void: got[0] = got[0] or x == d)
 	var core := _districts.buildings[_districts.core_of(d)]
 	_districts.convert_near(core.global_position, _districts.buildings.size())
+	_check(not _districts.is_controlled(d) and progress.value(d) < 1.0,
+			"every ordinary building is not enough: the key buildings are still City Hall's")
+	for k in _districts.keys:
+		_districts.open_key(k)
+		_districts.take(k)
 	await _frames(int(DS.progress_tick * 60.0 * 2.0))
 	_check(got[0] and _districts.is_controlled(d), "a full bar wins the district")
 	var empty := 0

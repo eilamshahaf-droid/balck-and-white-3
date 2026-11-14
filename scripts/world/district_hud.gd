@@ -22,8 +22,11 @@ func _process(delta: float) -> void:
 	var d: int = districts.district_at(rig.target_pivot)
 	var hold := "yours"
 	if not districts.is_controlled(d):
-		hold = "%d of its %d people follow you (%d%%, %d%% wins it)" % [followers.followers_in(d),
-				followers.people_in(d), floori(followers.people_share(d) * 100.0),
+		hold = "%d of its %d people follow you (%d%%), %d%% of its key buildings are yours" % [
+				followers.followers_in(d), followers.people_in(d),
+				floori(followers.people_share(d) * 100.0), floori(districts.key_share(d) * 100.0)]
+		hold += "\nTo win: %d%% of the key buildings, or %d%% of them and %d%% of the people" % [
+				roundi(S.key_win_share * 100.0), roundi(S.key_part_share * 100.0),
 				roundi(S.control_share * 100.0)]
 	var i := districts.building_near(rig.target_pivot)
 	var wealth := districts.wealth_of(d)

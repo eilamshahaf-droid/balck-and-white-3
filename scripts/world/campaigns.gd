@@ -82,8 +82,8 @@ func why_not(building: Node3D) -> String:
 		return "not a building"
 	if districts.is_yours(i):
 		return "already yours"
-	if districts.is_key(i):
-		return "a key building: it will take more than a Rep"
+	if districts.is_key(i) and not districts.is_key_open(i):
+		return "a key building: the Fixer must open it first"
 	if not districts.is_open(building):
 		return "opens in a later stage"
 	if not districts.borders_yours(i):

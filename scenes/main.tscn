@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3]
+[gd_scene load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -36,6 +36,8 @@
 [ext_resource type="Script" path="res://scripts/rooms/rooms.gd" id="73_rooms"]
 [ext_resource type="Script" path="res://scripts/rooms/room_editor.gd" id="74_editor"]
 [ext_resource type="Script" path="res://scripts/pause.gd" id="75_pause"]
+[ext_resource type="Script" path="res://scripts/world/breaches.gd" id="76_breaches"]
+[ext_resource type="Script" path="res://scripts/props/breach_marks.gd" id="77_breach_marks"]
 [ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 
 [node name="Main" type="Node3D"]
@@ -104,11 +106,14 @@ faith = NodePath("../Faith")
 script = ExtResource("41_priest")
 population = NodePath("../Population")
 
-[node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population", "campaigns", "inspectors")]
+[node name="ConversionNotes" type="Node3D" parent="." node_paths=PackedStringArray("population", "campaigns", "inspectors", "rooms", "breaches", "districts")]
 script = ExtResource("40_notes")
 population = NodePath("../Population")
 campaigns = NodePath("../Campaigns")
 inspectors = NodePath("../Inspectors")
+rooms = NodePath("../Rooms")
+breaches = NodePath("../Breaches")
+districts = NodePath("../Districts")
 
 [node name="Decrees" type="Node" parent="." node_paths=PackedStringArray("faith", "districts", "treasury")]
 script = ExtResource("13_decrees")
@@ -126,11 +131,12 @@ population = NodePath("../Population")
 decrees = NodePath("../Decrees")
 inspectors = NodePath("../Inspectors")
 
-[node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns", "menus", "districts")]
+[node name="HandTools" type="Node" parent="." node_paths=PackedStringArray("campaigns", "menus", "districts", "breaches")]
 script = ExtResource("8_tools")
 campaigns = NodePath("../Campaigns")
 menus = NodePath("../BuildingMenus")
 districts = NodePath("../Districts")
+breaches = NodePath("../Breaches")
 
 [node name="ResidentCard" type="CanvasLayer" parent="."]
 script = ExtResource("12_card")
@@ -214,7 +220,8 @@ Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit   
 Hold LEFT still on the ground: miracle wheel (pick one, then click to cast it)    On a building of yours: rooms, floors, sellers, and at the Office training, loan, bury the file    On a building next to yours: Send a Rep
 Lift a Rep and set them down at a door to take that building; keep the hand over a building at work and it goes faster
 Inspectors (red !) walk from key buildings to your Reps and want paperwork: lift one and set him down far away to buy time
-Space: pause (the hand, the wheels and the room editor still work)"
+Space: pause (the hand, the wheels and the room editor still work)
+Key buildings (red sign): train a Fixer at the Office and send him there; when he has opened one, send a Rep"
 
 [node name="Stats" type="Label" parent="HUD"]
 offset_left = 12.0
@@ -245,6 +252,18 @@ followers = NodePath("../../Followers")
 decrees = NodePath("../../Decrees")
 population = NodePath("../../Population")
 camera = NodePath("../../CameraRig/Camera3D")
+
+[node name="Breaches" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "hand")]
+script = ExtResource("76_breaches")
+districts = NodePath("../Districts")
+population = NodePath("../Population")
+faith = NodePath("../Faith")
+hand = NodePath("../GodHand")
+
+[node name="BreachMarks" type="Node3D" parent="." node_paths=PackedStringArray("breaches", "districts")]
+script = ExtResource("77_breach_marks")
+breaches = NodePath("../Breaches")
+districts = NodePath("../Districts")
 
 [node name="RoomEditor" type="CanvasLayer" parent="." node_paths=PackedStringArray("rooms", "menus", "districts", "followers", "treasury", "faith")]
 script = ExtResource("74_editor")

@@ -24,17 +24,28 @@ extends Resource
 @export var reps := 0
 @export var attraction := 0.0
 @export var security := 0
+## How much more every seller in this building brings in (0.25: a quarter more).
+@export var shop_boost := 0.0
+## Money a minute it costs to run. With no money it closes and gives nothing.
+@export var upkeep := 0.0
 
 @export_group("Where it fits")
 ## 0 basic, 1 advanced, 2 luxury: a stage offers homes up to its own tier
 ## (RoomSettings.max_tier). Office rooms are always offered.
 @export var tier := 0
-## It must touch (side by side or one above the other) a room of this kind; &"" for none.
+## It must touch (side by side or one above the other) a room of this kind or group;
+## &"" for none.
 @export var needs_next := &""
+## The family it belongs to for other rooms' needs_next (every shop is a &"shop").
+@export var group := &""
 ## Only in an office (today: the main Office).
 @export var office_only := false
 ## One of its cells must be on the ground floor.
 @export var ground_only := false
+
+
+func is_a(what: StringName) -> bool:
+	return id == what or (group != &"" and group == what)
 
 
 ## Its cells turned a quarter turn `turns` times, moved back so the lowest and leftmost

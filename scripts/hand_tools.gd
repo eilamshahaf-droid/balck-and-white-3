@@ -23,6 +23,7 @@ const GROUPS: Array[StringName] = [&"shop"]
 @export var campaigns: Campaigns
 @export var menus: BuildingMenus
 @export var districts: Districts
+@export var breaches: Breaches
 
 @onready var hand: Node3D = get_node("../GodHand")
 @onready var miracles: Miracles = get_node("../Miracles")
@@ -134,6 +135,9 @@ func _choose() -> void:
 				if building and id == &"send":
 					campaigns.send(building)
 					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+				elif building and id == &"fixer":
+					breaches.send(building)
+					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
 				elif building and GROUPS.has(id):
 					# A second wheel in the same place; the next click picks from it.
 					_mode = Mode.SECOND
@@ -179,9 +183,17 @@ func _building_items(building: Node3D) -> Array[Dictionary]:
 		return menus.items(building)
 	var why := campaigns.why_not(building)
 	var sent := campaigns.is_sent(building)
-	return [{"id": &"send", "label": "Send a Rep", "color": Color(0.5, 0.75, 1.0),
+	var items: Array[Dictionary] = [{"id": &"send", "label": "Send a Rep", "color": Color(0.5, 0.75, 1.0),
 			"note": "call back" if sent else ("go" if why == "" else why),
 			"enabled": sent or why == ""}]
+	var i := districts.index_of(building)
+	if i >= 0 and districts.is_key(i) and not districts.is_key_open(i):
+		var there := breaches.target == building
+		var stuck := breaches.why_not(building)
+		items.append({"id": &"fixer", "label": "Send the Fixer", "color": Color(0.75, 0.6, 1.0),
+				"note": "call back" if there else ("go" if stuck == "" else stuck),
+				"enabled": there or stuck == ""})
+	return items
 
 
 func _set_outline(building: Node3D, on: bool) -> void:
