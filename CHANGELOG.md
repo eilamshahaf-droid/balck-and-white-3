@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.17.2 (2026-11-14): fix, the pointer on top of the room editor
+- **Fix: the pointer was behind the room editor.** The editor now draws its own arrow over everything, so it no longer depends on the browser showing the system pointer.
+- Eilam's document on the building planner is in `docs/GDD.md` (section 0, item 9): the target the rooms are built toward.
+
 ## Pre-Alpha 0.17.1 (2026-11-14): fix, the pointer in the room editor
 - **Fix: the mouse pointer was invisible in the room editor**, so nothing could be aimed at. It shows while the editor is open and hides again over the city.
 
