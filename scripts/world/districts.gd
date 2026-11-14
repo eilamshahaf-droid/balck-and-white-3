@@ -172,7 +172,8 @@ func add_meter(index: int, amount: float) -> void:
 	if _yours[index] == 1 or _district_of[index] < 0 or _key[index] == 1:
 		return
 	var now := clampf(_meter[index] + amount, 0.0, 1.0)
-	if not is_equal_approx(now, _meter[index]):
+	# Compared exactly: "about equal" would leave a meter a hair under full for ever.
+	if now != _meter[index]:
 		_meter[index] = now
 		meter_changed.emit(index, now)
 

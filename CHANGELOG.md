@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.16.1 (2026-11-14): fix, a takeover bar stuck at 99%
+- **Fix: a building's bar could stop a hair under full and stay yellow at 99% for ever**, with a Rep at the door or not. The meter treated "almost full" as "no change" and never took the last step, so the building never came to want you. Found from Eilam's screenshot; a test now covers it.
+- Try it: the building next to the Office fills to a green bar by itself in a few minutes; a Rep at a door always finishes.
+
 ## Pre-Alpha 0.16.0 (2026-11-13): round B, the inspectors, and paperwork as the shield
 Round B of Eilam's model: the city answers, and paperwork is what answers it back. Numbers are provisional, all in `data/inspectors.tres`.
 - **Key buildings.** Nine buildings spread over the Slums (the core and one in every four or five blocks) carry a red signboard with a name: Bureau of Forms, Permit Office, Licence Desk... Inspectors come out of them. A Rep can't take one; that is round C.

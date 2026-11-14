@@ -197,7 +197,8 @@ func _test_taking() -> void:
 	_districts.add_meter(near, 0.4)
 	_check(is_equal_approx(_districts.meter_of(near), 0.4) and not _districts.wants_you(near),
 			"a takeover meter fills part way")
-	_districts.add_meter(near, 1.0)
+	_districts.add_meter(near, 0.6 - 0.000001)
+	_districts.add_meter(near, 0.5)
 	_check(_districts.wants_you(near) and not _districts.is_yours(near),
 			"a full meter means the building wants you, and is not yours yet")
 	var rep: Resident = null
