@@ -3,6 +3,9 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.17.1 (2026-11-14): fix, the pointer in the room editor
+- **Fix: the mouse pointer was invisible in the room editor**, so nothing could be aimed at. It shows while the editor is open and hides again over the city.
+
 ## Pre-Alpha 0.17.0 (2026-11-14): rooms, the vertical plan of a building
 Eilam's idea, step 1 (GDD section 0, item 8). Numbers are provisional, all in `data/rooms.tres`.
 - **Every building of yours is a grid** of bays and floors (the Office is 6 by 5, an ordinary building about 3 by 4). Hold the button on it and choose **Rooms**.

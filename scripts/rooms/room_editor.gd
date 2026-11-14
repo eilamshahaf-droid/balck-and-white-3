@@ -59,12 +59,21 @@ func open(building: Node3D) -> void:
 	_picked = NOTHING
 	_turns = 0
 	visible = true
+	# The hand hides the system pointer over the city; here it is what the player aims with.
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_board.queue_redraw()
 
 
 func close() -> void:
 	visible = false
 	_index = -1
+	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
+
+
+## Coming back to the window, the hand hides the pointer again: show it while open.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and visible:
+		(func() -> void: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE).call_deferred()
 
 
 func is_open() -> bool:
