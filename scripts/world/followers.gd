@@ -30,6 +30,7 @@ var paperwork_rate := 0.0
 var _count := PackedFloat32Array()     # per building: followers living there
 var _limit := PackedInt32Array()       # per building: sellers the player allows (AUTO: those worth their pay)
 var _staff := PackedInt32Array()       # per building: sellers at work there now
+var _others := PackedInt32Array()      # per building: who lives there while it is not yours
 var _timer := 0.0
 
 
@@ -67,6 +68,32 @@ func count_of(index: int) -> int:
 func attraction_of(index: int) -> float:
 	var out := 1.0 + rooms.totals_of(index).attraction
 	return out + (F.block_attraction if districts.in_complete_block(index) else 0.0)
+
+
+## Everyone who lives in district `d`: your followers, and the residents of the buildings
+## that are not yours. Followers you make room for are counted here too, so growing
+## inside your own buildings moves your share less and less: to grow you take buildings.
+func people_in(d: int) -> int:
+	var n := 0
+	for i in _count.size():
+		if districts.buildings[i] == null or districts.district_of(i) != d:
+			continue
+		n += count_of(i) if districts.is_yours(i) else _others[i]
+	return n
+
+
+## Your followers in district `d`.
+func followers_in(d: int) -> int:
+	var n := 0
+	for i in _count.size():
+		if districts.is_yours(i) and districts.district_of(i) == d:
+			n += count_of(i)
+	return n
+
+
+## Your share of the people of district `d`, 0..1.
+func people_share(d: int) -> float:
+	return float(followers_in(d)) / maxi(people_in(d), 1)
 
 
 ## Followers with no role.
@@ -173,6 +200,9 @@ func _on_layout_ready() -> void:
 	_limit.resize(n)
 	_limit.fill(AUTO)
 	_staff.resize(n)
+	_others.resize(n)
+	for i in n:
+		_others[i] = rooms.plain_room(i) if districts.buildings[i] else 0
 	_on_building_changed(districts.headquarters, true)
 
 

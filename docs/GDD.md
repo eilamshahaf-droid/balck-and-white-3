@@ -98,6 +98,8 @@ Where this disagrees with the text below, this wins.
    - Built with it: the fixed staircase in every building, and the first neighbour rules (an Archive next to a Desk Room, a Vault next to a Shop; a room others lean on can't be taken out).
    - Open for the Designer and the Balance Tester: on the smaller map the bot with no hand reaches 60% of the placeholder district bar (36% of the buildings) in an hour while completing only two blocks, after exposure from work and takings was doubled for the smaller map. The bar should probably count complete blocks until round C replaces it.
 
+11. **The majority is counted in people (Eilam, 2026-11-14). Built in 0.19.0.** The district's people are your followers plus the residents of every building that is not yours. Followers you make room for are counted in the total as well: with 100 followers, room for 50 more adds 50 to the district too, so it stays balanced and to grow you must take more buildings. This is the "60% of the district's people" of item 7's second way to win; the bar uses it now (with the core's part) until round C adds the key buildings.
+
 ## 1. Pitch
 
 You play a god nobody asked for, in a modern city that denies you. Your cult is tiny and chased by the authorities. Its Secretary narrates everything in deadpan meeting minutes, with ranks, paid courses and paperwork that satirise cults without copying any real one.

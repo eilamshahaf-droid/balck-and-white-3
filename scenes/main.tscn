@@ -175,9 +175,10 @@ districts = NodePath("../Districts")
 layer = 6
 script = ExtResource("66_stage")
 
-[node name="DistrictProgress" type="Node" parent="." node_paths=PackedStringArray("districts")]
+[node name="DistrictProgress" type="Node" parent="." node_paths=PackedStringArray("districts", "followers")]
 script = ExtResource("63_progress")
 districts = NodePath("../Districts")
+followers = NodePath("../Followers")
 
 [node name="DebugPanel" type="CanvasLayer" parent="."]
 script = ExtResource("10_debug")
@@ -224,7 +225,7 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 5
 script = ExtResource("5_hud")
 
-[node name="District" type="Label" parent="HUD" node_paths=PackedStringArray("progress")]
+[node name="District" type="Label" parent="HUD"]
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
@@ -236,7 +237,6 @@ grow_vertical = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
-progress = NodePath("../../DistrictProgress")
 
 [node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera")]
 script = ExtResource("22_tooltip")

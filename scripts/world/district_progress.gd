@@ -1,8 +1,8 @@
 class_name DistrictProgress
 extends Node
 ## How far along each open district is toward being yours: one bar. Until round C
-## brings the key buildings and the two ways to win, it is the share of the district's
-## buildings that are yours against the share that wins it, plus a part for its core.
+## brings the key buildings and the two ways to win, it is your followers' share of all
+## the people of the district against the share that wins it, plus a part for its core.
 ## When the bar is full the district is won.
 
 ## District `district`'s bar moved (1 = won).
@@ -11,6 +11,7 @@ signal changed(district: int, value: float)
 const S: DistrictSettings = preload("res://data/districts.tres")
 
 @export var districts: Districts
+@export var followers: Followers
 
 var _values := PackedFloat32Array()
 var _timer := 0.0
@@ -39,9 +40,10 @@ func value(d: int) -> float:
 	return following(d) + key_places(d)
 
 
-## What your buildings give: their share of the district against the share that wins it.
+## What your followers give: their share of the district's people against the share
+## that wins it.
 func following(d: int) -> float:
-	return districts.share(d) / S.control_share
+	return followers.people_share(d) / S.control_share
 
 
 ## What the key places give: the district's core, once it is yours.
