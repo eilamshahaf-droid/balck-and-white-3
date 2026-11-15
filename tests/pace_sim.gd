@@ -10,13 +10,14 @@ extends Node
 ## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this. fixer = train a Fixer and keep him
-## opening the nearest key building in reach. hand = stand-in for a player who carries
-## an inspector off every HAND_EVERY seconds (he gives up, as if thrown away).
+## opening the nearest key building in reach. hand = stand-in for a player who tries to
+## carry an inspector off every HAND_EVERY seconds (see _carry_one).
 ## Every STATS_EVERY a STATS block gives the paperwork economy for the Balance Tester:
 ## income and spending per minute by use (the last ten minutes), and running totals of
 ## inspectors, demands, audits and buildings.
 
 const MAIN := preload("res://scenes/main.tscn")
+const IS: InspectorSettings = preload("res://data/inspectors.tres")
 const SPEED := 8.0
 const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
@@ -24,6 +25,8 @@ const SHOP_EVERY := 4         # one building in this many becomes a shop
 const BURY_FROM := 0.5
 const STATS_EVERY := 600.0   # game seconds
 const HAND_EVERY := 15.0
+const CARRY_SUCCESS := 0.6
+const RETURN_SECONDS := 60.0
 const OFFICE_ROOMS: Array[StringName] = [&"training", &"desks", &"archive", &"vault"]
 
 var _main: Node3D
@@ -60,6 +63,7 @@ var _turned_back := 0
 var _carried := 0
 var _gave_up := 0
 var _keys_opened := 0
+var _throws := {}          # Inspector instance id -> times the stand-in threw him
 
 
 func _ready() -> void:
@@ -202,20 +206,25 @@ func _on_spent(amount: float, use: StringName) -> void:
 	_spent[use] = _spent.get(use, 0.0) + amount
 
 
-## The hand's stand-in: the inspector nearest his door gives up.
+## The hand's stand-in, with the Balance Tester's numbers: the inspector nearest his door
+## is carried off (CARRY_SUCCESS of the time; the rest he slips the hand) and is out of
+## the game RETURN_SECONDS, shorter each further throw, like a real one walking back.
 func _carry_one() -> void:
 	var best: Inspector = null
 	var gap := INF
 	for inspector in _inspectors.out:
-		if inspector.lost or inspector.arrived:
+		if inspector.lost or inspector.arrived or not inspector.is_walking():
 			continue
 		var d := inspector.global_position.distance_squared_to(inspector.building.global_position)
 		if d < gap:
 			gap = d
 			best = inspector
-	if best:
-		best.lost = true
-		_carried += 1
+	if best == null or randf() >= CARRY_SUCCESS:
+		return
+	var throws: int = _throws.get(best.get_instance_id(), 0)
+	best.lie_down(RETURN_SECONDS * pow(1.0 - IS.stun_shortens, throws))
+	_throws[best.get_instance_id()] = throws + 1
+	_carried += 1
 
 
 ## Ten minutes of the paperwork economy, per minute where it is a rate.

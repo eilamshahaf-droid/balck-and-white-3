@@ -57,6 +57,8 @@ func _physics_process(delta: float) -> void:
 	if _next <= 0.0 and out.size() < allowed():
 		_next = lerpf(I.spawn_seconds, I.spawn_seconds_min, faith.exposure)
 		_send()
+		if faith.exposure >= I.pairs_from and out.size() < allowed():
+			_send()
 	for inspector in out.duplicate():
 		if inspector.lost or inspector.age > I.patience_seconds:
 			gave_up.emit(inspector.global_position)
@@ -176,6 +178,8 @@ func _arrive(inspector: Inspector) -> void:
 				var rep := reps[0]
 				campaigns.dismiss(rep)
 				population.convert_to(rep, Resident.Rank.RESIDENT)
+				if i >= 0:
+					districts.add_meter(i, -I.failed_demand_meter)
 				faith.add_exposure(-I.satisfied_exposure)
 				rep_sent_home.emit(b, rep)
 	_remove(inspector)

@@ -274,10 +274,11 @@ func _fill_roles() -> void:
 	for i in _count.size():
 		if districts.is_yours(i):
 			total += floori(_count[i])
-	clerks = 0
+	var at_desks := 0
 	for i in _count.size():
-		clerks += clerks_in(i)
-	var free := total - clerks
+		at_desks += clerks_in(i)
+	clerks = mini(at_desks, F.max_clerks)
+	var free := total - at_desks
 	_staff.fill(0)
 	sellers = 0
 	money_rate = 0.0

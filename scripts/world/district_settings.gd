@@ -59,6 +59,7 @@ extends Resource
 		"Change the locks"])
 ## Paperwork to start an action, seconds it takes, and the exposure it adds.
 @export var breach_action_paperwork := 40.0
+@export var breach_action_money := 50.0
 @export var breach_action_seconds := 40.0
 @export var breach_action_exposure := 0.07
 ## Paperwork a minute the Fixer costs while he stands at a key building.

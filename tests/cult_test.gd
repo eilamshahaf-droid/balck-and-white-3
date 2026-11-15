@@ -464,9 +464,14 @@ func _test_inspector_and_rep() -> void:
 	_check(not _inspectors.out.has(inspector), "and the inspector leaves")
 	inspector = _inspectors.send_to(door, false)
 	inspector.arrived = true
+	var index := _districts.index_of(door)
+	_districts.add_meter(index, 0.5)
+	var meter := _districts.meter_of(index)
 	_inspectors._arrive(inspector)
 	_check(rep.rank == Resident.Rank.RESIDENT and _campaigns.reps_at(door).is_empty(),
 			"with no paperwork the Rep is sent home")
+	_check(is_equal_approx(_districts.meter_of(index), maxf(meter - I.failed_demand_meter, 0.0)),
+			"and the building loses %d%% of its bar" % roundi(I.failed_demand_meter * 100.0))
 
 
 ## An inspector audits a building of yours: paperwork passes it (less with Security);
