@@ -27,6 +27,7 @@ const SIDEWALK_GAP := 1.5   # metres out from the wall
 @export var attractiveness: Attractiveness
 
 var _campaigns: Array[Campaign] = []
+var _held := {}        # building -> Reps an inspector at the door holds back
 var _timer := 0.0
 
 
@@ -209,7 +210,11 @@ func _step(c: Campaign) -> void:
 	if working == 0:
 		c.stalled = "on the way" if not c.agents.is_empty() else "needs a Rep"
 		return
-	c.stalled = ""
+	var held := mini(held_at(c.building), working)
+	working -= held
+	c.stalled = S.held_note if held > 0 else ""
+	if working == 0:
+		return
 	var attention := F.attention if hand.pointed_part == c.building else 1.0
 	districts.add_meter(i, working * attention * S.tick / seconds_for(c.building))
 	if not districts.wants_you(i):
@@ -218,6 +223,25 @@ func _step(c: Campaign) -> void:
 	c.stalled = attractiveness.why_not(i)
 	if c.stalled == "":
 		_take(c.building, rep)
+
+
+## `count` inspectors stand at `building`'s door: each holds one Rep's work back.
+func hold_back(building: Node3D, count: int) -> void:
+	if count > 0:
+		_held[building] = count
+	else:
+		_held.erase(building)
+	# Show it at once, not at the next step.
+	var c := _campaign_on(building)
+	if c and count > 0:
+		c.stalled = S.held_note
+	elif c and c.stalled == S.held_note:
+		c.stalled = ""
+
+
+## How many Reps an inspector holds back at `building`.
+func held_at(building: Node3D) -> int:
+	return _held.get(building, 0)
 
 
 ## The nearest free Rep goes to the door; with none free the building waits for one.

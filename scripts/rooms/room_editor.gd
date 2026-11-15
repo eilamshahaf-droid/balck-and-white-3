@@ -267,9 +267,11 @@ func _draw_palette() -> void:
 		for c in kind.turned(_turns if k == _picked else 0):
 			var at := rect.position + Vector2(8.0 + c.x * MINI, rect.size.y - 8.0 - (c.y + 1) * MINI)
 			_board.draw_rect(Rect2(at, Vector2(MINI - 1.0, MINI - 1.0)), kind.color)
-		var price := "$%d" % roundi(kind.money)
-		if kind.paperwork > 0.0:
-			price += " + %d paperwork" % roundi(kind.paperwork)
+		var money := rooms.money_of(_index, kind)
+		var paperwork := rooms.paperwork_of(_index, kind)
+		var price := "$%d" % roundi(money) if money > 0.0 or paperwork > 0.0 else _s.gift_label
+		if paperwork > 0.0:
+			price += " + %d paperwork" % roundi(paperwork)
 		_text(rect.position + Vector2(64.0, 20.0), "%s   %s" % [kind.title, price], TEXT_SIZE, Color.WHITE)
 		_text(rect.position + Vector2(64.0, 38.0), kind.note, SMALL_SIZE, Color(1, 1, 1, 0.65))
 	var remove := _palette_rect(_shown.size())

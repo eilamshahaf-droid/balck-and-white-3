@@ -19,3 +19,5 @@ extends Resource
 @export var size_factor_min := 0.5
 @export var size_factor_max := 3.0
 @export var missionary_line := "Have you got a minute for the Committee?"
+## Over a door where an inspector with no papers to read holds a Rep's work back.
+@export var held_note := "An inspector holds one Rep back"

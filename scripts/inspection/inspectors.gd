@@ -12,8 +12,8 @@ extends Node3D
 signal sent(inspector: Inspector, from: Node3D)
 ## A Rep at `building` showed papers worth `cost`.
 signal papers_shown(building: Node3D, cost: float)
-## There was no paperwork: `rep` was sent home from `building`.
-signal rep_sent_home(building: Node3D, rep: Resident)
+## There was no paperwork at `building`: the inspector stays and holds one Rep back.
+signal rep_held(building: Node3D)
 ## A building of yours passed its audit for `cost`.
 signal audit_passed(building: Node3D, cost: float)
 ## A building of yours failed its audit and is lost.
@@ -39,6 +39,7 @@ const SIDEWALK_GAP := 1.5
 var out: Array[Inspector] = []
 
 var _buried := 0
+var _holding := {}     # building -> inspectors holding a Rep back there, as last told
 var _timer := 0.0
 var _next := I.first_seconds
 var _coat := StandardMaterial3D.new()
@@ -70,8 +71,11 @@ func _physics_process(delta: float) -> void:
 		if inspector.lost or inspector.age > I.patience_seconds:
 			gave_up.emit(inspector.global_position)
 			_remove(inspector)
-		elif inspector.arrived:
+		elif inspector.holding and campaigns.reps_at(inspector.building).is_empty():
+			_remove(inspector)   # nobody left to hold back
+		elif inspector.arrived and not inspector.holding:
 			_arrive(inspector)
+	_count_holds()
 
 
 ## How many inspectors may be out at once at the exposure there is now.
@@ -184,13 +188,10 @@ func _arrive(inspector: Inspector) -> void:
 			if faith.spend(cost, &"demand"):
 				papers_shown.emit(b, cost)
 			else:
-				var rep := reps[0]
-				campaigns.dismiss(rep)
-				population.convert_to(rep, Resident.Rank.RESIDENT)
-				if i >= 0:
-					districts.add_meter(i, -I.failed_demand_meter)
-				faith.add_exposure(-I.satisfied_exposure)
-				rep_sent_home.emit(b, rep)
+				inspector.holding = true
+				_count_holds()
+				rep_held.emit(b)
+				return
 		elif breaches.target == b:
 			var cost := demand_cost()
 			if faith.spend(cost, &"demand"):
@@ -205,6 +206,21 @@ func _arrive(inspector: Inspector) -> void:
 func _remove(inspector: Inspector) -> void:
 	out.erase(inspector)
 	inspector.queue_free()
+	_count_holds()
+
+
+## Tell Campaigns how many Reps the inspectors standing at each door hold back.
+func _count_holds() -> void:
+	var counts := {}
+	for inspector in out:
+		if inspector.holding and inspector.arrived:
+			counts[inspector.building] = counts.get(inspector.building, 0) + 1
+	for b: Node3D in _holding:
+		if not counts.has(b):
+			campaigns.hold_back(b, 0)
+	for b: Node3D in counts:
+		campaigns.hold_back(b, counts[b])
+	_holding = counts
 
 
 func _on_building_changed(index: int, yours: bool) -> void:
