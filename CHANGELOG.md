@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.25.0 (2026-11-15): the room designer inside the game
+Asked by Eilam through the Artist: the browser editor's 3D did not work for him.
+- **Room designer.** Press F1 in the game and pick **Room designer** (Back to game returns). Choose a room kind (all 14) and a level (1 to 3); the room is cut open from the front, its places lit in its colour and the rest of its box greyed. Pick a piece of furniture on the left (124 Kenney pieces, with search and groups) and click a lit place, or drag it in. Things stand on the floor or on a table, desk or counter under them; lamps and upper cabinets hang on the back wall. Click a piece to pick it: drag to move, Back/Mid/Front or a slider for depth, sliders for height and size, R turns, Delete removes, Ctrl+Z undoes.
+- **3D edit**: put pieces on a floor and drag them across it (left and right, back and front) in a 3D view; drag empty space to orbit, the wheel zooms. In the front view a small 3D preview shows the room.
+- **Files**: every change is kept at once, in the browser too. **Download room** gives that room's file (format 1, as the Artist's editor saves it), **Download all** every room you made, **Load file** reads one back (from the Artist's editor too).
+- The game doesn't show the furniture in its buildings yet; this is for making the rooms.
+- Under the hood: the depth-of-field layer no longer rides on the camera, so changing scenes is safe.
+- Try it: F1, Room designer, pick Desk Room, put a desk and a computer screen on it, switch to 3D edit.
+
 ## Pre-Alpha 0.24.1 (2026-11-15): money always gets going
 From the Designer, after the bot found the money trap in 0.24.0.
 - **A Shop costs $150** (was $225), and **the Office starts with two Shops**, so early money can't get stuck below the price of a Shop.

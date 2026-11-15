@@ -9,6 +9,7 @@ const TAKE_COUNT := 10
 const MONEY_GIFT := 200.0
 const LOG_SECONDS := 60.0
 const LOG_LINES := 12
+const ROOM_DESIGNER := "res://scenes/room_designer.tscn"
 
 @onready var faith: Faith = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
@@ -44,6 +45,7 @@ func _ready() -> void:
 	_button(box, "Money +%d" % roundi(MONEY_GIFT), func(): treasury.add_money(MONEY_GIFT))
 	_button(box, "Take %d buildings here" % TAKE_COUNT, func(): districts.convert_near(rig.target_pivot, TAKE_COUNT))
 	_button(box, "Exposure +%d%%" % roundi(EXPOSURE_GIFT * 100.0), func(): faith.exposure = minf(faith.exposure + EXPOSURE_GIFT, 1.0))
+	_button(box, "Room designer", func(): get_tree().change_scene_to_file(ROOM_DESIGNER))
 	var head := Label.new()
 	head.text = "Per minute: money in/out, paperwork in/out"
 	box.add_child(head)
