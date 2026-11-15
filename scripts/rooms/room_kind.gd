@@ -22,6 +22,7 @@ extends Resource
 @export var money_cap := 0.0
 ## Reps more that may be out at once.
 @export var reps := 0
+## Attractiveness it adds to its district (a utility; see Attractiveness).
 @export var attraction := 0.0
 @export var security := 0
 ## How much more every seller in this building brings in (0.25: a quarter more).

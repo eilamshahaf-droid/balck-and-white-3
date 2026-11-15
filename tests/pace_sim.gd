@@ -7,7 +7,8 @@ extends Node
 ## Bot habits (any mix): train = train a Rep whenever the cap, the pool and the paperwork
 ## allow, send = send Reps to buildings in reach (the fullest meters first), shop = open
 ## a shop in a building of yours when the money is there, upgrade = fit a Training Room,
-## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), bury = bury the file whenever the exposure is
+## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), and a
+## Laundry Room in a building of yours whenever the attractiveness gate is shut, bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this. fixer = train a Fixer and keep him
 ## opening the nearest key building: a loud action while the exposure is under LOUD_UNDER
@@ -43,6 +44,7 @@ var _decrees: Decrees
 var _progress: DistrictProgress
 var _faith: Faith
 var _inspectors: Inspectors
+var _appeal: Attractiveness
 var _rooms: Rooms
 var _breaches: Breaches
 var _papers := 0
@@ -67,6 +69,7 @@ var _carried := 0
 var _gave_up := 0
 var _keys_opened := 0
 var _fixer_caught := 0
+var _laundries := 0
 var _throws := {}          # Inspector instance id -> times the stand-in threw him
 
 
@@ -90,6 +93,7 @@ func _ready() -> void:
 	_inspectors = _main.get_node("Inspectors")
 	_rooms = _main.get_node("Rooms")
 	_breaches = _main.get_node("Breaches")
+	_appeal = _main.get_node("Attractiveness")
 	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
 	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
 	_inspectors.rep_sent_home.connect(func(_b: Node3D, _r: Resident) -> void: _reps_lost += 1)
@@ -156,6 +160,7 @@ func _act() -> void:
 		var kind := _rooms.settings.kind(OFFICE_ROOMS[_bought % OFFICE_ROOMS.size()])
 		if _rooms.place_anywhere(_districts.headquarters, kind):
 			_bought += 1
+		_open_gate()
 	if _habits.has("shop"):
 		var held := _districts.converted_buildings()
 		var shops := get_tree().get_nodes_in_group(Population.SHOPS).size()
@@ -218,6 +223,19 @@ func _use_fixer(office: Node3D) -> void:
 		_breaches.send(best)
 
 
+## The next ordinary building would be refused: fit a Laundry Room (+attractiveness)
+## into the first building of ours it fits in.
+func _open_gate() -> void:
+	var d := _districts.start_district()
+	if _appeal.value(d) >= _appeal.next_threshold(d):
+		return
+	var laundry := _rooms.settings.kind(&"laundry")
+	for b in _districts.converted_buildings():
+		if _rooms.place_anywhere(_districts.index_of(b), laundry):
+			_laundries += 1
+			return
+
+
 func _on_spent(amount: float, use: StringName) -> void:
 	_spent[use] = _spent.get(use, 0.0) + amount
 
@@ -255,9 +273,11 @@ func _print_stats() -> void:
 	print("STATS %3d min  clerks %d  sellers %d  paperwork income %.1f/min  spent %.1f/min (%s)" % [
 			roundi(_clock / 60.0), _followers.clerks, _followers.sellers, income,
 			total / minutes, ", ".join(uses) if not uses.is_empty() else "nothing"])
-	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep lost) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d  Fixer caught %d" % [
+	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep lost) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d  Fixer caught %d  laundries %d  attractiveness %d of %d" % [
 			roundi(_clock / 60.0), _faith.exposure * 100.0, _inspectors.out.size(), _sent,
 			_carried, _gave_up, _paid, _reps_lost, _audits, _turned_back,
-			_districts.converted_buildings().size(), _won, _lost, _keys_opened, _fixer_caught])
+			_districts.converted_buildings().size(), _won, _lost, _keys_opened, _fixer_caught, _laundries,
+			floori(_appeal.value(_districts.start_district())),
+			ceili(_appeal.next_threshold(_districts.start_district()))])
 	_spent.clear()
 	_pool_then = _faith.belief_pool
