@@ -50,26 +50,6 @@ extends Resource
 @export var key_label_font_size := 64
 @export var key_label_color := Color(1.0, 0.95, 0.85)
 
-@export_group("Key buildings: the Fixer opens them")
-@export var breach_tick := 1.0
-## Actions the Fixer must carry out at a key building before a Rep can take it, and
-## their names in order (they wrap round).
-@export var breach_actions := 3
-@export var breach_action_names := PackedStringArray(["Copy the keys", "Lose the file",
-		"Change the locks"])
-## Paperwork to start an action, seconds it takes, and the exposure it adds.
-@export var breach_action_paperwork := 40.0
-@export var breach_action_money := 50.0
-@export var breach_action_seconds := 40.0
-@export var breach_action_exposure := 0.07
-## Paperwork a minute the Fixer costs while he stands at a key building.
-@export var breach_presence_paperwork := 12.0
-@export var breach_line := "Nothing to see here."
-@export var breach_line_color := Color(0.75, 0.6, 1.0)
-@export var breach_open_note := "Open: send a Rep"
-@export var breach_label_font_size := 34
-@export var breach_label_pixel_size := 0.0012
-
 @export_group("Borders and blocks")
 ## Buildings whose walls stand this close border each other (next door, or across a street).
 @export var border_gap := 12.0
@@ -147,6 +127,3 @@ func minute_for(d: int) -> String:
 func key_name(k: int) -> String:
 	return key_names[k % key_names.size()] if k >= 0 else ""
 
-
-func breach_action(step: int) -> String:
-	return breach_action_names[step % breach_action_names.size()]

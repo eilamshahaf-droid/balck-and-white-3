@@ -19,6 +19,9 @@ enum Mode { NONE, MIRACLES, BUILDING, SECOND }
 
 ## Slices of the building wheel that open a second wheel.
 const GROUPS: Array[StringName] = [&"shop"]
+## The Fixer's actions on the wheel: "fixer_act_0", "fixer_act_1", ...
+const FIXER_ACT := "fixer_act_"
+const LOUD_TINT := Color(1.0, 0.4, 0.3)
 
 @export var campaigns: Campaigns
 @export var menus: BuildingMenus
@@ -138,6 +141,11 @@ func _choose() -> void:
 				elif building and id == &"fixer":
 					breaches.send(building)
 					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+				elif building and String(id).begins_with(FIXER_ACT):
+					var actions := breaches.actions_at(building)
+					var n := String(id).trim_prefix(FIXER_ACT).to_int()
+					if n < actions.size() and breaches.act(building, actions[n]):
+						Sfx.play(get_tree(), _target.position, &"chime", 0.5)
 				elif building and GROUPS.has(id):
 					# A second wheel in the same place; the next click picks from it.
 					_mode = Mode.SECOND
@@ -190,9 +198,18 @@ func _building_items(building: Node3D) -> Array[Dictionary]:
 	if i >= 0 and districts.is_key(i) and not districts.is_key_open(i):
 		var there := breaches.target == building
 		var stuck := breaches.why_not(building)
-		items.append({"id": &"fixer", "label": "Send the Fixer", "color": Color(0.75, 0.6, 1.0),
-				"note": "call back" if there else ("go" if stuck == "" else stuck),
+		var color := breaches.settings.line_color
+		items.append({"id": &"fixer", "label": "Call the Fixer back" if there else "Send the Fixer",
+				"color": color, "note": "" if there else ("go" if stuck == "" else stuck),
 				"enabled": there or stuck == ""})
+		if there:
+			var actions := breaches.actions_at(building)
+			for n in actions.size():
+				var why_act := breaches.why_not_act(building, actions[n])
+				items.append({"id": StringName(FIXER_ACT + str(n)), "label": actions[n].title,
+						"color": color.lerp(LOUD_TINT, 0.5) if actions[n].loud else color,
+						"note": why_act if why_act != "" else breaches.price_of(actions[n]),
+						"enabled": why_act == ""})
 	return items
 
 

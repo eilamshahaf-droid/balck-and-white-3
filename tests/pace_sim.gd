@@ -10,7 +10,8 @@ extends Node
 ## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this. fixer = train a Fixer and keep him
-## opening the nearest key building in reach. hand = stand-in for a player who tries to
+## opening the nearest key building in reach: a loud action while the exposure is under
+## LOUD_UNDER, else a quiet one. hand = stand-in for a player who tries to
 ## carry an inspector off every HAND_EVERY seconds (see _carry_one).
 ## Every STATS_EVERY a STATS block gives the paperwork economy for the Balance Tester:
 ## income and spending per minute by use (the last ten minutes), and running totals of
@@ -25,6 +26,7 @@ const SHOP_EVERY := 4         # one building in this many becomes a shop
 const BURY_FROM := 0.5
 const STATS_EVERY := 600.0   # game seconds
 const HAND_EVERY := 15.0
+const LOUD_UNDER := 0.4
 const CARRY_SUCCESS := 0.6
 const RETURN_SECONDS := 60.0
 const OFFICE_ROOMS: Array[StringName] = [&"training", &"desks", &"archive", &"vault"]
@@ -189,6 +191,12 @@ func _use_fixer(office: Node3D) -> void:
 		_menus.choose(&"train_fixer", office)
 		return
 	if _breaches.target:
+		var choice: FixerAction = null
+		for a in _breaches.actions_at(_breaches.target):
+			if a.loud == (_faith.exposure < LOUD_UNDER):
+				choice = a
+		if choice:
+			_breaches.act(_breaches.target, choice)
 		return
 	var best: Node3D = null
 	var gap := INF

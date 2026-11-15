@@ -551,10 +551,12 @@ func _test_shop_homes_and_upkeep() -> void:
 			"and opens again when there is money")
 
 
-## The Fixer opens a key building: actions that cost paperwork and raise exposure, and
-## paperwork for as long as he is there. Then a Rep can take it, and it is an office.
+## The Fixer opens a key building: the wheel's actions cost paperwork, money and exposure
+## and fill its bar; a loud one sends an inspector. Then a Rep can take it, and it is an
+## office.
 func _test_fixer() -> void:
 	var breaches: Breaches = _main.get_node("Breaches")
+	var inspectors: Inspectors = _main.get_node("Inspectors")
 	var office := _districts.start_building()
 	var key := -1
 	var gap := INF
@@ -564,35 +566,65 @@ func _test_fixer() -> void:
 			gap = d2
 			key = k
 	var b := _districts.buildings[key]
-	# The buildings round it are taken first: the Fixer works from a building of yours.
-	for round in 12:
-		if not _districts.borders_yours(key):
-			_districts.convert_near(b.global_position, 2)
 	_check(breaches.why_not(b) != "" and not breaches.send(b), "with no Fixer nobody can be sent")
 	_faith.belief_pool = PLENTY
 	_check(_menus.choose(&"train_fixer", office), "a Fixer is trained at the Office")
 	_finish_training()
+	var far := not _districts.borders_yours(key)
 	_check(_population.agent_count == 1 and breaches.send(b) and breaches.target == b,
-			"and sent to a key building next to yours")
-	breaches.fixer.body.global_position = breaches._door_of(b)
-	breaches.fixer.body._errand_route.clear()   # he is there: no walk to wait for
-	await _frames(5)
+			"and sent to a key building, next to yours or not (far: %s)" % far)
+	# The buildings round it are taken, so that a Rep can take it once it is open.
+	for round in 12:
+		if not _districts.borders_yours(key):
+			_districts.convert_near(b.global_position, 2)
+	var fs := breaches.settings
+	await _put_at_door(breaches, b)
+	var quiet: FixerAction = null
+	var noisy: FixerAction = null
+	for action in breaches.actions_at(b):
+		if action.loud:
+			noisy = action
+		else:
+			quiet = action
+	_check(quiet != null and noisy != null and breaches.actions_at(b).size() >= 3,
+			"at its door the Fixer has the building's own quiet and loud actions")
 	_faith.belief_pool = 0.0
-	breaches._physics_process(DS.breach_tick)
-	_check(breaches.stalled != "" and breaches.actions_done(b) == 0, "with no paperwork the Fixer waits")
+	_check(breaches.why_not_act(b, quiet) != "" and not breaches.act(b, quiet),
+			"with no paperwork he can do nothing")
 	_faith.belief_pool = 1000.0
 	_faith.exposure = 0.0
-	breaches._physics_process(DS.breach_tick)
-	_check(_faith.belief_pool < 1000.0 - DS.breach_action_paperwork + 0.01 \
-			and is_equal_approx(_faith.exposure, DS.breach_action_exposure),
-			"an action costs paperwork and raises the exposure")
-	var before := _faith.belief_pool
-	breaches._physics_process(DS.breach_tick)
-	_check(_faith.belief_pool < before, "and the Fixer costs paperwork for as long as he is there")
-	for step in int(DS.breach_actions * DS.breach_action_seconds / DS.breach_tick) + DS.breach_actions:
-		breaches._physics_process(DS.breach_tick)
+	_treasury.money = PLENTY
+	_check(breaches.act(b, quiet) and is_equal_approx(_faith.belief_pool, 1000.0 - fs.quiet_paperwork)
+			and is_equal_approx(_faith.exposure, fs.quiet_exposure) and not breaches.act(b, quiet),
+			"a quiet action costs paperwork and exposure, and he does one at a time")
+	_tick_breaches(breaches, fs.quiet_seconds)
+	_check(is_equal_approx(breaches.bar_of(b), fs.quiet_progress) and breaches.doing == null,
+			"done, it fills %d%% of the bar" % roundi(fs.quiet_progress * 100.0))
+	_faith.exposure = fs.gate_exposure
+	_check(breaches.why_not_act(b, quiet).contains("lie low"),
+			"from %d%% exposure he lies low" % roundi(fs.gate_exposure * 100.0))
+	_faith.exposure = 0.0
+	var out := inspectors.out.size()
+	_check(breaches.act(b, noisy) and inspectors.out.size() == out + 1
+			and inspectors.out[-1].building == b, "a loud action sends an inspector to his door")
+	_tick_breaches(breaches, fs.loud_seconds)
+	var bar := fs.quiet_progress + fs.loud_progress
+	_check(is_equal_approx(breaches.bar_of(b), bar), "and fills more of the bar")
+	_faith.belief_pool = 0.0
+	inspectors._arrive(inspectors.out[-1])
+	_check(breaches.target == null and is_equal_approx(breaches.bar_of(b), bar - fs.caught_loss),
+			"with no papers for the inspector the Fixer is sent back and the bar drops")
+	_faith.belief_pool = 1000.0
+	_faith.exposure = 0.0
+	_check(breaches.send(b), "he can be sent again")
+	await _put_at_door(breaches, b)
+	for round in 20:
+		if breaches.target == null:
+			break
+		breaches.act(b, quiet)
+		_tick_breaches(breaches, fs.quiet_seconds)
 	_check(_districts.is_key_open(key) and breaches.target == null and _campaigns.why_not(b) == "",
-			"after %d actions the key building is open to a Rep" % DS.breach_actions)
+			"a full bar opens the key building to a Rep")
 	var share := _districts.key_share(_districts.start_district())
 	_check(_districts.take(key) and _rooms.is_office(key) \
 			and _districts.key_share(_districts.start_district()) > share,
@@ -686,3 +718,15 @@ func _check(ok: bool, what: String) -> void:
 func _frames(n: int) -> void:
 	for i in n:
 		await get_tree().physics_frame
+
+
+## The Fixer is at `b`'s door: no walk to wait for.
+func _put_at_door(breaches: Breaches, b: Node3D) -> void:
+	breaches.fixer.body.global_position = breaches._door_of(b)
+	breaches.fixer.body._errand_route.clear()
+	await _frames(5)
+
+
+func _tick_breaches(breaches: Breaches, seconds: float) -> void:
+	for step in ceili(seconds / breaches.settings.tick):
+		breaches._physics_process(breaches.settings.tick)

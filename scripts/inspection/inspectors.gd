@@ -5,7 +5,8 @@ extends Node3D
 ## past some exposure toward a building of yours. The hand can lift an inspector and set
 ## him down far away, which buys time; one who arrives demands paperwork. A Rep with no
 ## papers is sent home; a building that fails its audit is lost. Paperwork also buries
-## the file, which lowers the exposure.
+## the file, which lowers the exposure. A loud action of the Fixer's sends one to his door,
+## and with no papers there he is sent back.
 
 ## An inspector left `from` (a key building).
 signal sent(inspector: Inspector, from: Node3D)
@@ -17,6 +18,8 @@ signal rep_sent_home(building: Node3D, rep: Resident)
 signal audit_passed(building: Node3D, cost: float)
 ## A building of yours failed its audit and is lost.
 signal turned_back(building: Node3D)
+## There was no paperwork: the Fixer was sent back from key building `building`.
+signal fixer_caught(building: Node3D)
 ## An inspector ran out of patience at `at`.
 signal gave_up(at: Vector3)
 
@@ -28,6 +31,7 @@ const SIDEWALK_GAP := 1.5
 @export var population: Population
 @export var followers: Followers
 @export var faith: Faith
+@export var breaches: Breaches
 
 ## The inspectors out now.
 var out: Array[Inspector] = []
@@ -45,6 +49,7 @@ func _ready() -> void:
 	_coat.albedo_color = I.coat_color
 	_skin.albedo_color = I.skin_color
 	districts.building_changed.connect(_on_building_changed)
+	breaches.loud.connect(func(b: Node3D) -> void: send_to(b, false))
 
 
 func _physics_process(delta: float) -> void:
@@ -182,6 +187,14 @@ func _arrive(inspector: Inspector) -> void:
 					districts.add_meter(i, -I.failed_demand_meter)
 				faith.add_exposure(-I.satisfied_exposure)
 				rep_sent_home.emit(b, rep)
+		elif breaches.target == b:
+			var cost := demand_cost()
+			if faith.spend(cost, &"demand"):
+				papers_shown.emit(b, cost)
+			else:
+				breaches.caught(b)
+				faith.add_exposure(-I.satisfied_exposure)
+				fixer_caught.emit(b)
 	_remove(inspector)
 
 

@@ -94,13 +94,14 @@ districts = NodePath("../Districts")
 script = ExtResource("72_keys")
 districts = NodePath("../Districts")
 
-[node name="Inspectors" type="Node3D" parent="." node_paths=PackedStringArray("districts", "campaigns", "population", "followers", "faith")]
+[node name="Inspectors" type="Node3D" parent="." node_paths=PackedStringArray("districts", "campaigns", "population", "followers", "faith", "breaches")]
 script = ExtResource("71_inspectors")
 districts = NodePath("../Districts")
 campaigns = NodePath("../Campaigns")
 population = NodePath("../Population")
 followers = NodePath("../Followers")
 faith = NodePath("../Faith")
+breaches = NodePath("../Breaches")
 
 [node name="PriestMarker" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("41_priest")
