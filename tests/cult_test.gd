@@ -563,6 +563,9 @@ func _test_shop_homes_and_upkeep() -> void:
 	_rooms._physics_process(_rooms.settings.upkeep_tick + 1.0)
 	_check(is_equal_approx(appeal.value(d), draw + laundry.attraction),
 			"and opens again when there is money")
+	_check(_followers.upkeep_rate(true) < _followers.upkeep_rate() \
+			and is_equal_approx(_followers.upkeep_rate(true), _rooms.upkeep() / 60.0),
+			"under $%d the buildings cost nothing to keep, only the rooms" % roundi(F.poor_below))
 
 
 ## The Fixer opens a key building: the wheel's actions cost paperwork, money and exposure

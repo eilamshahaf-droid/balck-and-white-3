@@ -175,10 +175,11 @@ followers = NodePath("../Followers")
 hand = NodePath("../GodHand")
 attractiveness = NodePath("../Attractiveness")
 
-[node name="Attractiveness" type="Node" parent="." node_paths=PackedStringArray("districts", "rooms")]
+[node name="Attractiveness" type="Node" parent="." node_paths=PackedStringArray("districts", "rooms", "treasury")]
 script = ExtResource("80_attractiveness")
 districts = NodePath("../Districts")
 rooms = NodePath("../Rooms")
+treasury = NodePath("../Treasury")
 
 [node name="CampaignMarks" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts")]
 script = ExtResource("20_marks")
