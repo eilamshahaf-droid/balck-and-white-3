@@ -218,7 +218,7 @@ The Designer's page is the design; the GDD's last section says what is built. In
 - **Only the Slums** until its loop is good, and it is the teaching stage: basic homes only.
   A later stage is harder by its numbers, never by new rules; before a second stage the
   per-stage numbers move into one profile.
-- **Decided, not built** (GDD section 9; section 13 is what is built): the planner inside the
+- **Decided, not built** (GDD section 9; section 14 is what is built): the planner inside the
   building as a doll's house, advanced and luxury blocks, fear and attractiveness as two dials,
   outside decorations, divine powers paid in faith from a Shrine that City Hall fines (GDD
   section 6), stamp and tear.
