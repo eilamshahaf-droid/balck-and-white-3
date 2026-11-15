@@ -625,6 +625,10 @@ func _test_fixer() -> void:
 	inspectors._arrive(inspectors.out[-1])
 	_check(breaches.target == null and is_equal_approx(breaches.bar_of(b), bar - fs.caught_loss),
 			"with no papers for the inspector the Fixer is sent back and the bar drops")
+	bar -= fs.caught_loss
+	_tick_breaches(breaches, 60.0)
+	_check(is_equal_approx(breaches.bar_of(b), bar - fs.left_fade_per_minute),
+			"and while he is away the bar falls back %d%% a minute" % roundi(fs.left_fade_per_minute * 100.0))
 	_faith.belief_pool = 1000.0
 	_faith.exposure = 0.0
 	_check(breaches.send(b), "he can be sent again")

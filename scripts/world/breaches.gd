@@ -45,9 +45,12 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_timer -= delta
-	if _timer > 0.0 or target == null:
+	if _timer > 0.0:
 		return
 	_timer = settings.tick
+	_fade()
+	if target == null:
+		return
 	if not is_instance_valid(fixer.body) or not fixer.body.on_errand:
 		_leave()   # the hand lifted him away
 		return
@@ -198,6 +201,19 @@ func _leave() -> void:
 	fixer = null
 	doing = null   # an action he walked away from is lost, and so is what it cost
 	changed.emit(building)
+
+
+## The bars of key buildings the Fixer has left fall back slowly, so parking him far away
+## for a while pays nothing.
+func _fade() -> void:
+	var step := settings.left_fade_per_minute * settings.tick / 60.0
+	for building: Node3D in _bar:
+		var before: float = _bar[building]
+		if building == target or before <= 0.0 or before >= 1.0:
+			continue
+		_bar[building] = maxf(before - step, 0.0)
+		if roundi(before * 100.0) != roundi(_bar[building] * 100.0):
+			changed.emit(building)
 
 
 func _free_fixer() -> Resident:
