@@ -88,7 +88,8 @@ func _train(rank: Resident.Rank, building: Node3D) -> bool:
 	if why_not_train(rank) != "":
 		return false
 	var cost := F.rep_paperwork if rank == Resident.Rank.MISSIONARY else F.fixer_paperwork
-	if not faith.spend(cost) or not followers.take_one():
+	if not faith.spend(cost, &"rep" if rank == Resident.Rank.MISSIONARY else &"fixer") \
+			or not followers.take_one():
 		return false
 	population.start_training(rank, building)
 	return true

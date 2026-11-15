@@ -74,7 +74,7 @@ func can_borrow() -> bool:
 
 
 func borrow() -> bool:
-	if not can_borrow() or not faith.spend(F.loan_paperwork):
+	if not can_borrow() or not faith.spend(F.loan_paperwork, &"loan"):
 		return false
 	owed = F.loan_owed
 	money += F.loan_money

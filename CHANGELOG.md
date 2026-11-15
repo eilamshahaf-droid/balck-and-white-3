@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.20.1 (2026-11-15): Reps no longer stand idle, and the game is called Godministration
+- **Fix: a trained Rep could stand idle for good.** On the way to the Office a trainee's body could be handed to a passer-by, so the Rep finished training with no body, and no door could get him: the building waited on "needs a Rep" while the HUD showed Reps free. The bot stalled at two buildings for 80 minutes. Bodies of people with a post are no longer handed on, and a newly trained Rep or Fixer always comes out. The cult test checks it.
+- With the fix the bot wins the Slums: at minute 88 without the hand, and at minute 68 with a stand-in for the hand. The CHANGELOG figure for 0.20.0 (42% of the bar after an hour) was measured with stalled Reps; every balance number from before this fix needs a fresh look.
+- **The working title is Godministration** (window title, web page, README). The district is still Spin Cycle Flats.
+- **For the Balance Tester:** `pace_sim` prints a STATS block every 10 minutes: paperwork income and spending per minute by use (Reps, the Fixer, his presence and actions, demands, audits, Bury the File, rooms, floors, the loan, miracles), exposure, and running totals of inspectors, demands, audits, buildings and key buildings. `--bot=...,hand` carries an inspector off every 15 seconds, as a stand-in for the player.
+- `docs/GDD.md` is synced from the Designer's page (v29): the old sections are gone; section 13 says what is built.
+
 ## Pre-Alpha 0.20.0 (2026-11-14): stairs in flights, homes for workers, upkeep, and the Fixer opens key buildings
 Eilam's four points (GDD section 0, item 12). Numbers are provisional.
 - **Stairs climb in flights.** Every floor has one stairs place; the staircase goes up two floors in one column and then moves to another, at the edges too. Every building has its own, so every plan is different. Floors you add get new flights on top.

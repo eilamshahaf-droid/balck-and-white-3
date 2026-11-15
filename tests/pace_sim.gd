@@ -10,7 +10,11 @@ extends Node
 ## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this. fixer = train a Fixer and keep him
-## opening the nearest key building in reach.
+## opening the nearest key building in reach. hand = stand-in for a player who carries
+## an inspector off every HAND_EVERY seconds (he gives up, as if thrown away).
+## Every STATS_EVERY a STATS block gives the paperwork economy for the Balance Tester:
+## income and spending per minute by use (the last ten minutes), and running totals of
+## inspectors, demands, audits and buildings.
 
 const MAIN := preload("res://scenes/main.tscn")
 const SPEED := 8.0
@@ -18,6 +22,8 @@ const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
 const SHOP_EVERY := 4         # one building in this many becomes a shop
 const BURY_FROM := 0.5
+const STATS_EVERY := 600.0   # game seconds
+const HAND_EVERY := 15.0
 const OFFICE_ROOMS: Array[StringName] = [&"training", &"desks", &"archive", &"vault"]
 
 var _main: Node3D
@@ -43,6 +49,17 @@ var _next_act := 0.0
 var _won := 0
 var _lost := 0
 var _bought := 0
+var _next_stats := STATS_EVERY
+var _next_hand := HAND_EVERY
+var _spent := {}           # use -> paperwork spent since the last STATS
+var _pool_then := 0.0
+var _sent := 0
+var _paid := 0
+var _audits := 0
+var _turned_back := 0
+var _carried := 0
+var _gave_up := 0
+var _keys_opened := 0
 
 
 func _ready() -> void:
@@ -68,7 +85,15 @@ func _ready() -> void:
 	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
 	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
 	_inspectors.rep_sent_home.connect(func(_b: Node3D, _r: Resident) -> void: _reps_lost += 1)
+	_inspectors.sent.connect(func(_i: Inspector, _f: Node3D) -> void: _sent += 1)
+	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _paid += 1)
+	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _audits += 1)
+	_inspectors.turned_back.connect(func(_b: Node3D) -> void: _turned_back += 1)
+	_inspectors.gave_up.connect(func(_p: Vector3) -> void: _gave_up += 1)
+	_breaches.opened.connect(func(_b: Node3D) -> void: _keys_opened += 1)
+	_faith.spent.connect(_on_spent)
 	_districts.building_changed.connect(_on_building_changed)
+	_pool_then = _faith.belief_pool
 	Engine.time_scale = SPEED
 	print("PACE SIM bot=%s" % ",".join(_habits))
 
@@ -78,6 +103,12 @@ func _physics_process(delta: float) -> void:
 	if _clock >= _next_act:
 		_next_act += ACT_EVERY
 		_act()
+	if _habits.has("hand") and _clock >= _next_hand:
+		_next_hand += HAND_EVERY
+		_carry_one()
+	if _clock >= _next_stats:
+		_next_stats += STATS_EVERY
+		_print_stats()
 	if _clock < _next_report:
 		return
 	_next_report += REPORT_EVERY
@@ -119,7 +150,7 @@ func _act() -> void:
 	if _habits.has("shop"):
 		var held := _districts.converted_buildings()
 		var shops := get_tree().get_nodes_in_group(Population.SHOPS).size()
-		if shops < held.size() / SHOP_EVERY:
+		if shops < floori(held.size() / float(SHOP_EVERY)):
 			for b in held:
 				if not _followers.has_shop(_districts.index_of(b)) \
 						and _rooms.place_anywhere(_districts.index_of(b), _rooms.settings.kind(&"shop")):
@@ -165,3 +196,43 @@ func _use_fixer(office: Node3D) -> void:
 			best = b
 	if best:
 		_breaches.send(best)
+
+
+func _on_spent(amount: float, use: StringName) -> void:
+	_spent[use] = _spent.get(use, 0.0) + amount
+
+
+## The hand's stand-in: the inspector nearest his door gives up.
+func _carry_one() -> void:
+	var best: Inspector = null
+	var gap := INF
+	for inspector in _inspectors.out:
+		if inspector.lost or inspector.arrived:
+			continue
+		var d := inspector.global_position.distance_squared_to(inspector.building.global_position)
+		if d < gap:
+			gap = d
+			best = inspector
+	if best:
+		best.lost = true
+		_carried += 1
+
+
+## Ten minutes of the paperwork economy, per minute where it is a rate.
+func _print_stats() -> void:
+	var minutes := STATS_EVERY / 60.0
+	var total := 0.0
+	var uses := PackedStringArray()
+	for use: StringName in _spent:
+		total += _spent[use]
+		uses.append("%s %.1f" % [use, _spent[use] / minutes])
+	var income := (_faith.belief_pool - _pool_then + total) / minutes
+	print("STATS %3d min  clerks %d  sellers %d  paperwork income %.1f/min  spent %.1f/min (%s)" % [
+			roundi(_clock / 60.0), _followers.clerks, _followers.sellers, income,
+			total / minutes, ", ".join(uses) if not uses.is_empty() else "nothing"])
+	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep lost) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d" % [
+			roundi(_clock / 60.0), _faith.exposure * 100.0, _inspectors.out.size(), _sent,
+			_carried, _gave_up, _paid, _reps_lost, _audits, _turned_back,
+			_districts.converted_buildings().size(), _won, _lost, _keys_opened])
+	_spent.clear()
+	_pool_then = _faith.belief_pool
