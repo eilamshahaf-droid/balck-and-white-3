@@ -35,7 +35,7 @@ extends Resource
 @export_group("Stores")
 ## What can be kept with no Archive and no Vault.
 @export var base_paperwork_cap := 150.0
-@export var base_money_cap := 1200.0
+@export var base_money_cap := 600.0
 ## The share of a room's money that comes back when it is taken out.
 @export_range(0.0, 1.0) var refund_share := 0.5
 ## The rooms the main Office opens with, each fitted into the first place it goes.

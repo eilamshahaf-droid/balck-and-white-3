@@ -10,9 +10,10 @@ extends Resource
 @export_group("Room and growth")
 ## A building just taken starts with this share of its room filled.
 @export_range(0.0, 1.0) var start_share := 0.5
-## Followers a building gains a minute at attraction 1, while it has room.
+## Followers a building gains a minute, while it has room, and how much faster in a
+## complete block (the block bonus).
 @export var growth_per_minute := 0.5
-@export var block_attraction := 0.25
+@export var block_growth := 0.25
 
 @export_group("Shops: sellers")
 ## Money a second the first seller brings in; each further seller this share of the last.

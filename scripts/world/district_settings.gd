@@ -37,6 +37,16 @@ extends Resource
 ## A building you lose keeps this much of its meter, so there is a window to send
 ## another rep before it has to be won from the start.
 @export_range(0.0, 1.0) var lost_meter := 0.6
+@export_group("Attractiveness: the gate on ordinary buildings")
+## A district's attractiveness: the Office, and every other building you hold (its homes).
+## Rooms that draw people add their RoomKind.attraction (the Laundry Room, a utility).
+@export var office_attraction := 10.0
+@export var building_attraction := 1.0
+## The first this many ordinary buildings need no attractiveness; each one after needs
+## this much more than the one before (the m-th: step x (m - free)).
+@export var free_buildings := 2
+@export var attraction_step := 2.0
+
 @export_group("Key buildings")
 ## One block in this many has a key building (1: every block but the Office's own).
 @export var blocks_per_key := 1.0

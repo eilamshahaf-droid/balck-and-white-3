@@ -24,6 +24,7 @@ const SIDEWALK_GAP := 1.5   # metres out from the wall
 @export var population: Population
 @export var followers: Followers
 @export var hand: GodHand
+@export var attractiveness: Attractiveness
 
 var _campaigns: Array[Campaign] = []
 var _timer := 0.0
@@ -90,7 +91,7 @@ func why_not(building: Node3D) -> String:
 		return "must border a building of yours"
 	if not districts.can_claim(i):
 		return "take the buildings around it first"
-	return ""
+	return attractiveness.why_not(i)
 
 
 ## Every building Reps are working on.
@@ -144,7 +145,7 @@ func seconds_for(building: Node3D) -> float:
 func _on_canvasser_set_down(r: Resident, building: Node3D) -> void:
 	var i := districts.index_of(building)
 	if i >= 0 and districts.wants_you(i) and r.rank == Resident.Rank.MISSIONARY \
-			and districts.can_claim(i):
+			and districts.can_claim(i) and attractiveness.why_not(i) == "":
 		clear(building)
 		_take(building, r)
 		return
@@ -213,7 +214,10 @@ func _step(c: Campaign) -> void:
 	districts.add_meter(i, working * attention * S.tick / seconds_for(c.building))
 	if not districts.wants_you(i):
 		return
-	_take(c.building, rep)
+	# Full, it waits at the door until the district is attractive enough.
+	c.stalled = attractiveness.why_not(i)
+	if c.stalled == "":
+		_take(c.building, rep)
 
 
 ## The nearest free Rep goes to the door; with none free the building waits for one.

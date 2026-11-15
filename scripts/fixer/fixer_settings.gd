@@ -26,6 +26,8 @@ extends Resource
 @export_group("Lying low")
 ## From this exposure on the Fixer starts nothing until it fades.
 @export_range(0.0, 1.0) var gate_exposure := 0.7
+## Share of a key building's bar lost a minute while the Fixer is not there.
+@export_range(0.0, 1.0) var left_fade_per_minute := 0.02
 ## Share of the bar lost when an inspector at the door finds no paperwork and the Fixer
 ## is sent back to the Office.
 @export_range(0.0, 1.0) var caught_loss := 0.3
