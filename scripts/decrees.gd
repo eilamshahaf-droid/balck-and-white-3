@@ -51,7 +51,7 @@ func price(kind: StringName, building: Node3D) -> String:
 func issue(kind: StringName, building: Node3D) -> bool:
 	if not districts.owns(building) or is_done(kind, building) or not can_afford(kind, building):
 		return false
-	faith.spend(cost(kind))
+	faith.spend(cost(kind), &"floors")
 	treasury.spend_money(money_cost(kind, building))
 	building.set_meta(&"decree_floors", building.get_meta(&"decree_floors", 0) + 1)
 	DecreeLooks.grow(building, D.floors_per_decree)

@@ -163,7 +163,7 @@ func place(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> bool:
 	if why_not(index, kind, origin, turns) != "":
 		return false
 	treasury.spend_money(kind.money)
-	faith.spend(kind.paperwork)
+	faith.spend(kind.paperwork, &"room")
 	layout_of(index).add(kind, origin, turns)
 	_count(index)
 	return true

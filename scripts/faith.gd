@@ -10,6 +10,9 @@ extends Node
 ## exist. Lifting and throwing with the hand are not reported: belief comes
 ## only from miracles.
 
+## Paperwork left the pool, paying for `use` (rep, demand, audit, bury, room, ...).
+signal spent(amount: float, use: StringName)
+
 const B = preload("res://data/balance.tres")
 const LAYER_WORLD := 1
 
@@ -54,11 +57,13 @@ func add_exposure(amount: float) -> void:
 	exposure = clampf(exposure + amount, 0.0, 1.0)
 
 
-## Take belief from the pool. Returns false (and takes nothing) if there isn't enough.
-func spend(amount: float) -> bool:
+## Take paperwork from the pool for `use` (what it paid for, for the balance bot).
+## Returns false (and takes nothing) if there isn't enough.
+func spend(amount: float, use := &"other") -> bool:
 	if amount > belief_pool:
 		return false
 	belief_pool -= amount
+	spent.emit(amount, use)
 	return true
 
 
