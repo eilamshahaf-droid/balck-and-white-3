@@ -27,6 +27,7 @@ const BURY_FROM := 0.5
 const STATS_EVERY := 600.0   # game seconds
 const HAND_EVERY := 15.0
 const LOUD_UNDER := 0.4
+const FIXER_RESERVE := 30.0   # paperwork: one Rep's training
 const CARRY_SUCCESS := 0.6
 const RETURN_SECONDS := 60.0
 const OFFICE_ROOMS: Array[StringName] = [&"training", &"desks", &"archive", &"vault"]
@@ -187,20 +188,22 @@ func _act() -> void:
 
 
 ## Train a Fixer when there is none, and send him to the nearest key building that
-## borders ours and is not open yet.
+## borders ours and is not open yet (one a Rep can take once it is open). He acts only
+## with paperwork to spare for a Rep (FIXER_RESERVE), so the Reps keep going.
 func _use_fixer(office: Node3D) -> void:
 	if _population.agent_count == 0:
 		_menus.choose(&"train_fixer", office)
 		return
 	if _breaches.target:
-		var choice: FixerAction = null
 		var fs := _breaches.settings
+		var spare := _faith.belief_pool - FIXER_RESERVE
 		var loud := _faith.exposure < LOUD_UNDER \
-				and _faith.belief_pool >= fs.loud_paperwork + _inspectors.demand_cost()
+				and spare >= fs.loud_paperwork + _inspectors.demand_cost()
+		var choice: FixerAction = null
 		for a in _breaches.actions_at(_breaches.target):
 			if a.loud == loud:
 				choice = a
-		if choice:
+		if choice and spare >= fs.paperwork(choice):
 			_breaches.act(_breaches.target, choice)
 		return
 	var best: Node3D = null
@@ -208,7 +211,7 @@ func _use_fixer(office: Node3D) -> void:
 	for k in _districts.keys:
 		var b := _districts.buildings[k]
 		var d := b.global_position.distance_squared_to(office.global_position)
-		if _breaches.why_not(b) == "" and d < gap:
+		if _breaches.why_not(b) == "" and _districts.borders_yours(k) and d < gap:
 			gap = d
 			best = b
 	if best:
