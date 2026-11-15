@@ -28,6 +28,9 @@ extends Resource
 ## Each room already bought in a building makes the next one there this much dearer
 ## (0.25: the second costs 1.25 times its price, the third 1.5 times).
 @export var price_step := 0.25
+## Rooms whose price never rises: the Office's key rooms, which could otherwise pass the
+## purse and never be bought.
+@export var price_step_exempt: Array[StringName] = [&"training", &"archive", &"vault"]
 
 @export_group("Upkeep")
 ## Seconds between rounds of reopening rooms that closed for want of upkeep.
@@ -42,7 +45,7 @@ extends Resource
 ## The share of a room's money that comes back when it is taken out.
 @export_range(0.0, 1.0) var refund_share := 0.5
 ## The rooms the main Office opens with, each fitted into the first place it goes.
-@export var office_start: Array[StringName] = [&"desks", &"shop"]
+@export var office_start: Array[StringName] = [&"desks", &"shop", &"shop"]
 
 ## The first time the Office's rooms are opened only this kind is offered, so the first
 ## look teaches one thing ("" offers everything).
