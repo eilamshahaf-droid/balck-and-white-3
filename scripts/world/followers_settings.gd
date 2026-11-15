@@ -24,14 +24,19 @@ extends Resource
 @export_group("Offices: clerks")
 ## Paperwork a second per clerk.
 @export var clerk_paperwork := 0.25
+## Clerks at work in all, at most: desks past this make nothing, so the Rep cap, not
+## paperwork, stays the limit (the Balance Tester's sim).
+@export var max_clerks := 8
 
 @export_group("Reps")
 ## Reps the player may have out at once (free, at a door or in training; Managers don't
 ## count); every Training Room adds one.
 @export var rep_cap := 2
-## Paperwork to train a Rep, and a Fixer.
+## Paperwork and money to train a Rep, and a Fixer.
 @export var rep_paperwork := 30.0
+@export var rep_money := 50.0
 @export var fixer_paperwork := 80.0
+@export var fixer_money := 0.0
 @export var fixer_cap := 1
 
 @export_group("The pull on neighbours, inside a block")

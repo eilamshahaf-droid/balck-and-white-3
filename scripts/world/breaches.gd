@@ -22,6 +22,7 @@ const SIDEWALK_GAP := 1.5
 @export var population: Population
 @export var faith: Faith
 @export var hand: GodHand
+@export var treasury: Treasury
 
 ## The key building the Fixer is at or on his way to, and the Fixer; null when idle.
 var target: Node3D
@@ -53,9 +54,13 @@ func _physics_process(delta: float) -> void:
 		_stall("no paperwork: the Fixer waits")
 		return
 	if _left <= 0.0:
+		if not treasury.can_afford(S.breach_action_money):
+			_stall("needs $%d" % roundi(S.breach_action_money))
+			return
 		if not faith.spend(S.breach_action_paperwork, &"fixer_action"):
 			_stall("needs %d paperwork" % roundi(S.breach_action_paperwork))
 			return
+		treasury.spend_money(S.breach_action_money)
 		_left = S.breach_action_seconds
 		faith.add_exposure(S.breach_action_exposure)
 		action_started.emit(target, actions_done(target))

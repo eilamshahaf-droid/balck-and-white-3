@@ -30,10 +30,10 @@ func items(building: Node3D, group := &"") -> Array[Dictionary]:
 	if districts.is_base(building):
 		out.append(_slice(&"train_rep", "Train " + U.title(Resident.Rank.MISSIONARY),
 				U.color(Resident.Rank.MISSIONARY), why_not_train(Resident.Rank.MISSIONARY),
-				"%d paperwork" % roundi(F.rep_paperwork)))
+				_price(F.rep_paperwork, F.rep_money)))
 		out.append(_slice(&"train_fixer", "Train " + U.title(Resident.Rank.AGENT),
 				U.color(Resident.Rank.AGENT), why_not_train(Resident.Rank.AGENT),
-				"%d paperwork: opens key buildings" % roundi(F.fixer_paperwork)))
+				_price(F.fixer_paperwork, F.fixer_money) + ": opens key buildings"))
 	out.append({"id": &"rooms", "label": "Rooms", "color": Color(0.6, 0.85, 1.0),
 			"note": "room for %d followers" % followers.room_of(i)})
 	out.append(_slice(&"floors", "+%d Floors" % D.floors_per_decree, Color(0.95, 0.7, 0.35),
@@ -80,6 +80,9 @@ func why_not_train(rank: Resident.Rank) -> String:
 	var cost := F.rep_paperwork if rep else F.fixer_paperwork
 	if faith.belief_pool < cost:
 		return "needs %d paperwork" % roundi(cost)
+	var money := F.rep_money if rep else F.fixer_money
+	if not treasury.can_afford(money):
+		return "needs $%d" % roundi(money)
 	return ""
 
 
@@ -87,12 +90,19 @@ func why_not_train(rank: Resident.Rank) -> String:
 func _train(rank: Resident.Rank, building: Node3D) -> bool:
 	if why_not_train(rank) != "":
 		return false
-	var cost := F.rep_paperwork if rank == Resident.Rank.MISSIONARY else F.fixer_paperwork
-	if not faith.spend(cost, &"rep" if rank == Resident.Rank.MISSIONARY else &"fixer") \
+	var rep := rank == Resident.Rank.MISSIONARY
+	if not faith.spend(F.rep_paperwork if rep else F.fixer_paperwork, &"rep" if rep else &"fixer") \
 			or not followers.take_one():
 		return false
+	treasury.spend_money(F.rep_money if rep else F.fixer_money)
 	population.start_training(rank, building)
 	return true
+
+
+## "30 paperwork" or "30 paperwork, $50".
+static func _price(paperwork: float, money: float) -> String:
+	var out := "%d paperwork" % roundi(paperwork)
+	return out + (", $%d" % roundi(money) if money > 0.0 else "")
 
 
 func _shop_items(i: int) -> Array[Dictionary]:

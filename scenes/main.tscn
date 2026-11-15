@@ -253,12 +253,13 @@ decrees = NodePath("../../Decrees")
 population = NodePath("../../Population")
 camera = NodePath("../../CameraRig/Camera3D")
 
-[node name="Breaches" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "hand")]
+[node name="Breaches" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "hand", "treasury")]
 script = ExtResource("76_breaches")
 districts = NodePath("../Districts")
 population = NodePath("../Population")
 faith = NodePath("../Faith")
 hand = NodePath("../GodHand")
+treasury = NodePath("../Treasury")
 
 [node name="BreachMarks" type="Node3D" parent="." node_paths=PackedStringArray("breaches", "districts")]
 script = ExtResource("77_breach_marks")
