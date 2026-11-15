@@ -51,17 +51,22 @@ func fill(city: Node3D, by_home: Dictionary, residents: Array[Resident]) -> void
 
 
 ## Bring `r` out onto the street now, in a skeptic's body: a housemate's if
-## one is out, else anyone's.
+## one is out, else anyone's, else a new one. Someone the Committee needs outside (a
+## trainee, a Rep, the Fixer) must never be left without a body: Campaigns can only send
+## a Rep who has one, so a bodiless Rep stood idle for good.
 func bring_out(r: Resident) -> void:
 	for c in bodies:
-		if c.resident.home == r.home and c.can_answer() and not c.resident.is_believer():
+		if c.resident.home == r.home and _spare(c):
 			_give_body(r, c)
 			return
 	for _attempt in 32:
+		if bodies.is_empty():
+			break
 		var c := bodies[_rng.randi() % bodies.size()]
-		if c.can_answer() and not c.resident.is_believer():
+		if _spare(c):
 			_give_body(r, c)
 			return
+	_spawn(r)
 
 
 ## Take `r` off the street: their body goes to someone of the same home who is
@@ -110,7 +115,7 @@ func _swap_someone() -> void:
 	var camera := get_viewport().get_camera_3d()
 	for _attempt in 8:
 		var c := bodies[_rng.randi() % bodies.size()]
-		if not c.can_answer() or c.resident.is_believer() or _seen_by(camera, c.global_position):
+		if not _spare(c) or _seen_by(camera, c.global_position):
 			continue
 		var home := c.resident.home
 		if _seen_by(camera, _city.node_position(_city.nearest_node(home.global_position))):
@@ -119,6 +124,13 @@ func _swap_someone() -> void:
 		if r:
 			_give_body(r, c)
 			return
+
+
+## Can `c`'s body go to someone else? Not a member's, and not someone's with a post
+## (a trainee walking to the Office still needs it).
+func _spare(c: Citizen) -> bool:
+	return c.can_answer() and not c.resident.is_believer() \
+			and c.resident.job == Resident.Job.FREE
 
 
 ## A random resident of `home` who is indoors, or null.

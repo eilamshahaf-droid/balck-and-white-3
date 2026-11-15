@@ -49,11 +49,11 @@ func _physics_process(delta: float) -> void:
 	if not fixer.body.errand_arrived:
 		_stall("on the way")
 		return
-	if not faith.spend(S.breach_presence_paperwork * S.breach_tick / 60.0):
+	if not faith.spend(S.breach_presence_paperwork * S.breach_tick / 60.0, &"fixer_presence"):
 		_stall("no paperwork: the Fixer waits")
 		return
 	if _left <= 0.0:
-		if not faith.spend(S.breach_action_paperwork):
+		if not faith.spend(S.breach_action_paperwork, &"fixer_action"):
 			_stall("needs %d paperwork" % roundi(S.breach_action_paperwork))
 			return
 		_left = S.breach_action_seconds

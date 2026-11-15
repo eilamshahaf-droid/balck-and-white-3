@@ -54,6 +54,7 @@ func tick_training(r: Resident, dt: float) -> void:
 		return
 	unassign(r)
 	_population.convert_to(r, r.training_for)
+	_population.bring_out(r)
 
 
 ## How many are training for `rank` now.
