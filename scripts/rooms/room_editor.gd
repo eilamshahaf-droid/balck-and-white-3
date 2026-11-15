@@ -32,6 +32,7 @@ var _turns := 0
 var _hover := Vector2i(-1, -1)
 var _pointer := Vector2.ZERO
 var _shown: Array[RoomKind] = []   # the kinds on offer for this building, in palette order
+var _office_seen := false
 var _font: Font = ThemeDB.fallback_font
 
 @onready var _s: RoomSettings = rooms.settings
@@ -61,8 +62,10 @@ func _input(event: InputEvent) -> void:
 func open(building: Node3D) -> void:
 	_index = districts.index_of(building)
 	_shown.clear()
+	var first := not _office_seen and districts.is_base(building) and _s.first_offer != &""
+	_office_seen = _office_seen or districts.is_base(building)
 	for kind in _s.kinds:
-		if rooms.offers(_index, kind):
+		if rooms.offers(_index, kind) and (not first or kind.id == _s.first_offer):
 			_shown.append(kind)
 	_picked = NOTHING
 	_turns = 0

@@ -10,13 +10,15 @@ extends Node
 ## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this. fixer = train a Fixer and keep him
-## opening the nearest key building in reach. hand = stand-in for a player who carries
-## an inspector off every HAND_EVERY seconds (he gives up, as if thrown away).
+## opening the nearest key building: a loud action while the exposure is under LOUD_UNDER
+## and there is paperwork for the inspector it brings, else a quiet one. hand = stand-in for a player who tries to
+## carry an inspector off every HAND_EVERY seconds (see _carry_one).
 ## Every STATS_EVERY a STATS block gives the paperwork economy for the Balance Tester:
 ## income and spending per minute by use (the last ten minutes), and running totals of
 ## inspectors, demands, audits and buildings.
 
 const MAIN := preload("res://scenes/main.tscn")
+const IS: InspectorSettings = preload("res://data/inspectors.tres")
 const SPEED := 8.0
 const REPORT_EVERY := 120.0   # game seconds
 const ACT_EVERY := 5.0
@@ -24,6 +26,10 @@ const SHOP_EVERY := 4         # one building in this many becomes a shop
 const BURY_FROM := 0.5
 const STATS_EVERY := 600.0   # game seconds
 const HAND_EVERY := 15.0
+const LOUD_UNDER := 0.4
+const FIXER_RESERVE := 30.0   # paperwork: one Rep's training
+const CARRY_SUCCESS := 0.6
+const RETURN_SECONDS := 60.0
 const OFFICE_ROOMS: Array[StringName] = [&"training", &"desks", &"archive", &"vault"]
 
 var _main: Node3D
@@ -60,6 +66,8 @@ var _turned_back := 0
 var _carried := 0
 var _gave_up := 0
 var _keys_opened := 0
+var _fixer_caught := 0
+var _throws := {}          # Inspector instance id -> times the stand-in threw him
 
 
 func _ready() -> void:
@@ -91,6 +99,7 @@ func _ready() -> void:
 	_inspectors.turned_back.connect(func(_b: Node3D) -> void: _turned_back += 1)
 	_inspectors.gave_up.connect(func(_p: Vector3) -> void: _gave_up += 1)
 	_breaches.opened.connect(func(_b: Node3D) -> void: _keys_opened += 1)
+	_inspectors.fixer_caught.connect(func(_b: Node3D) -> void: _fixer_caught += 1)
 	_faith.spent.connect(_on_spent)
 	_districts.building_changed.connect(_on_building_changed)
 	_pool_then = _faith.belief_pool
@@ -179,19 +188,30 @@ func _act() -> void:
 
 
 ## Train a Fixer when there is none, and send him to the nearest key building that
-## borders ours and is not open yet.
+## borders ours and is not open yet (one a Rep can take once it is open). He acts only
+## with paperwork to spare for a Rep (FIXER_RESERVE), so the Reps keep going.
 func _use_fixer(office: Node3D) -> void:
 	if _population.agent_count == 0:
 		_menus.choose(&"train_fixer", office)
 		return
 	if _breaches.target:
+		var fs := _breaches.settings
+		var spare := _faith.belief_pool - FIXER_RESERVE
+		var loud := _faith.exposure < LOUD_UNDER \
+				and spare >= fs.loud_paperwork + _inspectors.demand_cost()
+		var choice: FixerAction = null
+		for a in _breaches.actions_at(_breaches.target):
+			if a.loud == loud:
+				choice = a
+		if choice and spare >= fs.paperwork(choice):
+			_breaches.act(_breaches.target, choice)
 		return
 	var best: Node3D = null
 	var gap := INF
 	for k in _districts.keys:
 		var b := _districts.buildings[k]
 		var d := b.global_position.distance_squared_to(office.global_position)
-		if _breaches.why_not(b) == "" and d < gap:
+		if _breaches.why_not(b) == "" and _districts.borders_yours(k) and d < gap:
 			gap = d
 			best = b
 	if best:
@@ -202,20 +222,25 @@ func _on_spent(amount: float, use: StringName) -> void:
 	_spent[use] = _spent.get(use, 0.0) + amount
 
 
-## The hand's stand-in: the inspector nearest his door gives up.
+## The hand's stand-in, with the Balance Tester's numbers: the inspector nearest his door
+## is carried off (CARRY_SUCCESS of the time; the rest he slips the hand) and is out of
+## the game RETURN_SECONDS, shorter each further throw, like a real one walking back.
 func _carry_one() -> void:
 	var best: Inspector = null
 	var gap := INF
 	for inspector in _inspectors.out:
-		if inspector.lost or inspector.arrived:
+		if inspector.lost or inspector.arrived or not inspector.is_walking():
 			continue
 		var d := inspector.global_position.distance_squared_to(inspector.building.global_position)
 		if d < gap:
 			gap = d
 			best = inspector
-	if best:
-		best.lost = true
-		_carried += 1
+	if best == null or randf() >= CARRY_SUCCESS:
+		return
+	var throws: int = _throws.get(best.get_instance_id(), 0)
+	best.lie_down(RETURN_SECONDS * pow(1.0 - IS.stun_shortens, throws))
+	_throws[best.get_instance_id()] = throws + 1
+	_carried += 1
 
 
 ## Ten minutes of the paperwork economy, per minute where it is a rate.
@@ -230,9 +255,9 @@ func _print_stats() -> void:
 	print("STATS %3d min  clerks %d  sellers %d  paperwork income %.1f/min  spent %.1f/min (%s)" % [
 			roundi(_clock / 60.0), _followers.clerks, _followers.sellers, income,
 			total / minutes, ", ".join(uses) if not uses.is_empty() else "nothing"])
-	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep lost) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d" % [
+	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep lost) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d  Fixer caught %d" % [
 			roundi(_clock / 60.0), _faith.exposure * 100.0, _inspectors.out.size(), _sent,
 			_carried, _gave_up, _paid, _reps_lost, _audits, _turned_back,
-			_districts.converted_buildings().size(), _won, _lost, _keys_opened])
+			_districts.converted_buildings().size(), _won, _lost, _keys_opened, _fixer_caught])
 	_spent.clear()
 	_pool_then = _faith.belief_pool

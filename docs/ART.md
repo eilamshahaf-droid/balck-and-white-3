@@ -125,6 +125,32 @@ Walls: a mural is a decal quad on a wall (white ground, bold bright shapes) that
 grey-out so it always pops; a covered wall is a flat beige slab in the same place; a camera and
 a fine notice are small props. The district systems place them.
 
+## Rooms: the doll's house (proposal, agreed direction 2026-11-15)
+
+Eilam's rule: **the furniture says what the room is** (a home looks like a home), and **the level adds rooms' worth of furniture, dearer and more of it**. Colour is the second layer: blue homes, red fear, yellow shops, purple offices, stronger with level (the demo: https://claude.ai/artifact/6mCDkXaD3VemsUGao46qfC, source `art/tools/dollhouse-rooms.html`). The building is shown cut away from the front, camera high, floors tall enough to see into every room.
+
+| Kind (`data/rooms.tres`) | Colour | Level 1 | Level 2 adds | Level 3 adds |
+| --- | --- | --- | --- | --- |
+| Family Flat, Row Flat | blue | bed, bedside table | sofa, table, rug, plant | bookcase, picture, standing lamp, big bed |
+| Duplex, Common Room (advanced homes) | blue | as flat, two floors / a shared table and benches | more beds, a sofa | rich furnishings |
+| Shop, Corner Shop, Market | yellow | counter, till, shelves | sign, display table with goods | glass case, awning, a customer |
+| Stock Room | yellow | crates, a pallet | taller stacks | forklift or trolley |
+| Desk Room | purple | one desk, chair, lamp | second desk, filing cabinets, plant | boss desk, rug, bookcase |
+| Archive | purple | tall shelves of boxes | ladder, more rows | card index, reading table |
+| Vault | purple | steel door, strongbox | stacked cash, second door | bank-vault wheel, guard |
+| Training Room | purple | benches, whiteboard | lectern, stamp table | stage, banner |
+| Guard Room | red | barrier, camera, bars | second camera, guard at a desk | gate, red bell, monitor wall |
+| Laundry Room | teal (utility) | washers in a row | dryers, folding table | line of machines, soap crates |
+
+**Where the models come from** (decision for Eilam, in this order of cost):
+1. **Kenney Furniture Kit** (CC0, about 140 models in glTF): bed, double bed, sofa, tables, rug, lamps, bookcase, desk, chair, cabinets, plants, washer and dryer, shelves. It is flat-coloured, so it needs the same toon pass as everything else. Eilam downloads it (the cloud cannot reach kenney.nl) and drops the zip in the Drive folder.
+2. **Meshy** for what the kit lacks, in our miniature style (the prompt is in the art book): shop counter with till, glass display case, shop awning, vault door and strongbox, security camera, barrier gate, guard desk, filing cabinets, crate stacks, stamp table, whiteboard, red-tape reel. About 12 models, one image each.
+3. Nothing hand-made in Blender unless a model cannot be generated.
+
+Budget: every room in a building shares models, so draw calls stay low by merging each room's furniture into one mesh when the building is opened. The planner is a close-up, so these models may be richer than street props.
+
+**Open for the Designer:** the rooms have a `tier` only for homes today. Do shops, offices and fear rooms also have levels (upgrades), or is "level" a home-only idea? The table above assumes every kind can have three levels.
+
 ## Facade styles (catalog, first four: New York)
 
 Source: Eilam's reference photos (Wikimedia Commons, CC BY-SA: reference only, never in the game),

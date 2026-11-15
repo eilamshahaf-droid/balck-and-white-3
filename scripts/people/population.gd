@@ -210,7 +210,8 @@ func _where(r: Resident) -> Vector3:
 	return r.body.global_position if _has_body(r) else r.home.global_position
 
 
-## The game starts here: one of the main Office's residents is the Secretary.
+## The game starts here: one of the main Office's residents is the Secretary, and the
+## first Reps (UnitSettings.start_reps) come out free.
 func found_cult() -> void:
 	var start := districts.start_building()
 	if start == null:
@@ -222,6 +223,11 @@ func found_cult() -> void:
 	priest.color = U.color(Resident.Rank.HIGH_PRIEST)
 	convert_to(priest, Resident.Rank.HIGH_PRIEST)
 	staffing.post(priest, Resident.Job.PRIEST, start)
+	for n in U.start_reps:
+		var rep := recruit(start.global_position)
+		convert_to(rep, Resident.Rank.MISSIONARY)
+		bring_out(rep)
+	_count_ranks()
 	cult_founded.emit(start)
 
 

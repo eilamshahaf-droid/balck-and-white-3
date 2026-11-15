@@ -3,6 +3,29 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.21.0 (2026-11-15): the Fixer's wheel, the first ten minutes, and buildings that cost upkeep
+The Designer's briefs: the Fixer (approved by Eilam), the first ten minutes (GDD v36), and a money round.
+- **The Fixer works from a wheel.** Train him at the Office (80 paperwork) and set him down at any key building (red sign), next to yours or not, or choose Send the Fixer on its wheel. At the door, hold the button on the building: each key building has its own three actions with their own jokes (the Permit Office: Permit a permit, Swap the trays, Announce free permits). **Quiet** ones cost 20 paperwork, $20 and 3 points of exposure and fill 15% of the bar. The **loud** one costs 60 paperwork, $60 and 12 points, fills 45%, and sends an inspector to his door from another key building: with no paperwork for him, the Fixer is sent back to the Office and the bar loses 30%. Each action takes 30 seconds (less under the hand). From 70% exposure he starts nothing. A full bar opens the building and a Rep takes it as before. Numbers in `data/fixer.tres`.
+- The old Fixer charged paperwork every minute he stood at a key building, even when he had stalled. In the bot he stalled for whole games and ate a third of the paperwork. That cost is gone.
+- **The first ten minutes**:
+  - The Secretary's minute about the refused application shows on the first run only (Close the minutes). The old briefing still spoke of landmarks and the police.
+  - The first Rep waits by the Office, free.
+  - A **double click on a building of yours opens its rooms**; elsewhere the camera still flies. The first time on the Office only the Desk Room is offered.
+  - The first inspector comes after 5 minutes, not 90 seconds.
+  - The mission card follows the opening: take the first building, plan the Office, throw the inspector, train the Fixer, open a key building, then "Key buildings: 1 of 9".
+- **Every building of yours costs $4 a minute** to keep, half in a complete block. Bot runs with $1, $4, $8 and $15: $1 changes nothing, $15 leaves money near $0 for 40 minutes, and $4 and $8 keep it under the $1,200 cap until about minute 25. After that every run sits at the cap again.
+- Bot, 90 minutes (`train,send,shop,upgrade,bury,fixer`, no hand):
+  - By minute 10: 6 or 7 buildings with the Office, the Fixer trained.
+  - Three of four runs won at 84 to 88 minutes.
+  - In the fourth, money ran dry at minute 16 and the bot, which never takes a loan, held 27 buildings.
+  - With the old Fixer, runs with only 2 clerks stalled at 20 to 28 buildings.
+- From the earlier balance round (#56): a clerk cap of 8, Reps cost $50, rooms cost half as much again, each throw stuns an inspector 25% shorter, inspectors walk in pairs from 80% exposure, and a failed demand costs the building 40% of its bar.
+- Try it: start a new game (the briefing shows once; `--briefing` shows it again). Set the Rep down next door, double click the Office, throw the first inspector, then train the Fixer and set him at a red-signed building. Hold the button there for his actions.
+
+## Rooms as a doll's house: furniture by kind and level (2026-11-15)
+- `docs/ART.md` has a new section "Rooms: the doll's house": what furniture each of the fourteen room kinds shows at three levels, colour by use, where the models come from (Kenney Furniture Kit, then Meshy), and one open question for the Designer.
+- Try it: the demo linked in that section.
+
 ## Pre-Alpha 0.20.1 (2026-11-15): Reps no longer stand idle, and the game is called Godministration
 - **Fix: a trained Rep could stand idle for good.** On the way to the Office a trainee's body could be handed to a passer-by, so the Rep finished training with no body, and no door could get him: the building waited on "needs a Rep" while the HUD showed Reps free. The bot stalled at two buildings for 80 minutes. Bodies of people with a post are no longer handed on, and a newly trained Rep or Fixer always comes out. The cult test checks it.
 - With the fix the bot wins the Slums: at minute 88 without the hand, and at minute 68 with a stand-in for the hand. The CHANGELOG figure for 0.20.0 (42% of the bar after an hour) was measured with stalled Reps; every balance number from before this fix needs a fresh look.

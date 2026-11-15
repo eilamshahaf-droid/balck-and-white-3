@@ -19,10 +19,12 @@ extends Resource
 @export var spawn_seconds := 50.0
 @export var spawn_seconds_min := 15.0
 ## Seconds before the very first one, so the first building is taken in peace.
-@export var first_seconds := 90.0
+@export var first_seconds := 300.0
 ## Inspectors out at once with no exposure, and how many more at full exposure.
 @export var max_base := 1
 @export var max_extra := 3
+## From this exposure on they walk out in pairs.
+@export_range(0.0, 1.0) var pairs_from := 0.8
 ## From this exposure on, some inspectors audit a building of yours instead of a Rep.
 @export_range(0.0, 1.0) var audit_from := 0.35
 @export_range(0.0, 1.0) var audit_chance := 0.4
@@ -30,8 +32,10 @@ extends Resource
 @export_group("The inspector")
 @export var speed := 2.4
 @export var mass := 3.0
-## Seconds he lies where he landed before he gets up and walks again.
+## Seconds he lies where he landed before he gets up and walks again; every further throw
+## of the same inspector makes it this much shorter (the hand's work is Sisyphean).
 @export var stun_seconds := 4.0
+@export_range(0.0, 1.0) var stun_shortens := 0.25
 ## Seconds after leaving his office that he gives up and goes home.
 @export var patience_seconds := 150.0
 ## He has arrived this close to the door he is after.
@@ -44,6 +48,8 @@ extends Resource
 @export var alert_pixel_size := 0.0012
 
 @export_group("What he demands")
+## Share of a full takeover bar the building loses when its Rep has no papers.
+@export_range(0.0, 1.0) var failed_demand_meter := 0.4
 ## Paperwork a Rep must show, with no exposure; times 1 + exposure * demand_exposure.
 @export var demand_paperwork := 25.0
 @export var demand_exposure := 1.0

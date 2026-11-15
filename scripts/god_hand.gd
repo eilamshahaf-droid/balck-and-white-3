@@ -32,6 +32,8 @@ signal circle_drawn(screen_pos: Vector2, screen_radius: float)
 signal gesture_unrecognised
 ## A right click without drawing anything.
 signal right_clicked
+## A double click on a building of yours (it opens its rooms; elsewhere the camera flies).
+signal own_building_double_clicked(building: Node3D)
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
 const LAYER_WORLD := 1
@@ -304,7 +306,10 @@ func _on_press(event: InputEventMouseButton) -> void:
 	var hit := _raycast_mouse()
 	if event.double_click:
 		_press = Press.NONE
-		if hit:
+		var building: Node3D = BuildingBox.building_of(hit.collider) if hit else null
+		if building and districts.owns(building):
+			own_building_double_clicked.emit(building)
+		elif hit:
 			rig.fly_to(hit.position, _is_grabbable(hit.collider))
 		return
 	_press_time = _time()
