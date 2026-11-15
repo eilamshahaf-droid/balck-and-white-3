@@ -160,9 +160,14 @@ func clerks_in(index: int) -> int:
 	return mini(rooms.totals_of(index).clerks, floori(_count[index]))
 
 
-## Money a second the upkeep of your rooms costs.
+## Money a second the upkeep of your rooms and buildings costs.
 func upkeep_rate() -> float:
-	return rooms.upkeep() / 60.0
+	var per_minute := rooms.upkeep()
+	for i in _count.size():
+		if districts.buildings[i] != null and districts.is_yours(i):
+			per_minute += F.building_upkeep \
+					* (F.complete_block_upkeep_share if districts.in_complete_block(i) else 1.0)
+	return per_minute / 60.0
 
 
 ## The player allows one seller more (`step` 1) or fewer (-1) in building `index`'s shop
