@@ -11,6 +11,10 @@ class Piece:
 	var turns := 0
 	## Closed for want of upkeep: it gives nothing until there is money again.
 	var open := true
+	## What it cost (part comes back when it is taken out); a room given at the start
+	## was not bought and doesn't raise the price of the next one.
+	var paid := 0.0
+	var bought := true
 
 	func cells() -> Array[Vector2i]:
 		var out: Array[Vector2i] = []

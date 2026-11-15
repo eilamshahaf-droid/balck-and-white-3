@@ -1,4 +1,4 @@
-[gd_scene load_steps=41 format=3]
+[gd_scene load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -40,6 +40,7 @@
 [ext_resource type="Script" path="res://scripts/props/breach_marks.gd" id="77_breach_marks"]
 [ext_resource type="Script" path="res://scripts/world/attractiveness.gd" id="80_attractiveness"]
 [ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
+[ext_resource type="Script" path="res://scripts/props/training_marks.gd" id="81_training_marks"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -200,7 +201,7 @@ script = ExtResource("10_debug")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="Mission" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("districts", "population", "campaigns", "progress", "inspectors", "breaches", "menus")]
+[node name="Mission" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("districts", "population", "campaigns", "progress", "inspectors", "breaches", "rooms")]
 offset_left = 12.0
 offset_top = 96.0
 offset_right = 412.0
@@ -212,7 +213,7 @@ campaigns = NodePath("../../Campaigns")
 progress = NodePath("../../DistrictProgress")
 inspectors = NodePath("../../Inspectors")
 breaches = NodePath("../../Breaches")
-menus = NodePath("../../BuildingMenus")
+rooms = NodePath("../../Rooms")
 
 [node name="Help" type="Label" parent="HUD"]
 anchors_preset = 1
@@ -273,6 +274,11 @@ faith = NodePath("../Faith")
 hand = NodePath("../GodHand")
 treasury = NodePath("../Treasury")
 rooms = NodePath("../Rooms")
+
+[node name="TrainingMarks" type="Node3D" parent="." node_paths=PackedStringArray("population", "districts")]
+script = ExtResource("81_training_marks")
+population = NodePath("../Population")
+districts = NodePath("../Districts")
 
 [node name="BreachMarks" type="Node3D" parent="." node_paths=PackedStringArray("breaches", "districts")]
 script = ExtResource("77_breach_marks")

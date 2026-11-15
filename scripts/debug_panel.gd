@@ -1,11 +1,14 @@
 extends CanvasLayer
 ## Testing shortcuts, top right (hidden; F1 shows it): add paperwork and money, take the
-## buildings nearest the middle of the screen, raise exposure. Not part of the game.
+## buildings nearest the middle of the screen, raise exposure; and a log of money and
+## paperwork in and out each minute, for playtests. Not part of the game.
 
 const BELIEF_GIFT := 100.0
 const EXPOSURE_GIFT := 0.2
 const TAKE_COUNT := 10
 const MONEY_GIFT := 200.0
+const LOG_SECONDS := 60.0
+const LOG_LINES := 12
 
 @onready var faith: Faith = get_node("../Faith")
 @onready var rig: Node3D = get_node("../CameraRig")
@@ -13,6 +16,14 @@ const MONEY_GIFT := 200.0
 @onready var treasury: Treasury = get_node("../Treasury")
 
 var _panel: PanelContainer
+var _log: Label
+var _lines: PackedStringArray = []
+var _minute := 0
+var _money_in := 0.0
+var _money_out := 0.0
+var _paper_out := 0.0
+var _last_money := 0.0
+var _last_paper := 0.0
 
 
 func _ready() -> void:
@@ -33,6 +44,21 @@ func _ready() -> void:
 	_button(box, "Money +%d" % roundi(MONEY_GIFT), func(): treasury.add_money(MONEY_GIFT))
 	_button(box, "Take %d buildings here" % TAKE_COUNT, func(): districts.convert_near(rig.target_pivot, TAKE_COUNT))
 	_button(box, "Exposure +%d%%" % roundi(EXPOSURE_GIFT * 100.0), func(): faith.exposure = minf(faith.exposure + EXPOSURE_GIFT, 1.0))
+	var head := Label.new()
+	head.text = "Per minute: money in/out, paperwork in/out"
+	box.add_child(head)
+	_log = Label.new()
+	_log.add_theme_font_size_override("font_size", 12)
+	box.add_child(_log)
+	_last_money = treasury.money
+	_last_paper = faith.belief_pool
+	treasury.money_changed.connect(_on_money_changed)
+	faith.spent.connect(func(amount: float, _use: StringName) -> void: _paper_out += amount)
+	var timer := Timer.new()
+	timer.wait_time = LOG_SECONDS
+	timer.timeout.connect(_log_minute)
+	add_child(timer)
+	timer.start()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -46,3 +72,30 @@ func _button(box: VBoxContainer, text: String, action: Callable) -> void:
 	b.focus_mode = Control.FOCUS_NONE  # keep Space and the arrow keys for the game
 	b.pressed.connect(action)
 	box.add_child(b)
+
+
+func _on_money_changed(money: float) -> void:
+	var change := money - _last_money
+	if change > 0.0:
+		_money_in += change
+	else:
+		_money_out -= change
+	_last_money = money
+
+
+## One line for the minute that just ended. Paperwork earned is the change plus what was
+## spent, since it accrues every frame with no signal of its own.
+func _log_minute() -> void:
+	_minute += 1
+	var paper := faith.belief_pool
+	var paper_in := paper - _last_paper + _paper_out
+	_lines.append("m%d  $%d (+%d -%d)  pp %d (+%d -%d)" % [_minute, roundi(treasury.money),
+			roundi(_money_in), roundi(_money_out), roundi(paper), roundi(paper_in),
+			roundi(_paper_out)])
+	if _lines.size() > LOG_LINES:
+		_lines.remove_at(0)
+	_log.text = "\n".join(_lines)
+	_last_paper = paper
+	_money_in = 0.0
+	_money_out = 0.0
+	_paper_out = 0.0

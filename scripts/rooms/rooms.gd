@@ -9,6 +9,8 @@ extends Node
 
 ## Building `index`'s rooms changed.
 signal changed(index: int)
+## `kind` was fitted into building `index` (after it was paid for).
+signal placed(index: int, kind: RoomKind)
 ## A room of building `index` closed for want of upkeep, or opened again.
 signal room_closed(index: int, kind: RoomKind)
 signal room_reopened(index: int, kind: RoomKind)
@@ -35,6 +37,8 @@ class Totals:
 
 # Loaded at run time: its typed array holds custom resources.
 var settings: RoomSettings = load("res://data/rooms.tres")
+## The first room the planner offers is still a gift (see is_gift).
+var gift := true
 
 var _layouts := {}   # building index -> BuildingLayout
 var _totals := {}    # building index -> Totals
@@ -132,11 +136,35 @@ func why_not(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> String
 		if kind.needs_next != &"" and not layout.touches(kind.turned(turns), origin, kind.needs_next):
 			return "must be next to a %s" % String(kind.needs_next).capitalize()
 		return "must touch the ground floor"
-	if not treasury.can_afford(kind.money):
-		return "needs $%d" % roundi(kind.money)
-	if faith.belief_pool < kind.paperwork:
-		return "needs %d paperwork" % roundi(kind.paperwork)
+	if not treasury.can_afford(money_of(index, kind)):
+		return "needs $%d" % roundi(money_of(index, kind))
+	if faith.belief_pool < paperwork_of(index, kind):
+		return "needs %d paperwork" % roundi(paperwork_of(index, kind))
 	return ""
+
+
+## What `kind` costs in building `index` now: each room already bought there makes the
+## next one dearer (RoomSettings.price_step); the gift room is free.
+func money_of(index: int, kind: RoomKind) -> float:
+	return 0.0 if is_gift(kind) else kind.money * _escalation(index)
+
+
+func paperwork_of(index: int, kind: RoomKind) -> float:
+	return 0.0 if is_gift(kind) else kind.paperwork * _escalation(index)
+
+
+## The first room the planner offers (RoomSettings.first_offer) is free, once.
+func is_gift(kind: RoomKind) -> bool:
+	return gift and kind.id == settings.first_offer
+
+
+## Rooms bought in building `index` (not those it was given at the start).
+func bought_in(index: int) -> int:
+	var n := 0
+	for p in layout_of(index).pieces:
+		if p.bought:
+			n += 1
+	return n
 
 
 ## Is `kind` on offer for building `index`: office rooms in an office, homes up to the
@@ -162,10 +190,14 @@ func why_not_remove(index: int, cell: Vector2i) -> String:
 func place(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> bool:
 	if why_not(index, kind, origin, turns) != "":
 		return false
-	treasury.spend_money(kind.money)
-	faith.spend(kind.paperwork, &"room")
-	layout_of(index).add(kind, origin, turns)
+	var money := money_of(index, kind)
+	treasury.spend_money(money)
+	faith.spend(paperwork_of(index, kind), &"room")
+	if is_gift(kind):
+		gift = false
+	layout_of(index).add(kind, origin, turns).paid = money
 	_count(index)
+	placed.emit(index, kind)
 	return true
 
 
@@ -183,7 +215,7 @@ func remove(index: int, cell: Vector2i) -> bool:
 	if piece == null or why_not_remove(index, cell) != "":
 		return false
 	layout.pieces.erase(piece)
-	treasury.add_money(piece.kind.money * settings.refund_share)
+	treasury.add_money(piece.paid * settings.refund_share)
 	_count(index)
 	return true
 
@@ -253,7 +285,11 @@ func _furnish_office(layout: BuildingLayout) -> void:
 		var kind := settings.kind(id)
 		var spot := _first_fit(layout, kind)
 		if spot.z >= 0:
-			layout.add(kind, Vector2i(spot.x, spot.y), spot.z)
+			layout.add(kind, Vector2i(spot.x, spot.y), spot.z).bought = false
+
+
+func _escalation(index: int) -> float:
+	return 1.0 + settings.price_step * bought_in(index)
 
 
 func _count(index: int) -> void:

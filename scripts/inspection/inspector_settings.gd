@@ -19,7 +19,7 @@ extends Resource
 @export var spawn_seconds := 50.0
 @export var spawn_seconds_min := 15.0
 ## Seconds before the very first one, so the first building is taken in peace.
-@export var first_seconds := 300.0
+@export var first_seconds := 150.0
 ## Inspectors out at once with no exposure, and how many more at full exposure.
 @export var max_base := 1
 @export var max_extra := 3
@@ -48,8 +48,6 @@ extends Resource
 @export var alert_pixel_size := 0.0012
 
 @export_group("What he demands")
-## Share of a full takeover bar the building loses when its Rep has no papers.
-@export_range(0.0, 1.0) var failed_demand_meter := 0.4
 ## Paperwork a Rep must show, with no exposure; times 1 + exposure * demand_exposure.
 @export var demand_paperwork := 25.0
 @export var demand_exposure := 1.0
@@ -68,7 +66,7 @@ extends Resource
 @export_group("Texts")
 @export var sent_note := "Inspector on the way"
 @export var papers_note := "Papers in order: -%d paperwork"
-@export var rep_lost_note := "No papers. Rep sent home"
+@export var rep_held_note := "No papers. The inspector holds a Rep back"
 @export var audit_note := "Audit passed: -%d paperwork"
 @export var turned_back_note := "Audit failed. Building lost"
 @export var gave_up_note := "Inspector gave up"

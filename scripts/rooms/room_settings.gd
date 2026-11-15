@@ -25,6 +25,9 @@ extends Resource
 @export var office_min_rows := 6
 ## Followers a cell with no room in it houses (a plain flat).
 @export var followers_per_cell := 1
+## Each room already bought in a building makes the next one there this much dearer
+## (0.25: the second costs 1.25 times its price, the third 1.5 times).
+@export var price_step := 0.25
 
 @export_group("Upkeep")
 ## Seconds between rounds of reopening rooms that closed for want of upkeep.
@@ -44,6 +47,8 @@ extends Resource
 ## The first time the Office's rooms are opened only this kind is offered, so the first
 ## look teaches one thing ("" offers everything).
 @export var first_offer: StringName = &"desks"
+## How the palette shows the gift room's price.
+@export var gift_label := "free, a gift"
 
 @export_group("Editor")
 @export var cell_pixels := 76.0

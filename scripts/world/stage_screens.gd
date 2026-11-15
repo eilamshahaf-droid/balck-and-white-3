@@ -26,6 +26,8 @@ func _ready() -> void:
 		_root.visible = false
 		return
 	_show(0)
+	# The hand is a 3D glove under the dimmed screen: show the system pointer meanwhile.
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	# Let the city fill in and the HUD show its numbers before the world waits.
 	await get_tree().create_timer(0.5).timeout
 	if _root.visible:
@@ -56,6 +58,7 @@ func _on_next() -> void:
 func _end() -> void:
 	_root.visible = false
 	get_tree().paused = false
+	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 	var seen := FileAccess.open(SEEN, FileAccess.WRITE)
 	if seen:
 		seen.store_string("1")
