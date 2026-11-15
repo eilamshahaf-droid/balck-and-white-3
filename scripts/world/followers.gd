@@ -159,17 +159,16 @@ func clerks_in(index: int) -> int:
 	return mini(rooms.totals_of(index).clerks, floori(_count[index]))
 
 
-## Money a second the upkeep of your rooms and buildings costs; a `poor` Committee pays
-## only its rooms' (FollowersSettings.poor_below), so it can always climb back.
-func upkeep_rate(poor := false) -> float:
-	var per_minute := rooms.upkeep()
-	if poor:
-		return per_minute / 60.0
+## Money a second the upkeep of your rooms and buildings costs, with `money` in hand: the
+## buildings' share grows from nothing at $0 to all of it at FollowersSettings.full_upkeep_at,
+## so a Committee short of money can always climb back.
+func upkeep_rate(money := INF) -> float:
+	var buildings := 0.0
 	for i in _count.size():
 		if districts.buildings[i] != null and districts.is_yours(i):
-			per_minute += F.building_upkeep \
+			buildings += F.building_upkeep \
 					* (F.complete_block_upkeep_share if districts.in_complete_block(i) else 1.0)
-	return per_minute / 60.0
+	return (rooms.upkeep() + buildings * clampf(money / F.full_upkeep_at, 0.0, 1.0)) / 60.0
 
 
 ## The player allows one seller more (`step` 1) or fewer (-1) in building `index`'s shop

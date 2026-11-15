@@ -32,6 +32,13 @@ extends Resource
 ## is sent back to the Office.
 @export_range(0.0, 1.0) var caught_loss := 0.3
 
+@export_group("Guard Room")
+## With a Guard Room in any building of yours, his actions add this share of their exposure
+## and a loud one gone wrong loses `guarded_caught_loss` of the bar instead. More Guard
+## Rooms add nothing here (they still lower the audit price).
+@export_range(0.0, 1.0) var guarded_exposure_share := 0.8
+@export_range(0.0, 1.0) var guarded_caught_loss := 0.15
+
 @export_group("Look")
 @export var line := "Nothing to see here."
 @export var line_color := Color(0.75, 0.6, 1.0)

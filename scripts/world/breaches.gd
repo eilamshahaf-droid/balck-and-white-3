@@ -7,7 +7,8 @@ extends Node
 ## part of the bar. Quiet ones are small; loud ones are big and send an inspector to his
 ## door. Past a certain exposure he starts nothing. Opening is his talent: he goes to any
 ## key building, next to yours or not (taking it still needs a Rep next door). A full bar opens the building: a Rep
-## can take it like any other, and once taken it is an office of yours.
+## can take it like any other, and once taken it is an office of yours. A Guard Room in
+## any building of yours covers for him: less exposure, and less of the bar lost.
 
 ## The Fixer started `action` at `building`.
 signal action_started(building: Node3D, action: FixerAction)
@@ -26,6 +27,7 @@ const SIDEWALK_GAP := 1.5
 @export var faith: Faith
 @export var hand: GodHand
 @export var treasury: Treasury
+@export var rooms: Rooms
 
 var settings: FixerSettings = load("res://data/fixer.tres")
 ## The key building the Fixer is at or on his way to, and the Fixer; null when idle.
@@ -126,13 +128,27 @@ func price_of(action: FixerAction) -> String:
 			", loud" if action.loud else ""]
 
 
+## Is there a Guard Room in any building of yours (it covers for the Fixer).
+func guarded() -> bool:
+	for i in districts.buildings.size():
+		if districts.buildings[i] != null and districts.is_yours(i) \
+				and rooms.totals_of(i).security > 0:
+			return true
+	return false
+
+
+## The exposure `action` adds now, less with a Guard Room.
+func exposure_of(action: FixerAction) -> float:
+	return settings.exposure(action) * (settings.guarded_exposure_share if guarded() else 1.0)
+
+
 ## The Fixer carries out `action` at `building`. True when he started it.
 func act(building: Node3D, action: FixerAction) -> bool:
 	if why_not_act(building, action) != "" \
 			or not faith.spend(settings.paperwork(action), &"fixer_action"):
 		return false
 	treasury.spend_money(settings.money(action))
-	faith.add_exposure(settings.exposure(action))
+	faith.add_exposure(exposure_of(action))
 	doing = action
 	_left = settings.seconds(action)
 	action_started.emit(building, action)
@@ -171,7 +187,8 @@ func call_back() -> void:
 func caught(building: Node3D) -> void:
 	if target != building:
 		return
-	_bar[building] = maxf(bar_of(building) - settings.caught_loss, 0.0)
+	var loss := settings.guarded_caught_loss if guarded() else settings.caught_loss
+	_bar[building] = maxf(bar_of(building) - loss, 0.0)
 	call_back()
 
 
