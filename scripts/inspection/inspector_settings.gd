@@ -1,7 +1,7 @@
 class_name InspectorSettings
 extends Resource
-## Every number of the city's answer (round B of the model): exposure, the inspectors
-## that walk out of key buildings, what they demand, and burying the file.
+## Every number of the city's answer: exposure, the inspectors that walk out of key
+## buildings on a timer, what they demand, and burying the file.
 
 @export var tick := 0.5
 
@@ -10,24 +10,18 @@ extends Resource
 @export var work_exposure_per_minute := 0.03
 ## Exposure a building taken adds, once.
 @export var take_exposure := 0.03
-## Exposure that goes away when an inspector gets his way (a Rep sent home, a building
-## lost): City Hall is satisfied for a while.
+## Exposure that goes away when an inspector catches the Fixer: City Hall is satisfied
+## for a while.
 @export var satisfied_exposure := 0.12
 
 @export_group("Sending inspectors")
-## Seconds between inspectors with no exposure, and at full exposure.
-@export var spawn_seconds := 50.0
-@export var spawn_seconds_min := 15.0
-## Seconds before the very first one, so the first building is taken in peace.
+## A clerk of City Hall on a timer: the first comes this many seconds in, then one every
+## interval_seconds; exposure sends more at once (1 + floor(exposure x per_exposure)).
 @export var first_seconds := 150.0
-## Inspectors out at once with no exposure, and how many more at full exposure.
-@export var max_base := 1
-@export var max_extra := 3
-## From this exposure on they walk out in pairs.
-@export_range(0.0, 1.0) var pairs_from := 0.8
-## From this exposure on, some inspectors audit a building of yours instead of a Rep.
-@export_range(0.0, 1.0) var audit_from := 0.35
-@export_range(0.0, 1.0) var audit_chance := 0.4
+@export var interval_seconds := 120.0
+@export var per_exposure := 3.0
+## One who could not get all he asked for comes back to the same building this much later.
+@export var return_seconds := 90.0
 
 @export_group("The inspector")
 @export var speed := 2.4
@@ -48,13 +42,10 @@ extends Resource
 @export var alert_pixel_size := 0.0012
 
 @export_group("What he demands")
-## Paperwork a Rep must show, with no exposure; times 1 + exposure * demand_exposure.
-@export var demand_paperwork := 25.0
-@export var demand_exposure := 1.0
-## Paperwork an audit of an ordinary building of yours costs; a bigger building costs
-## more (by its room against ordinary_room), each Security level divides it.
-@export var audit_paperwork := 40.0
-@export var ordinary_room := 12.0
+## Paperwork he takes at a building of yours: this much, and this much more for every
+## building you hold; each Security level of the building divides it.
+@export var demand_paperwork := 15.0
+@export var demand_per_building := 1.0
 @export var security_step := 0.5
 
 @export_group("Burying the file")
@@ -66,9 +57,7 @@ extends Resource
 @export_group("Texts")
 @export var sent_note := "Inspector on the way"
 @export var papers_note := "Papers in order: -%d paperwork"
-@export var rep_held_note := "No papers. The inspector holds a Rep back"
-@export var audit_note := "Audit passed: -%d paperwork"
-@export var turned_back_note := "Audit failed. Building lost"
+@export var short_note := "Short of papers: -%d paperwork. He'll be back"
 @export var gave_up_note := "Inspector gave up"
 @export var good_color := Color(0.75, 0.9, 1.0)
 @export var bad_color := Color(1.0, 0.4, 0.35)

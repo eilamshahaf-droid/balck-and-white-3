@@ -24,10 +24,9 @@ const SIDEWALK_GAP := 1.5   # metres out from the wall
 @export var population: Population
 @export var followers: Followers
 @export var hand: GodHand
-@export var attractiveness: Attractiveness
+@export var impression: Impression
 
 var _campaigns: Array[Campaign] = []
-var _held := {}        # building -> Reps an inspector at the door holds back
 var _timer := 0.0
 
 
@@ -88,11 +87,11 @@ func why_not(building: Node3D) -> String:
 		return "a key building: the Fixer must open it first"
 	if not districts.is_open(building):
 		return "opens in a later stage"
-	if not districts.borders_yours(i):
-		return "must border a building of yours"
+	if districts.is_key(i) and not districts.borders_yours(i):
+		return "a key building: must border a building of yours"
 	if not districts.can_claim(i):
-		return "take the buildings around it first"
-	return attractiveness.why_not(i)
+		return "out of reach: more followers reach further"
+	return impression.why_not(i)
 
 
 ## Every building Reps are working on.
@@ -146,7 +145,7 @@ func seconds_for(building: Node3D) -> float:
 func _on_canvasser_set_down(r: Resident, building: Node3D) -> void:
 	var i := districts.index_of(building)
 	if i >= 0 and districts.wants_you(i) and r.rank == Resident.Rank.MISSIONARY \
-			and districts.can_claim(i) and attractiveness.why_not(i) == "":
+			and districts.can_claim(i):
 		clear(building)
 		_take(building, r)
 		return
@@ -191,7 +190,7 @@ func _step(c: Campaign) -> void:
 		return
 	var i := districts.index_of(c.building)
 	if not districts.can_claim(i):
-		c.stalled = "must border a building of yours"
+		c.stalled = "out of reach"
 		return
 	c.agents = c.agents.filter(func(a: Citizen) -> bool: return is_instance_valid(a) and a.on_errand)
 	if c.agents.is_empty():
@@ -210,38 +209,11 @@ func _step(c: Campaign) -> void:
 	if working == 0:
 		c.stalled = "on the way" if not c.agents.is_empty() else "needs a Rep"
 		return
-	var held := mini(held_at(c.building), working)
-	working -= held
-	c.stalled = S.held_note if held > 0 else ""
-	if working == 0:
-		return
+	c.stalled = ""
 	var attention := F.attention if hand.pointed_part == c.building else 1.0
 	districts.add_meter(i, working * attention * S.tick / seconds_for(c.building))
-	if not districts.wants_you(i):
-		return
-	# Full, it waits at the door until the district is attractive enough.
-	c.stalled = attractiveness.why_not(i)
-	if c.stalled == "":
+	if districts.wants_you(i):
 		_take(c.building, rep)
-
-
-## `count` inspectors stand at `building`'s door: each holds one Rep's work back.
-func hold_back(building: Node3D, count: int) -> void:
-	if count > 0:
-		_held[building] = count
-	else:
-		_held.erase(building)
-	# Show it at once, not at the next step.
-	var c := _campaign_on(building)
-	if c and count > 0:
-		c.stalled = S.held_note
-	elif c and c.stalled == S.held_note:
-		c.stalled = ""
-
-
-## How many Reps an inspector holds back at `building`.
-func held_at(building: Node3D) -> int:
-	return _held.get(building, 0)
 
 
 ## The nearest free Rep goes to the door; with none free the building waits for one.

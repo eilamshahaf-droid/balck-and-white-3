@@ -35,7 +35,7 @@ extends Resource
 @export_group("Guard Room")
 ## With a Guard Room in any building of yours, his actions add this share of their exposure
 ## and a loud one gone wrong loses `guarded_caught_loss` of the bar instead. More Guard
-## Rooms add nothing here (they still lower the audit price).
+## Rooms add nothing here (they still lower what an inspector takes).
 @export_range(0.0, 1.0) var guarded_exposure_share := 0.8
 @export_range(0.0, 1.0) var guarded_caught_loss := 0.15
 

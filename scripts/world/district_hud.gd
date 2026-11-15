@@ -1,9 +1,10 @@
 extends Label
 ## Bottom left, a few short lines: the district in the middle of the screen with your
-## followers out of all its people, its attractiveness against what the next building
-## needs (once that matters), and the block under the middle of the screen.
+## followers out of all its people, the block under the middle of the screen, and how far
+## Reps reach (the influence radius, and the followers the next ring needs).
 
 const S = preload("res://data/districts.tres")
+const F: FollowersSettings = preload("res://data/followers.tres")
 const REFRESH := 0.25   # seconds; the text doesn't need to change every frame
 const POOR := 0.6       # district wealth below this reads "poor", above RICH "rich"
 const RICH := 1.4
@@ -12,7 +13,6 @@ var _timer := 0.0
 
 @onready var districts: Districts = get_node("../../Districts")
 @onready var followers: Followers = get_node("../../Followers")
-@onready var attractiveness: Attractiveness = get_node("../../Attractiveness")
 @onready var rig: Node3D = get_node("../../CameraRig")
 
 
@@ -38,11 +38,9 @@ func _process(delta: float) -> void:
 			else "%d of %d buildings yours" % [districts.block_held(block), districts.block_size(block)]
 	var line := "District: %s%s, %s\nBlock here: %s" % [
 			districts.district_name(d), standing, hold, whole]
-	if not districts.is_controlled(d) and attractiveness.shown(d):
-		var have := attractiveness.value(d)
-		var need := attractiveness.next_threshold(d)
-		line += "\nAttractiveness %d of %d for the next building" % [floori(have), ceili(need)]
-		if have < need:
-			line += ": " + attractiveness.remedy()
+	if not districts.is_controlled(d):
+		var rings := followers.reach()
+		line += "\nReps reach %d building%s out (%d at %d followers)" % [rings,
+				"" if rings == 1 else "s", rings + 1, ceili(F.reach_followers * rings * rings)]
 	if text != line:
 		text = line

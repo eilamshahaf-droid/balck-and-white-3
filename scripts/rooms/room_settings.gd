@@ -31,6 +31,9 @@ extends Resource
 ## Rooms whose price never rises: the Office's key rooms, which could otherwise pass the
 ## purse and never be bought.
 @export var price_step_exempt: Array[StringName] = [&"training", &"archive", &"vault"]
+## The Office's first this many rooms bought don't raise the price of the next: the
+## first lesson (a Shop, a Desk Room, two homes) costs what the purse holds.
+@export var office_steady_rooms := 4
 
 @export_group("Upkeep")
 ## Seconds between rounds of reopening rooms that closed for want of upkeep.
@@ -44,14 +47,9 @@ extends Resource
 @export var base_money_cap := 600.0
 ## The share of a room's money that comes back when it is taken out.
 @export_range(0.0, 1.0) var refund_share := 0.5
-## The rooms the main Office opens with, each fitted into the first place it goes.
-@export var office_start: Array[StringName] = [&"desks", &"shop", &"shop"]
-
-## The first time the Office's rooms are opened only this kind is offered, so the first
-## look teaches one thing ("" offers everything).
-@export var first_offer: StringName = &"desks"
-## How the palette shows the gift room's price.
-@export var gift_label := "free, a gift"
+## The rooms the main Office opens with, each fitted into the first place it goes. Empty:
+## the player plans the Office from the start (the first lesson).
+@export var office_start: Array[StringName] = []
 
 @export_group("Editor")
 @export var cell_pixels := 76.0
