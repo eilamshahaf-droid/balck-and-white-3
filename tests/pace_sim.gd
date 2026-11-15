@@ -8,7 +8,8 @@ extends Node
 ## allow, send = send Reps to buildings in reach (the fullest meters first), shop = open
 ## a shop in a building of yours when the money is there, upgrade = fit a Training Room,
 ## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), and a
-## Laundry Room in a building of yours whenever the attractiveness gate is shut, bury = bury the file whenever the exposure is
+## Laundry Room in a building of yours whenever the attractiveness gate is shut (loan =
+## take the Office's loan when there isn't the money for it, as the gate's message says), bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this. fixer = train a Fixer and keep him
 ## opening the nearest key building: a loud action while the exposure is under LOUD_UNDER
@@ -230,6 +231,8 @@ func _open_gate() -> void:
 	if _appeal.value(d) >= _appeal.next_threshold(d):
 		return
 	var laundry := _rooms.settings.kind(&"laundry")
+	if _habits.has("loan") and not _treasury.can_afford(laundry.money):
+		_menus.choose(&"loan", _districts.start_building())
 	for b in _districts.converted_buildings():
 		if _rooms.place_anywhere(_districts.index_of(b), laundry):
 			_laundries += 1
