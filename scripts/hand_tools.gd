@@ -28,7 +28,7 @@ const LOUD_TINT := Color(1.0, 0.4, 0.3)
 @export var districts: Districts
 @export var breaches: Breaches
 
-@onready var hand: Node3D = get_node("../GodHand")
+@onready var hand: GodHand = get_node("../GodHand")
 @onready var miracles: Miracles = get_node("../Miracles")
 @onready var faith: Faith = get_node("../Faith")
 
@@ -50,6 +50,7 @@ func _ready() -> void:
 	add_child(layer)
 	_wheel = RadialWheel.new()
 	layer.add_child(_wheel)
+	hand.own_building_double_clicked.connect(func(b: Node3D) -> void: menus.choose(&"rooms", b))
 
 	_outline.albedo_color = Color(1.0, 0.9, 0.5)
 	_outline.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

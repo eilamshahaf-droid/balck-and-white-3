@@ -20,6 +20,8 @@ signal audit_passed(building: Node3D, cost: float)
 signal turned_back(building: Node3D)
 ## There was no paperwork: the Fixer was sent back from key building `building`.
 signal fixer_caught(building: Node3D)
+## The hand threw an inspector (or set him down somewhere).
+signal thrown(inspector: Inspector)
 ## An inspector ran out of patience at `at`.
 signal gave_up(at: Vector3)
 
@@ -120,6 +122,7 @@ func send_to(building: Node3D, audit: bool) -> Inspector:
 	inspector.build(_coat, _skin)
 	inspector.building = building
 	inspector.audit = audit
+	inspector.thrown.connect(func() -> void: thrown.emit(inspector))
 	add_child(inspector)
 	inspector.global_position = _door_of(from)
 	inspector.head_for(city, _door_of(building))

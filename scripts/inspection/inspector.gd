@@ -5,6 +5,9 @@ extends RigidBody3D
 ## lies there a moment, gets up and starts walking again. Inspectors decides what
 ## happens when he arrives.
 
+## The hand let go of him (thrown or set down).
+signal thrown
+
 enum State { WALKING, HELD, FLYING }
 
 const I: InspectorSettings = preload("res://data/inspectors.tres")
@@ -96,6 +99,7 @@ func on_grabbed() -> void:
 func on_released(_throw_velocity: Vector3) -> void:
 	lie_down(I.stun_seconds * pow(1.0 - I.stun_shortens, _throws))
 	_throws += 1
+	thrown.emit()
 
 
 ## Drop where he is and stay down `seconds` once he has come to rest (the balance bot's

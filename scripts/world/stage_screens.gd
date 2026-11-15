@@ -1,10 +1,12 @@
 class_name StageScreens
 extends CanvasLayer
-## The start of the Slums stage: a briefing from the Secretary when the game opens (the
-## world waits behind it). Winning is DistrictWon's screen; the stage has no way to lose
+## The start of the Slums stage: a briefing from the Secretary the first time the game
+## opens (the world waits behind it). Winning is DistrictWon's screen; the stage has no way to lose
 ## until round B brings the danger.
 
 const S: DistrictSettings = preload("res://data/districts.tres")
+## Written once the briefing has been read, so it shows on the first run only.
+const SEEN := "user://briefing_seen"
 
 var _start: PanelContainer
 
@@ -29,12 +31,19 @@ func is_open() -> bool:
 func _begin() -> void:
 	_start.visible = false
 	get_tree().paused = false
+	var seen := FileAccess.open(SEEN, FileAccess.WRITE)
+	if seen:
+		seen.store_string("1")
 
 
-## No briefing in headless runs (tests, checks) or with --no-briefing.
+## No briefing after the first run, in headless runs (tests, checks) or with
+## --no-briefing; --briefing shows it again.
 func _wants_briefing() -> bool:
-	return DisplayServer.get_name() != "headless" \
-			and not OS.get_cmdline_user_args().has("--no-briefing")
+	var args := OS.get_cmdline_user_args()
+	if args.has("--briefing"):
+		return true
+	return DisplayServer.get_name() != "headless" and not args.has("--no-briefing") \
+			and not FileAccess.file_exists(SEEN)
 
 
 func _panel(title: String, body: String, button_text: String, action: Callable) -> PanelContainer:

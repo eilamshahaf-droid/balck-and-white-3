@@ -108,7 +108,17 @@ func _test_start() -> void:
 			"the Office opens with followers of its own (%d)" % _followers.total)
 	_check(_followers.count_of(hq) <= _followers.room_of(hq),
 			"no more than it has room for (%d)" % _followers.room_of(hq))
-	_check(_population.missionary_count == 0, "and no Rep yet")
+	_check(_population.missionary_count == U.start_reps and _population.free_rep_count == U.start_reps,
+			"and %d free Rep out and ready" % U.start_reps)
+	var editor: RoomEditor = _main.get_node("RoomEditor")
+	var hand: GodHand = _main.get_node("GodHand")
+	hand.own_building_double_clicked.emit(start)
+	_check(editor.visible and editor._shown.size() == 1 and editor._shown[0].id == &"desks",
+			"a double click on the Office opens its rooms, the first time with only a Desk Room")
+	editor.close()
+	_menus.choose(&"rooms", start)
+	_check(editor._shown.size() > 1, "and the next time with every room that fits")
+	editor.close()
 	_check(_districts.is_unlocked(_districts.start_district()), "the start district is open")
 	if _districts.district_count() > 1:
 		_check(not _districts.is_unlocked((_districts.start_district() + 1) % _districts.district_count()),
@@ -161,13 +171,14 @@ func _test_training() -> void:
 	_check(not _menus.choose(&"train_rep", office), "no training without the paperwork")
 	_faith.belief_pool = F.rep_paperwork * 10.0
 	var before := _followers.total
+	var reps := _population.missionary_count
 	_check(_menus.choose(&"train_rep", office), "a Rep starts training at the main Office")
 	_check(_followers.total == before - 1, "one follower left the pool for it")
 	_check(is_equal_approx(_faith.belief_pool, F.rep_paperwork * 9.0),
 			"and it cost %d paperwork" % roundi(F.rep_paperwork))
 	_finish_training()
-	_check(_population.missionary_count == 1 and _population.free_rep_count == 1,
-			"after the training there is a free Rep")
+	_check(_population.missionary_count == reps + 1 and _population.free_rep_count == reps + 1,
+			"after the training there is one more free Rep")
 	for i in _followers.rep_cap():
 		_menus.choose(&"train_rep", office)
 	# A trainee's body may be swapped to a housemate on the way; the Rep still comes out.
