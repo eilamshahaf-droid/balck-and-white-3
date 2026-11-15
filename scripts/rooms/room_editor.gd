@@ -291,7 +291,7 @@ func _draw_totals() -> void:
 	if t.clerks > 0:
 		line += "     Desks %d" % t.clerks
 	if t.attraction > 0.0:
-		line += "     Draw +%d%%" % roundi(t.attraction * 100.0)
+		line += "     Attractiveness +%d" % roundi(t.attraction)
 	if t.security > 0:
 		line += "     Security %d" % t.security
 	_text(Vector2(MARGIN, _board.size.y - 78.0), line, TEXT_SIZE, Color.WHITE)

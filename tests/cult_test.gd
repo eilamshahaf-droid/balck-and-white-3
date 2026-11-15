@@ -64,6 +64,7 @@ func _ready() -> void:
 	_test_shop_homes_and_upkeep()
 	await _test_fixer()
 	await _test_block()
+	await _test_attractiveness()
 	await _test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -257,9 +258,9 @@ func _test_growth() -> void:
 	_check(_followers.count_of(_near) > before, "a building of yours gains followers with time")
 	_followers._grow(PLENTY)
 	_check(_followers.count_of(_near) == _followers.room_of(_near), "up to the room it has")
-	var plain := _followers.attraction_of(_near)
+	var plain := _followers.growth_of(_near)
 	_treasury.money = PLENTY
-	_check(not _fit(_near, &"duplex") and is_equal_approx(_followers.attraction_of(_near), plain),
+	_check(not _fit(_near, &"duplex") and is_equal_approx(_followers.growth_of(_near), plain),
 			"the Slums offer only the basic homes: no Duplex here")
 
 
@@ -546,19 +547,21 @@ func _test_shop_homes_and_upkeep() -> void:
 	_check(stocked and _followers.next_seller_net(hq) > plain and _followers.upkeep_rate() > rate,
 			"a Stock Room by a shop makes its sellers bring more, for upkeep (fitted: %s)" % stocked)
 	var laundry := _rooms.settings.kind(&"laundry")
-	var draw := _followers.attraction_of(hq)
-	_check(_fit(hq, &"laundry") and is_equal_approx(_followers.attraction_of(hq), draw + laundry.attraction),
-			"a Laundry Room, the Slums' utility, draws followers faster")
+	var appeal: Attractiveness = _main.get_node("Attractiveness")
+	var d := _districts.start_district()
+	var draw := appeal.value(d)
+	_check(_fit(hq, &"laundry") and is_equal_approx(appeal.value(d), draw + laundry.attraction),
+			"a Laundry Room, the Slums' utility, adds %d attractiveness" % roundi(laundry.attraction))
 	_treasury.money = 0.5
 	var income := _followers.money_rate
 	_followers.money_rate = 0.0
 	_treasury._physics_process(10.0)
-	_check(is_equal_approx(_followers.attraction_of(hq), draw) and is_zero_approx(_treasury.money),
+	_check(is_equal_approx(appeal.value(d), draw) and is_zero_approx(_treasury.money),
 			"with no money for upkeep the dearest room closes and gives nothing")
 	_followers.money_rate = income
 	_treasury.money = PLENTY
 	_rooms._physics_process(_rooms.settings.upkeep_tick + 1.0)
-	_check(is_equal_approx(_followers.attraction_of(hq), draw + laundry.attraction),
+	_check(is_equal_approx(appeal.value(d), draw + laundry.attraction),
 			"and opens again when there is money")
 
 
@@ -625,6 +628,10 @@ func _test_fixer() -> void:
 	inspectors._arrive(inspectors.out[-1])
 	_check(breaches.target == null and is_equal_approx(breaches.bar_of(b), bar - fs.caught_loss),
 			"with no papers for the inspector the Fixer is sent back and the bar drops")
+	bar -= fs.caught_loss
+	_tick_breaches(breaches, 60.0)
+	_check(is_equal_approx(breaches.bar_of(b), bar - fs.left_fade_per_minute),
+			"and while he is away the bar falls back %d%% a minute" % roundi(fs.left_fade_per_minute * 100.0))
 	_faith.belief_pool = 1000.0
 	_faith.exposure = 0.0
 	_check(breaches.send(b), "he can be sent again")
@@ -653,7 +660,7 @@ func _test_block() -> void:
 	_districts.block_changed.connect(func(b: int, complete: bool) -> void:
 		done[0] = done[0] or (b == block and complete))
 	var members := _districts.block_members(block)
-	var plain := _followers.attraction_of(hq)
+	var plain := _followers.growth_of(hq)
 	# Outward from the base: each can only be taken next to one already held.
 	for pass_ in members.size():
 		for i in members:
@@ -663,8 +670,62 @@ func _test_block() -> void:
 			"every building of the base's block is yours (%d of %d)"
 			% [_districts.block_held(block), members.size()])
 	_check(done[0] and _districts.is_block_complete(block), "so the block is complete")
-	_check(is_equal_approx(_followers.attraction_of(hq) - plain, F.block_attraction),
+	_check(is_equal_approx(_followers.growth_of(hq) - plain, F.block_growth),
 			"and followers come to its buildings faster")
+
+
+## An ordinary building needs the district to be attractive enough: the threshold rises
+## with every one you hold, a Laundry Room raises the attractiveness.
+func _test_attractiveness() -> void:
+	var appeal: Attractiveness = _main.get_node("Attractiveness")
+	var d := _districts.start_district()
+	_check(is_equal_approx(appeal.next_threshold(d),
+			DS.attraction_step * maxi(appeal.ordinary_held(d) + 1 - DS.free_buildings, 0)),
+			"the next building needs %d attractiveness (%d held)" % [
+			roundi(appeal.next_threshold(d)), appeal.ordinary_held(d)])
+	var shut := -1
+	for round in 80:
+		shut = _shut_building(appeal)
+		if shut >= 0:
+			break
+		for i in _districts.buildings.size():
+			if _districts.buildings[i] and not _districts.is_yours(i) and not _districts.is_key(i) \
+					and _districts.can_claim(i) and _districts.district_of(i) == d:
+				_districts.take(i)
+				break
+	if shut < 0:
+		_check(false, "taking buildings closes the gate at last")
+		return
+	var b := _districts.buildings[shut]
+	_check(_campaigns.why_not(b).begins_with("attractiveness %d of %d" % [
+			floori(appeal.value(d)), ceili(appeal.next_threshold(d))]),
+			"then a Rep is refused: \"%s\"" % _campaigns.why_not(b))
+	_districts.add_meter(shut, 1.0)
+	var rep := _population.recruit(b.global_position)
+	_population.convert_to(rep, Resident.Rank.MISSIONARY)
+	_population.bring_out(rep)
+	_population.canvasser_set_down.emit(rep, b)
+	await _frames(3)
+	_check(_districts.wants_you(shut) and not _districts.is_yours(shut),
+			"and a full bar waits until the district is attractive enough")
+	_treasury.money = PLENTY
+	var before := appeal.value(d)
+	var fitted := false
+	for i in _districts.buildings.size():
+		if _districts.buildings[i] and _districts.is_yours(i) and _fit(i, &"laundry"):
+			fitted = true
+			break
+	_check(fitted and appeal.value(d) > before and _campaigns.why_not(b) == "",
+			"a Laundry Room opens the gate again")
+
+
+## A building next to yours that the gate shuts; -1 when there is none.
+func _shut_building(appeal: Attractiveness) -> int:
+	for i in _districts.buildings.size():
+		if _districts.buildings[i] and not _districts.is_yours(i) and _districts.can_claim(i) \
+				and appeal.why_not(i) != "":
+			return i
+	return -1
 
 
 func _test_capture() -> void:

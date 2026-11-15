@@ -63,11 +63,10 @@ func count_of(index: int) -> int:
 	return floori(_count[index])
 
 
-## How fast followers come to building `index`, 1 = plain: the rooms that draw them
-## and a complete block.
-func attraction_of(index: int) -> float:
-	var out := 1.0 + rooms.totals_of(index).attraction
-	return out + (F.block_attraction if districts.in_complete_block(index) else 0.0)
+## How fast followers come to building `index`, 1 = plain, more in a complete block.
+## (What rooms draw is the district's attractiveness, see Attractiveness.)
+func growth_of(index: int) -> float:
+	return 1.0 + (F.block_growth if districts.in_complete_block(index) else 0.0)
 
 
 ## Everyone who lives in district `d`: your followers, and the residents of the buildings
@@ -247,7 +246,7 @@ func _grow(minutes: float) -> void:
 			continue
 		var room := float(room_of(i))
 		# Rooms that house fewer were fitted in: the followers over the room move out.
-		_count[i] = minf(_count[i] + F.growth_per_minute * attraction_of(i) * minutes, room) \
+		_count[i] = minf(_count[i] + F.growth_per_minute * growth_of(i) * minutes, room) \
 				if _count[i] < room else room
 
 
@@ -262,7 +261,7 @@ func _pull(minutes: float) -> void:
 			if districts.buildings[i] == null or not districts.is_yours(i) \
 					or districts.block_of(i) != districts.block_of(j):
 				continue
-			var one := F.pull_per_minute * attraction_of(i)
+			var one := F.pull_per_minute * growth_of(i)
 			pull += one * F.office_pull if districts.is_base(districts.buildings[i]) else one
 		if pull > 0.0:
 			districts.add_meter(j, pull * minutes)

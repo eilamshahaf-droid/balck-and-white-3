@@ -3,6 +3,17 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.22.0 (2026-11-15): the attractiveness gate, a smaller purse, and key buildings that cool off
+From the Designer's brief, with Eilam's numbers and the Balance Tester's sim.
+- **Attractiveness.** A district has one attractiveness number: the Office counts 10, every other building of yours 1, and each Laundry Room (the Slums' utility) 5. The first two ordinary buildings are free. After that, each one you would take needs 2 more than the one before (the m-th needs 2 x (m - 2)). With too little, Send a Rep refuses with the reason ("attractiveness 14 of 18"), and a bar already full waits at the door. The line at the bottom left shows the meter from the third building. Key buildings skip the gate, and a lost building lowers the threshold. Numbers are in `data/districts.tres`. Rooms no longer make followers come faster; a complete block still does.
+- **A key building cools off.** While the Fixer is elsewhere, its bar falls back 2% a minute, so parking him far away no longer pays.
+- **Money stops at $600** with no Vault (it was $1,200), so Vaults matter.
+- Bot, 90 minutes, two runs each:
+  - Without the hand: won at 82 minutes, and 83% at 90. Money stayed under $600 most of the game, and the bot fit 8 to 9 Laundry Rooms.
+  - With the hand: won at 78 minutes in one run. The other ran out of money at minute 16, could not afford a Laundry Room, and stopped at 30 buildings; the bot never takes a loan.
+  - With the $600 cap and no gate: won at 84 and 71 (with the hand), and 97 to 98% at 90.
+- Try it: take two buildings next to the Office. The third one shows the meter at the bottom left. Fit a Laundry Room (Rooms on a building of yours) and watch the number rise.
+
 ## Pre-Alpha 0.21.0 (2026-11-15): the Fixer's wheel, the first ten minutes, and buildings that cost upkeep
 The Designer's briefs: the Fixer (approved by Eilam), the first ten minutes (GDD v36), and a money round.
 - **The Fixer works from a wheel.** Train him at the Office (80 paperwork) and set him down at any key building (red sign), next to yours or not, or choose Send the Fixer on its wheel. At the door, hold the button on the building: each key building has its own three actions with their own jokes (the Permit Office: Permit a permit, Swap the trays, Announce free permits). **Quiet** ones cost 20 paperwork, $20 and 3 points of exposure and fill 15% of the bar. The **loud** one costs 60 paperwork, $60 and 12 points, fills 45%, and sends an inspector to his door from another key building: with no paperwork for him, the Fixer is sent back to the Office and the bar loses 30%. Each action takes 30 seconds (less under the hand). From 70% exposure he starts nothing. A full bar opens the building and a Rep takes it as before. Numbers in `data/fixer.tres`.

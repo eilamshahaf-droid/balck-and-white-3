@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3]
+[gd_scene load_steps=41 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -38,6 +38,7 @@
 [ext_resource type="Script" path="res://scripts/pause.gd" id="75_pause"]
 [ext_resource type="Script" path="res://scripts/world/breaches.gd" id="76_breaches"]
 [ext_resource type="Script" path="res://scripts/props/breach_marks.gd" id="77_breach_marks"]
+[ext_resource type="Script" path="res://scripts/world/attractiveness.gd" id="80_attractiveness"]
 [ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 
 [node name="Main" type="Node3D"]
@@ -166,12 +167,18 @@ rooms = NodePath("../Rooms")
 districts = NodePath("../Districts")
 decrees = NodePath("../Decrees")
 
-[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "followers", "hand")]
+[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "followers", "hand", "attractiveness")]
 script = ExtResource("19_campaigns")
 districts = NodePath("../Districts")
 population = NodePath("../Population")
 followers = NodePath("../Followers")
 hand = NodePath("../GodHand")
+attractiveness = NodePath("../Attractiveness")
+
+[node name="Attractiveness" type="Node" parent="." node_paths=PackedStringArray("districts", "rooms")]
+script = ExtResource("80_attractiveness")
+districts = NodePath("../Districts")
+rooms = NodePath("../Rooms")
 
 [node name="CampaignMarks" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts")]
 script = ExtResource("20_marks")
