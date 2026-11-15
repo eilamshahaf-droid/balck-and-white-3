@@ -112,10 +112,11 @@ func bury() -> bool:
 	return true
 
 
-## Send one inspector to `building` now (to audit it, or to a Rep at its door), from the
-## key building nearest to it. Null when there is no key building left to send one.
+## Send one inspector to `building` now (to audit it, or to a Rep or the Fixer at its
+## door), from the key building nearest to it other than itself. Null when there is no key
+## building left to send one.
 func send_to(building: Node3D, audit: bool) -> Inspector:
-	var from := _nearest_key(building.global_position)
+	var from := _nearest_key(building)
 	if from == null:
 		return null
 	var inspector := Inspector.new()
@@ -225,14 +226,16 @@ func _is_target(building: Node3D) -> bool:
 	return false
 
 
-func _nearest_key(p: Vector3) -> Node3D:
+## The key building nearest to `to` that is not yours, and not `to` itself (the Fixer is
+## at a key building's door: someone has to walk over from another).
+func _nearest_key(to: Node3D) -> Node3D:
 	var best: Node3D = null
 	var best_d := INF
 	for k in districts.keys:
 		var b := districts.buildings[k]
-		if b == null or districts.is_yours(k):
+		if b == null or b == to or districts.is_yours(k):
 			continue
-		var d := b.global_position.distance_squared_to(p)
+		var d := b.global_position.distance_squared_to(to.global_position)
 		if d < best_d:
 			best_d = d
 			best = b

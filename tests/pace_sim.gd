@@ -10,8 +10,8 @@ extends Node
 ## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this. fixer = train a Fixer and keep him
-## opening the nearest key building in reach: a loud action while the exposure is under
-## LOUD_UNDER, else a quiet one. hand = stand-in for a player who tries to
+## opening the nearest key building: a loud action while the exposure is under LOUD_UNDER
+## and there is paperwork for the inspector it brings, else a quiet one. hand = stand-in for a player who tries to
 ## carry an inspector off every HAND_EVERY seconds (see _carry_one).
 ## Every STATS_EVERY a STATS block gives the paperwork economy for the Balance Tester:
 ## income and spending per minute by use (the last ten minutes), and running totals of
@@ -65,6 +65,7 @@ var _turned_back := 0
 var _carried := 0
 var _gave_up := 0
 var _keys_opened := 0
+var _fixer_caught := 0
 var _throws := {}          # Inspector instance id -> times the stand-in threw him
 
 
@@ -97,6 +98,7 @@ func _ready() -> void:
 	_inspectors.turned_back.connect(func(_b: Node3D) -> void: _turned_back += 1)
 	_inspectors.gave_up.connect(func(_p: Vector3) -> void: _gave_up += 1)
 	_breaches.opened.connect(func(_b: Node3D) -> void: _keys_opened += 1)
+	_inspectors.fixer_caught.connect(func(_b: Node3D) -> void: _fixer_caught += 1)
 	_faith.spent.connect(_on_spent)
 	_districts.building_changed.connect(_on_building_changed)
 	_pool_then = _faith.belief_pool
@@ -192,8 +194,11 @@ func _use_fixer(office: Node3D) -> void:
 		return
 	if _breaches.target:
 		var choice: FixerAction = null
+		var fs := _breaches.settings
+		var loud := _faith.exposure < LOUD_UNDER \
+				and _faith.belief_pool >= fs.loud_paperwork + _inspectors.demand_cost()
 		for a in _breaches.actions_at(_breaches.target):
-			if a.loud == (_faith.exposure < LOUD_UNDER):
+			if a.loud == loud:
 				choice = a
 		if choice:
 			_breaches.act(_breaches.target, choice)
@@ -247,9 +252,9 @@ func _print_stats() -> void:
 	print("STATS %3d min  clerks %d  sellers %d  paperwork income %.1f/min  spent %.1f/min (%s)" % [
 			roundi(_clock / 60.0), _followers.clerks, _followers.sellers, income,
 			total / minutes, ", ".join(uses) if not uses.is_empty() else "nothing"])
-	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep lost) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d" % [
+	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep lost) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d  Fixer caught %d" % [
 			roundi(_clock / 60.0), _faith.exposure * 100.0, _inspectors.out.size(), _sent,
 			_carried, _gave_up, _paid, _reps_lost, _audits, _turned_back,
-			_districts.converted_buildings().size(), _won, _lost, _keys_opened])
+			_districts.converted_buildings().size(), _won, _lost, _keys_opened, _fixer_caught])
 	_spent.clear()
 	_pool_then = _faith.belief_pool
