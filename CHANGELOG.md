@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.24.1 (2026-11-15): money always gets going
+From the Designer, after the bot found the money trap in 0.24.0.
+- **A Shop costs $150** (was $225), and **the Office starts with two Shops**, so early money can't get stuck below the price of a Shop.
+- **The Office's key rooms keep their price.** The Training Room, Archive and Vault no longer get 25% dearer for each room bought; they could pass the $600 purse and never be bought. Homes, Shops and the other rooms still do. The list is `price_step_exempt` in `data/rooms.tres`.
+- With two Shops the Office is fuller: to fit a Vault you may need to take one Shop out.
+- No bot runs for this fix, by Eilam's direction: his own play is the balance check.
+- Try it: open the Office's rooms and see two Shops; the Shop's price in the list is $150.
+
 ## Pre-Alpha 0.24.0 (2026-11-15): the playtest round
 Approved by Eilam, from the Designer's corrections list after his playtest.
 - **Homes are worth buying.** A Family Flat takes 2 places and houses 5, a Row Flat 3 places and 9 (a plain place is still 1). Prices are the same. A new home brings half the people it adds at once; the rest grow in.

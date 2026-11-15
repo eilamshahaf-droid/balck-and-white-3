@@ -348,6 +348,13 @@ func _test_rooms() -> void:
 	for piece in office.pieces.duplicate():
 		if piece.kind.id == &"training":
 			_rooms.remove(hq, piece.cells()[0])
+	var start_shops: Array[BuildingLayout.Piece] = []
+	for piece in office.pieces:
+		if piece.kind.id == &"shop" and not piece.bought:
+			start_shops.append(piece)
+	_check(start_shops.size() == 2, "the Office starts with two Shops")
+	# The plan below is a one-Shop Office: the second Shop comes out (nothing leans on it).
+	_check(_rooms.remove(hq, start_shops[1].cells()[0]), "a Shop nothing leans on can be taken out")
 	var taken := office.pieces[0].cells()[0]
 	_check(not office.fits(kinds.kind(&"guard"), taken, 0), "a room can't go where another is")
 	_check(not office.fits(kinds.kind(&"shop"), Vector2i(office.columns - 2, office.rows - 1), 0),
