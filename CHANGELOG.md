@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.23.0 (2026-11-15): the opening scene
+Approved by Eilam, from the Designer's brief.
+- **A new opening** in place of the Secretary's minute: five text panels on the first run. The narrator, the Secretary quitting City Hall over his holiday, the altar in his closet, the god's answer (the necessary forms are missing), and "Bureaucracy. Even God cannot defeat it." **Next** steps through them, **Skip** ends them, and then the mission card says to take the first building. No animation yet, so the camera dropping through the clouds is a line of stage direction for now. The lines are in `data/districts.tres` ("opening"), ready for Eilam to rewrite.
+- Players who saw the old minute see the new opening once, too.
+- Code cleanup, no change in play: choosing the cores, the base and the key buildings has its own script (`world/district_layout.gd`). `docs/GDD.md` is synced from the Designer's page (v39).
+- Try it: open the game for the first time, or start it with `--briefing`.
+
 ## Pre-Alpha 0.22.2 (2026-11-15): a gradual upkeep floor, and the Guard Room covers for the Fixer
 From the Designer's brief.
 - **Upkeep grows with your money.** The buildings' $4 a minute is now scaled by the money in hand: nothing at $0, all of it from $250 (it stopped below $100 in 0.22.1). Rooms with upkeep still cost theirs in full. In 0.22.1 money stuck at exactly $100, under the $210 a Laundry Room costs; now it can drift up past it. The number is `full_upkeep_at` in `data/followers.tres`.
