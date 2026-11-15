@@ -5,7 +5,7 @@ config_version=5
 
 [application]
 
-config/name="Spin Cycle"
+config/name="Godministration"
 config/version="0.20.0"
 config/release_stage="Pre-Alpha"
 run/main_scene="res://scenes/main.tscn"

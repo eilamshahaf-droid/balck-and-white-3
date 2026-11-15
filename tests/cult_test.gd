@@ -170,9 +170,18 @@ func _test_training() -> void:
 			"after the training there is a free Rep")
 	for i in _followers.rep_cap():
 		_menus.choose(&"train_rep", office)
+	# A trainee's body may be swapped to a housemate on the way; the Rep still comes out.
+	for r in _population.residents:
+		if r.job == Resident.Job.TRAIN:
+			_population.put_away(r)
 	_finish_training()
 	_check(_population.reps_out == _followers.rep_cap(),
 			"Reps can be trained up to the cap (%d)" % _followers.rep_cap())
+	var walking := true
+	for r in _population.residents:
+		if r.rank == Resident.Rank.MISSIONARY and r.job == Resident.Job.FREE:
+			walking = walking and _population.has_body(r)
+	_check(walking, "every free Rep has a body to be sent out in")
 	_check(_menus.why_not_train(Resident.Rank.MISSIONARY) != "" \
 			and not _menus.choose(&"train_rep", office), "and no further")
 	_treasury.money = PLENTY

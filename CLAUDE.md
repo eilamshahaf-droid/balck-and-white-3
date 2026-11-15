@@ -4,7 +4,7 @@ Guide for every Claude session that works on this repo. Read it before writing c
 
 ## The project
 
-An original god game with city building, made in **Godot 4** (standard build, GDScript, no C#).
+**Godministration** (working title, Eilam 2026-11-15; was "Spin Cycle"): an original god game with city building, made in **Godot 4** (standard build, GDScript, no C#).
 A comedy: you are the god of a small cult taking over an NYC-like city, district by district,
 up to City Hall; the hand is the whole interface. The design is `docs/GDD.md` (owned by the
 Game Designer thread) and the look is `docs/ART.md` (owned by the Artist thread); build what
