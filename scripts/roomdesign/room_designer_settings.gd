@@ -16,6 +16,16 @@ extends Resource
 @export var depth_presets: Array[float] = [-2.2, 0.0, 2.2]
 
 @export_group("Furniture")
+## The Kenney models are about half of true size (a desk 0.38 m high), and a place is
+## 4 x 6 m: every piece is drawn this many times its model size, so a desk stands about
+## 1.15 m, a doll's-house scale that reads in the room. An item's own scale is on top of
+## it, so files keep metres of the room.
+@export var furniture_scale := 3.0
+## Placing and dragging snap across and deep to this many metres (Shift: free), and the
+## floor shows grid lines this far apart.
+@export var snap := 0.25
+@export var grid_step := 0.5
+@export var grid_color := Color(0, 0, 0, 0.18)
 @export var model_folder := "res://assets/models/kenney_furniture/"
 @export var models: Array[StringName] = [
 		&"bathroomCabinet", &"bathroomCabinetDrawer", &"bathroomMirror", &"bathroomSink",

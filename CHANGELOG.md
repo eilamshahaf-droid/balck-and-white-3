@@ -3,6 +3,14 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.27.0 (2026-11-15): a title screen, and the room designer in 3D
+Asked by Eilam.
+- **Title screen.** The game opens on a menu: New Game, Room Designer, Settings, Credits (and Quit on a PC), with the version in the corner. Settings: volume, full screen (PC), the art style on or off, and "Show the opening scene again". Credits name the kits and licences; CC-BY lines from `art/kits/CREDITS.md` go into `data/title.tres` once those models are used. The room designer's "Back to title" returns here; the debug panel no longer has the designer button.
+- **The room designer is 3D only.** The front cut-away is gone; the room fills the middle of the screen and you always edit in it.
+- **A grid, as in the Sims.** Lines every 0.5 m on every floor, and pieces snap to 0.25 m when placed or dragged. Hold Shift to place freely. Numbers: `snap`, `grid_step`, `grid_color` in `data/room_designer.tres`.
+- **Furniture at true size.** The Kenney pieces are about half true size, so they are drawn 3 times bigger (a desk is about 1.15 m wide). Number: `furniture_scale`.
+- Try it: open the game, pick Room Designer, choose Desk Room and drag a desk around the floor; hold Shift to move it off the grid.
+
 ## Pre-Alpha 0.26.0 (2026-11-15): the economy round
 The Designer's seven points from Eilam's playtest, with Eilam's answer on what paperwork pays for.
 - **The Office starts empty, and the card teaches it.** You start with $600 and 100 paperwork. The card asks for a Shop, then a Desk Room, then two Family Flats (people work where they live), then sends the free Rep, then saves up for a Training Room. The Office's first four rooms bought keep their base price, so that first lesson costs exactly $600 and 50 paperwork. From the fifth room on the +25% per room applies there too. The gift Desk Room is gone.
