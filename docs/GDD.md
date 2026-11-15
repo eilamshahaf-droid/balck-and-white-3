@@ -1,6 +1,6 @@
 # Godministration: Game Design Document
 
-The repo's copy of the Designer's page (https://claude.ai/artifact/3SbaznH5KKjxk2jop61iBf), which is the source: owned by the Game Designer thread, with Eilam as Creative Director. Synced from the page's v38 on 2026-11-15. The last section, "The rules as built", is the Programmer's and says what the game does today (Pre-Alpha 0.22.2); where the two differ in a number, the build is the newer one.
+The repo's copy of the Designer's page (https://claude.ai/artifact/3SbaznH5KKjxk2jop61iBf), which is the source: owned by the Game Designer thread, with Eilam as Creative Director. Synced from the page's v39 on 2026-11-15. The last section, "The rules as built", is the Programmer's and says what the game does today (Pre-Alpha 0.22.2); where the two differ in a number, the build is the newer one.
 
 Working title (formerly Spin Cycle). PC, Godot 4, toy-like 3D with tilt-shift. The god's hand is a white cloth glove and is the whole interface.
 
@@ -10,15 +10,37 @@ A comedy about a god nobody asked for, up against a city run by paperwork. Win a
 
 ## 1. The pitch
 
-You play a god nobody asked for, in a city run by paperwork. The god once applied to City Hall to be recognised as a god, and was refused: a form was missing. Since then the god's tiny Committee has one aim, to out-file the bureaucracy in one district after another. The Secretary narrates everything in deadpan meeting minutes.
+You play a god nobody asked for, in a city run by paperwork. It starts when a City Hall clerk, refused his holiday for half a year, quits in a rage and asks the god to destroy City Hall. The god answers in the only language left: a letter saying the necessary forms are missing, and that to produce them he must do as the god says. That clerk becomes the Secretary of the god's tiny Committee, and narrates everything in deadpan meeting minutes.
 
 It is a comedy, and it is meant to feel considered, not like a fast takeover of everything. The player has time to put into each building and the people in it. There is no good or evil, and there is no cult taking over: the god stands for resistance to bureaucracy.
 
 **The hand is the whole interface.** It lifts only Reps, the Fixer, inspectors and street props. It never converts anyone and never builds anything itself.
 
-## 2. Two ways to resist
+## 2. The story and two ways to resist
 
 Every district can be won in two ways, and the way you play shows in the ending.
+
+### The opening scene
+
+The game opens on a short scene, in the narrator's deadpan voice.
+
+> **Narrator:** In the whole universe there is one thing that even God has no answer to...
+>
+> *The camera drops through the clouds and zooms in on City Hall.*
+>
+> **The Secretary, from inside City Hall, shouting:** I asked for holiday days half a year ago! I won't work like this. I quit!
+>
+> *Music. He storms home. At home he opens the closet: inside is an altar in the shape of a hand.*
+>
+> **The Secretary:** God, I need a holiday. Destroy City Hall so I can finally go on mine.
+>
+> *Light streams from the altar. A letter is found in the statue's hand, and the Secretary takes it.*
+>
+> **The Secretary, reading:** After considering your request, the necessary forms are missing. To produce them you will have to do as I say before we can approve the request.
+>
+> **Narrator:** Bureaucracy. Even God cannot defeat it.
+
+The forms the god is missing are the paperwork the player makes, and the key buildings are where they are kept. The Secretary used to work in City Hall, so he knows the building code and its habits.
 
 ### Control
 
@@ -68,7 +90,7 @@ Each building of yours is a grid you can plan, like a dollhouse.
 
 A building is a grid of bays and floors. An empty place is a plain flat for one follower, so planning can be ignored. Rooms are shapes fitted in for money and sometimes paperwork, and can be turned. Every floor has one stairs place that nothing fits over; the stairs climb two floors and then change column. Some rooms must touch another (an Archive a Desk Room; a Vault and a Stock Room a shop), and a room leaned on cannot be taken out. More floors, by decree, add rows. There are fourteen kinds of room.
 
-Paperwork and money stop at what the Archives and Vaults hold, 150 and $1,200 with none. Some rooms cost money a minute: the Guard Room, the Stock Room, the Laundry Room, the Slums' utility. When it cannot be paid, the dearest room closes until there is money again. The Slums offer only basic homes (Family Flat, Row Flat), so the puzzle is in the offices. A **loan** at the Office turns paperwork into money now, paid back from the takings.
+Paperwork and money stop at what the Archives and Vaults hold, 150 and $600 with none. Every building of yours costs $4 a minute in upkeep, scaled by the money you have (nothing at $0, in full from $250), so a poor player can always recover. Some rooms cost money a minute: the Guard Room, the Stock Room, the Laundry Room, the Slums' utility. When it cannot be paid, the dearest room closes until there is money again. The Slums offer only basic homes (Family Flat, Row Flat), so the puzzle is in the offices. A **loan** at the Office turns paperwork into money now, paid back from the takings.
 
 ## 5. Exposure, inspectors and the Fixer
 
@@ -155,7 +177,7 @@ The Slums hold only homeless and blue collar people. Each later district brings 
 
 One new thing at a time, never two. The existing next-step line guides it.
 
-1. **Minute 0 to 1: the minute**: The Secretary reads a short minute: the god applied to be recognised and was refused, a form was missing. One line says what to do: take the first building. The first time only, and skippable.
+1. **Minute 0 to 1: the opening scene**: The camera drops through the clouds and zooms in on City Hall. The player sees the story below, then one line says what to do: take the first building. The first run only, and skippable.
 2. **Minute 1 to 3: the first building**: The first Rep is trained free, and only one. Set at the neighbour's door, the bar fills, and the hand makes it twice as fast. The hand's first verb is setting down. The building you win holds the Shrine.
 3. **Minute 3 to 5: the planner**: A double click on the Office opens the planner and offers one desk room. Skipping it changes nothing, since an empty place is a plain flat. The second building is taken by minute five, and the third shows the attractiveness meter for the first time, with its threshold.
 4. **Minute 5 to 7: the inspector**: The first inspector demands paperwork. The hand lifts and throws him, and he comes back. The hand's second verb is throwing, and it never solves anything for good. This is where the player learns what exposure is.
@@ -167,7 +189,7 @@ By minute ten the player has taken three to five buildings, thrown at least one 
 
 Every number is provisional and lives in the game's data files, so it can change without touching code. The bot with no hand holds about 42% of the bar and one key building of nine after an hour.
 
-30 paperwork to train a Rep; 80 paperwork to train the Fixer; 40 paperwork and 40 seconds per Fixer action; inspectors also go for buildings from 35% exposure; 150 paperwork and $1,200 are the ceilings with no Archive or Vault; no time limits on a stage.
+30 paperwork to train a Rep; 80 to train the Fixer; 20 or 60 paperwork for a quiet or loud Fixer action, 30 seconds each; inspectors also go for buildings from 35% exposure; 150 paperwork and $600 are the ceilings with no Archive or Vault; no time limits on a stage.
 
 Paperwork is the short resource: Reps, the Fixer, inspectors and Bury the File all draw on it, while money is plentiful unless Vaults and rooms are bought. The first district is the shortest and teaches the game; later districts grow toward three to four hours.
 
@@ -184,7 +206,7 @@ Decided against, and gone from the game: landmarks, murals and the Vandalist; aw
 What Pre-Alpha 0.22.2 does. Numbers live in `data/*.tres`.
 
 - **Map.** One district, the Slums: 97 buildings in nine large blocks (8 to 13 buildings) plus the core. Every block but the Office's own has one key building (nine in all). Buildings are taken one at a time, only next to one you hold. A block whose ordinary buildings are all yours is complete: followers come to it faster, its buildings cost half the upkeep, and inspectors don't audit it.
-- **The opening.** The Secretary's minute shows on the first run only (Close the minutes). One Rep waits by the Office, free. The mission card follows the first ten minutes: take the first building, plan the Office, throw the inspector, train the Fixer, open a key building, then "Key buildings: 1 of 9". The first inspector comes after 5 minutes.
+- **The opening.** The Secretary's minute (the old briefing, not yet the page's opening scene) shows on the first run only (Close the minutes). One Rep waits by the Office, free. The mission card follows the first ten minutes: take the first building, plan the Office, throw the inspector, train the Fixer, open a key building, then "Key buildings: 1 of 9". The first inspector comes after 5 minutes.
 - **Followers are a number per building**, one pool. A building has room by its rooms; taken, it starts half full and fills by itself. No building is ever empty.
 - **People work where they live.** Roles fill themselves: clerks at desks (paperwork), sellers in shops (money; each further seller in a shop brings less and is paid the same, so only those worth their pay are taken on). A building puts to work no more than it houses. A follower with no role is only counted.
 - **Reps.** Trained at the Office from one follower for 30 paperwork. Two may be out at once, one more per Training Room; a Manager no longer counts. Only Reps work on buildings; the Secretary stays at the Office.
