@@ -12,7 +12,6 @@ const U: UnitSettings = preload("res://data/units.tres")
 
 var _ring: MeshInstance3D
 var _label: Label3D
-var _preach_left := 0.0
 var _title := ""
 
 
@@ -42,26 +41,16 @@ func _ready() -> void:
 	_label.modulate = M.priest_ring_color
 	_label.position = Vector3.UP * M.priest_label_height
 	add_child(_label)
-	population.preaching.preached.connect(_on_preached)
 
 
-## The high priest preached to someone: say so for a few seconds.
-func _on_preached(preacher: Resident, _target: Resident, _converted: bool) -> void:
-	if preacher == population.priest:
-		_preach_left = M.priest_preach_mark_time
-
-
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	var priest := population.priest
 	var body := priest.body if priest else null
 	visible = body != null and is_instance_valid(body)
 	if not visible:
 		return
 	global_position = body.global_position
-	_preach_left = maxf(_preach_left - delta, 0.0)
 	var title := "%s\n%s" % [U.title(Resident.Rank.HIGH_PRIEST), priest.full_name()]
-	if _preach_left > 0.0:
-		title += "\ntalking..."
 	if title != _title:
 		_title = title
 		_label.text = title

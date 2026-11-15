@@ -6,7 +6,7 @@ extends Resource
 
 @export var id := &""
 @export var title := ""
-## How well off it is, 1 = average: scales rent, shop income and the price of buying people out.
+## How well off it is, 1 = average: scales dues, shop income and the price of buying people out.
 @export var wealth := 1.0
 ## How likely this kind is at a corner, a side and the centre of the district grid.
 @export var ring_weights := Vector3.ONE

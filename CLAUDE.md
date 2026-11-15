@@ -24,8 +24,10 @@ the 4.3 feature level; do not use APIs newer than that without updating `project
 project.godot        main scene, autoloads, window settings
 scenes/              main.tscn (the game), city_planning.tscn (planning sandbox), map_lab.tscn (2D map generator playground)
 scripts/             gameplay scripts for main.tscn
-scripts/people/      residents: Population, Resident records, archetypes, needs, preaching, staffing, debug card
+scripts/people/      residents: Population, Resident records, archetypes, staffing, debug card
 scripts/props/       Meshy props: facade and roof dressing, sidewalk props, building-state props, their models
+scripts/inspection/  the city's answer: Inspectors, the Inspector body, settings
+scripts/rooms/       the rooms inside buildings: Rooms, layouts, room kinds, the editor
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 scripts/maplab/      the map lab: districts' street styles, blocks, land use, menu
 data/                every tunable number, as .tres resources (one per system); data/maps/ the stage maps
@@ -42,41 +44,37 @@ The scene is small; most nodes are built in code at startup.
 
 | Node | Script | Role |
 | --- | --- | --- |
-| `Main` | `city.gd` (`City`; + `world/city_plan.gd`, `world/plan_builder.gd`) | Builds the stage's map (`CityPlan.load_file(CitySettings.map_path)`, made in the Map Lab, see Stage maps): `PlanBuilder` lays the ground with its land colours, the streets as ribbons along their centre lines, every building turned to face its street (local -z), doors and trees; every building is its own node in group `buildings` (what the player takes, `City.building_nodes[i]`, index = map building index) with meta `block` (the map unit it stands in); `BuildingBox.building_of(collider)` turns a hit into a building. Taxis, litter, pigeons. The street graph people walk: `node_position`, `nearest_node`, `random_neighbor`, `walk_from`. Day/night (`set_daylight`). Tunables `data/city.tres`. |
+| `Main` | `city.gd` (`City`; + `world/city_plan.gd`, `world/plan_builder.gd`) | Builds the stage's map (`CityPlan.load_file(CitySettings.map_path)`, made in the Map Lab, see Stage maps): `PlanBuilder` lays the ground with its land colours, the streets as ribbons along their centre lines, every building turned to face its street (local -z), doors and trees; every building is its own node in group `buildings` (what the player takes, `City.building_nodes[i]`, index = map building index) with meta `block` (the map unit it stands in); `BuildingBox.building_of(collider)` turns a hit into a building. Taxis, litter, pigeons. The street graph people walk: `node_position`, `nearest_node`, `random_neighbor`, `walk_from`, `route(from, to)` (the shortest walk). Day/night (`set_daylight`). Tunables `data/city.tres`. |
 | `CityProps` | `props/city_props.gd` (+ `street_prop.gd`, `prop_model.gd`, `prop_kind.gd`) | Dresses the built city with the Meshy models: air conditioners under windows and water tanks / cooling units on roofs (MultiMesh per kind and chunk of town; roof props follow new floors and hide under a penthouse), and sidewalk props the hand can pick up (`StreetProp`; trash bags squash under weight and on landing; dumpsters and bags in poor districts). Tunables `data/city_props.tres`. |
-| `StateProps` | `props/state_props.gd` | Shows who holds a building with Meshy props on top of it, redressed on `Districts.building_changed` / `building_abandoned` and on the floors and luxury decrees: banner and roof flag (yours), boarded windows and rubble (abandoned), flower boxes and planters (luxury), laundry (poor districts). |
+| `StateProps` | `props/state_props.gd` | Shows who holds a building with Meshy props on top of it, redressed on `Districts.building_changed` and on the floors decree: banner and roof flag (yours), laundry (poor districts). |
 | `TypeMarkers` | `props/type_markers.gd` (+ `use_marker.gd`) | Shows a building's Change Use with a Meshy prop on its roof or by its front. Kept apart from `StateProps` so the source of a building's type can change. |
-| `UpgradeMarkers` | `props/upgrade_markers.gd` (+ `upgrade_marker.gd`) | Shows the upgrades a building has bought (`BuildingUpgrades.upgraded`, `bought_in`) with Meshy props, one marker per `BuildingUpgrades.Kind` (housing, sermon house, shop). |
 | `CoreMarkers` | `props/core_markers.gd` | Each district's core building (`Districts.core_of`) gets a portico in front and a signboard with the district's name on the roof; moves on `core_changed`. |
 | `CameraRig` | `god_camera.gd` | B&W-style camera: grab-and-drag the city, orbit, zoom to cursor, fly-to, fade buildings that block the view. |
 | `Surroundings` | `world/surroundings.gd` (+ `world/outskirts.gd`) | Scenery past the map, built once: land and hills (with a height-map collision floor), the river, promenade and bridges, the map's streets running on into it, outer neighbourhoods and woods, clouds, and the depth haze that hides the edge. |
-| `Population` | `people/population.gd` | Every person is a `Resident` record (name, `ResidentArchetype`, rank, home, work, family, friends, traits, assets, needs); `census.gd` (`Census`) builds them, at least `min_residents_per_home` (1) and a family of up to 3 per building, about 600 in all (each record stands for a group of like people), each with an archetype picked by the kind of district they live in (`Districts.kind_at`, `data/archetypes.tres`). About one in `residents_per_body` (at least one per lived-in home) has a `Citizen` body at a time; the rest are indoors and swap with housemates out of view (`street.gd`, `Street`). Ranks (`Resident.Rank`): resident, believer, missionary, priest, special agent (the Vandalist in the Slums, trained at a core you hold), high priest; `convert_to` changes one and emits `rank_changed`. The cult starts with the high priest alone in the start district's core building (`found_cult`). `preaching` (`people/preaching.gd`, `Preaching`, a child): missionaries and the high priest try once per `attempt_interval` on a non-believer near them, `chance` is the GDD formula times sermon-house upgrades and miracle proof; miracles never convert. `staffing` (`people/staffing.gd`, `Staffing`): posts (PRAY, PRIEST, SHOP) and training (TRAIN: believer to missionary, missionary to priest at the high priest's house, up to `max_priests`); `staffed`, `is_staffed`, `fighters_of`, `buy_price_factor`. `upgrades` (`people/building_upgrades.gd`, `BuildingUpgrades`): purchases per building (`Kind`, rising `cost`, `upgraded`). Each believer makes money (`tithes`) by wealth and, in a staffed sermon house (group `prayer_houses`), belief (`prayer`) by faith, both times `Needs.multiplier` (`people/needs.gd`); one whose livelihood is unmet may leave. There is no cap on believers. Preachers stop now and then for sermons (`people/sermons.gd`, `Population.sermons`): a crowd gathers, attempts come faster, a hidden chance of a police raid. Fear and comfort (`scare`, `add_comfort`): too much fear moves people out. The hand's orders: whoever it sets down at a building acts by their rank (a preacher at a building that is not yours emits `canvasser_set_down`, which `Campaigns` turns into the sky sign; a believer joins a prayer house or shop, a priest serves; otherwise they sit in), and `_take_order` adds `Resident.strain`: below `willing_at` they still go but `effort_of` falls, awareness rises, and past `strain_leave` they quit (`ordered` signal, lines shown by `ConversionNotes`). Believers the hand sets down on or at a building sit in there; `power_presence(building)` and `believer_share(building)` feed who holds it; `evacuate`, `evict` change who lives where. `crowd.gd` (`Crowd`) draws every body in one MultiMesh. Still about 600 lines: the sit-ins and comfort/fear are the next pieces to split out. |
-| `Heat` | `heat.gd` | The police's hidden criteria: per-building heat from sit-ins, crowds and broken building rules (`raise`), decaying; `police_called(building, reason)` past a threshold scaled by district hardness (`set_hardness`). Tunables: `data/heat.tres`. |
-| `Faith` | `faith.gd` | Belief pool, believers, exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
+| `Population` | `people/population.gd` | The people you can see. Every person is a `Resident` record (name, `ResidentArchetype`, rank, home, family, friends); `census.gd` (`Census`) builds them, a family of up to 3 per building, each with an archetype by the kind of district (`Districts.kind_at`, `data/archetypes.tres`); `add_household` adds one. About one in `residents_per_body` has a `Citizen` body at a time (`street.gd`, `Street`); `crowd.gd` (`Crowd`) draws every body in one MultiMesh. **Followers are not counted here** (see `Followers`): residents are the faces. Ranks that matter (`Resident.Rank`): the Secretary (`HIGH_PRIEST`, `priest`, found by `found_cult` at the Office), Reps (`MISSIONARY`) and the Fixer (`AGENT`); `convert_to` changes one and emits `rank_changed`. `start_training(rank, building)` picks someone (`recruit`) and `staffing` (`people/staffing.gd`, `Staffing`: `post`, `train`, `tick_training`, `training_for`) counts the training down, faster while the hand points at the Office. A Rep set down by the hand at a building that is not yours emits `canvasser_set_down` (`Campaigns` listens), the Fixer `fixer_set_down` (`Breaches`); nobody else takes orders. `make_manager(rep, building)` puts a Rep in as Manager; a lost building loses its Manager. Counts: `missionary_count`, `free_rep_count`, `reps_out` (Reps and trainees that are not Managers: what the cap limits), `agent_count`. |
+| `Faith` | `faith.gd` (`Faith`) | The paperwork pool (`belief_pool`, the old name; fed by `Followers.paperwork_rate`, `spend`), and exposure. Miracles `report()` here; a few times a second witnesses with line of sight react once per event. |
 | `GodHand` | `god_hand.gd` (+ `hand_visual.gd`, `gesture.gd`) | The interface: pick up, throw, tap, knock, right-button gestures. Emits signals (`long_pressed`, `tool_clicked`, `circle_drawn`, ...) for the tools. |
-| `Miracles` | `miracles.gd` | Casts the miracles (water, fire, roaches, money, block party, rain of frogs): spends belief and reports to `Faith`. A burnt-out, roach- or frog-infested building is emptied (`Population.evacuate`) and announced with `building_abandoned`; a fire put out in time is `building_saved`. Effects: `rain.gd`, `fire.gd`, `roaches.gd`, `money_rain.gd`, `block_party.gd`, `frog_rain.gd`. |
-| `ConversionNotes` | `conversion_notes.gd` (+ `floating_note.gd`) | Floats "+ Believer" / "+ Missionary" / "Lost a believer" (rank names from `data/units.tres`) over people from `Population.rank_changed`; `FloatingNote.pop` is the shared pop-up text |
-| `Decrees` | `decrees.gd` (+ `decree_looks.gd`) | Divine decrees on the god's own buildings (`Districts.owns()`): add floors, luxury, facade, change use, preserve; paid in belief and `Treasury` money. Preserved buildings are in group `preserved`. |
-| `SermonAlerts` | `sermon_alerts.gd` | A ring on the ground and a click-to-fly button for each sermon and police raid (`Population.sermons` signals). |
-| `BuildingMenus` | `building_menus.gd` | The second wheels of a building of yours: upgrades (paid from `Treasury`, applied with `Population.upgrade`), posts for free believers and priests in sermon houses and shops, and training missionaries and priests. |
-| `HandTools` | `hand_tools.gd` (+ `radial_wheel.gd`) | The two wheels opened by holding the button still: decrees on your building, the three `Campaigns` takeover marks on anyone else's, miracles elsewhere. A chosen miracle sits in the hand until cast. |
-| `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Knows the stage map's districts (`CityPlan.districts`, each of a kind, `DistrictSettings.kinds`: Slums, Workers, ..., that says who lives there; the Slums stage has one) and keeps who holds every building (index = map building index): yours once most of its residents believe (an empty one, while a believer sits in or lives there). Eilam's rule: buildings are taken one at a time, and a block (a map unit: `block_of`, `block_members`, `block_held`, `block_size`) whose standing buildings are all yours is complete (`is_block_complete`, `in_complete_block`, signal `block_changed`): its people make `block_output_bonus` more (`block_bonus`, used by `Population.money_rate` / `belief_rate`), its buildings can't give way (`Fragility`) or draw complaints (`Condemnation`), and awareness drops once. The cult's base (`headquarters`, `is_base`) is the largest building of the start district's block farthest from its core, always yours; the core (the largest building of the unit the map marks) has to be won; only the start district is open (`is_unlocked`, `is_open`). A district is yours (`district_controlled`, set by `win(d)`) once `DistrictProgress` says its bar is full. A building can only become yours if it borders one you hold (`can_claim`; `world/building_graph.gd`, `BuildingGraph.set_from_plan`: walls within `border_gap`, and blocks the map calls neighbours always join), so the city is taken outwards from the base; a core also needs `core_base_share` of the buildings around it. A per-district `independence` value waits for the story. `DistrictView` puts a gold plate on every roof of yours and a ring on the ground round each block (warming toward gold, solid once complete). Tunables `data/districts.tres`. |
-| `DistrictProgress` | `world/district_progress.gd` | Eilam's rule for winning: one bar per open district with two sources, `following(d)` (the share of buildings that are yours over `control_share`, times `welfare_low`..`welfare_high` by `Population.welfare`) and `key_places(d)` (`core_points` for the core, `landmark_points` per marked landmark); `value(d)`, signal `changed`; calls `Districts.win(d)` at 1. Shown by `district_hud.gd`. |
+| `Miracles` | `miracles.gd` | Casts the miracles offered (`MiracleSettings.offered`: water, money, block party, rain of frogs): spends paperwork and reports to `Faith`; money goes to `Treasury.add_money` (which pays a loan off first). Effects: `rain.gd`, `money_rain.gd`, `block_party.gd`, `frog_rain.gd`. To be rebuilt as a small refilling stock. |
+| `ConversionNotes` | `conversion_notes.gd` (+ `floating_note.gd`) | Floats "+ Rep" and the like over people from `Population.rank_changed`, and why a building can't be worked on (`Campaigns.mark_refused`); `FloatingNote.pop` is the shared pop-up text |
+| `Decrees` | `decrees.gd` (`Decrees`, + `decree_looks.gd`) | The floors decree on a building of yours (`Districts.owns()`): more floors, so more rows for rooms; paid in paperwork and `Treasury` money; `issue`, `price`, `is_done`, signal `decree_issued`. `show_shop(building, on)` puts up or takes down the shop sign (meta `decree_use`, group `shops`) when `Rooms` says so. |
+| `BuildingMenus` | `building_menus.gd` (`BuildingMenus`) | What the wheel of a building of yours offers: `items(building, group)` and `choose(id, building)`. First wheel: Train Rep / Train Fixer (the Office), Rooms (emits `rooms_requested`, which opens `RoomEditor`), +Floors, Sellers (a building with a shop), Loan and Bury the File (the Office); the second wheel `&"shop"` is one seller more or fewer. Every slice says its price or why not (`why_not_train`). |
+| `HandTools` | `hand_tools.gd` (`HandTools`, + `radial_wheel.gd`) | The wheels opened by holding the button still: `BuildingMenus` on your building, "Send a Rep" (`Campaigns.send`) on one in reach, miracles elsewhere. A chosen miracle sits in the hand until cast. |
+| `Districts` | `world/districts.gd` (+ `district_view.gd`, `district_hud.gd`) | Knows the stage map's districts (`CityPlan.districts`, each of a kind, `DistrictSettings.kinds`: Slums, Workers, ..., that says who lives there; the Slums stage has one) and keeps who holds every building (index = map building index): yours while a Rep manages it (`take`, `lose`; the base always is), with a takeover meter per building (`meter_of`, `add_meter`, `wants_you` when full, `meter_changed`; a lost one keeps `lost_meter`). Eilam's rule: buildings are taken one at a time, and a block (a map unit: `block_of`, `block_members`, `block_held`, `block_size`) whose standing buildings are all yours is complete (`is_block_complete`, `in_complete_block`, signal `block_changed`): followers come to its buildings faster (`Followers.attraction_of`). The cult's base (`headquarters`, `is_base`) is the largest building of the start district's block farthest from its core, always yours; the core (the largest building of the unit the map marks) has to be won; only the start district is open (`is_unlocked`, `is_open`). A district is yours (`district_controlled`, set by `win(d)`) once `DistrictProgress` says its bar is full. A building can only become yours if it borders one you hold (`can_claim`; `world/building_graph.gd`, `BuildingGraph.set_from_plan`: walls within `border_gap`, and blocks the map calls neighbours always join), so the city is taken outwards from the base; a core also needs `core_base_share` of the buildings around it. Key buildings (`keys`, `is_key`, `key_name`; `_find_keys`: the core and the largest building of one block in `blocks_per_key`, today 1: every block but the base's; a block is complete without its key building) are where inspectors come from, and are locked to Reps until the Fixer opens them (`is_key_open`, `open_key`, `key_share(d)`; see `Breaches`). A per-district `independence` value waits for the story. `DistrictView` puts a gold plate on every roof of yours, a ring on the ground round each block (warming toward gold, solid once complete) and the takeover bar over each building. Tunables `data/districts.tres`. |
+| `Followers` | `world/followers.gd` (`Followers`) | The model's economy (GDD section 0 item 7). Followers are a number per building of yours: `room_of` (from `Rooms`), `count_of` (starts at `start_share` of the room, grows by `attraction_of`, never over the room), `total` is the one pool. Roles are slots filled by `_fill_roles`; people work in the building they live in: clerks first (`clerks_in(i)`: desks, but no more than live there; `paperwork_rate`), then sellers (`sellers_possible(i)`: slots, but no more than live there after its clerks) one at a time to the shop where the next brings the most while worth the pay (`has_shop`, `shop_slots`, `sellers_in`, `next_seller_net`, `change_sellers` for the player's own number), giving `money_rate`. `take_one` removes a follower for training; `rep_cap`; `idle`; `security_of(i)`; `upkeep_rate()`; `people_in(d)`, `followers_in(d)`, `people_share(d)` (the district's people are your followers plus the plain room of every building not yours, so followers you make room for raise the total too); `paperwork_cap()` and `money_cap()` (what the archives and vaults hold; `Faith` and `Treasury` stop their income there). All slots, caps, attraction and security come from the rooms. Buildings of yours pull up the meters of their neighbours inside a block (`_pull`). Signal `changed`. Tunables `data/followers.tres`. |
+| `Rooms` | `rooms/rooms.gd` (`Rooms`, + `building_layout.gd`, `room_kind.gd`, `room_settings.gd`) | The rooms inside every building of yours (GDD section 0 item 8). A `BuildingLayout` per building: a grid of bays (columns, by the front's width) and floors (rows, 0 the ground floor; the floors decree adds rows) and the `Piece`s on it (a `RoomKind`, an origin, quarter turns), with a staircase nothing fits over: one place a floor (`stairs`, a column per row), climbing in flights of `stairs_flight` floors that change column (`_climb`; floors added later keep the stairs below). A cell with no piece is a plain flat, so a building works unplanned. A kind may need a neighbour (`RoomKind.needs_next`, by id or `group`: Archive by a Desk Room, Vault and Stock Room by a shop; `touches`, the stairs don't come between) and then that neighbour can't be taken out (`why_not_remove`, `leaning_on`). `offers(i, kind)`: office kinds in an office, homes up to the stage's `max_tier` (the Slums: basic only; `RoomKind.tier`). The Office is raised to `office_min_rows` floors at the start (`Decrees.raise_free`). `why_not`, `place` (pays money and paperwork), `place_anywhere`, `remove` (part of the money back), `room_of(i)`, `totals_of(i)` (`Totals`: followers, clerks, sellers, reps, security, attraction, paperwork_cap, money_cap), `is_office(i)` (the main Office and every key building you have taken: office-only kinds go there). Rooms with `upkeep` cost money a minute (`upkeep()`, taken by `Treasury`); when it can't be paid (`Treasury.ran_dry`) the dearest closes (`close_dearest`, `Piece.open`, signals `room_closed` / `room_reopened`) and gives nothing until there is `reopen_money` again. The Office opens with `office_start`. A lost building loses its rooms. Signal `changed(index)`. `settings` is `data/rooms.tres` (`RoomSettings`, loaded with `load()`: fourteen kinds as sub-resources). |
+| `RoomEditor` | `rooms/room_editor.gd` (`RoomEditor`) | The editor's screen, drawn in code on one Control: the grid, a palette of kinds, the ghost of the picked room (green or red with the reason), totals. Left click picks and places, right click or the wheel turns, "Take a room out" removes, Esc closes. Does not pause the game. Placeholder look. |
+| `Pause` | `pause.gd` (`Pause`) | The player's own pause (Space): pauses the tree but keeps `keep_awake` (camera, hand, wheels, editor, HUD) working; the hand lifts nothing meanwhile. Not available while the briefing is up. |
+| `Inspectors` | `inspection/inspectors.gd` (`Inspectors`, + `inspector.gd`, `inspector_settings.gd`) | The city's answer (round B). Reps at work and buildings taken raise `Faith.exposure`; every so often (sooner and more at once with exposure, `allowed()`) an `Inspector` (a RigidBody the hand can lift and throw; he lies a moment, then walks on along `City.route`) leaves the nearest key building for a Rep's door, or past `audit_from` for a building of yours (not the Office, not in a complete block, least Security first). Arriving, he demands paperwork: `demand_cost()` from a Rep (else the Rep is sent home), `audit_cost(i)` for a building (else `Districts.lose`). He gives up after `patience_seconds`. `bury()` spends paperwork to lower exposure (dearer each time). `send_to(building, audit)` for tests. Signals `sent`, `papers_shown`, `rep_sent_home`, `audit_passed`, `turned_back`, `gave_up` (shown by `ConversionNotes`). Tunables `data/inspectors.tres`. |
+| `KeyMarkers` | `props/key_markers.gd` | A signboard with its name on each key building (`Districts.keys`). Placeholder look. |
+| `Breaches` | `world/breaches.gd` (`Breaches`, + `props/breach_marks.gd`) | The Fixer at a key building (round C). `send(building)` (or the hand setting the Fixer down there, `Population.fixer_set_down`) puts him at its door; each tick he costs `breach_presence_paperwork` a minute and carries out `breach_actions` actions in turn (each `breach_action_paperwork` to start, `breach_action_seconds`, `breach_action_exposure`; faster under the hand); with no paperwork he waits (`stalled`). Done, `Districts.open_key` lets a Rep take it, and taken it is an office (`Rooms.is_office`). `why_not`, `target`, `fixer`, `actions_done`. Signals `action_started`, `opened`, `changed`. `BreachMarks` writes the state over the building. Tunables in `data/districts.tres` ("Key buildings: the Fixer opens them"). |
+| `DistrictProgress` | `world/district_progress.gd` | One bar per open district, by the model's two ways to win: `control(d)` (`Districts.key_share(d)` over `key_win_share`) and `freedom(d)` (half for `key_part_share` of the key buildings, half for `Followers.people_share(d)` over `control_share`); `value(d)` is the better; signal `changed`; calls `Districts.win(d)` at 1. `district_hud.gd` shows both counts and the rule. |
 | `DistrictWon` | `world/district_won.gd` | The "district captured" screen with a line from the Secretary's minutes (texts in `data/districts.tres`). |
-| `Treasury` | `world/treasury.gd` | The cult's money: tithes from believers, and each building of yours earns or costs money by its decrees (`net_of`, `net_if`: rent, use upkeep, shop, luxury speed, floor efficiency) and its district's wealth; `spend_money` / `add_money`. Tunables `data/treasury.tres`. |
-| `Campaigns` | `world/campaigns.gd` (+ `campaign_marks.gd`) | The three takeover marks on a building (force, buy, missionaries), carried out by believers until most residents believe. Tunables `data/campaigns.tres`. |
-| `Government` | `government/government.gd` (+ `bulldozer.gd`, `demolition_notice.gd`) | City Hall: a hidden building code (floors past the limit, luxury, Combat Training) feeds `Heat` and slowly raises suspicion; at the limit an inspector visits, then a demolition notice and the bulldozer. Tunables `data/government.tres`. |
-| `Police` | `government/police.gd` | Crews at marked buildings raise `Heat`; when `Heat.police_called` fires the street is closed with a roadblock and the campaign waits (`Campaigns.block`). Controlled districts are exempt; hardness follows district wealth. Tunables `data/police.tres`. |
-| `Arrests` | `government/police_arrests.gd` (+ `police_officer.gd`, `arrest_alert.gd`) | A squad of grabbable officers surrounds the Vandalist (called by `Murals`) and holds him still; that makes him a martyr (`Awareness.add_martyr`). The hand or a miracle (`scatter_near`) clears them for belief, or he is taken to jail (`jailed`, `Resident.jailed_left`) until `bail()` or time served. `arrest_started` / `arrest_ended` / `released`; a banner shows the countdown and the bail button. |
-| `Awareness` | `world/awareness.gd` | Per-district awareness 0..1 from how concentrated the preaching attempts are, fading faster with a joined-up front; `factor_for(home)` scales conversion (with the core spike, core protection and martyr bonus). Tunables `data/awareness.tres` (`AwarenessSettings`, also for the next three). |
-| `Landmarks` | `world/landmarks.gd` | The five landmarks of the start district on a ring around its core (`buildings`, signs); `mark`, `clean` (City Hall scrubs old marks), `core_ease(d)` which `Awareness.factor_for` applies at a core. Tunables `data/landmarks.tres` (`LandmarkSettings`). |
-| `StageScreens` | `world/stage_screens.gd` | The Slums stage's briefing (pauses the tree; skipped headless or with `--no-briefing`) and the lose screen (had `lose_after_believers`, then none for `lose_minutes`). Texts in `data/districts.tres`. |
-| `Fragility` | `world/fragility.gd` | Exposed buildings of yours (at most one of yours next to them) may be lost (`crumble`: `Population.revert_believers`, `Districts.lose`). |
-| `Murals` | `world/murals.gd` | The Vandalist set down by a building (`Population.agent_set_down`) paints a mural; murals feed `Population.pleasure_bonus` and awareness; the neighbourhood's answer (painted over, fine, camera; weights grow with use) may call `Arrests.arrest`. |
-| `Condemnation` | `government/condemnation.gd` (+ `condemnation_notice.gd`) | Complaints from loud buildings of yours raise awareness; at `condemn_at` a notice, then `Population.close_building` for `close_minutes` and `reopen_building`. The hand can tear the notice off for belief. Replaces the inspector in `GovernmentSettings.condemn_kinds` (the Slums). |
+| `Treasury` | `world/treasury.gd` (`Treasury`) | The money: `income` is `Followers.money_rate` less `Followers.upkeep_rate()` (signal `ran_dry` when the upkeep can't be paid); `spend_money`, `add_money`, `can_afford`. One loan at a time (`borrow`, `owed`): paperwork for money now, paid back from a share of the takings or by `add_money`. Tunables `data/treasury.tres`, the loan in `data/followers.tres`. |
+| `Campaigns` | `world/campaigns.gd` (`Campaigns`, + `campaign_marks.gd`) | Reps at work on buildings. `send(building)` sends the nearest free Rep (with none free the building waits, "needs a Rep"); a Rep set down by the hand joins, and such a door is dropped when the Rep leaves. Only Reps work on buildings: the Secretary stays at the Office. Each tick the meter rises by the Reps at the door, the building's size (`seconds_for`) and the god's attention (`GodHand.pointed_part`); full, `_take` makes the building yours and the Rep its Manager (`taken`). `why_not`, `marked`, `clear`, `is_sent`. Tunables `data/campaigns.tres`. |
+| `StageScreens` | `world/stage_screens.gd` | The Slums stage's briefing (pauses the tree; skipped headless or with `--no-briefing`). Texts in `data/districts.tres`. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts, hidden until F1. Not part of the game. |
-| `HUD` | `hud.gd` (+ `help_label.gd`) | The numbers the player may see, and the controls folded into one hint line (H opens them). |
+| `HUD` | `hud.gd` (+ `help_label.gd`, `mission_card.gd`, `world/building_tooltip.gd`) | The numbers the player may see (paperwork, money, followers with sellers and clerks, Reps free and out of the cap, buildings), the controls folded into one hint line (H opens them), `MissionCard`: the one thing to do next with a progress bar (texts in `data/districts.tres`, "Missions"), and the card over the building under the hand (followers of room, sellers, Manager, or what it takes to take it). |
 
 World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`,
 `door.gd`, `litter.gd`, `pigeon.gd`.
@@ -85,8 +83,8 @@ World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `
 `shared_meshes.gd` (`SharedMeshes`) hands out low-poly primitive meshes shared by every instance.
 `sfx.gd` makes placeholder sounds in code.
 
-Groups used for lookups: `citizens`, `buildings`, `fires`, `doors`, `god_grabbable`, `shops`,
-`prayer_houses`, `wind_reactive`, `no_toon`, `preserved`.
+Groups used for lookups: `citizens`, `buildings`, `doors`, `god_grabbable`, `shops`,
+`wind_reactive`, `no_toon`.
 
 Physics layers (bit values in code): 1 = world (ground, buildings), 2 = citizens,
 3 (4) = props (taxis, trees, litter), 4 (8) = critters (pigeons, as Area3D so the hand's wind
@@ -115,7 +113,7 @@ each Map Lab archetype becomes, and the unit rules (`unit_max`, `unit_min` build
 real metres for neighbours across a street). Each district kind can have a style file,
 `data/maps/styles/<kind>.json` (street pattern, land use, building mix, height, ART.md facade style
 per building kind), applied before the map is made. Units are the game's blocks (buildings are taken one at a time; a whole block pays a
-bonus): a block or a run of one, 5 to 12 buildings; each district's core is its own unit (the public building nearest
+bonus): a block or a run of one, 8 to 14 buildings in the Slums (97 buildings, nine blocks and the core); each district's core is its own unit (the public building nearest
 its middle). The exporter prints the start district's unit count and how far its farthest unit
 is from the core, for the Balance Tester. `json` files are in the web export
 (`include_filter` in `export_presets.cfg`).
@@ -158,72 +156,78 @@ Tunables: `data/planning.tres`.
 | --- | --- | --- |
 | `data/hand_settings.tres` | `HandSettings` | hand and camera feel |
 | `data/balance.tres` | `Balance` | miracle witnesses, exposure, starting belief |
-| `data/miracles.tres` | `MiracleSettings` | miracle costs, reach and effects |
-| `data/decrees.tres` | `DecreeSettings` | divine decree costs, exposure and limits |
-| `data/people.tres` | `PeopleSettings` | residents, names, walking, comfort and fear, jobs and places, upgrades, sermons |
+| `data/miracles.tres` | `MiracleSettings` | which miracles are offered, their costs, reach and effects |
+| `data/decrees.tres` | `DecreeSettings` | the floors decree: costs and limits |
+| `data/people.tres` | `PeopleSettings` | residents, names, walking, bodies on the street |
 | `data/archetypes.tres` | `ArchetypeSettings` (+ `ResidentArchetype`s) | the eight archetypes: where they live, traits, assets, needs (levels), and what a level is worth |
-| `data/units.tres` | `UnitSettings` | ranks (names, colours, charisma), the conversion formula, output per believer, needs, training |
-| `data/heat.tres` | `HeatSettings` | when the police step in |
-| `data/landmarks.tres` | `LandmarkSettings` | landmark names, ring, marks: time, cost, arrest chance, core multiplier, City Hall cleaning |
-| `data/awareness.tres` | `AwarenessSettings` | district awareness, fragility, complaints and condemnation, murals and the neighbourhood's answers, arrest and martyr |
+| `data/units.tres` | `UnitSettings` | ranks (names, colours), training times |
 | `data/art_style.tres` | `ArtStyleSettings` | cel shading, depth of field, tilt-shift, colour grade |
 | `data/planning.tres` | `PlanningSettings` | planning model |
 | `data/surroundings.tres` | `SurroundingsSettings` | land, river, outer neighbourhoods, clouds, haze |
 | `data/city_props.tres` | `CityPropsSettings` (+ `PropKind`s) | which Meshy props go where, how many, how bags squash, building-state and poor-district props, the taxi model |
-| `data/districts.tres` | `DistrictSettings` | district kinds and their wealth, who holds a building, borders, the block bonus, block rings |
+| `data/districts.tres` | `DistrictSettings` | district kinds and their wealth, borders, the lost meter, the two ways to win, key buildings and the Fixer's actions, block rings, mission and briefing texts |
 | `data/city.tres` | `CitySettings` | which stage map, floor height, glass kinds, street and ground colours, trees, taxis, litter, pigeons |
-| `data/treasury.tres` | `TreasurySettings` | money: tithes, rent, use upkeep, shops, luxury, floors |
-| `data/campaigns.tres` | `CampaignSettings` | takeover marks: crews, prices, sermons |
-| `data/police.tres` | `PoliceSettings` | roadblocks: crew heat, force and exposure multipliers, closing time |
+| `data/treasury.tres` | `TreasurySettings` | starting money, tick |
+| `data/campaigns.tres` | `CampaignSettings` | a Rep's time per building and how size scales it |
+| `data/inspectors.tres` | `InspectorSettings` | exposure from work and takings, how often and how many inspectors, the inspector's walk, patience and look, what he demands, burying the file, the notes |
+| `data/followers.tres` | `FollowersSettings` | the economy: growth, seller and clerk rates, the base Rep cap, training costs, the pull inside a block, the god's attention, the loan |
+| `data/rooms.tres` | `RoomSettings` (+ `RoomKind`s) | the room kinds (shape, price, upkeep, what each gives, where it fits, what it must be next to), the stairs, upkeep and reopening, the grid (bay width, floor height, limits), the stores with no room built, the refund, the Office's first rooms, the editor's look |
 | `data/mapgen.tres` | `MapGenSettings` (+ `Archetype`s) | the neighbourhood kinds the map generator places |
 | `data/map_lab.tres` | `MapLabSettings` (+ `LabParams`, `LabSlider`s, `LandUseMix`es) | map lab menu, land use per archetype, block finding, colours |
 
 ### Who owns what
 
-The studio has three standing role threads. All code here belongs to the Programmer.
+The studio has four standing role threads. All code here belongs to the Programmer.
 
 | Area | Files | Owner thread |
 | --- | --- | --- |
-| Design, balance, research | `docs/GDD.md` | "מעצב המשחק" (Game Designer) |
+| Design, research | `docs/GDD.md` | "מעצב המשחק" (Game Designer) |
+| Balance: simulations before a system is coded, the numbers the Designer briefs | `tests/pace_sim.gd` findings, sim artifacts | "בודק איזון" (Balance Tester) |
 | All code, tests, builds, the `alpha` branch, the web export, `CLAUDE.md`, `CHANGELOG.md` | everything else | "המתכנת" (Programmer) |
 | Look, 3D assets, shaders' art direction, UI art | `docs/ART.md`, `assets/` | "האמן" (Artist) |
 
 The Programmer builds only what the Designer briefed or Eilam asked, and asks the Designer
 when the design is unclear.
 
-A session cannot message the other threads: the documents are the channel. Decisions by Eilam
+Role threads in the project can message each other; a session outside the project cannot, so
+for it the documents are the channel. Either way, decisions by Eilam
 go at the top of `docs/GDD.md` (section 0) and `docs/ART.md` the day they are made, with what
 each thread owes; read both before starting work.
 
-### Standing decisions (Eilam, 2026-11-12)
+### Standing decisions (Eilam; the full text is `docs/GDD.md` section 0)
 
-- The story is a god against the bureaucracy, not a cult taking over, and not a street-artist
-  god. Two ways to resist: control (you write the rules anew: fast, focused, little spreading)
-  and freedom (a real majority: slower, with time to invest in buildings and people). The game
-  should feel considered, not a fast takeover; do not tune it to go faster.
-- Chosen direction, not built yet (GDD section 0): the god asked City Hall to be recognised and
-  was refused (the background story, kept for its humour); from there a journey in one of two ways, sweeping
-  believers along behind you (freedom) or taking things over yourself (control); the hand's two
-  verbs are stamp (your own rules) and tear (no rules). No signatures or petition.
-- `docs/GDD.md` is a copy of the Designer's page (the link is at its top). If Eilam says the
-  design changed and the copy has not, read the page with the Artifact tool and sync the copy.
-- Buildings are taken one at a time; a whole block pays a bonus.
-- The system has three layers (GDD section 13): a base that no stage changes, branches the player
-  balances by style, and a stage profile of numbers. A later stage is harder by its numbers
-  (residents, buildings, reactions), never by new rules; before a second stage, the per-stage
-  numbers move into one profile per stage.
-- Names on screen (set B; the code keeps the old identifiers): `BELIEVER` is a Member,
-  `MISSIONARY` a Canvasser, `PRIEST` a Clerk, `HIGH_PRIEST` the Secretary, `AGENT` the Field
-  Delegate, the cult is the Committee, a prayer house is a Branch (`data/units.tres`).
-- The hand places people: where it sets someone down, and who they are, is what they do
-  (`Population._on_set_down`, `_take_order`, `willingness`, `effort_of`, `Resident.strain`); an
-  unwilling one still goes, at a price. Prefer this to adding wheel slices.
-- A district is won by filling one bar from two sources, a wide following that lives well and
-  focused actions on key places; either alone must stay hard and the mix flexible.
-- **Feature freeze**: no new systems and no other districts until the Slums' base loop is good.
-  Fix, tune, simplify and make readable; judge balance with `tests/pace_sim`.
-- No cap on believers by housing; no abandoned buildings at the start.
-- Tell Eilam in a line what you are about to do before long work, and what happened after.
+Section 0 of the GDD is the game as it stands and wins over everything else in that document.
+In short:
+
+- **The story**: a god against the bureaucracy, a comedy, in two ways: control (take the offices
+  over) and freedom (a real majority). Considered, not a fast takeover: do not tune it to go
+  faster.
+- **The model**: followers are a number per building in one pool; people work where they live
+  (clerks make paperwork, sellers money); a Rep (capped) fills a building's bar and stays as
+  its Manager; inspectors come from key buildings and are paid in paperwork or carried off by
+  the hand; the Fixer opens a key building, which becomes an office; rooms are fitted into
+  every building's grid and set room, slots, ceilings and upkeep. Win: 80% of the key buildings,
+  or 30% of them and 60% of the district's people.
+- **Buildings are taken one at a time**, only next to one you hold; a whole block pays a bonus.
+  No empty or abandoned buildings, ever. Nobody is converted in the street.
+- **The hand** lifts only Reps, the Fixer and inspectors; where it sets one down is what they
+  do. Prefer that to adding wheel slices. Pause is the player's own; nothing pauses by itself.
+- **It must work when ignored**: a building never opened in the room editor still works.
+- **Only the Slums** until its loop is good, and it is the teaching stage: basic homes only.
+  A later stage is harder by its numbers, never by new rules; before a second stage the
+  per-stage numbers move into one profile (GDD section 13).
+- **Decided, not built** (GDD 0.4): the planner inside the building as a doll's house, advanced
+  and luxury blocks, fear and attractiveness as two dials, outside decorations, miracles from a
+  small stock that City Hall fines, stamp and tear.
+- Names on screen (the code keeps the old identifiers): `BELIEVER` a Member, `MISSIONARY` a Rep,
+  `PRIEST` a Clerk, `HIGH_PRIEST` the Secretary, `AGENT` the Fixer, the cult the Committee;
+  `Faith.belief_pool` is the paperwork, `Campaigns` are Reps at work.
+- Leftovers to clear when next touched: `ResidentArchetype` still carries the old needs and
+  traits data, and `Miracles` still spends paperwork.
+- `docs/GDD.md` is otherwise a copy of the Designer's page (the link is at its top). If Eilam
+  says the design changed and the copy has not, read the page with the Artifact tool and sync.
+- Tell Eilam in a line what you are about to do before long work, and what happened after. He
+  wants to be shown, not told at length.
 
 ### The Alpha build
 
@@ -338,7 +342,7 @@ section of the release with the version. Stages in order: Pre-Alpha, Alpha, Beta
    `HAND TEST: PASS` and `res://tests/cult_test.tscn` must print `CULT TEST: PASS` (exit
    code 0). Add a check there when you add a hand behaviour or change the core loop.
    After a balance change, run the bot and compare with the last CHANGELOG numbers:
-   `godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,pray,preach,buy`.
+   `godot --headless --path . res://tests/pace_sim.tscn -- --minutes=60 --bot=train,send,shop,upgrade,bury,fixer`.
 4. Test the feature you changed. For visual changes, take a screenshot
    (`godot --path . -- --shot=out.png` saves one after 120 frames) and share it.
 5. Check that both renderers still start (`--rendering-method gl_compatibility`); for an

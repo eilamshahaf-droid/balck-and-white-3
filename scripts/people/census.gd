@@ -51,6 +51,11 @@ func _set_home(r: Resident, building: Node3D) -> void:
 	(by_home[building] as Array).append(r)
 
 
+## One more household moves into `home` (the Office's first followers).
+func add_household(home: Node3D) -> void:
+	_add_family(home, _people.family_size_max)
+
+
 ## A family of at most `max_size` moves into `home`.
 func _add_family(home: Node3D, max_size: int) -> void:
 	var last: String = _people.last_names[_rng.randi() % _people.last_names.size()]
@@ -65,7 +70,6 @@ func _add_family(home: Node3D, max_size: int) -> void:
 		_give_archetype(r, kind)
 		r.work = pick_work(r.archetype)
 		r.color = Color.from_hsv(_rng.randf(), 0.45, 0.85)
-		r.comfort = r.wealth
 		r.has_phone = _rng.randf() < B.phone_chance
 		residents.append(r)
 		_set_home(r, home)

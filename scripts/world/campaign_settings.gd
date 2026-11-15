@@ -1,32 +1,21 @@
 class_name CampaignSettings
 extends Resource
-## Tunables for the three ways to take a building (campaigns.gd). Open
-## data/campaigns.tres in Godot and change values in the Inspector.
+## Tunables for taking a building (campaigns.gd). Open data/campaigns.tres in Godot and
+## change values in the Inspector.
 
-@export var tick := 0.5                     # seconds between steps of every campaign
+@export var tick := 0.5                     # seconds between steps
 @export var line_color := Color(1.0, 0.85, 0.3)
-## The marks shrink as the camera comes in: full size from this far away...
+## The mark over a building shrinks as the camera comes in: full size from this far away...
 @export var mark_far_distance := 160.0
 ## ...down to this share of it, up close.
 @export_range(0.05, 1.0) var mark_min_scale := 0.25
 
-@export_group("Force (skull)")
-## The Change Use that trains fighters; you need one building with it.
-@export var training_use := "Combat Training"
-@export var fighters := 4                   # believers sent at once
-@export var max_fighters := 12              # with a gym's holy warriors added
-@export var force_interval := 6.0           # seconds between residents scared out
-@export var force_exposure := 0.03          # exposure per resident scared out: the police notice
-@export var fighter_line := "Out! This floor belongs to the Hand."
-
-@export_group("Buy (dollar)")
-@export var buyers := 1
-@export var apartment_price := 80.0         # money per resident bought out
-@export var buy_interval := 5.0
-@export var buyer_line := "Cash offer. Today only."
-
-@export_group("Missionaries (sky sign)")
-@export var missionaries := 3
-@export var preach_interval := 7.0          # seconds between attempts at the door
-@export var preach_cost := 1.0              # belief per attempt
+@export_group("Reps at the door")
+## Seconds one Rep takes to fill an ordinary building's meter.
+@export var rep_seconds := 60.0
+## Room for followers in an ordinary building; a bigger one takes longer in proportion,
+## within these limits.
+@export var ordinary_room := 12.0
+@export var size_factor_min := 0.5
+@export var size_factor_max := 3.0
 @export var missionary_line := "Have you got a minute for the Committee?"

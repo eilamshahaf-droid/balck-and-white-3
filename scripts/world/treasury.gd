@@ -1,23 +1,25 @@
 class_name Treasury
 extends Node
-## The cult's money. It comes from the believers (each by their wealth and
-## needs, Population.tithes) and from the buildings of yours: each one earns or costs money every
-## second, by what the decrees made of it (net_of()). Decrees, miracles and
-## buying buildings spend it.
+## The money. It comes from the sellers in the shops (Followers.money_rate, after their
+## pay) and goes on upgrades, floors and shops. One loan at a time: opened with
+## paperwork, paid back out of a share of the takings, and any windfall (the money
+## miracle's banknotes) goes to it first.
 
 signal money_changed(money: float)
+## The upkeep of the rooms can't be paid: one of them must close.
+signal ran_dry
 
 const S: TreasurySettings = preload("res://data/treasury.tres")
+const F: FollowersSettings = preload("res://data/followers.tres")
 
-@export var faith: Node
-@export var population: Population
-@export var districts: Districts
-@export var decrees: Decrees
-@export var police: Police
+@export var faith: Faith
+@export var followers: Followers
 
 var money := S.start_money
 ## Money per second right now, for the HUD.
 var income := 0.0
+## What is still owed on the loan (0: no loan).
+var owed := 0.0
 
 var _timer := 0.0
 
@@ -27,10 +29,23 @@ func _physics_process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = S.tick
-	income = population.tithes
-	for b in districts.converted_buildings():
-		income += net_of(b)
-	add_money(income * S.tick)
+	income = followers.money_rate - followers.upkeep_rate()
+	if income < 0.0 and money + income * S.tick <= 0.0:
+		money = 0.0
+		ran_dry.emit()
+		money_changed.emit(money)
+		return
+	var gain := income * S.tick
+	if owed > 0.0 and gain > 0.0:
+		var paid := minf(gain * F.loan_repay_share, owed)
+		owed -= paid
+		gain -= paid
+	if gain < 0.0:
+		money += gain
+	else:
+		# The takings stop at what the vaults hold; a loan or a miracle may go over.
+		money = maxf(money, minf(money + gain, followers.money_cap()))
+	money_changed.emit(money)
 
 
 func can_afford(amount: float) -> bool:
@@ -38,68 +53,30 @@ func can_afford(amount: float) -> bool:
 
 
 func spend_money(amount: float) -> bool:
-	if money < amount:
+	if not can_afford(amount):
 		return false
 	money -= amount
 	money_changed.emit(money)
 	return true
 
 
+## Money from outside the takings (the money miracle): the loan is paid off first.
 func add_money(amount: float) -> void:
-	if amount == 0.0:
-		return
-	money += amount
+	var paid := minf(amount, owed)
+	owed -= paid
+	money += amount - paid
 	money_changed.emit(money)
 
 
-## Money per second `building` earns (positive) or costs (negative) as yours.
-func net_of(building: Node3D) -> float:
-	return _net(building, decrees.use_of(building), building.get_meta(&"decree_luxury", false),
-			building.get_meta(&"decree_floors", 0))
+## A loan can be opened: none is running, and there is the paperwork for it.
+func can_borrow() -> bool:
+	return owed <= 0.0 and faith.belief_pool >= F.loan_paperwork
 
 
-## What net_of() would be after decree `kind` (a Change Use names the use),
-## so the wheel can show what a decree does to the money.
-func net_if(building: Node3D, kind: StringName, use_name := "") -> float:
-	var use := decrees.use_of(building)
-	var luxury: bool = building.get_meta(&"decree_luxury", false)
-	var levels: int = building.get_meta(&"decree_floors", 0)
-	match kind:
-		&"use": use = use_name
-		&"luxury": luxury = true
-		&"floors": levels += 1
-	return _net(building, use, luxury, levels)
-
-
-## How much faster the building does its job: luxury.
-func speed_of(building: Node3D) -> float:
-	return S.luxury_speed if building.get_meta(&"decree_luxury", false) else 1.0
-
-
-## How much more the building yields for its floors.
-func efficiency_of(building: Node3D) -> float:
-	return _efficiency(building.get_meta(&"decree_floors", 0))
-
-
-func _net(building: Node3D, use: String, luxury: bool, levels: int) -> float:
-	var i := districts.index_of(building)
-	if i < 0:
-		return 0.0
-	var gain := 0.0
-	var upkeep := S.floor_upkeep * levels * levels
-	if use == "":
-		gain = S.rent_per_resident * districts.residents_in(i)
-	elif use == S.shop_use:
-		gain = S.shop_income + S.shop_income_per_believer * districts.believers_at(i)
-	else:
-		upkeep += S.use_upkeep
-	if luxury:
-		gain *= S.luxury_speed
-		upkeep += S.luxury_upkeep
-	if police.is_blockaded(building):
-		gain = 0.0
-	return gain * _efficiency(levels) * districts.wealth_at(i) - upkeep
-
-
-func _efficiency(levels: int) -> float:
-	return 1.0 + S.floor_gain * (1.0 - pow(S.floor_falloff, levels))
+func borrow() -> bool:
+	if not can_borrow() or not faith.spend(F.loan_paperwork):
+		return false
+	owed = F.loan_owed
+	money += F.loan_money
+	money_changed.emit(money)
+	return true

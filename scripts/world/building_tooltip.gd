@@ -9,7 +9,7 @@ const S: DistrictSettings = preload("res://data/districts.tres")
 const RAY_LENGTH := 2000.0
 
 @export var districts: Districts
-@export var treasury: Treasury
+@export var followers: Followers
 @export var decrees: Decrees
 @export var population: Population
 @export var camera: Camera3D
@@ -54,24 +54,30 @@ func _describe(building: Node3D) -> String:
 	if i < 0:
 		return ""
 	var use := decrees.use_of(building)
-	var kind := use if use != "" else ("Apartments" if districts.residents_in(i) > 0 else "Empty building")
+	var kind := "The Office" if districts.is_base(building) else (use if use != "" else "Homes")
 	var d := districts.district_at(building.global_position)
 	var lines := PackedStringArray()
 	lines.append("%s%s" % [kind, "  (core of %s)" % districts.district_name(d) if districts.core_of(d) == i else ""])
-	var of := "%d of %d" % [population.believers_in(building), population.residents_in(building)]
-	lines.append("%s believe" % of)
-	var staff := population.staffing.staff_count(building)
-	if staff > 0:
-		lines.append("Staff %d, yields %.1f" % [staff, population.yield_of(building)])
-	elif building.is_in_group(Decrees.PRAYER_HOUSES):
-		lines.append("Yields %.1f belief/s" % population.yield_of(building))
 	if districts.is_yours(i):
-		var net := treasury.net_of(building)
-		lines.append("Yours: %s $%.1f/s" % ["earns" if net >= 0.0 else "costs", absf(net)])
+		var manager := population.manager_of(building)
+		if manager:
+			lines.append("Manager: " + manager.full_name())
+		lines.append("Followers %d of %d" % [followers.count_of(i), followers.room_of(i)])
+		if followers.has_shop(i):
+			lines.append("Sellers %d of %d" % [followers.sellers_in(i), followers.shop_slots(i)])
+	elif districts.is_key(i):
+		lines[0] = districts.key_name(i)
+		lines.append("Key building: inspectors come from here")
+		lines.append("Open: send a Rep to take it" if districts.is_key_open(i)
+				else "The Fixer must open it before a Rep can take it")
+	elif districts.wants_you(i) and districts.can_claim(i):
+		lines.append("Wants you: set a Rep down here to manage it")
 	elif not districts.borders_yours(i):
-		lines.append("Not yours, and too far: it must border a building of yours")
+		lines.append("Too far: it must border a building of yours")
 	elif not districts.can_claim(i):
-		lines.append("Not yours: take the buildings around it first")
+		lines.append("Take the buildings around it first")
+	elif districts.meter_of(i) > 0.0:
+		lines.append("Takeover %d%%: keep a Rep at its door" % floori(districts.meter_of(i) * 100.0))
 	else:
-		lines.append("Not yours")
+		lines.append("Set a Rep down at its door to take it")
 	return "\n".join(lines)

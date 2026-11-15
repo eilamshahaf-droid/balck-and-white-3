@@ -1,6 +1,7 @@
 class_name Faith
 extends Node
-## Belief, witnesses and exposure for the whole city.
+## Paperwork (the pool that used to be belief; the code keeps the name), witnesses and
+## exposure for the whole city. Clerks fill the pool (Followers.paperwork_rate).
 ##
 ## Miracles report what people could see (a cloud raining from a clear sky).
 ## A few times a second, everyone with a clear view of it reacts once per
@@ -12,12 +13,12 @@ extends Node
 const B = preload("res://data/balance.tres")
 const LAYER_WORLD := 1
 
-@export var population: Population
+@export var followers: Followers
 
 ## 0..1, shown to the player.
 var exposure := 0.0
 var believers := 0
-## The belief pool: believers' prayers fill it, miracles spend it.
+## The paperwork pool: clerks fill it; training, decrees, a loan and miracles spend it.
 var belief_pool := B.belief_start
 
 var _events := {}        # subject -> {kind, intensity, situation, time_left, id}
@@ -48,6 +49,11 @@ func end_report(subject: Node3D) -> void:
 	_events.erase(subject)
 
 
+## Raise (or lower) how much the city has noticed, kept in 0..1.
+func add_exposure(amount: float) -> void:
+	exposure = clampf(exposure + amount, 0.0, 1.0)
+
+
 ## Take belief from the pool. Returns false (and takes nothing) if there isn't enough.
 func spend(amount: float) -> bool:
 	if amount > belief_pool:
@@ -58,7 +64,8 @@ func spend(amount: float) -> bool:
 
 func _physics_process(delta: float) -> void:
 	exposure = maxf(exposure - B.exposure_decay * delta, 0.0)
-	belief_pool += _prayer * delta
+	# What the clerks make stops at what the archives hold; a gift may go over.
+	belief_pool = maxf(belief_pool, minf(belief_pool + _prayer * delta, followers.paperwork_cap()))
 	for subject in _events.keys():
 		_events[subject].time_left -= delta
 		if not is_instance_valid(subject) or _events[subject].time_left <= 0.0:
@@ -69,8 +76,8 @@ func _physics_process(delta: float) -> void:
 	_timer = B.witness_interval
 	var people := get_tree().get_nodes_in_group("citizens")
 	# Everyone counts and prays, indoors too; only those outside see miracles.
-	believers = population.believer_count
-	_prayer = population.prayer
+	believers = followers.total
+	_prayer = followers.paperwork_rate
 	for subject in _events:
 		_witness(subject, _events[subject], people)
 

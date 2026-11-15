@@ -3,6 +3,133 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.20.0 (2026-11-14): stairs in flights, homes for workers, upkeep, and the Fixer opens key buildings
+Eilam's four points (GDD section 0, item 12). Numbers are provisional.
+- **Stairs climb in flights.** Every floor has one stairs place; the staircase goes up two floors in one column and then moves to another, at the edges too. Every building has its own, so every plan is different. Floors you add get new flights on top.
+- **People work where they live.** A shop puts to work no more sellers than its building houses, and desks no more clerks: a Market for four needs homes for four in the same building. The room editor says "homes here for only 2".
+- **Rooms that cost money to run**, a minute: the Guard Room $18, and two new ones below. When the upkeep can't be paid the dearest room **closes** (dark, "closed", a note over the building) and gives nothing; it opens again once there is $150.
+- **Four new rooms**: Corner Shop (1 place, 1 seller), Market (3 in a row, 4 sellers), Stock Room (1 place by a shop: its sellers bring a quarter more, $15 a minute), and the **Laundry Room**, the utility of Spin Cycle Flats (2 places, draws followers faster, $30 a minute). The palette shows only what the building can take.
+- **The Fixer has a job.** Train him at the Office (80 paperwork), then hold the button on a key building next to yours and choose **Send the Fixer**, or set him down there. He carries out three actions (Copy the keys, Lose the file, Change the locks): each costs 40 paperwork to start, takes 40 seconds (less under your hand) and adds 7 points of exposure, and he costs 12 paperwork a minute while he stands there. With no paperwork he waits. Then the building is **open** and a Rep takes it like any other.
+- **A key building of yours is an office**: desk rooms, archives, vaults and training rooms fit into it, and it stops sending inspectors.
+- **The two ways to win are in** (bottom left): 80% of the key buildings, or 30% of them and 60% of the people. The district bar shows the way that is further along.
+- For balance (bot `train,send,shop,upgrade,bury,fixer`, no hand): after an hour 32 buildings (33%), 166 followers, 1 key building of 9, the bar at 42%; 8 buildings and 2 Reps lost. Paperwork is the short resource now: Reps, inspectors, the file and the Fixer all want it.
+- Not done: the Fixer is not chased by inspectors; no elevator or advanced homes yet; the planner inside the building itself; outside decorations.
+- Try it: open Rooms on the Office and look at the stairs. Fit a Laundry Room and watch the money rate. Train a Fixer and send him to the red-signed building nearest your buildings.
+
+## Pre-Alpha 0.19.0 (2026-11-14): the district is won by people, not by buildings
+Eilam's rule for the majority.
+- **The district bar counts people.** Your share is your followers out of everyone who lives in the district: your followers, plus the residents of every building that is not yours. 60% of the people wins it (the core adds its part, as before).
+- **Followers you make room for count in the total too.** If you hold 100 and build room for 50 more, the district has 50 more people as well, so growing inside your own buildings moves your share less and less. To grow for real you take more buildings.
+- The bottom-left line shows it: "69 of its 564 people follow you (12%, 60% wins it)".
+- For balance (the same bot, no hand): after an hour 45 buildings (46%), 225 followers, 2 whole blocks, the bar at 66%; 34 demands paid, 5 buildings and 3 Reps lost.
+- Try it: watch the bottom-left line while a building fills up, then fit Row Flats into it and watch both numbers rise.
+
+## Pre-Alpha 0.18.0 (2026-11-14): fewer and bigger blocks, stairs, rooms that need neighbours
+From Eilam's planner document (GDD section 0, items 9 and 10). Numbers are provisional.
+- **A smaller city of bigger blocks**: 97 buildings (was 174) in nine blocks of 8 to 13 buildings, plus the core. A block is now a real goal. Every block but the Office's own has a **key building** (nine in all), and a block counts as complete without it.
+- **A staircase in every building**: one column, ground to roof, that nothing can be fitted over. Every plan goes round it.
+- **Rooms that need a neighbour**: an Archive must touch a Desk Room, a Vault must touch a Shop (the stairs don't come between). A room that another leans on can't be taken out. The editor says which rule stops you.
+- **The Slums teach with the basic homes only**: Family Flat (2 places, houses 3) and Row Flat (3 in a row, houses 5). The Duplex and the Common Room are advanced and show greyed out, "not in this district". The puzzle is in the Office: desks, archive, vault and training room in a grid of 5 bays by 6 floors with the stairs up the middle.
+- **The Office starts six floors high**, so there is room to plan.
+- The room editor **draws its own pointer** (0.17.2).
+- Exposure from work and from takings is doubled, to suit the smaller map.
+- For balance (the same bot, no hand): after an hour 35 buildings (36%), 2 whole blocks, 175 followers, 39 demands paid, 3 buildings and 1 Rep lost; money sits at its $1,200 ceiling (the bot never fits a Vault), paperwork runs short late. Before the exposure change the bot filled the district bar by minute 56: the bar is still the placeholder (share of buildings) and should probably count whole blocks until round C.
+- Not done: upkeep and utility blocks (elevator, energy), fear that keeps residents in, the outside decorations, the planner inside the building itself, copying a plan to similar buildings.
+- Try it: open Rooms on the Office and try to fit an Archive, a Vault and a Training Room round the stairs.
+
+## Pre-Alpha 0.17.2 (2026-11-14): fix, the pointer on top of the room editor
+- **Fix: the pointer was behind the room editor.** The editor now draws its own arrow over everything, so it no longer depends on the browser showing the system pointer.
+- Eilam's document on the building planner is in `docs/GDD.md` (section 0, item 9): the target the rooms are built toward.
+
+## Pre-Alpha 0.17.1 (2026-11-14): fix, the pointer in the room editor
+- **Fix: the mouse pointer was invisible in the room editor**, so nothing could be aimed at. It shows while the editor is open and hides again over the city.
+
+## Pre-Alpha 0.17.0 (2026-11-14): rooms, the vertical plan of a building
+Eilam's idea, step 1 (GDD section 0, item 8). Numbers are provisional, all in `data/rooms.tres`.
+- **Every building of yours is a grid** of bays and floors (the Office is 6 by 5, an ordinary building about 3 by 4). Hold the button on it and choose **Rooms**.
+- **An empty place is a plain flat** that houses one follower, so a building you never open works as before. You can ignore the whole thing.
+- **Rooms are shapes you fit in**, for money and sometimes paperwork; turn one with the right button or the wheel. Ten kinds:
+  - anywhere: Family Flat (2 places, houses 3), Tenement (an L of 3, houses 5), Duplex (2 high, houses 1, draws followers), Common Room (an S of 4, draws followers faster), Guard Room (1, cheaper audits), Shop (2 wide, on the ground floor, 2 sellers);
+  - only in the Office: Desk Room (an L of 4, 2 clerks), Archive (3 high), Vault (2 by 2), Training Room (a T, one more Rep at a time).
+- **Paperwork and money have ceilings now**: 150 paperwork and $1,200 with nothing built; each Archive keeps 150 more, each Vault $1,500 more. The clerks and the shops stop at the ceiling (a loan or a miracle can go over). The top cards show "78 of 150".
+- **More floors make more rows**, so the +Floors decree is how a full building gets room for more.
+- **Taking a room out** gives half its money back. A building that is lost loses its rooms.
+- This **replaces the Upgrades wheel** (attraction, security, bigger shop, desks, training room are rooms now) and the Open a Shop decree (a shop is a room; the sign goes up by itself).
+- **Space pauses the game**; the hand, the camera, the wheels and the room editor go on working, so you can plan in peace. The editor never pauses by itself. While paused nothing can be lifted.
+- For balance (the same bot, which only fits four rooms into the Office and a shop into every fourth building): after an hour 47 buildings (27%), 9 whole blocks, 552 followers; money stops at its $2,700 ceiling instead of piling up to $12,000, paperwork at 300.
+- Not done yet: rooms next to each other raising impression or security, the elevator, copying a plan to similar buildings, a smaller map, models for the rooms (they are coloured blocks).
+- Try it: hold the button on the Office, choose Rooms, pick the Archive, turn it, fit it in. Then fit a Shop into the first building you take.
+
+## Pre-Alpha 0.16.2 (2026-11-14): the Secretary stays at the Office
+- **The Secretary no longer walks to marked buildings**, and setting him down at a door does nothing: he could fill a bar but never take the building, which only confused. Only Reps work on buildings. A building marked with "Send a Rep" while no Rep is free shows "needs a Rep" and gets the next one that is.
+- Fix: a Rep lifted from the door he was working at and set down there again goes back to work (he could be left standing).
+- A door the hand set a Rep at is dropped when that Rep leaves; a door marked from the wheel keeps waiting for the next free Rep.
+- Try it: mark a building before training anyone. Nobody comes until a Rep is trained.
+
+## Pre-Alpha 0.16.1 (2026-11-14): fix, a takeover bar stuck at 99%
+- **Fix: a building's bar could stop a hair under full and stay yellow at 99% for ever**, with a Rep at the door or not. The meter treated "almost full" as "no change" and never took the last step, so the building never came to want you. Found from Eilam's screenshot; a test now covers it.
+- Try it: the building next to the Office fills to a green bar by itself in a few minutes; a Rep at a door always finishes.
+
+## Pre-Alpha 0.16.0 (2026-11-13): round B, the inspectors, and paperwork as the shield
+Round B of Eilam's model: the city answers, and paperwork is what answers it back. Numbers are provisional, all in `data/inspectors.tres`.
+- **Key buildings.** Nine buildings spread over the Slums (the core and one in every four or five blocks) carry a red signboard with a name: Bureau of Forms, Permit Office, Licence Desk... Inspectors come out of them. A Rep can't take one; that is round C.
+- **Exposure** (a new card at the top) rises while Reps are at work and with every building taken, and fades slowly.
+- **Inspectors.** Every so often one walks the streets from the nearest key building to a Rep at a door, with "! INSPECTOR" over his head. When he arrives the Rep **shows papers**: it costs paperwork (25, up to twice that at full exposure). With no paperwork the Rep is sent home and is lost.
+- **The hand against him.** Lift an inspector and set him down far away, or throw him: he lies there a moment, gets up and walks back. After two and a half minutes out he gives up. So the hand saves paperwork.
+- **More exposure, more trouble**: up to four inspectors at once, more often, and from 35% exposure some of them **audit a building of yours** (never the Office, never one in a complete block). An audit costs paperwork by the building's size; with none the building is lost with its followers and its Manager, and keeps 60% of its bar.
+- **Security** now does something: each level makes that building's audit cheaper, and inspectors go for the least secure first.
+- **Bury the File** (the Office wheel): spend paperwork to cut the exposure by 25 points; it costs more each time (60, 90, 135...). When an inspector does get his way the exposure drops a little.
+- For balance (`pace_sim --bot=train,send,shop,upgrade,bury`, no hand, so every inspector arrives): after an hour 58 buildings (33%), 9 whole blocks, 671 followers; 67 demands paid, 3 buildings and 2 Reps lost; paperwork stays between 60 and 140 instead of piling up to 3,600. Money still piles up ($12,000): it needs a use.
+- Not done: nothing points to an inspector who is off screen, and key buildings look like any building with a sign.
+- Try it: send a Rep to a building and wait a minute and a half. When "! INSPECTOR" appears, pick him up and drop him across town, or let him come and watch the paperwork go.
+
+## Pre-Alpha 0.15.0 (2026-11-13): round A of the new model, the economy
+Eilam's model of 2026-11-13 (GDD section 0, item 7), first of three rounds. Round B brings the danger (inspectors you can lift away), round C the goal (key buildings, the Fixer, the two ways to win). Numbers are provisional, all in `data/followers.tres`.
+- **Followers are a number.** Every building of yours has room for followers by its size (an ordinary one about 10, the Office 45). A building you take starts half full and fills by itself. They are one pool. No building is ever empty.
+- **Roles fill themselves from the pool.** Clerks at the main Office make **paperwork**, which replaces belief (training, floors, the loan and miracles cost it). Sellers in shops make money: each further seller in a shop brings in less and is paid the same, so only those worth their pay are taken on. The shop wheel shows what the next seller would bring and lets you add or let go of one.
+- **The main Office is the heart**: homes, a shop, the clerks' desks and all training.
+- **Reps under a cap.** Training a Rep costs 30 paperwork and one follower. Two Reps may be out at once; each Training Room at the Office adds one. A Rep who takes a building stays as its Manager and frees their place.
+- **Taking a building**: hold the button on a building next to yours and choose **Send a Rep**, or set a Rep down at its door. A bigger building takes longer. The skull and dollar marks are gone.
+- **The god's attention**: the building under the hand fills twice as fast, and so does training while the hand is on the Office.
+- **The building wheel**: Upgrades (Attraction, Security, and at the Office Bigger Shop, More Desks, Training Room), +Floors (more room), Open a Shop, and at the Office a **Loan**: 40 paperwork for $400 now and $500 owed, paid back from half the takings, or at once by the money miracle's banknotes.
+- **Removed**, as agreed: landmarks, murals and the Vandalist; awareness, heat, police roadblocks and arrests; City Hall's inspector and bulldozer; fragility, complaints and condemnation; seats and debt; street meetings; per-person needs; the facade, luxury and preserve decrees; wear from the hand's orders; the fire and roach miracles. Only Reps and the Secretary answer to the hand. Nothing can take a building back yet: that is round B.
+- The district bar is, for now, your share of the buildings (60% fills it); the core adds its part.
+- For balance (`pace_sim --bot=train,send,shop,upgrade`, no hand): after an hour 68 buildings (39%), 13 whole blocks, 867 followers, 6 Reps allowed. Paperwork and money pile up late (3,600 and $5,700): they have few sinks until rounds B and C.
+- Try it: follow the mission card. Train a Rep at the Office, hold the button on the building next door and choose Send a Rep, keep the hand over it, then open a shop there.
+
+## Pre-Alpha 0.14.0 (2026-11-13): a Rep takes a building and stays to manage it
+Eilam's new model for taking the city, step 1 of 3 (the city's answer and the blocks' key buildings come next). Numbers are provisional.
+- **Every building has a takeover bar** over its roof. Set a **Rep** (the old Canvasser) down at its door and the bar fills, about a minute for one Rep on an ordinary building; two Reps fill it twice as fast. When it is full the building is yours and the Rep goes in as its **Manager**. So every building needs a Rep of its own, and Reps are what you run short of.
+- **A building that wants you** has a full green bar: buildings next to yours in the same block come round by themselves, slowly (the Office pulls four times as hard). Such a building only needs a Rep set down at it; it is taken on the spot.
+- **A lost building keeps 60% of its bar**, and a bar nothing holds up sinks slowly, so there is time to send another Rep.
+- **The Office opens with four followers** living in it, ready to be trained. The first mission is to train one as a Rep.
+- **A smaller city of larger buildings**: 174 buildings (was 417), about twice the size, in 41 blocks of three to six, so each building is a decision. The map is regenerated (`data/maps/slums/stage.json`).
+- **A mission card** (top left) says the one thing to do next, with a progress bar: train a Rep, send them to a building, take it, complete the Office's block, fill the district's bar. It replaces the paragraph of hints. The bottom-left text is three short lines, and the card over a building says its state in one line ("Wants you: set a Rep down here", "Takeover 55%", "Yours. Manager: ...").
+- **Names**: Canvasser is **Rep**, a Rep in a building is its **Manager**, the Field Delegate is the **Fixer**.
+- The skull and dollar marks fill the same bar by force or by money and leave the building wanting you. The HUD shows free Reps of all Reps.
+- For balance: the bot (one Rep per building, two at work at a time) holds 25 buildings and 5 whole blocks after an hour. The seats rule of 0.13.1 was tuned for the old model and needs another look, as does awareness (the city's answer is rebuilt in step 2).
+- Try it: follow the mission card. Train a Rep at the Office, lift them, set them down at the door of the building next door, and watch the bar.
+
+## Pre-Alpha 0.13.1 (2026-11-12): balance from the Designer and the Balance Tester
+All numbers are provisional, and each is in a `.tres`. They were checked over about 20 bot runs of 90 minutes.
+- **The district bar.** The core is worth 25% and each landmark mark 12%. A following alone fills at most 70%, so a district always needs some key places.
+- **Seats, a soft limit on believers.** There is no hard cap. Believers need seats: 20 at the Branch, plus 10 per Clerk (and 25 per free space, once free spaces exist). A believer without a seat makes no money and half the belief, and draws awareness (up to 0.5 from this alone). Numbers are in `data/units.tres`, under "Seats".
+- **Money.** Each seated believer costs $1.5 a minute. A building of yours with no use pays the Committee's dues of $0.03 per resident a second (never "rent": the god is against landlords). Prices rise: a Field Delegate's mark costs $200, or $300 where City Hall scrubbed one; bail is $400; each Clerk costs 25% more than the last.
+- **Debt.** Upkeep can overdraw the treasury down to -$1,000 and no further. While overdrawn, nothing that costs money can be bought; free training goes on. The Secretary minutes it.
+- **For testing:** `pace_sim` has a new habit, `delegate`, which trains the Field Delegate and keeps three landmarks marked. With it the bot wins at about minute 62 to 78. Without it, it stops at the 70% bar, and money is $8-11k at minute 90.
+## Pre-Alpha 0.13.0 (2026-11-12): how people come over, after Eilam played 0.12
+- **Fix: a building turned into a shop stays yours.** It used to empty and be lost. An empty building of yours is now simply yours, and the people who move out no longer crowd the house next door (which made your own members quit).
+- **Nobody is won over in the street any more.** People come over in two ways only:
+  - **At a door you chose**: set a Canvasser (or the Secretary) down at a building next to yours, or use the sky sign.
+  - **By themselves, slowly, inside a block**: every building of yours brings round the buildings next to it in its own block, faster the better its members live. It never crosses to another block; to enter a new block you canvass.
+- **The Office is the strongest building.** It works on its own block four times as hard as any other building, so a new game gets going by itself; and the Secretary canvasses in person, so the first doors open before anyone is trained.
+- **Street meetings** (the gold ring round a Canvasser) no longer convert: worn-out members near one rest from the hand's orders.
+- **No empty buildings left.** The Slums' towers were counted as offices with nobody living in them; they are housing now, so every building is won by winning its residents. Fire and Roaches are off the miracle wheel (they empty a building), and frogs no longer overrun one.
+- **"What now?"** A line at the bottom left says the next step until you are under way: set the Secretary down at a door, train a Canvasser, set Canvassers down at doors.
+- Numbers (`data/units.tres`, "Winning people over without being asked"; all provisional): left alone, the Office takes its own block in about 20 minutes and stops there; with Canvassers the bot holds 42 buildings and 3 whole blocks after half an hour.
+- Decided and not built yet: Paperwork replaces belief; miracles come from a small stock that refills, never touch buildings, the bar or notices, and each draws a dry fine from City Hall (GDD section 0).
+- Try it: start a game and do nothing for two minutes; then lift the Secretary and set him at a door across the street.
+
 ## Pre-Alpha 0.12.0 (2026-11-12): the Hand places people, and the Committee's names
 - **Where you set someone down is what they do** (Eilam's rule; the first step of the hand's role). It depends on who they are:
   - a **Canvasser** or the **Secretary** at a building next to yours: the sky sign starts there, with no wheel; out of reach, a note says why not.

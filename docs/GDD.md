@@ -6,33 +6,61 @@ Working title: "Spin Cycle". Platform: PC, Godot 4, toy-like 3D with tilt-shift.
 
 ---
 
-## 0. Direction from Eilam, 2026-11-12, after this version (not yet folded in by the Designer)
+## 0. The game as it stands (Pre-Alpha 0.20.0, 2026-11-15)
 
-Where this disagrees with the text below, this wins.
+Eilam's decisions of 2026-11-12 to 11-14, consolidated by the Programmer. **Where this disagrees with sections 1 to 13 below, this wins**: sections 5 (needs), 6 (units), 7 (the loop), 9 (the building editor), 10 and 12 describe the old game and are void; section 4's archetypes survive only as the faces in the street. The Designer has not folded this in yet. The order things were decided and built in is in `CHANGELOG.md`.
 
-1. **Not a street-artist god.** Eilam did not connect with it. The god stands for resistance to bureaucracy, and there are two ways to resist it:
-   - **Control** (the "bad" way, so to speak): you write the bureaucracy anew yourself. Faster, focused, with less spreading out: an allegory for the few who dictate the rule.
-   - **Freedom** (the "good" way): you win people their freedom. Unhurried; you need a real majority to succeed, so it is slower, and the game lets you enjoy the pace by investing: in key buildings, in planning the believers' apartments (section 9), in their welfare.
-2. **The game should feel considered, not a fast takeover of everything.** The player has time to put into each building, into the believers' welfare, and into cultivating their own values.
-3. **Chosen direction (Eilam, 2026-11-12; nothing of it is built yet).**
-   - **Background story (kept by Eilam as an opening for humour): the god applied and was refused.** The god filed a request with City Hall to be recognised as a god, and it was turned down (a form was missing). That is why the god is against City Hall, and where the Secretary's case file and minutes come from.
-   - **A journey, in one of two ways.** There are no signatures and no petition; believers stay believers.
-   - **Freedom: you sweep people along behind you.** A following that grows because people choose to come. It takes a real majority and it is slow, and the time goes into the buildings and the people. Ending: nobody needs a permit for anything.
-   - **Control: you take things over yourself.** Buildings, offices and rules pass into your hands. Fast and focused, with little spreading out. Ending: you are the new City Hall, and the game laughs at you.
-   - **Mechanics: stamp or tear.** Every building stands under City Hall's rules. The hand can stamp rules of its own in their place (control; today's decrees are this) or tear them up and let the residents decide (freedom; tearing the condemnation notice off is this). Two plain verbs for the hand.
-   - Kept as inspiration for the Artist: bureaucracy as a physical thing in the city (red tape round buildings, forms in the wind, people stuck in queues). Dropped: a second, dark hand (too close to good and evil).
-4. **One bar per district, two sources (Eilam, 2026-11-12; built in 0.11.0 with provisional numbers).** Not an independence meter alone. A district is won when its bar is full, and two kinds of action fill it:
-   - **A wide following**: sweeping people along, their welfare and their freedom. In the game: the share of the district's buildings that are yours, over 60%, times 0.85 to 1.15 by how well your believers' needs are met.
-   - **Focused actions on key places**: the agent defacing things, and other options to come. In the game: the core held is worth 20%, each marked landmark 8%.
-   - Either way alone is very hard: the following alone needs most of the district (52% to 70% of its buildings, by welfare); the key places alone give 60% and still need about a quarter of the buildings. Mixed, the player can raise a large force and use the agent lightly, and put the time into other things.
-   - Key places are not required: an aggressive player needs more of them and plans the takeover to reach them; a player who cultivates a large area can use them to get ahead, or take none and win on most of the district.
-   - The core is therefore no longer a condition for winning, only the largest key place.
-5. **The hand places people (Eilam, 2026-11-12; first step built in 0.12.0).** The hand is a spirit that moves people, tears and stamps, and now and then works a miracle; it never talks anyone round itself and never builds.
-   - **Where it sets someone down, and who they are, is what they do**: a canvasser at a door talks to the people inside; a member at a branch joins it; a clerk at a branch serves there; the field delegate at a key place does their act.
-   - **Willingness.** Someone who lives well goes gladly and gives full effort. Someone neglected or worn out by orders still goes, with a penalty in three parts, all approved: their work is worth less; it wears them further and after a few such orders they leave; and the neighbours who see it raise the district's awareness.
-   - This is the dial between the two ways: moving people like pieces is fast and wears them down, and a following that lives well acts by itself.
-6. **Names (Eilam chose set B, 2026-11-12; in the game since 0.12.0).** Believer: Member. Missionary: Canvasser. Priest: Clerk. High priest: the Secretary, who is also the narrator of the minutes. Special agent: Field Delegate. The cult: the Committee. Sermon house: Branch. The text of sections 1 to 12 still uses the old names.
-7. Open for the Designer: what the Vandalist, street art and "colour is freedom" become when the god is not a street artist; how each style wins the Slums (the Programmer's suggestion: the district's independence sets how much of it you need, a real majority when it is high, the core and a small tight area when it is low).
+### 0.1 Story and tone
+
+- **A god against the bureaucracy**, a comedy. The god applied to City Hall to be recognised as a god and was refused (a form was missing); that is where the Secretary's minutes come from. Not a cult taking over, not a street-artist god.
+- **Two ways to resist**, and to win. **Control**: you take the offices over yourself; fast, focused, and in the end you are the new City Hall and the game laughs at you. **Freedom**: people follow you because they choose to; it needs a real majority and it is slower, and the time goes into the buildings and the people.
+- **Considered, not a fast takeover.** Do not tune it to go faster; it must not be watching paint dry either.
+- **The hand is the whole interface.** It lifts only Reps, the Fixer and inspectors (and taxis and street props). It never converts anyone itself.
+
+### 0.2 The loop in a paragraph
+
+You start with the main Office at the edge of the Slums. Clerks there make **paperwork**, sellers in shops make **money**. Paperwork trains a **Rep**; a Rep at a door fills a building's bar and stays as its Manager, so every building costs a Rep. Each building of yours is a grid you may plan with **rooms**. Working raises **exposure**, and inspectors walk out of the **key buildings** toward your Reps and your buildings and want paperwork; the hand can carry them away. The **Fixer** opens a key building so that a Rep can take it; taken, it is an office of yours. The district is won by key buildings, or by a few of them and most of the people.
+
+### 0.3 The rules as built
+
+- **Map.** One district, the Slums: 97 buildings in nine large blocks (8 to 13 buildings) plus the core. Every block but the Office's own has one key building (nine in all). Buildings are taken one at a time, only next to one you hold. A block whose ordinary buildings are all yours is complete: followers come to it faster and inspectors don't audit it.
+- **Followers are a number per building**, one pool. A building has room by its rooms; taken, it starts half full and fills by itself. No building is ever empty.
+- **People work where they live.** Roles fill themselves: clerks at desks (paperwork), sellers in shops (money; each further seller in a shop brings less and is paid the same, so only those worth their pay are taken on). A building puts to work no more than it houses. A follower with no role is only counted.
+- **Reps.** Trained at the Office from one follower for 30 paperwork. Two may be out at once, one more per Training Room; a Manager no longer counts. Only Reps work on buildings; the Secretary stays at the Office.
+- **Taking a building.** "Send a Rep" from the wheel, or set a Rep down at its door. The bar fills by the building's size and the Reps at the door, twice as fast under the hand (the god's attention; training too). Inside a block the neighbours of your buildings fill slowly by themselves and then only need a Rep. A lost building keeps 60% of its bar.
+- **Rooms (the vertical plan).** A building is a grid of bays and floors. An empty place is a plain flat for one follower, so planning can be ignored. Rooms are shapes fitted in for money and sometimes paperwork, and can be turned. Every floor has one stairs place that nothing fits over; the stairs climb two floors and then change column. Some rooms must touch another (an Archive a Desk Room; a Vault and a Stock Room a shop), and a room leaned on can't be taken out. More floors (a decree, paperwork and money) add rows. The Slums offer the basic homes only (Family Flat, Row Flat); the puzzle is in the offices. Fourteen kinds in `data/rooms.tres`.
+- **Ceilings.** Paperwork and money stop at what the Archives and Vaults hold (150 and $1,200 with none).
+- **Upkeep.** Some rooms cost money a minute (Guard Room, Stock Room, the Laundry Room, the Slums' utility). When it can't be paid the dearest closes until there is money again.
+- **A loan** at the Office: paperwork for money now, paid back from the takings or at once by the money miracle's banknotes.
+- **Exposure and inspectors.** Reps at work, buildings taken and the Fixer's actions raise exposure; it fades. Inspectors leave the nearest key building for a Rep's door, and past 35% exposure also for a building of yours. One who arrives demands paperwork: with none, the Rep is sent home or the building is lost. The hand can lift and throw him; he gets up and walks again, and gives up after two and a half minutes. More exposure, more of them at once. Guard Rooms make audits cheaper. "Bury the File" at the Office spends paperwork to lower exposure, dearer each time.
+- **Key buildings and the Fixer.** A Rep can't take a key building until the Fixer (trained at the Office, 80 paperwork, one at a time) has opened it: three actions at its door, each 40 paperwork, 40 seconds and +7 exposure, and 12 paperwork a minute while he stands there. Open, a Rep takes it like any other; yours, it is an office (desks, archive, vault, training room) and sends no more inspectors.
+- **Winning the district.** 80% of the key buildings (control), or 30% of them and 60% of the district's people (freedom). The district's people are your followers plus the residents of every building not yours; followers you make room for count in the total too, so real growth means more buildings.
+- **Pause** is the player's own (Space); the hand, the wheels and the room editor go on working. Nothing pauses by itself.
+- **Names on screen**: Member, Rep (a Manager once in a building), Clerk, the Secretary, the Fixer, the Committee.
+
+### 0.4 Decided, not built
+
+- **The building planner as Eilam drew it** (his document of 2026-11-14): double click a building of yours, the camera goes to its front and the background blurs; the rooms show inside the building, furnished, in simple isometric 3D, like a realistic doll's house. Block types by colour (blue homes, red fear, yellow shops, purple offices), the strength of the colour is the level.
+- **Advanced and luxury blocks** for later districts: harder shapes by tier (basic: 1, 2, 3 in a row; advanced: L, S, T; luxury: plus, C, 2 by 3, 4 high), blocks that dislike a neighbour (an advanced home by a basic one or a utility), demanding residents who want a level, an elevator in place of the stairs on their floors, an energy block for an advanced shop, a boiler, a gym.
+- **Upkeep in full**: utilities that cost paperwork too; dependents that earn less or lose faith and leave when a utility is closed.
+- **Attractiveness and fear as two dials**: attractiveness (decoration, utilities) shortens the conversion of the buildings round yours; fear blocks keep residents from leaving, so a luxury building can be held without meeting its needs (the control way), and fear that can't be kept up stops working.
+- **The outside decoration editor**: a slot under every window where a flower box, a camera or an air conditioner snaps in; small, cheap, capped bonuses.
+- **Dictating a plan** to similar buildings.
+- **Miracles** from a small stock (about three) that refills slowly, not paid in paperwork. A miracle cannot move the bureaucracy: it works on people and the physical world, never takes a building, fills the bar or cancels a notice. City Hall answers each with a form and a fine. The list is open (candidates: block party, rain of frogs, a smell of fresh bread, a yawn that sends officers to sleep, pigeons over a camera, every phone ringing at once). Today four old miracles still cost paperwork.
+- **Stamp and tear** as the hand's two verbs (your own rules in place of City Hall's, or no rules).
+- **More options at a key building** (a ruse at a police building), names and looks for the key buildings, special coins.
+- **Other districts.** A later stage is harder by its numbers (residents, buildings, reactions), never by new rules; before a second stage the per-stage numbers move into one profile (section 13).
+
+### 0.5 Removed
+
+Landmarks, murals and the Vandalist; awareness, heat, police roadblocks and arrests; City Hall's inspector and bulldozer; fragility, complaints and condemnation; seats and debt; street meetings and converting in the street; needs and traits per person; the skull and dollar marks; the facade, luxury and preserve decrees; the upgrade wheel and the shop decree (they are rooms); abandoned or empty buildings; a cap on followers by housing alone; the Secretary working on buildings.
+
+### 0.6 Open, by thread
+
+- **Designer**: fold this section into the document; the miracle list; what the Fixer may do at a key building beyond opening it; how control and freedom differ in play before the fear rooms exist; whether inspectors should chase the Fixer.
+- **Balance Tester**: paperwork is the short resource (Reps, inspectors, the file, the Fixer); the bot with no hand reaches 42% of the bar and one key building of nine in an hour (`tests/pace_sim`, numbers in the CHANGELOG); money sits at its ceiling unless Vaults and rooms are bought; all numbers are provisional.
+- **Artist**: see the top of `docs/ART.md`.
+- **Programmer**: next from 0.4 in the order Eilam chooses.
 
 ---
 

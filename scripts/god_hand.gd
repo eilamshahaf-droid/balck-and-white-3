@@ -1,3 +1,4 @@
+class_name GodHand
 extends Node3D
 ## The god's hand is the whole interface, as in Black & White.
 ##
@@ -31,8 +32,6 @@ signal circle_drawn(screen_pos: Vector2, screen_radius: float)
 signal gesture_unrecognised
 ## A right click without drawing anything.
 signal right_clicked
-## A double-click on a building of yours (anything else flies the camera there).
-signal owned_building_double_clicked(building: Node3D)
 const RAY_LENGTH := 3000.0
 const RIGID_GRAVITY := 9.8
 const LAYER_WORLD := 1
@@ -305,16 +304,14 @@ func _on_press(event: InputEventMouseButton) -> void:
 	var hit := _raycast_mouse()
 	if event.double_click:
 		_press = Press.NONE
-		var building := BuildingBox.building_of(hit.collider) if hit else null
-		if building and districts.owns(building):
-			owned_building_double_clicked.emit(building)
-		elif hit:
+		if hit:
 			rig.fly_to(hit.position, _is_grabbable(hit.collider))
 		return
 	_press_time = _time()
 	_press_pos = event.position
 	_press_hit = hit
-	_press_target = null if carrying_tool else _pick_target(hit)
+	# While the player has the game paused nothing can be lifted: the city stands still.
+	_press_target = null if carrying_tool or get_tree().paused else _pick_target(hit)
 	# Over empty sky the city can still be grabbed: the grip goes on the street plane.
 	_press = Press.PENDING_OBJECT if _press_target else Press.PENDING_GROUND
 

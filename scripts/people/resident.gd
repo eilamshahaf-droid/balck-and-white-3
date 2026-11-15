@@ -12,7 +12,9 @@ extends RefCounted
 enum Rank { RESIDENT, BELIEVER, MISSIONARY, PRIEST, AGENT, HIGH_PRIEST }
 ## What a believer does for the cult: FREE believers have no post. PRAY and
 ## PRIEST staff a sermon house, SHOP staffs a shop, TRAIN is training in a sermon house.
-enum Job { FREE, PRAY, SHOP, PRIEST, TRAIN }
+## MANAGER: a rep who took a building over stays there and runs it; the building is yours
+## while it has one.
+enum Job { FREE, PRAY, SHOP, PRIEST, TRAIN, MANAGER }
 
 ## Index in Population.residents; -1 for a passer-by the city doesn't count.
 var id := -1
@@ -42,18 +44,7 @@ var faith := 0.5
 ## Scales converting; set by rank.
 var charisma := 0.0
 
-## The four needs, 0..1: how much of each this person has now (Needs reads them).
-var livelihood := 0.5
-var security := 0.5
-var pleasure := 0.5
-## How worn out by the hand's orders, 0..1 and past it: every order adds to it, more when
-## they did not want to go; it fades with time. Past PeopleSettings.strain_leave they quit.
-var strain := 0.0
-var meaning := 0.5
-
-## Hidden meters, 0..1. Comfort follows the home (livelihood); fear is what
-## force works on, and too much of it makes people move away.
-var comfort := 0.5
+## What a miracle that hurts leaves behind, 0..1.
 var fear := 0.0
 var color := Color.WHITE
 var job := Job.FREE
@@ -78,9 +69,9 @@ func is_believer() -> bool:
 	return rank >= Rank.BELIEVER
 
 
-## Missionaries and the high priest win people over.
+## Only a Rep works on a building; the Secretary stays at the Office.
 func preaches() -> bool:
-	return rank == Rank.MISSIONARY or rank == Rank.HIGH_PRIEST
+	return rank == Rank.MISSIONARY
 
 
 ## Priests and the high priest serve in a sermon house, drawn larger.
