@@ -39,7 +39,10 @@ func _process(delta: float) -> void:
 	var line := "District: %s%s, %s\nBlock here: %s" % [
 			districts.district_name(d), standing, hold, whole]
 	if not districts.is_controlled(d) and attractiveness.shown(d):
-		line += "\nAttractiveness %d of %d for the next building (utilities like the Laundry Room add more)" \
-				% [floori(attractiveness.value(d)), ceili(attractiveness.next_threshold(d))]
+		var have := attractiveness.value(d)
+		var need := attractiveness.next_threshold(d)
+		line += "\nAttractiveness %d of %d for the next building" % [floori(have), ceili(need)]
+		if have < need:
+			line += ": " + attractiveness.remedy()
 	if text != line:
 		text = line

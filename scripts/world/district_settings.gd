@@ -46,6 +46,8 @@ extends Resource
 ## this much more than the one before (the m-th: step x (m - free)).
 @export var free_buildings := 2
 @export var attraction_step := 2.0
+## The room the gate's messages suggest (RoomSettings id): the Slums' utility.
+@export var attraction_utility: StringName = &"laundry"
 
 @export_group("Key buildings")
 ## One block in this many has a key building (1: every block but the Office's own).

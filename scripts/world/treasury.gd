@@ -29,7 +29,7 @@ func _physics_process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = S.tick
-	income = followers.money_rate - followers.upkeep_rate()
+	income = followers.money_rate - followers.upkeep_rate(money < F.poor_below)
 	if income < 0.0 and money + income * S.tick <= 0.0:
 		money = 0.0
 		ran_dry.emit()

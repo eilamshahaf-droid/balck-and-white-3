@@ -12,6 +12,7 @@ const S: DistrictSettings = preload("res://data/districts.tres")
 
 @export var districts: Districts
 @export var rooms: Rooms
+@export var treasury: Treasury
 
 
 ## District `d`'s attractiveness now.
@@ -54,7 +55,17 @@ func why_not(index: int) -> String:
 	var d := districts.district_of(index)
 	var have := value(d)
 	var need := next_threshold(d)
-	return "" if have >= need else "attractiveness %d of %d" % [floori(have), ceili(need)]
+	return "" if have >= need else "attractiveness %d of %d: %s" % [floori(have), ceili(need), remedy()]
+
+
+## What raises the attractiveness now: the utility, or the loan when it can't be paid for.
+func remedy() -> String:
+	var utility := rooms.settings.kind(S.attraction_utility)
+	if utility == null:
+		return "take more buildings"
+	if treasury.can_afford(utility.money):
+		return "fit a %s ($%d)" % [utility.title, roundi(utility.money)]
+	return "needs a %s ($%d): take a loan at the Office" % [utility.title, roundi(utility.money)]
 
 
 func _ordinary(index: int) -> bool:
