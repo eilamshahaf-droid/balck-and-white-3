@@ -83,9 +83,10 @@ func info(model: StringName) -> Info:
 	return _info[model]
 
 
-## A turned, scaled item's size: across, up, deep.
+## A turned, scaled item's size as drawn (RoomDesignerSettings.furniture_scale): across,
+## up, deep.
 func size_of(o: RoomDesign.Item) -> Vector3:
-	var s := info(o.model).size * o.scale
+	var s := info(o.model).size * o.scale * settings.furniture_scale
 	return Vector3(s.z, s.y, s.x) if o.rot % 2 == 1 else s
 
 

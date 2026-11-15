@@ -67,11 +67,16 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_V:
-		enabled = not enabled
-		_layer.visible = enabled
-		_dof.visible = enabled and S.dof_blur > 0.0
-		for m: GeometryInstance3D in _meshes:
-			_apply(m)
+		set_enabled(not enabled)
+
+
+## Turn the style on or off (V, or the title screen's settings).
+func set_enabled(on: bool) -> void:
+	enabled = on
+	_layer.visible = enabled
+	_dof.visible = enabled and S.dof_blur > 0.0
+	for m: GeometryInstance3D in _meshes:
+		_apply(m)
 
 
 func _process(_delta: float) -> void:

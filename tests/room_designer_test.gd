@@ -1,8 +1,8 @@
 extends Node
 ## Drives the room designer headless: furniture is put in, stacks on a surface, turns,
-## undoes, survives a save and a reload in format 1, and the 3D view builds. Prints
-## ROOM DESIGNER TEST: PASS or FAILED; with --shot=<path> it leaves the 3D edit view up
-## for a screenshot instead of quitting.
+## undoes, survives a save and a reload in format 1, snaps to the grid, and the 3D view
+## builds. Prints ROOM DESIGNER TEST: PASS or FAILED; with --shot=<path> it leaves the
+## view up for a screenshot instead of quitting.
 
 const SCENE := preload("res://scenes/room_designer.tscn")
 
@@ -41,16 +41,21 @@ func _ready() -> void:
 			and back.items[2].row == 1, "and reads back the same")
 	var again := DesignStore.new(d.settings).design_of(d.kind, 1)
 	_check(again.items.size() == 3, "the designer keeps the room between visits")
-	d._set_view(true)
 	await get_tree().process_frame
 	_check(d._preview._nodes.size() == 3, "the 3D view builds the furniture")
+	var drawn := d._preview._nodes[d.design.items[0]] as Node3D
+	_check(is_equal_approx(drawn.scale.x, d.settings.furniture_scale),
+			"furniture is drawn %.1f times its size" % d.settings.furniture_scale)
+	_check(is_equal_approx(d._preview._snap(1.13), 1.25) and is_equal_approx(d._preview._snap(-0.6), -0.5),
+			"places snap to a %.2f m grid" % d.settings.snap)
+	d._preview._free = true
+	_check(is_equal_approx(d._preview._snap(1.13), 1.13), "Shift places freely")
+	d._preview._free = false
 	d.selected = screen
 	d._sync(false)
 	print("ROOM DESIGNER TEST: %s" % ("PASS" if _failed == 0 else "%d FAILED" % _failed))
 	DirAccess.remove_absolute(d.settings.store_path)
 	for arg in OS.get_cmdline_user_args():
-		if arg == "--front":
-			d._set_view(false)
 		if arg.begins_with("--shot="):
 			return
 	get_tree().quit(1 if _failed > 0 else 0)

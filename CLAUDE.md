@@ -22,14 +22,15 @@ the 4.3 feature level; do not use APIs newer than that without updating `project
 
 ```
 project.godot        main scene, autoloads, window settings
-scenes/              main.tscn (the game), room_designer.tscn (furnishing the room kinds), city_planning.tscn (planning sandbox), map_lab.tscn (2D map generator playground)
+scenes/              title.tscn (the title screen, the main scene), main.tscn (the game), room_designer.tscn (furnishing the room kinds), city_planning.tscn (planning sandbox), map_lab.tscn (2D map generator playground)
 scripts/             gameplay scripts for main.tscn
 scripts/people/      residents: Population, Resident records, archetypes, staffing, debug card
 scripts/props/       Meshy props: facade and roof dressing, sidewalk props, building-state props, their models
 scripts/inspection/  the city's answer: Inspectors, the Inspector body, settings
 scripts/rooms/       the rooms inside buildings: Rooms, layouts, room kinds, the editor
 scripts/fixer/       the Fixer's actions at key buildings: settings, actions, one set per key building
-scripts/roomdesign/  the room designer: format-1 room files, the furniture catalog, front and 3D views
+scripts/roomdesign/  the room designer: format-1 room files, the furniture catalog, the 3D view
+scripts/title/       the title screen and the player's settings
 scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, UI)
 scripts/maplab/      the map lab: districts' street styles, blocks, land use, menu
 data/                every tunable number, as .tres resources (one per system); data/maps/ the stage maps
@@ -78,7 +79,7 @@ The scene is small; most nodes are built in code at startup.
 | `StageScreens` | `world/stage_screens.gd` | The opening scene: a few text panels (who speaks, what is seen, the line; `DistrictSettings.opening_*`, read through `opening_count`, `opening_speaker`, `opening_direction`, `opening_line`), Next and Skip, over the dimmed, paused world on its own high layer. First run only, remembered in `user://opening_seen`; skipped headless or with `--no-briefing`, shown again with `--briefing`. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `TrainingMarks` | `props/training_marks.gd` | The training meter over the Office (who, percent, seconds left) and a badge over every Rep and Fixer (`UnitSettings.badge`, "Training meter and badges"). |
-| `DebugPanel` | `debug_panel.gd` | Testing shortcuts, the Room designer button, and a per-minute log of money and paperwork in and out, hidden until F1. Not part of the game. |
+| `DebugPanel` | `debug_panel.gd` | Testing shortcuts and a per-minute log of money and paperwork in and out, hidden until F1. Not part of the game. |
 | `HUD` | `hud.gd` (+ `help_label.gd`, `mission_card.gd`, `world/building_tooltip.gd`) | The numbers the player may see (paperwork, money, followers with sellers and clerks, Reps free and out of the cap, buildings), the controls folded into one hint line (H opens them), `MissionCard`: one step at a time with a progress bar, following what really happened and never repeating a done step (plan the Office's free room, send the Rep, take the first building, throw the inspector when one is out, train the Fixer, open a key building, then "Key buildings: 1 of 9"; texts in `data/districts.tres`, "Missions"), and the card over the building under the hand (followers of room, clerks and sellers and whether homes are short, Manager, or what it takes to take it: reach, impression). |
 
 World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `swaying_tree.gd`,
@@ -149,14 +150,14 @@ the view, so `tests/map_lab_test.tscn` checks the same maps. Tunables: `data/map
 
 ### Room designer (`scenes/room_designer.tscn`)
 
-A tool scene for the Artist and Eilam, opened from the debug panel (F1, "Room designer"); "Back
-to game" returns. It furnishes each room kind (`data/rooms.tres`) at levels 1 to 3 with the
+A tool scene for the Artist and Eilam, opened from the title screen ("Room Designer"); "Back
+to title" returns. It furnishes each room kind (`data/rooms.tres`) at levels 1 to 3 with the
 Kenney Furniture Kit (`assets/models/kenney_furniture/`, CC0, with the side-view icons the
 Artist's browser editor used). `room_designer.gd` (`RoomDesigner`, a CanvasLayer above the art
-style's screen layer) is the screen; `designer_front_view.gd` the front cut-away (lit places in
-the category's colour, the rest of the box greyed, icons drawn from the side);
-`designer_preview.gd` the 3D view in its own world (preview, or "3D edit": put on a floor, drag
-across it); `furniture_catalog.gd` each model's scene, icon, size from its meshes, groups, what
+style's screen layer) is the screen; `designer_preview.gd` the 3D view in its own world, always
+editing: put a piece on a floor, drag it across it, snapped to `snap` (Shift for free), with grid
+lines every `grid_step` on each floor; models are drawn `furniture_scale` times (the Kenney pieces
+are about half true size, and the room files store unscaled sizes); `furniture_catalog.gd` each model's scene, icon, size from its meshes, groups, what
 is a surface and what hangs on a wall, `new_item` and `rest_height` (stacking);
 `room_design.gd` (`RoomDesign`, `Item`) the design and its file, format 1 as the Artist set it
 (x per cell to the item's middle, y above that floor, z from the room's middle, back negative);
@@ -165,6 +166,16 @@ files in `data/rooms/designs/` (`room_<id>_L<level>.json`), and hands files out 
 browser, `user://room_files/` on a PC) or reads one back (the page's file picker, or a
 FileDialog). Not yet used by the game. Tunables `data/room_designer.tres`. Test:
 `tests/room_designer_test.tscn`.
+
+### Title screen (`scenes/title.tscn`, the main scene)
+
+`title/title_screen.gd` (`TitleScreen`, a CanvasLayer) builds the menu in code: New Game
+(`main.tscn`), Room Designer, Settings, Credits, Quit (not on the web), the version. Headless, or
+with a `--shot` argument, it goes straight to the game, so the checks and screenshots run as
+before. `title/player_settings.gd` (`PlayerSettings`) keeps volume, full screen and the art style
+in `user://settings.cfg` and applies them at start (`ArtStyle.set_enabled`). Texts, colours and the
+credit lines in `data/title.tres` (`TitleSettings`); add the CC-BY lines of `art/kits/CREDITS.md`
+there when one of those models goes into the game.
 
 ### City-planning sandbox (`scenes/city_planning.tscn`)
 
@@ -197,7 +208,8 @@ Tunables: `data/planning.tres`.
 | `data/inspectors.tres` | `InspectorSettings` | exposure from work and takings, the inspectors' timer and how many at once, coming back, the inspector's walk, patience and look, what he demands, burying the file, the notes |
 | `data/followers.tres` | `FollowersSettings` | the economy: growth, seller and clerk rates, the base Rep cap, training costs, what Reps cost in paperwork a second, the influence radius, the pull inside a block, building upkeep, the god's attention, the loan |
 | `data/rooms.tres` | `RoomSettings` (+ `RoomKind`s) | the room kinds (shape, price, upkeep, what each gives, where it fits, what it must be next to), the stairs, upkeep and reopening, the grid (bay width, floor height, limits), the stores with no room built, the refund, the Office's first rooms and its steady prices, the editor's look |
-| `data/room_designer.tres` | `RoomDesignerSettings` | room designer: a place's size, the furniture list and groups, surfaces, wall heights, category colours |
+| `data/title.tres` | `TitleSettings` | title screen: subtitle, colours, sizes, credit lines |
+| `data/room_designer.tres` | `RoomDesignerSettings` | room designer: furniture scale, snap and grid, a place's size, the furniture list and groups, surfaces, wall heights, category colours |
 | `data/mapgen.tres` | `MapGenSettings` (+ `Archetype`s) | the neighbourhood kinds the map generator places |
 | `data/map_lab.tres` | `MapLabSettings` (+ `LabParams`, `LabSlider`s, `LandUseMix`es) | map lab menu, land use per archetype, block finding, colours |
 
