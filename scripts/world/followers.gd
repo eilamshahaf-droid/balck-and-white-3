@@ -159,9 +159,12 @@ func clerks_in(index: int) -> int:
 	return mini(rooms.totals_of(index).clerks, floori(_count[index]))
 
 
-## Money a second the upkeep of your rooms and buildings costs.
-func upkeep_rate() -> float:
+## Money a second the upkeep of your rooms and buildings costs; a `poor` Committee pays
+## only its rooms' (FollowersSettings.poor_below), so it can always climb back.
+func upkeep_rate(poor := false) -> float:
 	var per_minute := rooms.upkeep()
+	if poor:
+		return per_minute / 60.0
 	for i in _count.size():
 		if districts.buildings[i] != null and districts.is_yours(i):
 			per_minute += F.building_upkeep \

@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.22.1 (2026-11-15): no building upkeep while money is short, and the gate says what to do
+From the Designer's brief.
+- **Under $100, buildings cost nothing to keep.** The $4 a minute per building stops while money is under $100; rooms with upkeep (the Laundry Room, Guard Room, Stock Room) still cost theirs. The loan stays as it was. The number is `poor_below` in `data/followers.tres`.
+- **The gate says what to do.** When attractiveness is short, the meter at the bottom left and Send a Rep's refusal end with "fit a Laundry Room ($210)", or, when you can't afford one, "needs a Laundry Room ($210): take a loan at the Office".
+- Bot, 90 minutes, with the hand, four runs each:
+  - The bot never takes a loan: two won (about 79 and 80 minutes), one reached 99% of the bar, and one crawled from 28 buildings at minute 40 to 37 at minute 90, with 4 sellers. Its money sat at $100: under $100 the buildings are free, so money climbs back to $100 and the upkeep starts again, and the Laundry Room costs $210.
+  - The bot takes the loan when the message says so: all four won, at 76, 76, 80 and 86 minutes. None stopped below 45 buildings.
+- Try it: take buildings until the gate shuts with less than $210, and read the line at the bottom left.
+
 ## Pre-Alpha 0.22.0 (2026-11-15): the attractiveness gate, a smaller purse, and key buildings that cool off
 From the Designer's brief, with Eilam's numbers and the Balance Tester's sim.
 - **Attractiveness.** A district has one attractiveness number: the Office counts 10, every other building of yours 1, and each Laundry Room (the Slums' utility) 5. The first two ordinary buildings are free. After that, each one you would take needs 2 more than the one before (the m-th needs 2 x (m - 2)). With too little, Send a Rep refuses with the reason ("attractiveness 14 of 18"), and a bar already full waits at the door. The line at the bottom left shows the meter from the third building. Key buildings skip the gate, and a lost building lowers the threshold. Numbers are in `data/districts.tres`. Rooms no longer make followers come faster; a complete block still does.
