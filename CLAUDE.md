@@ -194,46 +194,40 @@ for it the documents are the channel. Either way, decisions by Eilam
 go at the top of `docs/GDD.md` (section 0) and `docs/ART.md` the day they are made, with what
 each thread owes; read both before starting work.
 
-### Standing decisions (Eilam, 2026-11-12)
+### Standing decisions (Eilam; the full text is `docs/GDD.md` section 0)
 
-- The story is a god against the bureaucracy, not a cult taking over, and not a street-artist
-  god. Two ways to resist: control (you write the rules anew: fast, focused, little spreading)
-  and freedom (a real majority: slower, with time to invest in buildings and people). The game
-  should feel considered, not a fast takeover; do not tune it to go faster.
-- Chosen direction, not built yet (GDD section 0): the god asked City Hall to be recognised and
-  was refused (the background story, kept for its humour); from there a journey in one of two ways, sweeping
-  believers along behind you (freedom) or taking things over yourself (control); the hand's two
-  verbs are stamp (your own rules) and tear (no rules). No signatures or petition.
-- `docs/GDD.md` is a copy of the Designer's page (the link is at its top). If Eilam says the
-  design changed and the copy has not, read the page with the Artifact tool and sync the copy.
-- **The model (2026-11-13, GDD section 0 item 7) is the game now**; anything older that
-  disagrees is void. Followers are a number per building in one pool; roles (seller, clerk) are
-  slots that fill themselves; a Rep (`MISSIONARY`, capped) fills a building's meter and stays as
-  its Manager; money from shops, paperwork from clerks; the main Office is the heart; key
-  buildings send inspectors and become offices; only Reps, the Fixer and the Secretary are
-  lifted by the hand. Built in three rounds: A the economy, B the danger, C the goal. **Rounds A and B are built (0.15.0, 0.16.0)**, and the rooms in steps (GDD section 0 items 8 to 10: the grid and ceilings in 0.17.0, the smaller map, stairs, neighbour rules and tiers in 0.18.0; the upgrade tracks and the shop decree are rooms now); round C has begun in 0.20.0: the Fixer opens key buildings, taken ones are offices, and the two ways to win are in. Old identifiers kept: `Faith.belief_pool` is the paperwork, `Campaigns` are Reps at work. `ResidentArchetype` still carries the old needs and traits data, unused: remove it when the residents are next touched.
-- Buildings are taken one at a time; a whole block pays a bonus.
-- The system has three layers (GDD section 13): a base that no stage changes, branches the player
-  balances by style, and a stage profile of numbers. A later stage is harder by its numbers
-  (residents, buildings, reactions), never by new rules; before a second stage, the per-stage
-  numbers move into one profile per stage.
-- Names on screen (the code keeps the old identifiers): `BELIEVER` is a Member, `MISSIONARY`
-  a Rep (a Manager once in a building), `PRIEST` a Clerk, `HIGH_PRIEST` the Secretary, `AGENT`
-  the Fixer, the cult is the Committee, a prayer house is a Branch (`data/units.tres`).
-- The hand places people: where it sets someone down, and who they are, is what they do
-  (`Population._on_set_down`, `_take_order`, `willingness`, `effort_of`, `Resident.strain`); an
-  unwilling one still goes, at a price. Prefer this to adding wheel slices.
-- A district is won by filling one bar from two sources, a wide following that lives well and
-  focused actions on key places; either alone must stay hard and the mix flexible.
-- **Feature freeze**: no new systems and no other districts until the Slums' base loop is good.
-  Fix, tune, simplify and make readable; judge balance with `tests/pace_sim`.
-- No cap on believers by housing. No abandoned or empty buildings: every building has residents
-  and is won by winning them; an empty building of yours (a shop, a branch) stays yours.
-- Nobody is converted on the street: only at a door the player chose, or slowly by the
-  neighbours inside a block. The Office (the base) is the strongest building.
-- Decided, not built: Paperwork replaces belief; miracles come from a small refilling stock,
-  never touch buildings, the bar or notices, and City Hall fines each one (GDD section 0).
-- Tell Eilam in a line what you are about to do before long work, and what happened after.
+Section 0 of the GDD is the game as it stands and wins over everything else in that document.
+In short:
+
+- **The story**: a god against the bureaucracy, a comedy, in two ways: control (take the offices
+  over) and freedom (a real majority). Considered, not a fast takeover: do not tune it to go
+  faster.
+- **The model**: followers are a number per building in one pool; people work where they live
+  (clerks make paperwork, sellers money); a Rep (capped) fills a building's bar and stays as
+  its Manager; inspectors come from key buildings and are paid in paperwork or carried off by
+  the hand; the Fixer opens a key building, which becomes an office; rooms are fitted into
+  every building's grid and set room, slots, ceilings and upkeep. Win: 80% of the key buildings,
+  or 30% of them and 60% of the district's people.
+- **Buildings are taken one at a time**, only next to one you hold; a whole block pays a bonus.
+  No empty or abandoned buildings, ever. Nobody is converted in the street.
+- **The hand** lifts only Reps, the Fixer and inspectors; where it sets one down is what they
+  do. Prefer that to adding wheel slices. Pause is the player's own; nothing pauses by itself.
+- **It must work when ignored**: a building never opened in the room editor still works.
+- **Only the Slums** until its loop is good, and it is the teaching stage: basic homes only.
+  A later stage is harder by its numbers, never by new rules; before a second stage the
+  per-stage numbers move into one profile (GDD section 13).
+- **Decided, not built** (GDD 0.4): the planner inside the building as a doll's house, advanced
+  and luxury blocks, fear and attractiveness as two dials, outside decorations, miracles from a
+  small stock that City Hall fines, stamp and tear.
+- Names on screen (the code keeps the old identifiers): `BELIEVER` a Member, `MISSIONARY` a Rep,
+  `PRIEST` a Clerk, `HIGH_PRIEST` the Secretary, `AGENT` the Fixer, the cult the Committee;
+  `Faith.belief_pool` is the paperwork, `Campaigns` are Reps at work.
+- Leftovers to clear when next touched: `ResidentArchetype` still carries the old needs and
+  traits data, and `Miracles` still spends paperwork.
+- `docs/GDD.md` is otherwise a copy of the Designer's page (the link is at its top). If Eilam
+  says the design changed and the copy has not, read the page with the Artifact tool and sync.
+- Tell Eilam in a line what you are about to do before long work, and what happened after. He
+  wants to be shown, not told at length.
 
 ### The Alpha build
 
