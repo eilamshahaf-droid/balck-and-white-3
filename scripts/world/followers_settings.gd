@@ -54,8 +54,10 @@ extends Resource
 ## building in a complete block pays this share of it.
 @export var building_upkeep := 4.0
 @export_range(0.0, 1.0) var complete_block_upkeep_share := 0.5
-## Below this much money the buildings cost nothing to keep (rooms still do).
-@export var poor_below := 100.0
+## The buildings' upkeep grows with the money in hand, from nothing at $0 to all of it
+## at this much (rooms always cost theirs). Above the price of a Laundry Room, so a
+## Committee short of money can still save up for one.
+@export var full_upkeep_at := 250.0
 
 @export_group("The god's attention")
 ## The building under the hand is taken over, and trains, this many times as fast.

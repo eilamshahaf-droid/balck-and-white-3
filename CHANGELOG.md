@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.22.2 (2026-11-15): a gradual upkeep floor, and the Guard Room covers for the Fixer
+From the Designer's brief.
+- **Upkeep grows with your money.** The buildings' $4 a minute is now scaled by the money in hand: nothing at $0, all of it from $250 (it stopped below $100 in 0.22.1). Rooms with upkeep still cost theirs in full. In 0.22.1 money stuck at exactly $100, under the $210 a Laundry Room costs; now it can drift up past it. The number is `full_upkeep_at` in `data/followers.tres`.
+- **A Guard Room covers for the Fixer.** With a Guard Room in any building of yours, his actions add 20% less exposure, and a loud action that goes wrong loses 15% of the bar instead of 30%. One Guard Room is enough; more still only make audits cheaper. Numbers in `data/fixer.tres` ("Guard Room").
+- Bot, 90 minutes, gate and hand, no loans, four runs: all four won, at 78, 80, 80 and 86 minutes, with 9 to 16 Laundry Rooms. None stopped below 45 buildings (in 0.22.1 one stuck at 37).
+- Try it: fit a Guard Room in the Office, then watch the exposure a Fixer action adds.
+
 ## Pre-Alpha 0.22.1 (2026-11-15): no building upkeep while money is short, and the gate says what to do
 From the Designer's brief.
 - **Under $100, buildings cost nothing to keep.** The $4 a minute per building stops while money is under $100; rooms with upkeep (the Laundry Room, Guard Room, Stock Room) still cost theirs. The loan stays as it was. The number is `poor_below` in `data/followers.tres`.
