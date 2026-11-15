@@ -4,7 +4,7 @@ One entry per update, newest first. Each entry says what changed and how to try 
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
 ## Art kits (2026-11-15)
-- 2026-11-15: art/kits/ added with three furniture packs for the Artist: kaykit_restaurant_bits (144 gltf, CC0), office_pack (124 glb), house_interior_pack (82 glb). Not used in the game yet; browse the folders.
+- 2026-11-15: art/kits/ added with two CC0 furniture packs for the Artist: kaykit_restaurant_bits (144 gltf, CC0, Kay Lousberg) and house_interior_pack (82 glb, CC0, Quaternius, from poly.pizza). Not used in the game yet. The Office Pack was left out: its models are 42 CC0 and about 85 CC-BY, so it needs a credits file first.
 
 ## Pre-Alpha 0.25.0 (2026-11-15): the room designer inside the game
 Asked by Eilam through the Artist: the browser editor's 3D did not work for him.
