@@ -115,7 +115,7 @@ func cast(kind: StringName, ground: Vector3) -> void:
 		miracle_failed.emit(&"cooling")
 		return
 	var power := power_at(ground)
-	if not faith.spend(cost(kind, power)):
+	if not faith.spend(cost(kind, power), &"miracle"):
 		miracle_failed.emit(&"no_belief")
 		return
 	var size := lerpf(M.weak_size, M.strong_size, power)

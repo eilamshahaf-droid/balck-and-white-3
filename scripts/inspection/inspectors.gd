@@ -96,7 +96,7 @@ func why_not_bury() -> String:
 
 ## Spend paperwork to lower the exposure.
 func bury() -> bool:
-	if why_not_bury() != "" or not faith.spend(bury_cost()):
+	if why_not_bury() != "" or not faith.spend(bury_cost(), &"bury"):
 		return false
 	_buried += 1
 	faith.add_exposure(-I.bury_exposure)
@@ -160,7 +160,7 @@ func _arrive(inspector: Inspector) -> void:
 	if inspector.audit:
 		if i >= 0 and districts.is_yours(i):
 			var cost := audit_cost(i)
-			if faith.spend(cost):
+			if faith.spend(cost, &"audit"):
 				audit_passed.emit(b, cost)
 			else:
 				districts.lose(i)
@@ -170,7 +170,7 @@ func _arrive(inspector: Inspector) -> void:
 		var reps := campaigns.reps_at(b)
 		if not reps.is_empty():
 			var cost := demand_cost()
-			if faith.spend(cost):
+			if faith.spend(cost, &"demand"):
 				papers_shown.emit(b, cost)
 			else:
 				var rep := reps[0]
