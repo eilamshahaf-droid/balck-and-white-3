@@ -18,14 +18,9 @@ const HEIGHT := 1.8
 const REST_SPEED := 0.4
 const LOST_BELOW := -30.0
 
-## The building he is after, and whether he audits it (a building of yours) or checks
-## the papers of a Rep at its door.
+## The building he is after: one of yours, or a key building with the Fixer at its door.
 var building: Node3D
-var audit := false
 var arrived := false
-## At a Rep's door with no papers shown: he stands there and holds one Rep's work back
-## until the hand lifts him or his patience runs out.
-var holding := false
 ## Seconds since he left his office.
 var age := 0.0
 ## Fell off the world.
@@ -96,7 +91,6 @@ func _physics_process(delta: float) -> void:
 func on_grabbed() -> void:
 	_state = State.HELD
 	arrived = false
-	holding = false
 	freeze = false
 
 
@@ -112,7 +106,6 @@ func lie_down(seconds: float) -> void:
 	_state = State.FLYING
 	freeze = false
 	arrived = false
-	holding = false
 	_rest = 0.0
 	_down = seconds
 

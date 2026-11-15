@@ -3,6 +3,17 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.26.0 (2026-11-15): the economy round
+The Designer's seven points from Eilam's playtest, with Eilam's answer on what paperwork pays for.
+- **The Office starts empty, and the card teaches it.** You start with $600 and 100 paperwork. The card asks for a Shop, then a Desk Room, then two Family Flats (people work where they live), then sends the free Rep, then saves up for a Training Room. The Office's first four rooms bought keep their base price, so that first lesson costs exactly $600 and 50 paperwork. From the fifth room on the +25% per room applies there too. The gift Desk Room is gone.
+- **Reps cost paperwork.** Every Rep costs 0.1 paperwork a second while they exist, a Manager a quarter of that (0.025), the Fixer 0.2. A clerk makes 0.25, so desks are what keep Reps at work (at most 12 clerks count, was 8). The paperwork card shows the net rate. With the paperwork at 0, every 10 seconds one Rep who isn't a Manager (a free one first) goes back to being a plain follower, then the Fixer. Nothing else is lost, and Managers stay. Numbers: `rep_upkeep`, `manager_upkeep_share`, `fixer_upkeep`, `revert_seconds` in `data/followers.tres`.
+- **Influence radius.** Reps can work on buildings 1 + floor(√(followers ÷ 60)) borders from yours: 2 at 60 followers, 3 at 240, 4 at 540, with no cap. The bottom-left line says how far you reach and when the next ring comes. Key buildings must still border yours. Number: `reach_followers`.
+- **Impression replaces attractiveness.** Each ordinary building has its own impression: every building of yours within reach counts 1, plus 1 for each home in it, 2 for each shop and 5 for a Laundry Room (`impression` on each room kind). The next ordinary building needs 3 + 0.3 for every ordinary building you hold past two. Short of it, Send a Rep refuses with the numbers and what to fit. It shows only on the card under the hand ("Impression 4 of 5"). The district-wide meter is gone.
+- **Inspectors come on a timer.** The first at 2:30, then one every 2 minutes (the exposure card counts down), and more at once with exposure (1 + floor(exposure × 3)). Each walks to a building of yours (not the Office) and takes 15 + 1 paperwork for every building you hold (less with a Guard Room). Short of it, he takes what there is and comes back 90 seconds later. Throw him to buy time. Audits that lose a building, and inspectors holding a Rep back, are gone.
+- **Housing shows.** The card over a building of yours and the room planner say "Clerks 2 of 4: needs homes here" when fewer people live there than there are desks or shop places.
+- Under the hand: `scripts/world/impression.gd` replaces `attractiveness.gd`. `scripts/people/unit_upkeep.gd` is new.
+- Try it: start fresh and follow the card. Hover a building two doors away once you have 60 followers. Watch the exposure card count down to the first inspector.
+
 ## CC-BY props (2026-11-15)
 - 2026-11-15: Eilam approved CC-BY models with a credit line. Added art/kits/office_pack_cc_by/ (CCTV Camera, File Cabinet, Office Chair from Poly Pizza's Office Pack) and art/kits/CREDITS.md, the list the game's credits screen must show. Not used in the game yet.
 

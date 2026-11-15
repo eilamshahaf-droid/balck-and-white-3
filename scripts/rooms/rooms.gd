@@ -22,7 +22,7 @@ class Totals:
 	var sellers := 0
 	var reps := 0
 	var security := 0
-	var attraction := 0.0
+	var impression := 0.0
 	var paperwork_cap := 0.0
 	var money_cap := 0.0
 	var shop_boost := 0.0
@@ -37,8 +37,6 @@ class Totals:
 
 # Loaded at run time: its typed array holds custom resources.
 var settings: RoomSettings = load("res://data/rooms.tres")
-## The first room the planner offers is still a gift (see is_gift).
-var gift := true
 
 var _layouts := {}   # building index -> BuildingLayout
 var _totals := {}    # building index -> Totals
@@ -144,18 +142,31 @@ func why_not(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> String
 
 
 ## What `kind` costs in building `index` now: each room already bought there makes the
-## next one dearer (RoomSettings.price_step); the gift room is free.
+## next one dearer (RoomSettings.price_step), past the Office's first few.
 func money_of(index: int, kind: RoomKind) -> float:
-	return 0.0 if is_gift(kind) else kind.money * _escalation(index, kind)
+	return kind.money * _escalation(index, kind)
 
 
 func paperwork_of(index: int, kind: RoomKind) -> float:
-	return 0.0 if is_gift(kind) else kind.paperwork * _escalation(index, kind)
+	return kind.paperwork * _escalation(index, kind)
 
 
-## The first room the planner offers (RoomSettings.first_offer) is free, once.
-func is_gift(kind: RoomKind) -> bool:
-	return gift and kind.id == settings.first_offer
+## Open rooms of kind or group `what` in building `index`.
+func count_in(index: int, what: StringName) -> int:
+	var n := 0
+	for p in layout_of(index).pieces:
+		if p.open and p.kind.is_a(what):
+			n += 1
+	return n
+
+
+## Homes in building `index`: rooms that house people.
+func homes_in(index: int) -> int:
+	var n := 0
+	for p in layout_of(index).pieces:
+		if p.kind.followers > 0:
+			n += 1
+	return n
 
 
 ## Rooms bought in building `index` (not those it was given at the start).
@@ -193,8 +204,6 @@ func place(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> bool:
 	var money := money_of(index, kind)
 	treasury.spend_money(money)
 	faith.spend(paperwork_of(index, kind), &"room")
-	if is_gift(kind):
-		gift = false
 	layout_of(index).add(kind, origin, turns).paid = money
 	_count(index)
 	placed.emit(index, kind)
@@ -291,7 +300,10 @@ func _furnish_office(layout: BuildingLayout) -> void:
 func _escalation(index: int, kind: RoomKind) -> float:
 	if settings.price_step_exempt.has(kind.id):
 		return 1.0
-	return 1.0 + settings.price_step * bought_in(index)
+	var steps := bought_in(index)
+	if index == districts.headquarters:
+		steps = maxi(steps + 1 - settings.office_steady_rooms, 0)
+	return 1.0 + settings.price_step * steps
 
 
 func _count(index: int) -> void:
@@ -306,7 +318,7 @@ func _count(index: int) -> void:
 		t.sellers += p.kind.sellers
 		t.reps += p.kind.reps
 		t.security += p.kind.security
-		t.attraction += p.kind.attraction
+		t.impression += p.kind.impression
 		t.paperwork_cap += p.kind.paperwork_cap
 		t.money_cap += p.kind.money_cap
 	_totals[index] = t

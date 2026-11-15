@@ -2,9 +2,10 @@ class_name MissionCard
 extends PanelContainer
 ## The one thing to do next, as a card with a progress bar, in place of paragraphs of
 ## help. The first ten minutes teach one thing at a time (GDD "The first ten minutes"):
-## plan the Office (a free Desk Room), send the free Rep, take the first building, throw
-## the inspector, train the Fixer and open a key building; then the goal, the key
-## buildings of the district. Each step follows what really happened and, once done,
+## plan the empty Office (a Shop, a Desk Room, two homes for the people who work there),
+## send the free Rep, take the first building, fit a Training Room, throw the inspector,
+## train the Fixer and open a key building; then the goal, the key buildings of the
+## district. Each step follows what really happened and, once done,
 ## never comes back. Texts are in data/districts.tres ("Missions").
 
 const S: DistrictSettings = preload("res://data/districts.tres")
@@ -18,13 +19,17 @@ const REFRESH := 0.25
 @export var inspectors: Inspectors
 @export var breaches: Breaches
 @export var rooms: Rooms
+@export var treasury: Treasury
 
 var _timer := 0.0
 var _title := Label.new()
 var _hint := Label.new()
 var _bar := ProgressBar.new()
 # Steps done, latched so a step never shows twice.
-var _planned := false     # a room bought
+var _shop := false        # a Shop in the Office
+var _desks := false       # a Desk Room in the Office
+var _homes := false       # homes in the Office for the people who work there
+var _training := false    # a Training Room in the Office
 var _sent := false        # a Rep sent to a building
 var _first := false       # the first building taken
 var _threw := false       # an inspector thrown
@@ -33,7 +38,6 @@ var _opened := false      # a key building opened
 
 
 func _ready() -> void:
-	rooms.placed.connect(func(_i: int, _kind: RoomKind) -> void: _planned = true)
 	campaigns.campaign_started.connect(func(_b: Node3D) -> void: _sent = true)
 	campaigns.taken.connect(func(_b: Node3D, _rep: Resident) -> void: _first = true)
 	inspectors.thrown.connect(func(_i: Inspector) -> void: _threw = true)
@@ -62,16 +66,29 @@ func _process(delta: float) -> void:
 	_first = _first or held > 0
 	_fixer = _fixer or population.agent_count > 0
 	var working := _best_meter()
+	var office := districts.headquarters
+	_shop = _shop or rooms.count_in(office, &"shop") > 0
+	_desks = _desks or rooms.count_in(office, &"desks") > 0
+	_homes = _homes or rooms.homes_in(office) >= S.mission_homes_count
+	_training = _training or rooms.count_in(office, &"training") > 0
 	if districts.is_controlled(d):
 		_show(S.mission_won, "", 1.0)
 	elif not _threw and not inspectors.out.is_empty():
 		_show(S.mission_inspector, S.mission_inspector_hint, 0.0)
-	elif not _planned:
-		_show(S.mission_rooms, S.mission_rooms_hint, 0.0)
+	elif not _shop:
+		_show(S.mission_shop, S.mission_shop_hint, 0.0)
+	elif not _desks:
+		_show(S.mission_desks, S.mission_desks_hint, 0.0)
+	elif not _homes:
+		_show(S.mission_homes % S.mission_homes_count, S.mission_homes_hint,
+				float(rooms.homes_in(office)) / S.mission_homes_count)
 	elif not _sent and not _first:
 		_show(S.mission_first, S.mission_first_hint, 0.0)
 	elif not _first:
 		_show(S.mission_first_take, S.mission_first_take_hint, maxf(working, 0.0))
+	elif not _training:
+		var price := rooms.money_of(office, rooms.settings.kind(&"training"))
+		_show(S.mission_training, S.mission_training_hint, treasury.money / maxf(price, 1.0))
 	elif not _fixer and held >= S.mission_fixer_from:
 		_show(S.mission_fixer, S.mission_fixer_hint,
 				population.training_progress(Resident.Rank.AGENT))

@@ -28,12 +28,8 @@ func _ready() -> void:
 		_over(from, I.sent_note, I.bad_color))
 	inspectors.papers_shown.connect(func(b: Node3D, cost: float) -> void:
 		_over(b, I.papers_note % roundi(cost), I.good_color))
-	inspectors.rep_held.connect(func(b: Node3D) -> void:
-		_over(b, I.rep_held_note, I.bad_color))
-	inspectors.audit_passed.connect(func(b: Node3D, cost: float) -> void:
-		_over(b, I.audit_note % roundi(cost), I.good_color))
-	inspectors.turned_back.connect(func(b: Node3D) -> void:
-		_over(b, I.turned_back_note, I.bad_color))
+	inspectors.short_taken.connect(func(b: Node3D, taken: float) -> void:
+		_over(b, I.short_note % roundi(taken), I.bad_color))
 	rooms.room_closed.connect(func(i: int, kind: RoomKind) -> void:
 		_over(districts.buildings[i], "%s closed: no money for upkeep" % kind.title, I.bad_color))
 	rooms.room_reopened.connect(func(i: int, kind: RoomKind) -> void:

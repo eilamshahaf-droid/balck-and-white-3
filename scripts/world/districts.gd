@@ -12,9 +12,9 @@ extends Node
 ## Buildings change hands one at a time (index = CityPlan building index). Each stands
 ## in a block (a map unit: a block or a run of one); a block whose standing buildings
 ## are all yours is complete, which pays a bonus (block_bonus, in_complete_block).
-## A building can only become yours if it borders one you already hold (can_claim),
-## so the city is taken outwards from the headquarters. A core
-## also needs most of the buildings around it first.
+## A building can only become yours if it is within the influence radius of one you
+## already hold (can_claim, `reach` borders out, which grows with your followers), so the
+## city is taken outwards from the headquarters; a key building must border one of yours.
 
 signal layout_ready
 signal building_changed(index: int, yours: bool)
@@ -41,6 +41,9 @@ var headquarters := -1
 var keys := PackedInt32Array()
 ## How free each district is (0..1); see DistrictSettings.independence.
 var independence := PackedFloat32Array()
+## The influence radius: Reps may work this many borders out from your buildings (1: next
+## door). Followers sets it from how many followers there are.
+var reach := 1
 
 var _district_of := PackedInt32Array()   # -1 once demolished
 var _yours := PackedByteArray()
@@ -228,13 +231,15 @@ func in_complete_block(index: int) -> bool:
 	return _block_complete[_block_of[index]] == 1
 
 
-## Building `index` could become yours: its district is open, it borders a building you
-## hold, and, for a core, enough of the buildings around it are yours (core_base).
+## Building `index` could become yours: its district is open and it is within the
+## influence radius of a building you hold; a key building must border one.
 func can_claim(index: int) -> bool:
 	var d := _district_of[index]
 	if index == headquarters:
 		return true
-	return d >= 0 and _unlocked[d] == 1 and not _locked(index) and borders_yours(index)
+	if d < 0 or _unlocked[d] == 0 or _locked(index):
+		return false
+	return borders_yours(index) if _key[index] == 1 else in_reach(index)
 
 
 func is_key(index: int) -> bool:
@@ -279,6 +284,20 @@ func borders_yours(index: int) -> bool:
 		if _yours[j] == 1 and _district_of[j] >= 0:
 			return true
 	return false
+
+
+## Building `index` is within the influence radius (`reach` borders) of a building of yours.
+func in_reach(index: int) -> bool:
+	return not yours_within(index, maxi(reach, 1)).is_empty()
+
+
+## The standing buildings of yours within `steps` borders of building `index`.
+func yours_within(index: int, steps: int) -> Array[int]:
+	var out: Array[int] = []
+	for j in around(index, steps):
+		if _yours[j] == 1:
+			out.append(j)
+	return out
 
 
 ## The share of the standing buildings within core_base_steps borders of `index`

@@ -27,7 +27,7 @@ extends Resource
 @export var clerk_paperwork := 0.25
 ## Clerks at work in all, at most: desks past this make nothing, so the Rep cap, not
 ## paperwork, stays the limit (the Balance Tester's sim).
-@export var max_clerks := 8
+@export var max_clerks := 12
 
 @export_group("Reps")
 ## Reps the player may have out at once (free, at a door or in training; Managers don't
@@ -39,6 +39,19 @@ extends Resource
 @export var fixer_paperwork := 80.0
 @export var fixer_money := 0.0
 @export var fixer_cap := 1
+## Paperwork a second each Rep costs while they exist (free or at a door); a Manager this
+## share of it; the Fixer his own. Clerks make it: you can't keep Reps without desks.
+@export var rep_upkeep := 0.1
+@export_range(0.0, 1.0) var manager_upkeep_share := 0.25
+@export var fixer_upkeep := 0.2
+## With the paperwork at 0, one Rep (or else the Fixer) goes back to being a follower this
+## often. Managers stay.
+@export var revert_seconds := 10.0
+
+@export_group("The influence radius")
+## Reps may work 1 + floor(sqrt(followers / this)) borders out from your buildings: two
+## at 60 followers, three at 240, four at 540. No cap.
+@export var reach_followers := 60.0
 
 @export_group("The pull on neighbours, inside a block")
 ## A building of yours raises the takeover meter of each neighbour in its own block by
