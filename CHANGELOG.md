@@ -22,6 +22,9 @@ The Designer's seven points from Eilam's playtest, with Eilam's answer on what p
 - Under the hand: `scripts/world/impression.gd` replaces `attractiveness.gd`. `scripts/people/unit_upkeep.gd` is new.
 - Try it: start fresh and follow the card. Hover a building two doors away once you have 60 followers. Watch the exposure card count down to the first inspector.
 
+## Art bible: the room designer and furniture (2026-11-15)
+- 2026-11-15: docs/ART.md now records the room designer's numbers (furniture scale 3.0, snap 0.25 m, grid 0.5 m), the model sources and licences, and the Meshy lessons.
+
 ## CC-BY props (2026-11-15)
 - 2026-11-15: Eilam approved CC-BY models with a credit line. Added art/kits/office_pack_cc_by/ (CCTV Camera, File Cabinet, Office Chair from Poly Pizza's Office Pack) and art/kits/CREDITS.md, the list the game's credits screen must show. Not used in the game yet.
 
