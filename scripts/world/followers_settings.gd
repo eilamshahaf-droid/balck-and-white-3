@@ -51,7 +51,7 @@ extends Resource
 @export_group("Upkeep of buildings")
 ## Money a minute every building of yours costs to keep, on top of its rooms' upkeep; a
 ## building in a complete block pays this share of it.
-@export var building_upkeep := 1.0
+@export var building_upkeep := 4.0
 @export_range(0.0, 1.0) var complete_block_upkeep_share := 0.5
 
 @export_group("The god's attention")
