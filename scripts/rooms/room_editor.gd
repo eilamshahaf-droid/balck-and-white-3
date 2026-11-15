@@ -32,7 +32,6 @@ var _turns := 0
 var _hover := Vector2i(-1, -1)
 var _pointer := Vector2.ZERO
 var _shown: Array[RoomKind] = []   # the kinds on offer for this building, in palette order
-var _office_seen := false
 var _font: Font = ThemeDB.fallback_font
 
 @onready var _s: RoomSettings = rooms.settings
@@ -62,10 +61,8 @@ func _input(event: InputEvent) -> void:
 func open(building: Node3D) -> void:
 	_index = districts.index_of(building)
 	_shown.clear()
-	var first := not _office_seen and districts.is_base(building) and _s.first_offer != &""
-	_office_seen = _office_seen or districts.is_base(building)
 	for kind in _s.kinds:
-		if rooms.offers(_index, kind) and (not first or kind.id == _s.first_offer):
+		if rooms.offers(_index, kind):
 			_shown.append(kind)
 	_picked = NOTHING
 	_turns = 0
@@ -269,7 +266,7 @@ func _draw_palette() -> void:
 			_board.draw_rect(Rect2(at, Vector2(MINI - 1.0, MINI - 1.0)), kind.color)
 		var money := rooms.money_of(_index, kind)
 		var paperwork := rooms.paperwork_of(_index, kind)
-		var price := "$%d" % roundi(money) if money > 0.0 or paperwork > 0.0 else _s.gift_label
+		var price := "$%d" % roundi(money)
 		if paperwork > 0.0:
 			price += " + %d paperwork" % roundi(paperwork)
 		_text(rect.position + Vector2(64.0, 20.0), "%s   %s" % [kind.title, price], TEXT_SIZE, Color.WHITE)
@@ -287,13 +284,15 @@ func _draw_totals() -> void:
 	if t.sellers > 0:
 		line += "     Sellers %d of %d" % [followers.sellers_in(_index), t.sellers]
 		if followers.sellers_possible(_index) < t.sellers:
-			line += " (homes here for only %d)" % followers.sellers_possible(_index)
+			line += " (homes here for only %d: people work where they live)" % followers.sellers_possible(_index)
 	if t.upkeep > 0.0:
 		line += "     Upkeep $%d a minute" % roundi(t.upkeep)
 	if t.clerks > 0:
-		line += "     Desks %d" % t.clerks
-	if t.attraction > 0.0:
-		line += "     Attractiveness +%d" % roundi(t.attraction)
+		line += "     Clerks %d of %d" % [followers.clerks_in(_index), t.clerks]
+		if followers.clerks_in(_index) < t.clerks:
+			line += " (homes here for only %d: people work where they live)" % followers.clerks_in(_index)
+	if t.impression > 0.0:
+		line += "     Impression nearby +%d" % roundi(t.impression)
 	if t.security > 0:
 		line += "     Security %d" % t.security
 	_text(Vector2(MARGIN, _board.size.y - 78.0), line, TEXT_SIZE, Color.WHITE)

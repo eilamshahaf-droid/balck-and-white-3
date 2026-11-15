@@ -1,10 +1,11 @@
 extends Node
 ## Checks the Slums slice of the core loop in the real main scene: the stage map, the
-## Secretary at the main Office, followers as numbers and the roles that fill
-## themselves, training a Rep under the cap, taking a building next to yours with a Rep
-## who stays as its Manager, the pull inside a block, shops, floors, the loan, key
-## buildings and inspectors (papers, audits, burying the file), the block bonus, and
-## winning the district.
+## Secretary at the main Office, which starts empty and is planned for the purse,
+## followers as numbers and the roles that fill themselves, training a Rep under the cap,
+## taking a building with a Rep who stays as its Manager, the influence radius and the
+## impression a building needs, the pull inside a block, shops, floors, the loan, key
+## buildings and inspectors on a timer (papers, coming back, burying the file), what Reps
+## cost in paperwork, the block bonus, and winning the district.
 ##
 ## Run headless:
 ##   godot --headless --path . res://tests/cult_test.tscn
@@ -16,6 +17,8 @@ const DS: DistrictSettings = preload("res://data/districts.tres")
 const F: FollowersSettings = preload("res://data/followers.tres")
 const I: InspectorSettings = preload("res://data/inspectors.tres")
 const CS: CampaignSettings = preload("res://data/campaigns.tres")
+const TS: TreasurySettings = preload("res://data/treasury.tres")
+const BAL: Balance = preload("res://data/balance.tres")
 const PULL_MINUTES := 2.0
 const PLENTY := 100000.0
 
@@ -30,6 +33,7 @@ var _decrees: Decrees
 var _inspectors: Inspectors
 var _campaigns: Campaigns
 var _rooms: Rooms
+var _upkeep: UnitUpkeep
 var _near := -1   # a building taken next to the headquarters by _test_taking
 var _failures := 0
 
@@ -47,6 +51,10 @@ func _ready() -> void:
 	_inspectors = _main.get_node("Inspectors")
 	_campaigns = _main.get_node("Campaigns")
 	_rooms = _main.get_node("Rooms")
+	_upkeep = _main.get_node("UnitUpkeep")
+	# What the Reps cost is checked on its own; elsewhere it would eat the paperwork the
+	# checks count.
+	_upkeep.set_physics_process(false)
 	await _frames(int(F.tick * 60.0) + 20)
 	_test_stage_map()
 	_test_opening()
@@ -61,12 +69,14 @@ func _ready() -> void:
 	_test_loan()
 	_test_rooms()
 	_test_key_buildings()
-	await _test_inspector_and_rep()
-	_test_audit()
+	await _test_inspector()
+	_test_guard_room()
+	_test_unit_upkeep()
 	_test_shop_homes_and_upkeep()
 	await _test_fixer()
 	await _test_block()
-	await _test_attractiveness()
+	_test_reach()
+	await _test_impression()
 	await _test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
@@ -121,8 +131,9 @@ func _test_start() -> void:
 	_check(_population.priest.rank == Resident.Rank.HIGH_PRIEST, "with the Secretary's rank")
 	_check(_population.priest.post == start, "serving at the main Office")
 	_check(_districts.owns(start), "the main Office is yours")
+	_check(_rooms.layout_of(hq).pieces.is_empty(), "the Office starts empty")
 	_check(_followers.total > 0 and _followers.total == _followers.count_of(hq),
-			"the Office opens with followers of its own (%d)" % _followers.total)
+			"and with followers of its own (%d)" % _followers.total)
 	_check(_followers.count_of(hq) <= _followers.room_of(hq),
 			"no more than it has room for (%d)" % _followers.room_of(hq))
 	_check(_population.missionary_count == U.start_reps and _population.free_rep_count == U.start_reps,
@@ -130,12 +141,26 @@ func _test_start() -> void:
 	var editor: RoomEditor = _main.get_node("RoomEditor")
 	var hand: GodHand = _main.get_node("GodHand")
 	hand.own_building_double_clicked.emit(start)
-	_check(editor.visible and editor._shown.size() == 1 and editor._shown[0].id == &"desks",
-			"a double click on the Office opens its rooms, the first time with only a Desk Room")
+	_check(editor.visible and editor._shown.size() > 1,
+			"a double click on the Office opens its rooms, with every room that fits")
 	editor.close()
-	_menus.choose(&"rooms", start)
-	_check(editor._shown.size() > 1, "and the next time with every room that fits")
-	editor.close()
+	var spent := 0.0
+	var paper := 0.0
+	for id: StringName in [&"shop", &"desks", &"family", &"family"]:
+		spent += _rooms.settings.kind(id).money
+		paper += _rooms.settings.kind(id).paperwork
+	# A second of building upkeep has already gone by.
+	_treasury.money = TS.start_money
+	_faith.belief_pool = BAL.belief_start
+	var planned := true
+	for id: StringName in [&"shop", &"desks", &"family", &"family"]:
+		planned = planned and _fit(hq, id)
+	_check(planned and is_equal_approx(spent, TS.start_money) and is_zero_approx(_treasury.money) \
+			and is_equal_approx(_faith.belief_pool, BAL.belief_start - paper),
+			"the first lesson (a Shop, a Desk Room, two homes) costs the whole purse, $%d and %d paperwork: no price rise"
+				% [roundi(spent), roundi(paper)])
+	var family := _rooms.settings.kind(&"family")
+	_check(_rooms.money_of(hq, family) > family.money, "the fifth room bought in the Office costs more")
 	_check(_districts.is_unlocked(_districts.start_district()), "the start district is open")
 	if _districts.district_count() > 1:
 		_check(not _districts.is_unlocked((_districts.start_district() + 1) % _districts.district_count()),
@@ -184,6 +209,7 @@ func _test_roles() -> void:
 ## A Rep is trained at the main Office from one follower, for paperwork, up to the cap.
 func _test_training() -> void:
 	var office := _districts.start_building()
+	_treasury.money = PLENTY
 	_faith.belief_pool = 0.0
 	_check(not _menus.choose(&"train_rep", office), "no training without the paperwork")
 	_faith.belief_pool = F.rep_paperwork * 10.0
@@ -341,20 +367,13 @@ func _test_rooms() -> void:
 	var kinds := _rooms.settings
 	var office := _rooms.layout_of(hq)
 	_check(office.columns >= 4 and office.rows >= 3 and not office.pieces.is_empty(),
-			"the Office is a grid of bays and floors with its first rooms in (%d by %d, %d rooms)"
+			"the Office is a grid of bays and floors with the first lesson's rooms in (%d by %d, %d rooms)"
 			% [office.columns, office.rows, office.pieces.size()])
 	# The Training Room of the earlier test sits where first-fit put it; the plan below
 	# needs that place, as a player's would.
 	for piece in office.pieces.duplicate():
 		if piece.kind.id == &"training":
 			_rooms.remove(hq, piece.cells()[0])
-	var start_shops: Array[BuildingLayout.Piece] = []
-	for piece in office.pieces:
-		if piece.kind.id == &"shop" and not piece.bought:
-			start_shops.append(piece)
-	_check(start_shops.size() == 2, "the Office starts with two Shops")
-	# The plan below is a one-Shop Office: the second Shop comes out (nothing leans on it).
-	_check(_rooms.remove(hq, start_shops[1].cells()[0]), "a Shop nothing leans on can be taken out")
 	var taken := office.pieces[0].cells()[0]
 	_check(not office.fits(kinds.kind(&"guard"), taken, 0), "a room can't go where another is")
 	_check(not office.fits(kinds.kind(&"shop"), Vector2i(office.columns - 2, office.rows - 1), 0),
@@ -371,6 +390,13 @@ func _test_rooms() -> void:
 	_faith._physics_process(5.0)
 	_check(is_equal_approx(_faith.belief_pool, _followers.paperwork_cap()),
 			"the clerks stop when the archives are full")
+	# The first lesson's rooms and the stairs hem the Shop in; the Vault below needs a
+	# place by it, so the Shop moves to the left wall, stood on end.
+	for id: StringName in [&"family", &"archive", &"desks", &"shop"]:
+		for piece in office.pieces.duplicate():
+			if piece.kind.id == id:
+				_rooms.remove(hq, piece.cells()[0])
+	_rooms.place(hq, kinds.kind(&"shop"), Vector2i.ZERO, 1)
 	var purse := _followers.money_cap()
 	var kinds_vault := kinds.kind(&"vault")
 	var lone := Vector2i(-1, -1)
@@ -400,14 +426,7 @@ func _test_rooms() -> void:
 	_check(flights_ok and turns >= 1,
 			"every floor has one stairs place, in flights of two floors that change column (%d turns)" % turns)
 	var desks := _followers.clerk_slots()
-	var gift_money := _treasury.money
-	var gift_paper := _faith.belief_pool
-	var gifted := _rooms.is_gift(kinds.kind(&"desks"))
 	var fitted := _fit(hq, &"desks")
-	var free := is_equal_approx(_treasury.money, gift_money) \
-			and is_equal_approx(_faith.belief_pool, gift_paper)
-	_check(gifted and fitted and free, "the first Desk Room is a gift")
-	_check(not _rooms.is_gift(kinds.kind(&"desks")), "and only the first")
 	_check(fitted and _followers.clerk_slots() == desks + kinds.kind(&"desks").clerks,
 			"a Desk Room seats more clerks")
 	if _near < 0:
@@ -460,20 +479,31 @@ func _test_key_buildings() -> void:
 	_check(joined and route.size() > 2, "the streets join a key building to the Office (%d corners)" % route.size())
 
 
-## An inspector walks from a key building to a Rep at work. With paperwork the Rep shows
-## papers; with none the Rep is sent home. More exposure, more inspectors.
-func _test_inspector_and_rep() -> void:
+## Inspectors come on a timer, more at once with exposure, and walk from a key building to
+## a building of yours: with paperwork it is paid, short of it he takes what there is and
+## comes back later. The hand can throw him. Burying the file lowers the exposure.
+func _test_inspector() -> void:
 	_faith.exposure = 0.0
-	_check(_inspectors.allowed() == I.max_base, "with no exposure, %d inspector at a time" % I.max_base)
+	_check(_inspectors.at_once() == 1, "with no exposure, one inspector at a time")
 	_faith.exposure = 1.0
-	_check(_inspectors.allowed() == I.max_base + I.max_extra,
-			"at full exposure, %d" % (I.max_base + I.max_extra))
+	_check(_inspectors.at_once() == 1 + floori(I.per_exposure),
+			"at full exposure, %d at once" % (1 + floori(I.per_exposure)))
 	_faith.exposure = 0.5
 	_faith.belief_pool = _inspectors.bury_cost()
 	var first := _inspectors.bury_cost()
 	_check(_inspectors.bury() and is_equal_approx(_faith.exposure, 0.5 - I.bury_exposure) \
 			and is_zero_approx(_faith.belief_pool), "burying the file costs paperwork and lowers exposure")
 	_check(_inspectors.bury_cost() > first, "and costs more the next time")
+	_faith.exposure = 0.0
+	var out := _inspectors.out.size()
+	_inspectors.next_in = 0.1
+	_inspectors._physics_process(I.tick)
+	_check(_inspectors.out.size() == out + 1 and is_equal_approx(_inspectors.next_in, I.interval_seconds)
+			and not _districts.is_base(_inspectors.out[-1].building),
+			"when the timer runs out one walks to a building of yours (not the Office); the next in %ds"
+				% roundi(I.interval_seconds))
+	for inspector in _inspectors.out.duplicate():
+		_inspectors._remove(inspector)
 	var rep: Resident = null
 	for r in _population.residents:
 		if r.rank == Resident.Rank.MISSIONARY and r.job == Resident.Job.FREE:
@@ -484,8 +514,8 @@ func _test_inspector_and_rep() -> void:
 				and _campaigns.why_not(_districts.buildings[i]) == "":
 			door = _districts.buildings[i]
 			break
-	if rep == null or door == null:
-		_check(false, "a free Rep and a door to send them to")
+	if rep == null or door == null or _near < 0:
+		_check(false, "a free Rep, a door to send them to and a building of yours")
 		return
 	_population.bring_out(_population.priest)
 	_campaigns.send(door)
@@ -494,10 +524,8 @@ func _test_inspector_and_rep() -> void:
 			and not _population.priest.body.on_errand,
 			"the Secretary is never sent to a marked building")
 	_campaigns.clear(door)
-	_population.bring_out(rep)
-	_population.canvasser_set_down.emit(rep, door)
-	_check(_campaigns.reps_at(door).has(rep), "a Rep set down at a door is at work there")
-	var inspector := _inspectors.send_to(door, false)
+	var b := _districts.buildings[_near]
+	var inspector := _inspectors.send_to(b)
 	var start := inspector.global_position
 	await _frames(60)
 	_check(inspector.global_position.distance_to(start) > 1.0 and not inspector.arrived,
@@ -505,61 +533,73 @@ func _test_inspector_and_rep() -> void:
 	inspector.on_grabbed()
 	inspector.on_released(Vector3.ZERO)
 	_check(_inspectors.out.has(inspector) and not inspector.arrived, "the hand can lift him and set him down")
-	var cost := _inspectors.demand_cost()
+	var cost := _inspectors.demand_cost(_near)
+	_check(is_equal_approx(cost, I.demand_paperwork + I.demand_per_building \
+			* _districts.converted_buildings().size()),
+			"he demands %d paperwork: more for every building you hold" % roundi(cost))
 	_faith.belief_pool = cost + 5.0
 	inspector.arrived = true
 	_inspectors._arrive(inspector)
-	_check(is_equal_approx(_faith.belief_pool, 5.0) and rep.rank == Resident.Rank.MISSIONARY \
-			and _campaigns.reps_at(door).has(rep),
-			"when he arrives the Rep shows papers (%d paperwork) and works on" % roundi(cost))
-	_check(not _inspectors.out.has(inspector), "and the inspector leaves")
-	inspector = _inspectors.send_to(door, false)
+	_check(is_equal_approx(_faith.belief_pool, 5.0) and _districts.is_yours(_near)
+			and not _inspectors.out.has(inspector), "with the paperwork in hand he takes it and leaves")
+	inspector = _inspectors.send_to(b)
 	inspector.arrived = true
-	var index := _districts.index_of(door)
+	_faith.belief_pool = 3.0
 	_inspectors._arrive(inspector)
-	_check(_inspectors.out.has(inspector) and inspector.holding and rep.rank == Resident.Rank.MISSIONARY
-			and _campaigns.held_at(door) == 1 and _campaigns.stalled_on(door) == CS.held_note,
-			"with no paperwork he stays at the door and holds the Rep back, with a note over it")
-	var meter := _districts.meter_of(index)
-	_campaigns._step(_campaigns._campaign_on(door))
-	_check(is_equal_approx(_districts.meter_of(index), meter), "and the bar stands still")
-	inspector.on_grabbed()
-	_inspectors._count_holds()
-	_check(_campaigns.held_at(door) == 0, "lifted by the hand, he holds nobody back")
-	_inspectors._remove(inspector)
-	_campaigns.clear(door)
+	_check(is_zero_approx(_faith.belief_pool) and _districts.is_yours(_near) \
+			and not _inspectors.out.has(inspector),
+			"short of it he takes what there is, and the building stays yours")
+	out = _inspectors.out.size()
+	_inspectors.next_in = PLENTY
+	for step in ceili(I.return_seconds / I.tick) + 1:
+		_inspectors._physics_process(I.tick)
+	_check(_inspectors.out.size() == out + 1 and _inspectors.out[-1].building == b,
+			"and comes back to it %ds later" % roundi(I.return_seconds))
+	for one in _inspectors.out.duplicate():
+		_inspectors._remove(one)
 
 
-## An inspector audits a building of yours: paperwork passes it (less with Security);
-## with none it is lost, with its followers and its Manager, and keeps part of its meter.
-func _test_audit() -> void:
+## A Guard Room makes the inspectors take less from its building.
+func _test_guard_room() -> void:
 	if _near < 0:
 		return
-	var b := _districts.buildings[_near]
-	var plain := _inspectors.audit_cost(_near)
+	var plain := _inspectors.demand_cost(_near)
 	_treasury.money = PLENTY
-	_fit(_near, &"guard")
-	var cost := _inspectors.audit_cost(_near)
-	_check(cost < plain, "a Guard Room makes an audit cheaper (%d to %d paperwork)" % [roundi(plain), roundi(cost)])
-	_faith.belief_pool = cost
-	var inspector := _inspectors.send_to(b, true)
-	inspector.arrived = true
-	_inspectors._arrive(inspector)
-	_check(_districts.is_yours(_near) and is_zero_approx(_faith.belief_pool),
-			"a building of yours passes its audit for paperwork")
-	var manager := _population.manager_of(b)
-	_followers.recount()
+	_faith.belief_pool = PLENTY
+	_check(_fit(_near, &"guard") and _inspectors.demand_cost(_near) < plain,
+			"a Guard Room makes the inspector take less (%d to %d paperwork)"
+				% [roundi(plain), roundi(_inspectors.demand_cost(_near))])
+
+
+## Every Rep and the Fixer cost paperwork a second, a Manager a quarter of a Rep; with the
+## paperwork at 0 a Rep goes back to being a follower, but a Manager stays.
+func _test_unit_upkeep() -> void:
+	var reps := 0
+	var managers := 0
+	for r in _population.residents:
+		if r.rank == Resident.Rank.MISSIONARY:
+			if r.job == Resident.Job.MANAGER:
+				managers += 1
+			else:
+				reps += 1
+	var rate := F.rep_upkeep * (reps + managers * F.manager_upkeep_share) \
+			+ F.fixer_upkeep * _population.agent_count
+	_check(reps > 0 and managers > 0 and is_equal_approx(_upkeep.rate(), rate),
+			"%d Reps and %d Managers cost %.2f paperwork a second" % [reps, managers, rate])
+	_faith.belief_pool = 10.0
+	_upkeep._physics_process(1.0)
+	_check(is_equal_approx(_faith.belief_pool, 10.0 - rate), "and it is taken from the pool")
+	_faith.belief_pool = 0.0
 	var pool := _followers.total
-	var there := _followers.count_of(_near)
-	inspector = _inspectors.send_to(b, true)
-	inspector.arrived = true
-	_inspectors._arrive(inspector)
-	_check(not _districts.is_yours(_near) and is_equal_approx(_districts.meter_of(_near), DS.lost_meter),
-			"with no paperwork it is lost, and keeps %d%% of its meter" % roundi(DS.lost_meter * 100.0))
-	_check(_followers.count_of(_near) == 0 and _followers.total == pool - there,
-			"its followers leave the pool")
-	_check(manager != null and manager.rank == Resident.Rank.RESIDENT \
-			and _population.manager_of(b) == null, "and its Manager is lost")
+	var count := _population.missionary_count
+	for second in ceili(F.revert_seconds) + 1:
+		_upkeep._physics_process(1.0)
+	_check(_population.missionary_count == count - 1 and _followers.total == pool + 1,
+			"with no paperwork for %ds a Rep goes back to being a follower" % roundi(F.revert_seconds))
+	var managed := 0
+	for r in _population.residents:
+		managed += 1 if r.rank == Resident.Rank.MISSIONARY and r.job == Resident.Job.MANAGER else 0
+	_check(managed == managers, "and the Managers stay")
 
 
 ## A seller lives over the shop: no more sellers than the building houses. Rooms with
@@ -591,21 +631,19 @@ func _test_shop_homes_and_upkeep() -> void:
 	_check(stocked and _followers.next_seller_net(hq) > plain and _followers.upkeep_rate() > rate,
 			"a Stock Room by a shop makes its sellers bring more, for upkeep (fitted: %s)" % stocked)
 	var laundry := _rooms.settings.kind(&"laundry")
-	var appeal: Attractiveness = _main.get_node("Attractiveness")
-	var d := _districts.start_district()
-	var draw := appeal.value(d)
-	_check(_fit(hq, &"laundry") and is_equal_approx(appeal.value(d), draw + laundry.attraction),
-			"a Laundry Room, the Slums' utility, adds %d attractiveness" % roundi(laundry.attraction))
+	var draw := _rooms.totals_of(hq).impression
+	_check(_fit(hq, &"laundry") and is_equal_approx(_rooms.totals_of(hq).impression, draw + laundry.impression),
+			"a Laundry Room, the Slums' utility, makes %d impression more" % roundi(laundry.impression))
 	_treasury.money = 0.5
 	var income := _followers.money_rate
 	_followers.money_rate = 0.0
 	_treasury._physics_process(10.0)
-	_check(is_equal_approx(appeal.value(d), draw) and is_zero_approx(_treasury.money),
+	_check(is_equal_approx(_rooms.totals_of(hq).impression, draw) and is_zero_approx(_treasury.money),
 			"with no money for upkeep the dearest room closes and gives nothing")
 	_followers.money_rate = income
 	_treasury.money = PLENTY
 	_rooms._physics_process(_rooms.settings.upkeep_tick + 1.0)
-	_check(is_equal_approx(appeal.value(d), draw + laundry.attraction),
+	_check(is_equal_approx(_rooms.totals_of(hq).impression, draw + laundry.impression),
 			"and opens again when there is money")
 	var rooms_only := _rooms.upkeep() / 60.0
 	_check(is_equal_approx(_followers.upkeep_rate(0.0), rooms_only) \
@@ -741,18 +779,42 @@ func _test_block() -> void:
 			"and followers come to its buildings faster")
 
 
-## An ordinary building needs the district to be attractive enough: the threshold rises
-## with every one you hold, a Laundry Room raises the attractiveness.
-func _test_attractiveness() -> void:
-	var appeal: Attractiveness = _main.get_node("Attractiveness")
+## The influence radius grows with the followers: 1 + floor(sqrt(followers / 60)) borders,
+## and a building that far from yours can be worked on; a key building must border yours.
+func _test_reach() -> void:
+	_check(_followers.reach() == 1 + floori(sqrt(_followers.total / F.reach_followers))
+			and _districts.reach == _followers.reach(),
+			"%d followers reach %d borders out" % [_followers.total, _followers.reach()])
+	var two := -1
+	for i in _districts.buildings.size():
+		if _districts.buildings[i] and not _districts.is_yours(i) and not _districts.is_key(i) \
+				and not _districts.borders_yours(i) and not _districts.yours_within(i, 2).is_empty():
+			two = i
+			break
+	if two < 0:
+		_check(false, "a building two borders from yours")
+		return
+	var reach := _districts.reach
+	_districts.reach = 1
+	var near_only := not _districts.can_claim(two)
+	_districts.reach = 2
+	_check(near_only and _districts.can_claim(two),
+			"a building two borders out can be worked on only once the radius is two")
+	_districts.reach = reach
+
+
+## An ordinary building needs impression from your buildings near it: each counts, its
+## homes and shops more; what the next one needs rises with every one you hold.
+func _test_impression() -> void:
+	var impression: Impression = _main.get_node("Impression")
 	var d := _districts.start_district()
-	_check(is_equal_approx(appeal.next_threshold(d),
-			DS.attraction_step * maxi(appeal.ordinary_held(d) + 1 - DS.free_buildings, 0)),
-			"the next building needs %d attractiveness (%d held)" % [
-			roundi(appeal.next_threshold(d)), appeal.ordinary_held(d)])
+	_check(is_equal_approx(impression.required(d), DS.impression_start
+			+ DS.impression_step * maxi(impression.ordinary_held(d) - DS.impression_free, 0)),
+			"the next building needs %.1f impression (%d held)" % [
+			impression.required(d), impression.ordinary_held(d)])
 	var shut := -1
 	for round in 80:
-		shut = _shut_building(appeal)
+		shut = _shut_building(impression)
 		if shut >= 0:
 			break
 		for i in _districts.buildings.size():
@@ -764,33 +826,32 @@ func _test_attractiveness() -> void:
 		_check(false, "taking buildings closes the gate at last")
 		return
 	var b := _districts.buildings[shut]
-	_check(_campaigns.why_not(b).begins_with("attractiveness %d of %d" % [
-			floori(appeal.value(d)), ceili(appeal.next_threshold(d))]),
+	_check(_campaigns.why_not(b).begins_with("impression %d of" % floori(impression.of(shut))),
 			"then a Rep is refused: \"%s\"" % _campaigns.why_not(b))
-	_districts.add_meter(shut, 1.0)
-	var rep := _population.recruit(b.global_position)
-	_population.convert_to(rep, Resident.Rank.MISSIONARY)
-	_population.bring_out(rep)
-	_population.canvasser_set_down.emit(rep, b)
-	await _frames(3)
-	_check(_districts.wants_you(shut) and not _districts.is_yours(shut),
-			"and a full bar waits until the district is attractive enough")
 	_treasury.money = PLENTY
-	var before := appeal.value(d)
+	_faith.belief_pool = PLENTY
+	var before := impression.of(shut)
 	var fitted := false
-	for i in _districts.buildings.size():
-		if _districts.buildings[i] and _districts.is_yours(i) and _fit(i, &"laundry"):
+	for j in _districts.yours_within(shut, _districts.reach):
+		if _fit(j, &"laundry"):
 			fitted = true
 			break
-	_check(fitted and appeal.value(d) > before and _campaigns.why_not(b) == "",
-			"a Laundry Room opens the gate again")
+	_check(fitted and is_equal_approx(impression.of(shut), before + _rooms.settings.kind(&"laundry").impression),
+			"a Laundry Room next door makes %d impression more"
+				% roundi(_rooms.settings.kind(&"laundry").impression))
+	for round in 10:
+		if _campaigns.why_not(b) == "":
+			break
+		for j in _districts.yours_within(shut, _districts.reach):
+			_fit(j, &"family")
+	_check(_campaigns.why_not(b) == "", "and homes near it open the gate again")
 
 
-## A building next to yours that the gate shuts; -1 when there is none.
-func _shut_building(appeal: Attractiveness) -> int:
+## A building within reach that the gate shuts; -1 when there is none.
+func _shut_building(impression: Impression) -> int:
 	for i in _districts.buildings.size():
 		if _districts.buildings[i] and not _districts.is_yours(i) and _districts.can_claim(i) \
-				and appeal.why_not(i) != "":
+				and impression.why_not(i) != "":
 			return i
 	return -1
 

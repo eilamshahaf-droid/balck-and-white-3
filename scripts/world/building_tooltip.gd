@@ -2,7 +2,9 @@ class_name BuildingTooltip
 extends Label
 ## Follows the cursor and says what the building under it is: its kind, how many
 ## people live there and how many of them believe ("X of Y", from Population), its staff,
-## what it yields and what it earns when it is yours.
+## what it yields and what it earns when it is yours. People work where they live, so
+## desks and shop places with nobody living there to fill them say so (the housing rule).
+## A building you could take shows the impression your buildings make on it.
 ## A district's core building says so.
 
 const S: DistrictSettings = preload("res://data/districts.tres")
@@ -13,6 +15,7 @@ const RAY_LENGTH := 2000.0
 @export var decrees: Decrees
 @export var population: Population
 @export var camera: Camera3D
+@export var impression: Impression
 
 var _timer := 0.0
 
@@ -63,8 +66,12 @@ func _describe(building: Node3D) -> String:
 		if manager:
 			lines.append("Manager: " + manager.full_name())
 		lines.append("Followers %d of %d" % [followers.count_of(i), followers.room_of(i)])
+		var desks := followers.desks_in(i)
+		if desks > 0:
+			lines.append(_staffed("Clerks", followers.clerks_in(i), desks, followers.clerks_in(i)))
 		if followers.has_shop(i):
-			lines.append("Sellers %d of %d" % [followers.sellers_in(i), followers.shop_slots(i)])
+			lines.append(_staffed("Sellers", followers.sellers_in(i), followers.shop_slots(i),
+					followers.sellers_possible(i)))
 	elif districts.is_key(i):
 		lines[0] = districts.key_name(i)
 		lines.append("Key building: inspectors come from here")
@@ -72,12 +79,23 @@ func _describe(building: Node3D) -> String:
 				else "The Fixer must open it before a Rep can take it")
 	elif districts.wants_you(i) and districts.can_claim(i):
 		lines.append("Wants you: set a Rep down here to manage it")
-	elif not districts.borders_yours(i):
-		lines.append("Too far: it must border a building of yours")
 	elif not districts.can_claim(i):
-		lines.append("Take the buildings around it first")
-	elif districts.meter_of(i) > 0.0:
-		lines.append("Takeover %d%%: keep a Rep at its door" % floori(districts.meter_of(i) * 100.0))
+		lines.append("Out of reach: more followers reach further")
 	else:
-		lines.append("Set a Rep down at its door to take it")
+		var have := impression.of(i)
+		var need := impression.required(districts.district_of(i))
+		lines.append("Impression %d of %d" % [floori(have), ceili(need)])
+		if have < need:
+			lines.append("Fit homes or shops in your buildings near it")
+		elif districts.meter_of(i) > 0.0:
+			lines.append("Takeover %d%%: keep a Rep at its door" % floori(districts.meter_of(i) * 100.0))
+		else:
+			lines.append("Set a Rep down at its door to take it")
 	return "\n".join(lines)
+
+
+## "Clerks 2 of 4", and when fewer live here than there are places (`possible`), that
+## people work where they live.
+static func _staffed(what: String, working: int, places: int, possible: int) -> String:
+	var line := "%s %d of %d" % [what, working, places]
+	return line + ": needs homes here" if possible < places else line

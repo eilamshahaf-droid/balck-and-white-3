@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=3]
+[gd_scene load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -38,9 +38,10 @@
 [ext_resource type="Script" path="res://scripts/pause.gd" id="75_pause"]
 [ext_resource type="Script" path="res://scripts/world/breaches.gd" id="76_breaches"]
 [ext_resource type="Script" path="res://scripts/props/breach_marks.gd" id="77_breach_marks"]
-[ext_resource type="Script" path="res://scripts/world/attractiveness.gd" id="80_attractiveness"]
+[ext_resource type="Script" path="res://scripts/world/impression.gd" id="80_impression"]
 [ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 [ext_resource type="Script" path="res://scripts/props/training_marks.gd" id="81_training_marks"]
+[ext_resource type="Script" path="res://scripts/people/unit_upkeep.gd" id="82_unit_upkeep"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -96,11 +97,10 @@ districts = NodePath("../Districts")
 script = ExtResource("72_keys")
 districts = NodePath("../Districts")
 
-[node name="Inspectors" type="Node3D" parent="." node_paths=PackedStringArray("districts", "campaigns", "population", "followers", "faith", "breaches")]
+[node name="Inspectors" type="Node3D" parent="." node_paths=PackedStringArray("districts", "campaigns", "followers", "faith", "breaches")]
 script = ExtResource("71_inspectors")
 districts = NodePath("../Districts")
 campaigns = NodePath("../Campaigns")
-population = NodePath("../Population")
 followers = NodePath("../Followers")
 faith = NodePath("../Faith")
 breaches = NodePath("../Breaches")
@@ -168,19 +168,24 @@ rooms = NodePath("../Rooms")
 districts = NodePath("../Districts")
 decrees = NodePath("../Decrees")
 
-[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "followers", "hand", "attractiveness")]
+[node name="Campaigns" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "followers", "hand", "impression")]
 script = ExtResource("19_campaigns")
 districts = NodePath("../Districts")
 population = NodePath("../Population")
 followers = NodePath("../Followers")
 hand = NodePath("../GodHand")
-attractiveness = NodePath("../Attractiveness")
+impression = NodePath("../Impression")
 
-[node name="Attractiveness" type="Node" parent="." node_paths=PackedStringArray("districts", "rooms", "treasury")]
-script = ExtResource("80_attractiveness")
+[node name="UnitUpkeep" type="Node" parent="." node_paths=PackedStringArray("population", "followers", "faith")]
+script = ExtResource("82_unit_upkeep")
+population = NodePath("../Population")
+followers = NodePath("../Followers")
+faith = NodePath("../Faith")
+
+[node name="Impression" type="Node" parent="." node_paths=PackedStringArray("districts", "rooms")]
+script = ExtResource("80_impression")
 districts = NodePath("../Districts")
 rooms = NodePath("../Rooms")
-treasury = NodePath("../Treasury")
 
 [node name="CampaignMarks" type="Node3D" parent="." node_paths=PackedStringArray("campaigns", "districts")]
 script = ExtResource("20_marks")
@@ -201,7 +206,7 @@ script = ExtResource("10_debug")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="Mission" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("districts", "population", "campaigns", "progress", "inspectors", "breaches", "rooms")]
+[node name="Mission" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("districts", "population", "campaigns", "progress", "inspectors", "breaches", "rooms", "treasury")]
 offset_left = 12.0
 offset_top = 96.0
 offset_right = 412.0
@@ -214,6 +219,7 @@ progress = NodePath("../../DistrictProgress")
 inspectors = NodePath("../../Inspectors")
 breaches = NodePath("../../Breaches")
 rooms = NodePath("../../Rooms")
+treasury = NodePath("../../Treasury")
 
 [node name="Help" type="Label" parent="HUD"]
 anchors_preset = 1
@@ -258,13 +264,14 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
 
-[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera")]
+[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera", "impression")]
 script = ExtResource("22_tooltip")
 districts = NodePath("../../Districts")
 followers = NodePath("../../Followers")
 decrees = NodePath("../../Decrees")
 population = NodePath("../../Population")
 camera = NodePath("../../CameraRig/Camera3D")
+impression = NodePath("../../Impression")
 
 [node name="Breaches" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "hand", "treasury", "rooms")]
 script = ExtResource("76_breaches")

@@ -65,7 +65,7 @@ func count_of(index: int) -> int:
 
 
 ## How fast followers come to building `index`, 1 = plain, more in a complete block.
-## (What rooms draw is the district's attractiveness, see Attractiveness.)
+## (What rooms draw is the impression they make nearby, see Impression.)
 func growth_of(index: int) -> float:
 	return 1.0 + (F.block_growth if districts.in_complete_block(index) else 0.0)
 
@@ -151,6 +151,11 @@ func next_seller_net(index: int) -> float:
 ## more than the followers the building houses, after its clerks.
 func sellers_possible(index: int) -> int:
 	return mini(shop_slots(index), floori(_count[index]) - clerks_in(index))
+
+
+## Desks in building `index`'s rooms, filled or not.
+func desks_in(index: int) -> int:
+	return rooms.totals_of(index).clerks if districts.is_yours(index) else 0
 
 
 ## Clerks at the desks of building `index`: no more than live there.
@@ -316,3 +321,26 @@ func _fill_roles() -> void:
 		free -= 1
 		money_rate += best_net
 	paperwork_rate = clerks * F.clerk_paperwork
+	districts.reach = reach()
+
+
+## The influence radius the followers give: how many borders out Reps may work.
+func reach() -> int:
+	return 1 + floori(sqrt(total / F.reach_followers))
+
+
+## A follower comes back to the pool (a Rep or the Fixer gave the work up): to the
+## building of yours with the most room to spare.
+func give_back() -> void:
+	var best := -1
+	var best_room := -INF
+	for i in _count.size():
+		if districts.buildings[i] == null or not districts.is_yours(i):
+			continue
+		var spare := room_of(i) - _count[i]
+		if spare > best_room:
+			best_room = spare
+			best = i
+	if best >= 0:
+		_count[best] += 1.0
+		recount()

@@ -1,6 +1,6 @@
 extends Label
 ## The numbers the player may see, as a row of cards along the top: paperwork (what
-## training, decrees and miracles spend), money and what comes in, followers and how
+## training, rooms and inspectors take, and what the Reps cost a second), money and what comes in, followers and how
 ## many of them hold a role, Reps (free of the cap), buildings of yours, and the
 ## exposure with the inspectors out. Under
 ## them, what the hand holds.
@@ -18,6 +18,7 @@ var _values: Array[Label] = []
 @onready var treasury: Treasury = get_node("../../Treasury")
 @onready var districts: Districts = get_node("../../Districts")
 @onready var population: Population = get_node("../../Population")
+@onready var upkeep: UnitUpkeep = get_node("../../UnitUpkeep")
 
 
 func _ready() -> void:
@@ -64,8 +65,9 @@ func _process(delta: float) -> void:
 	if _timer > 0.0:
 		return
 	_timer = REFRESH
+	# Net of what the Reps and the Fixer cost, so a falling pool shows before it is empty.
 	_show(0, "%d of %d  %+.1f/s" % [floori(faith.belief_pool), roundi(followers.paperwork_cap()),
-			followers.paperwork_rate])
+			followers.paperwork_rate - upkeep.rate()])
 	_show(1, "$%d of %d  %+.1f/s" % [floori(treasury.money), roundi(followers.money_cap()),
 			treasury.income])
 	_show(2, "%d  (%d sellers, %d clerks)" % [followers.total, followers.sellers, followers.clerks])
@@ -73,8 +75,8 @@ func _process(delta: float) -> void:
 			followers.rep_cap()])
 	_show(4, "%d" % districts.converted_buildings().size())
 	var count := inspectors.out.size()
-	_show(5, "%d%%" % roundi(faith.exposure * 100.0) if count == 0
-			else "%d%%  %d inspector%s out" % [roundi(faith.exposure * 100.0), count, "" if count == 1 else "s"])
+	_show(5, "%d%%  inspector in %ds" % [roundi(faith.exposure * 100.0), ceili(inspectors.next_in)]
+			if count == 0 else "%d%%  %d inspector%s out" % [roundi(faith.exposure * 100.0), count, "" if count == 1 else "s"])
 	var line := ""
 	if tools.charged != &"":
 		line = "In the hand: %s (click to cast, right-click to drop)" % String(tools.charged).capitalize()

@@ -37,17 +37,18 @@ extends Resource
 ## A building you lose keeps this much of its meter, so there is a window to send
 ## another rep before it has to be won from the start.
 @export_range(0.0, 1.0) var lost_meter := 0.6
-@export_group("Attractiveness: the gate on ordinary buildings")
-## A district's attractiveness: the Office, and every other building you hold (its homes).
-## Rooms that draw people add their RoomKind.attraction (the Laundry Room, a utility).
-@export var office_attraction := 10.0
-@export var building_attraction := 1.0
-## The first this many ordinary buildings need no attractiveness; each one after needs
-## this much more than the one before (the m-th: step x (m - free)).
-@export var free_buildings := 2
-@export var attraction_step := 2.2
-## The room the gate's messages suggest (RoomSettings id): the Slums' utility.
-@export var attraction_utility: StringName = &"laundry"
+@export_group("Impression: the gate on ordinary buildings")
+## A building is impressed by every building of yours within the influence radius: this
+## much each, plus the RoomKind.impression of its open rooms (homes, shops, the Laundry
+## Room).
+@export var impression_per_building := 1.0
+## The next ordinary building needs impression_start, and impression_step more for every
+## ordinary building you hold past impression_free.
+@export var impression_start := 3.0
+@export var impression_step := 0.3
+@export var impression_free := 2
+## What to do when it is short.
+@export var impression_remedy := "fit homes (+1), shops (+2) or a Laundry Room (+5) in your buildings near it"
 
 @export_group("Key buildings")
 ## One block in this many has a key building (1: every block but the Office's own).
@@ -102,17 +103,25 @@ extends Resource
 @export var mission_train := "Train a Rep"
 @export var mission_train_hint := "Hold the button on the Office (gold roof) and choose Train Rep. It costs paperwork, which the clerks at the Office make. A Rep takes a building over and stays to manage it."
 @export var mission_send := "Send your Rep to a building"
-@export var mission_send_hint := "Hold the button on a building next to one of yours and choose Send a Rep. (Faster: lift the Rep and set them down at its door.) Two Reps at one door work twice as fast."
+@export var mission_send_hint := "Hold the button on a building near yours and choose Send a Rep (the card under the hand says if it is impressed enough). (Faster: lift the Rep and set them down at its door.) Two Reps at one door work twice as fast."
 @export var mission_take := "Take the building"
 @export var mission_take_hint := "The bar over the building fills while a Rep is at its door, faster while your hand is over it. When it is full the building is yours and the Rep stays as its Manager."
 @export var mission_first := "Send your Rep"
 @export var mission_first_hint := "Your first Rep waits by the Office. Hold the button on a building next to the Office and choose Send a Rep. (Faster: lift the Rep and set them down at its door.)"
 @export var mission_first_take := "Take the first building"
 @export var mission_first_take_hint := "The bar over the building fills while your Rep is at its door, twice as fast with your hand over it. When it is full the building is yours and the Rep stays as its Manager."
-@export var mission_rooms := "Plan the Office"
-@export var mission_rooms_hint := "Double click the Office (gold roof) and fit the Desk Room, a gift: more clerks, more paperwork. Later, buy a home in any building of yours and it adds people. Esc closes the plan."
+@export var mission_shop := "Plan the Office: a Shop"
+@export var mission_shop_hint := "The Office (gold roof) is empty. Double click it and fit a Shop on the ground floor: its sellers bring in money. Esc closes the plan."
+@export var mission_desks := "Plan the Office: a Desk Room"
+@export var mission_desks_hint := "Fit a Desk Room in the Office: its clerks make paperwork. Every Rep costs a little paperwork each second, so desks are what keep your Reps at work."
+## Homes the Office needs before the card moves on.
+@export var mission_homes_count := 2
+@export var mission_homes := "Plan the Office: %d homes"
+@export var mission_homes_hint := "People work where they live: fit two Family Flats in the Office so there is someone to sit at the desks and serve in the Shop. Homes also impress the buildings nearby."
+@export var mission_training := "Save up for a Training Room"
+@export var mission_training_hint := "Fit a Training Room in the Office: one more Rep at a time. The bar shows your money against its price."
 @export var mission_inspector := "An inspector!"
-@export var mission_inspector_hint := "He walks from a key building (red sign) to demand paperwork from your Rep; with none, he stands at the door and holds one Rep back. Lift him and throw him far away. He comes back, but it buys time."
+@export var mission_inspector_hint := "A clerk from City Hall walks from a key building (red sign) to one of yours and takes the paperwork he asks for; short of it, he takes what there is and comes back. Lift him and throw him far away: it buys time."
 ## Reps first: the Fixer's missions start once this many buildings are yours.
 @export var mission_fixer_from := 3
 @export var mission_fixer := "Train the Fixer"

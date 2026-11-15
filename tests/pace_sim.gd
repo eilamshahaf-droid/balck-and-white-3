@@ -8,7 +8,7 @@ extends Node
 ## allow, send = send Reps to buildings in reach (the fullest meters first), shop = open
 ## a shop in a building of yours when the money is there, upgrade = fit a Training Room,
 ## a Desk Room, an Archive and a Vault into the Office in turn (while they fit), and a
-## Laundry Room in a building of yours whenever the attractiveness gate is shut (loan =
+## Laundry Room near a building in reach whenever its impression is short (loan =
 ## take the Office's loan when there isn't the money for it, as the gate's message says), bury = bury the file whenever the exposure is
 ## past a half. It never uses the hand (so every inspector arrives), a miracle or a
 ## loan, so a player should do better than this. fixer = train a Fixer and keep him
@@ -17,7 +17,7 @@ extends Node
 ## carry an inspector off every HAND_EVERY seconds (see _carry_one).
 ## Every STATS_EVERY a STATS block gives the paperwork economy for the Balance Tester:
 ## income and spending per minute by use (the last ten minutes), and running totals of
-## inspectors, demands, audits and buildings.
+## inspectors, demands and buildings.
 
 const MAIN := preload("res://scenes/main.tscn")
 const IS: InspectorSettings = preload("res://data/inspectors.tres")
@@ -45,11 +45,11 @@ var _decrees: Decrees
 var _progress: DistrictProgress
 var _faith: Faith
 var _inspectors: Inspectors
-var _appeal: Attractiveness
+var _impression: Impression
 var _rooms: Rooms
 var _breaches: Breaches
 var _papers := 0
-var _reps_held := 0
+var _short := 0
 var _habits := PackedStringArray()
 var _minutes := 40.0
 var _clock := 0.0
@@ -64,8 +64,6 @@ var _spent := {}           # use -> paperwork spent since the last STATS
 var _pool_then := 0.0
 var _sent := 0
 var _paid := 0
-var _audits := 0
-var _turned_back := 0
 var _carried := 0
 var _gave_up := 0
 var _keys_opened := 0
@@ -95,14 +93,11 @@ func _ready() -> void:
 	_inspectors = _main.get_node("Inspectors")
 	_rooms = _main.get_node("Rooms")
 	_breaches = _main.get_node("Breaches")
-	_appeal = _main.get_node("Attractiveness")
+	_impression = _main.get_node("Impression")
 	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
-	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
-	_inspectors.rep_held.connect(func(_b: Node3D) -> void: _reps_held += 1)
+	_inspectors.short_taken.connect(func(_b: Node3D, _t: float) -> void: _short += 1)
 	_inspectors.sent.connect(func(_i: Inspector, _f: Node3D) -> void: _sent += 1)
 	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _paid += 1)
-	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _audits += 1)
-	_inspectors.turned_back.connect(func(_b: Node3D) -> void: _turned_back += 1)
 	_inspectors.gave_up.connect(func(_p: Vector3) -> void: _gave_up += 1)
 	_breaches.opened.connect(func(_b: Node3D) -> void: _keys_opened += 1)
 	_inspectors.fixer_caught.connect(func(_b: Node3D) -> void: _fixer_caught += 1)
@@ -131,14 +126,14 @@ func _physics_process(delta: float) -> void:
 	var blocks := 0
 	for b in _districts.block_count():
 		blocks += 1 if _districts.is_block_complete(b) else 0
-	print("PACE %3d min  followers %4d (%2d sellers %2d clerks)  reps %d/%d  buildings %3d (%2.0f%%, won %d lost %d)  blocks %2d  bar %3.0f%%  core %s  $%5.0f %+.1f/s  paperwork %4.0f %+.2f/s  exposure %3.0f%%  paid %d  reps held %d  keys %d/%d" % [
+	print("PACE %3d min  followers %4d (%2d sellers %2d clerks)  reps %d/%d  buildings %3d (%2.0f%%, won %d lost %d)  blocks %2d  bar %3.0f%%  core %s  $%5.0f %+.1f/s  paperwork %4.0f %+.2f/s  exposure %3.0f%%  paid %d  short %d  keys %d/%d" % [
 			roundi(_clock / 60.0), _followers.total, _followers.sellers, _followers.clerks,
 			_population.reps_out, _followers.rep_cap(),
 			_districts.converted_buildings().size(), _districts.share(d) * 100.0, _won, _lost,
 			blocks, _progress.value(d) * 100.0,
 			"yes" if _districts.is_yours(_districts.core_of(d)) else "no",
 			_treasury.money, _treasury.income, _faith.belief_pool, _followers.paperwork_rate,
-			_faith.exposure * 100.0, _papers, _reps_held,
+			_faith.exposure * 100.0, _papers, _short,
 			roundi(_districts.key_share(d) * _districts.keys.size()), _districts.keys.size()])
 	if _clock >= _minutes * 60.0 or _districts.is_controlled(d):
 		print("PACE SIM END: %s" % ("district won" if _districts.is_controlled(d) else "time up"))
@@ -160,8 +155,9 @@ func _act() -> void:
 		_inspectors.bury()
 	# Shops first: a player who is short of money buys a seller before an Office room.
 	var held := _districts.converted_buildings()
-	var short := get_tree().get_nodes_in_group(Population.SHOPS).size() \
-			< floori(held.size() / float(SHOP_EVERY))
+	# The Office starts empty: its own Shop is the first one.
+	var shops := held.filter(func(b: Node3D) -> bool: return _followers.has_shop(_districts.index_of(b)))
+	var short := shops.size() < 1 + floori(held.size() / float(SHOP_EVERY))
 	if _habits.has("shop") and short:
 		for b in held:
 			if not _followers.has_shop(_districts.index_of(b)) \
@@ -234,17 +230,21 @@ func _use_fixer(office: Node3D) -> void:
 		_breaches.send(best)
 
 
-## The next ordinary building would be refused: fit a Laundry Room (+attractiveness)
-## into the building of ours that has bought the fewest rooms (prices rise with each one
-## bought there) and has a place for it.
+## No building in reach is impressed enough: fit a Laundry Room (+impression) into the
+## building of ours near one of them that has bought the fewest rooms (prices rise with
+## each one bought there) and has a place for it.
 func _open_gate() -> void:
-	var d := _districts.start_district()
-	if _appeal.value(d) >= _appeal.next_threshold(d):
+	var shut := -1
+	for i in _districts.buildings.size():
+		if _districts.buildings[i] == null or _districts.is_yours(i) or not _districts.can_claim(i):
+			continue
+		if _impression.why_not(i) == "":
+			return
+		shut = i if shut < 0 else shut
+	if shut < 0:
 		return
 	var laundry := _rooms.settings.kind(&"laundry")
-	var order: Array[int] = []
-	for b in _districts.converted_buildings():
-		order.append(_districts.index_of(b))
+	var order: Array[int] = _districts.yours_within(shut, _districts.reach)
 	order.sort_custom(func(a: int, b: int) -> bool: return _rooms.bought_in(a) < _rooms.bought_in(b))
 	if order.is_empty():
 		return
@@ -293,12 +293,11 @@ func _print_stats() -> void:
 	print("STATS %3d min  clerks %d  sellers %d  paperwork income %.1f/min  spent %.1f/min (%s)" % [
 			roundi(_clock / 60.0), _followers.clerks, _followers.sellers, income,
 			total / minutes, ", ".join(uses) if not uses.is_empty() else "nothing"])
-	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep held) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d  Fixer caught %d  laundries %d  office rooms %d (skipped %d, dearer than the purse)  attractiveness %d of %d" % [
+	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d short %d  buildings held %d won %d lost %d  keys opened %d  Fixer caught %d  laundries %d  office rooms %d (skipped %d, dearer than the purse)  reach %d" % [
 			roundi(_clock / 60.0), _faith.exposure * 100.0, _inspectors.out.size(), _sent,
-			_carried, _gave_up, _paid, _reps_held, _audits, _turned_back,
+			_carried, _gave_up, _paid, _short,
 			_districts.converted_buildings().size(), _won, _lost, _keys_opened, _fixer_caught, _laundries,
 			_bought - _skipped, _skipped,
-			floori(_appeal.value(_districts.start_district())),
-			ceili(_appeal.next_threshold(_districts.start_district()))])
+			_districts.reach])
 	_spent.clear()
 	_pool_then = _faith.belief_pool

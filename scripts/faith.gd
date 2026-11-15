@@ -10,7 +10,7 @@ extends Node
 ## exist. Lifting and throwing with the hand are not reported: belief comes
 ## only from miracles.
 
-## Paperwork left the pool, paying for `use` (rep, demand, audit, bury, room, ...).
+## Paperwork left the pool, paying for `use` (rep, demand, upkeep, bury, room, ...).
 signal spent(amount: float, use: StringName)
 
 const B = preload("res://data/balance.tres")
