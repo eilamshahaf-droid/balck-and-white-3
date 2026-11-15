@@ -48,6 +48,7 @@ func _ready() -> void:
 	_rooms = _main.get_node("Rooms")
 	await _frames(int(F.tick * 60.0) + 20)
 	_test_stage_map()
+	_test_opening()
 	_test_start()
 	_test_slums_people()
 	_test_roles()
@@ -68,6 +69,20 @@ func _ready() -> void:
 	await _test_capture()
 	print("CULT TEST: %s" % ("PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(1 if _failures > 0 else 0)
+
+
+## The opening scene steps through its panels, the last one leading to the first building.
+## (Headless it stays hidden; this walks it without closing, which would mark it seen.)
+func _test_opening() -> void:
+	var screens: StageScreens = _main.get_node("StageScreens")
+	var hidden := not screens.is_open()
+	screens._show(0)
+	for i in DS.opening_count() - 1:
+		screens._on_next()
+	_check(hidden and DS.opening_count() == 5 and screens._panel == 4
+			and screens._next.text == DS.opening_done and screens._line.text == DS.opening_line(4),
+			"the opening: hidden headless, %d panels, the last leads to the first building"
+				% DS.opening_count())
 
 
 ## The Slums come from the Map Lab's stage file: about a hundred large buildings (each

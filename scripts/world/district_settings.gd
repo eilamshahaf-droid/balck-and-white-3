@@ -67,10 +67,36 @@ extends Resource
 @export var border_gap := 12.0
 @export var block_note := "Block complete!"
 @export_group("The stage")
-## The start screen: a title and the Secretary's briefing.
-@export var start_title := "Stage 1: The Slums"
-@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the Secretary (taking these minutes), a kettle.\n\nItem 1: our god applied to City Hall to be recognised as a god. The application was refused. A form was missing.\nItem 2: the Committee will appeal, one building at a time, starting here in the Slums.\nItem 3: the Committee has one Rep. The Rep is waiting by the Office.\n\nAction: take the first building."
-@export var start_button := "Close the minutes"
+## The opening scene on the first run: one panel per line, each with who speaks and
+## what is seen (an empty direction shows nothing). Read through the accessors below.
+@export var opening_speakers := PackedStringArray([
+	"Narrator",
+	"The Secretary, shouting from inside City Hall",
+	"The Secretary, at home",
+	"The Secretary, reading",
+	"Narrator",
+])
+@export var opening_directions := PackedStringArray([
+	"The camera drops through the clouds onto City Hall.",
+	"",
+	"He opens the closet. Inside is an altar in the shape of a hand.",
+	"Light streams from the altar. There is a letter in the statue's hand.",
+	"",
+])
+@export_multiline var opening_lines := PackedStringArray([
+	"In the whole universe there is one thing that even God has no answer to...",
+	"I asked for holiday days half a year ago! I won't work like this. I quit!",
+	"God, I need a holiday. Destroy City Hall so I can finally go on mine.",
+	"After considering your request, the necessary forms are missing. To produce them you will have to do as I say before we can approve the request.",
+	"Bureaucracy. Even God cannot defeat it.",
+])
+@export var opening_next := "Next"
+@export var opening_skip := "Skip"
+@export var opening_done := "Take the first building"
+## The world behind the opening is dimmed to this.
+@export var opening_dim := Color(0.02, 0.03, 0.06, 0.88)
+@export var opening_panel_color := Color(0.09, 0.1, 0.15, 0.97)
+@export var opening_direction_color := Color(0.7, 0.72, 0.8)
 @export_group("Missions: the card that says what to do next")
 @export var mission_width := 380.0
 @export var mission_train := "Train a Rep"
@@ -148,3 +174,18 @@ func minute_for(d: int) -> String:
 func key_name(k: int) -> String:
 	return key_names[k % key_names.size()] if k >= 0 else ""
 
+
+func opening_count() -> int:
+	return opening_lines.size()
+
+
+func opening_speaker(i: int) -> String:
+	return opening_speakers[i] if i < opening_speakers.size() else ""
+
+
+func opening_direction(i: int) -> String:
+	return opening_directions[i] if i < opening_directions.size() else ""
+
+
+func opening_line(i: int) -> String:
+	return opening_lines[i]

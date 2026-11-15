@@ -51,6 +51,7 @@ var _unlocked := PackedByteArray()
 var _core := PackedInt32Array()          # per district: index of its core building, -1 if none
 var _index := {}                         # building -> index
 var _graph := BuildingGraph.new()
+var _layout: DistrictLayout
 var _meter := PackedFloat32Array()        # per building: the takeover meter, 0..1
 var _managed := PackedByteArray()        # per building: a rep manages it, so it is yours
 var _block_of := PackedInt32Array()
@@ -378,7 +379,7 @@ func remove_building(building: Node3D) -> void:
 	_check_block(_block_of[i])
 	building_changed.emit(i, false)
 	if _core[d] == i:
-		_core[d] = _pick_core(d)
+		_core[d] = _layout.pick_core(d)
 		core_changed.emit(d)
 
 
@@ -405,37 +406,8 @@ func _holds(i: int) -> bool:
 ## The base, always yours, is where the game starts; only its district is open.
 func _found_headquarters() -> void:
 	var start := start_district()
-	headquarters = _edge_building(start)
+	headquarters = _layout.edge_building(start)
 	_unlocked[start] = 1
-
-
-
-## The base: the largest building of the block of district `d` farthest from its core,
-## so the cult starts at the edge and works its way in to the heart.
-func _edge_building(d: int) -> int:
-	var middle := buildings[_core[d]].global_position
-	var far := _core[d]
-	var far_d := -1.0
-	for i in buildings.size():
-		if _district_of[i] != d:
-			continue
-		var gap := buildings[i].global_position.distance_squared_to(middle)
-		if gap > far_d:
-			far_d = gap
-			far = i
-	return _largest(_block_members[_block_of[far]], d)
-
-
-## The roomiest of `members` standing in district `d`.
-func _largest(members: PackedInt32Array, d: int) -> int:
-	var best := -1
-	var best_volume := -1.0
-	for i in members:
-		var volume := sizes[i].x * sizes[i].y * sizes[i].z
-		if _district_of[i] == d and volume > best_volume:
-			best_volume = volume
-			best = i
-	return best
 
 
 func _set_side(i: int, mine: bool) -> void:
@@ -482,7 +454,8 @@ func _collect() -> void:
 		_block_of.append(p.unit)
 		_block_standing[p.unit] += 1
 		_totals[d] += 1
-	_find_cores(count)
+	_layout = DistrictLayout.new(self, city.plan)
+	_core = _layout.cores(count)
 	var n := buildings.size()
 	_yours.resize(n)
 	_yours.fill(0)
@@ -493,7 +466,7 @@ func _collect() -> void:
 	_find_borders()
 	_found_headquarters()
 	for d in count:
-		_find_keys(d)
+		_add_keys(d)
 
 
 ## Which buildings border each other (next door or across a street, and across district
@@ -502,74 +475,19 @@ func _find_borders() -> void:
 	_graph.set_from_plan(city.plan, S.border_gap)
 
 
+## District `d`'s key buildings (DistrictLayout.keys). A block is complete without its
+## key building, which a Rep can't take; the core is a block of its own.
+func _add_keys(d: int) -> void:
+	for k in _layout.keys(d):
+		_key[k] = 1
+		keys.append(k)
+		if k != _core[d]:
+			_block_standing[_block_of[k]] -= 1
+
+
 func _demolished() -> PackedByteArray:
 	var out := PackedByteArray()
 	out.resize(buildings.size())
 	for i in buildings.size():
 		out[i] = 1 if _district_of[i] < 0 else 0
 	return out
-
-
-## District `d`'s key buildings: its core, and the largest building of one block in every
-## blocks_per_key, each time the block farthest from those chosen so far, so they spread
-## over the district. Never in the base's block.
-func _find_keys(d: int) -> void:
-	if _core[d] < 0:
-		return
-	var blocks: Array[int] = []
-	var middles := {}
-	for block in _block_members.size():
-		var lead := _largest(_block_members[block], d)
-		if lead >= 0 and block != _block_of[headquarters] and block != _block_of[_core[d]]:
-			blocks.append(block)
-			middles[block] = buildings[lead].global_position
-	var chosen: Array[Vector3] = [buildings[_core[d]].global_position]
-	_key[_core[d]] = 1
-	keys.append(_core[d])
-	var wanted := roundi((blocks.size() + 2) / S.blocks_per_key)
-	while chosen.size() < wanted and not blocks.is_empty():
-		var far := -1
-		var far_d := -1.0
-		for block in blocks:
-			var nearest := INF
-			for p in chosen:
-				nearest = minf(nearest, p.distance_squared_to(middles[block]))
-			if nearest > far_d:
-				far_d = nearest
-				far = block
-		blocks.erase(far)
-		chosen.append(middles[far])
-		var index := _largest(_block_members[far], d)
-		_key[index] = 1
-		keys.append(index)
-		# A block is complete without its key building, which a Rep can't take.
-		_block_standing[far] -= 1
-
-
-## Each district's core is the largest building of the block the stage map marks as
-## its core.
-func _find_cores(count: int) -> void:
-	_core.resize(count)
-	_core.fill(-1)
-	for unit in city.plan.units:
-		if unit.core and unit.district >= 0 and unit.district < count:
-			_core[unit.district] = _largest(unit.buildings, unit.district)
-	for d in count:
-		if _core[d] < 0:
-			_core[d] = _pick_core(d)
-
-
-## The standing building nearest the middle of district `d`, or -1.
-func _pick_core(d: int) -> int:
-	var middle := district_centre(d)
-	var best := -1
-	var best_gap := INF
-	for i in buildings.size():
-		if _district_of[i] != d:
-			continue
-		var p := buildings[i].global_position
-		var gap := Vector2(p.x, p.z).distance_squared_to(middle)
-		if gap < best_gap:
-			best_gap = gap
-			best = i
-	return best
