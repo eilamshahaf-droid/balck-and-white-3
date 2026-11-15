@@ -14,6 +14,12 @@ The Designer's seven points from Eilam's playtest, with Eilam's answer on what p
 - Under the hand: `scripts/world/impression.gd` replaces `attractiveness.gd`. `scripts/people/unit_upkeep.gd` is new.
 - Try it: start fresh and follow the card. Hover a building two doors away once you have 60 followers. Watch the exposure card count down to the first inspector.
 
+## CC-BY props (2026-11-15)
+- 2026-11-15: Eilam approved CC-BY models with a credit line. Added art/kits/office_pack_cc_by/ (CCTV Camera, File Cabinet, Office Chair from Poly Pizza's Office Pack) and art/kits/CREDITS.md, the list the game's credits screen must show. Not used in the game yet.
+
+## Art kits (2026-11-15)
+- 2026-11-15: art/kits/ added with two CC0 furniture packs for the Artist: kaykit_restaurant_bits (144 gltf, CC0, Kay Lousberg) and house_interior_pack (82 glb, CC0, Quaternius, from poly.pizza). Not used in the game yet. The Office Pack was left out: its models are 42 CC0 and about 85 CC-BY, so it needs a credits file first.
+
 ## Pre-Alpha 0.25.0 (2026-11-15): the room designer inside the game
 Asked by Eilam through the Artist: the browser editor's 3D did not work for him.
 - **Room designer.** Press F1 in the game and pick **Room designer** (Back to game returns). Choose a room kind (all 14) and a level (1 to 3); the room is cut open from the front, its places lit in its colour and the rest of its box greyed. Pick a piece of furniture on the left (124 Kenney pieces, with search and groups) and click a lit place, or drag it in. Things stand on the floor or on a table, desk or counter under them; lamps and upper cabinets hang on the back wall. Click a piece to pick it: drag to move, Back/Mid/Front or a slider for depth, sliders for height and size, R turns, Delete removes, Ctrl+Z undoes.
