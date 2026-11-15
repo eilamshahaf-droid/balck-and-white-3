@@ -1,17 +1,16 @@
 class_name RoomDesigner
 extends CanvasLayer
 ## The room designer (scenes/room_designer.tscn), for the Artist and Eilam: furnish each
-## room kind at each level with the Kenney furniture, in a front view cut open like a
-## doll's house or in 3D, and save one small file per room (format 1, see RoomDesign).
+## room kind at each level with the Kenney furniture, in 3D on a floor grid, and save one
+## small file per room (format 1, see RoomDesign).
 ## Every change is kept at once (in the browser too); "Download room" hands out the file.
-## Opened from the debug panel (F1) in the game; "Back to game" returns.
+## Opened from the title screen; "Back to title" returns.
 
 const SETTINGS_PATH := "res://data/room_designer.tres"
 const ROOMS_PATH := "res://data/rooms.tres"
-const GAME_SCENE := "res://scenes/main.tscn"
+const TITLE_SCENE := "res://scenes/title.tscn"
 const LEFT_WIDTH := 250.0
 const RIGHT_WIDTH := 320.0
-const PREVIEW_HEIGHT := 300.0
 const TILE := Vector2(72, 64)
 const ICON_WIDTH := 60
 const SLIDER_STEP := 0.05
@@ -24,8 +23,7 @@ const INK := Color("2b2a28")
 const MUTED := Color("8a857b")
 const ACCENT := Color("d9534f")
 const DUPLICATE_STEP := 0.4
-const FRONT_HELP := "Pick a piece on the left (click, or drag it onto a lit place), then click inside a lit place. Click an item to pick it; drag to move. Items with a top (desks, counters) take things on top. R turns, Delete removes, right click drops the piece."
-const EDIT_HELP := "3D edit: pick a piece and click a floor; click an item and drag it across its floor. Drag empty space to orbit, wheel to zoom. R turns, Delete removes."
+const HELP := "Pick a piece on the left and click a floor, or drag it in. Click an item and drag it across its floor; it snaps to the grid (hold Shift for free). Desks and counters take things on top. Drag empty space to orbit, wheel to zoom. R turns, Delete removes, right click drops the piece."
 
 var settings: RoomDesignerSettings
 var catalog: FurnitureCatalog
@@ -39,19 +37,15 @@ var armed: StringName = &""
 
 var _undo: Array = []   # snapshots of design.items
 var _group := "all"
-var _three_d := false
-var _front := DesignerFrontView.new()
 var _preview := DesignerPreview.new()
 var _kind_menu := OptionButton.new()
 var _level_buttons: Array[Button] = []
-var _view_buttons: Array[Button] = []
 var _info := Label.new()
 var _status := Label.new()
 var _search := LineEdit.new()
 var _groups := HFlowContainer.new()
 var _palette := GridContainer.new()
 var _centre := VBoxContainer.new()
-var _small := VBoxContainer.new()
 var _help := Label.new()
 var _picked_box := VBoxContainer.new()
 var _file_dialog: FileDialog
@@ -67,12 +61,6 @@ func _ready() -> void:
 	store.file_loaded.connect(_on_file_loaded)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_build()
-	_front.settings = settings
-	_front.catalog = catalog
-	_front.edit_started.connect(_snapshot)
-	_front.edited.connect(_on_edited)
-	_front.picked.connect(_pick)
-	_front.placed.connect(_pick)
 	_preview.settings = settings
 	_preview.catalog = catalog
 	_preview.edit_started.connect(_snapshot)
@@ -129,19 +117,13 @@ func _load_design() -> void:
 	_sync(true)
 
 
-## Tell both views what to show; rebuild the 3D when the furniture changed.
+## Tell the view what to show; rebuild it when the furniture changed.
 func _sync(rebuild: bool) -> void:
-	_front.kind = kind
-	_front.level = level
-	_front.design = design
-	_front.selected = selected
-	_front.armed = armed
 	_preview.kind = kind
 	_preview.level = level
 	_preview.design = design
 	_preview.selected = selected
 	_preview.armed = armed
-	_front.queue_redraw()
 	if rebuild:
 		_preview.rebuild()
 	else:
@@ -202,7 +184,10 @@ func _duplicate() -> void:
 		return
 	_snapshot()
 	var o := selected.copy()
-	o.x = minf(o.x + DUPLICATE_STEP, _front.columns() * settings.bay_width - 0.1)
+	var columns := 0
+	for c in kind.cells:
+		columns = maxi(columns, c.x + 1)
+	o.x = minf(o.x + DUPLICATE_STEP, columns * settings.bay_width - 0.1)
 	design.items.append(o)
 	selected = o
 	_on_edited()
@@ -272,26 +257,6 @@ func _on_file_loaded(designs: Array[RoomDesign]) -> void:
 	_load_design()
 
 
-func _set_view(three_d: bool) -> void:
-	_three_d = three_d
-	_preview.editing = three_d
-	_view_buttons[0].button_pressed = not three_d
-	_view_buttons[1].button_pressed = three_d
-	_front.get_parent().visible = not three_d
-	_preview.get_parent().remove_child(_preview)
-	if three_d:
-		_centre.add_child(_preview)
-		_preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		_preview.custom_minimum_size = Vector2.ZERO
-	else:
-		_small.add_child(_preview)
-		_small.move_child(_preview, 0)
-		_preview.size_flags_vertical = Control.SIZE_FILL
-		_preview.custom_minimum_size = Vector2(0, PREVIEW_HEIGHT)
-	_help.text = EDIT_HELP if three_d else FRONT_HELP
-	_sync(true)
-
-
 # --- building the screen ---
 
 
@@ -313,12 +278,12 @@ func _build() -> void:
 	root.add_child(body)
 	body.add_child(_left())
 	_centre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_front.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_centre.add_child(_panel_of(_front))
-	_front.get_parent().size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_centre.add_child(_panel_of(_preview))
+	_preview.get_parent().size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(_centre)
 	body.add_child(_right())
-	_help.text = FRONT_HELP
+	_help.text = HELP
 	_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_help.add_theme_color_override("font_color", MUTED)
 	_centre.add_child(_help)
@@ -345,13 +310,6 @@ func _top_bar() -> Control:
 		_level_buttons.append(b)
 	_info.add_theme_color_override("font_color", MUTED)
 	bar.add_child(_info)
-	var views := ButtonGroup.new()
-	for v in 2:
-		var b := _button(bar, "3D edit" if v == 1 else "Front view", _set_view.bind(v == 1))
-		b.toggle_mode = true
-		b.button_group = views
-		b.button_pressed = v == 0
-		_view_buttons.append(b)
 	var gap := Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(gap)
@@ -362,7 +320,7 @@ func _top_bar() -> Control:
 	_button(bar, "Download all", _download_all)
 	_button(bar, "Load file", _open_file)
 	_button(bar, "Clear room", _clear)
-	_button(bar, "Back to game", func() -> void: get_tree().change_scene_to_file(GAME_SCENE))
+	_button(bar, "Back to title", func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))
 	return bar
 
 
@@ -394,13 +352,6 @@ func _left() -> Control:
 func _right() -> Control:
 	var box := VBoxContainer.new()
 	box.custom_minimum_size.x = RIGHT_WIDTH
-	_preview.custom_minimum_size = Vector2(0, PREVIEW_HEIGHT)
-	_small.add_child(_preview)
-	var hint := Label.new()
-	hint.text = "preview: drag to orbit, wheel to zoom"
-	hint.add_theme_color_override("font_color", MUTED)
-	_small.add_child(hint)
-	box.add_child(_small)
 	box.add_child(_picked_box)
 	return _panel_of(box)
 
@@ -490,7 +441,6 @@ func _slider(title: String, lo: float, hi: float, value: float, apply: Callable)
 	s.value_changed.connect(func(v: float) -> void:
 		apply.call(v)
 		label.text = "%s: %.2f" % [title, v]
-		_front.queue_redraw()
 		_preview.refresh_selection())
 	s.drag_ended.connect(func(_changed: bool) -> void: _on_edited())
 	_picked_box.add_child(s)

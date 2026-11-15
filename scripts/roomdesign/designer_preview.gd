@@ -1,8 +1,9 @@
 class_name DesignerPreview
 extends SubViewportContainer
-## The room designer's 3D view. As a preview: drag to orbit, wheel to zoom. In 3D edit:
-## with a model picked, click a floor to put it there; click an item and drag it across
-## its floor (left and right, back and front); drag empty space to orbit.
+## The room designer's view, in 3D: with a model picked, click a floor to put it there (or
+## drag one in from the palette); click an item and drag it across its floor (left and
+## right, back and front). Places snap to a grid drawn on the floors (Shift: free). Drag
+## empty space to orbit, the wheel zooms.
 
 signal edit_started
 signal edited
@@ -31,8 +32,6 @@ var level := 1
 var design: RoomDesign
 var selected: RoomDesign.Item
 var armed: StringName = &""
-## Clicks place and move furniture (else they only orbit).
-var editing := false
 
 var _viewport := SubViewport.new()
 var _camera := Camera3D.new()
@@ -40,13 +39,14 @@ var _room := Node3D.new()
 var _nodes := {}   # item -> its Node3D
 var _outline := MeshInstance3D.new()
 var _yaw := 0.5
-var _pitch := 0.35
+var _pitch := 0.5
 var _dist := 22.0
 var _orbiting := false
 var _moving: RoomDesign.Item
 var _move_y := 0.0
 var _grab := Vector2.ZERO
 var _moved := false
+var _free := false   # Shift held: no snapping
 
 
 func _ready() -> void:
@@ -102,6 +102,7 @@ func rebuild() -> void:
 		var mid := c.x * bay + bay / 2.0 - w / 2.0
 		_block(Vector3(bay, FLOOR_THICK, settings.depth), Vector3(mid, c.y * fh - FLOOR_THICK / 2.0, 0), floor_mat)
 		_block(Vector3(bay, fh, WALL_THICK), Vector3(mid, c.y * fh + fh / 2.0, -settings.depth / 2.0), wall_mat)
+		_grid(c, w)
 		if not kind.cells.has(c + Vector2i.LEFT):
 			_block(Vector3(WALL_THICK, fh, settings.depth), Vector3(c.x * bay - w / 2.0, c.y * fh + fh / 2.0, 0), side_mat)
 		if not kind.cells.has(c + Vector2i.RIGHT):
@@ -129,7 +130,7 @@ func _place(o: RoomDesign.Item) -> void:
 		return
 	holder.position = Vector3(o.x - _width() / 2.0, o.row * settings.floor_height + o.y, o.z)
 	holder.rotation.y = -o.rot * PI / 2.0
-	holder.scale = Vector3.ONE * o.scale
+	holder.scale = Vector3.ONE * o.scale * settings.furniture_scale
 
 
 func refresh_selection() -> void:
@@ -151,7 +152,8 @@ func _gui_input(event: InputEvent) -> void:
 			_dist = clampf(_dist * (1.0 + step), MIN_DIST, MAX_DIST)
 			_update_camera()
 		elif mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
-			_press(mb.position, mb.shift_pressed)
+			_free = mb.shift_pressed
+			_press(mb.position)
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if _moving and _moved:
 				edited.emit()
@@ -161,6 +163,7 @@ func _gui_input(event: InputEvent) -> void:
 			armed = &""
 	elif event is InputEventMouseMotion:
 		var mm := event as InputEventMouseMotion
+		_free = mm.shift_pressed
 		if _moving:
 			_drag_to(mm.position)
 		elif _orbiting:
@@ -170,17 +173,14 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func _can_drop_data(_at: Vector2, data: Variant) -> bool:
-	return editing and data is Dictionary and (data as Dictionary).has("model")
+	return data is Dictionary and (data as Dictionary).has("model")
 
 
 func _drop_data(at: Vector2, data: Variant) -> void:
 	_put(StringName(str((data as Dictionary)["model"])), at)
 
 
-func _press(at: Vector2, orbit_only: bool) -> void:
-	if not editing or orbit_only:
-		_orbiting = true
-		return
+func _press(at: Vector2) -> void:
 	if armed != &"" and _put(armed, at):
 		return
 	var ray := _ray(at)
@@ -208,8 +208,8 @@ func _put(model: StringName, at: Vector2) -> RoomDesign.Item:
 	var bay := settings.bay_width
 	var col := floori(spot.x / bay)
 	var reach := settings.depth / 2.0 - settings.wall_margin
-	var x := clampf(spot.x, col * bay + 0.1, (col + 1) * bay - 0.1)
-	var o := catalog.new_item(model, int(spot.z), x, clampf(spot.y, -reach, reach), design.items)
+	var x := clampf(_snap(spot.x), col * bay + 0.1, (col + 1) * bay - 0.1)
+	var o := catalog.new_item(model, int(spot.z), x, clampf(_snap(spot.y), -reach, reach), design.items)
 	design.items.append(o)
 	placed.emit(o)
 	edited.emit()
@@ -234,12 +234,44 @@ func _drag_to(at: Vector2) -> void:
 			hi = maxf(hi, (c.x + 1) * bay - 0.1)
 	var reach := settings.depth / 2.0 - settings.wall_margin
 	var to := (p as Vector2) - _grab
-	o.x = clampf(to.x, lo, hi)
-	o.z = clampf(to.y, -reach, reach)
+	o.x = clampf(_snap(to.x), lo, hi)
+	o.z = clampf(_snap(to.y), -reach, reach)
 	if not o.manual:
 		o.y = catalog.rest_height(o, design.items)
 		_move_y = o.row * settings.floor_height + o.y
 	picked.emit(o)
+
+
+## `v` metres on the grid, unless Shift is held.
+func _snap(v: float) -> float:
+	return v if _free or settings.snap <= 0.0 else snappedf(v, settings.snap)
+
+
+## Grid lines on the floor of place `c` (the room `w` wide, centred on x = 0).
+func _grid(c: Vector2i, w: float) -> void:
+	var mesh := ImmediateMesh.new()
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = settings.grid_color
+	var y := c.y * settings.floor_height + 0.01
+	var left := c.x * settings.bay_width - w / 2.0
+	var half := settings.depth / 2.0
+	mesh.surface_begin(Mesh.PRIMITIVE_LINES, mat)
+	var x := 0.0
+	while x <= settings.bay_width + 0.001:
+		mesh.surface_add_vertex(Vector3(left + x, y, -half))
+		mesh.surface_add_vertex(Vector3(left + x, y, half))
+		x += settings.grid_step
+	var z := -half
+	while z <= half + 0.001:
+		mesh.surface_add_vertex(Vector3(left, y, z))
+		mesh.surface_add_vertex(Vector3(left + settings.bay_width, y, z))
+		z += settings.grid_step
+	mesh.surface_end()
+	var lines := MeshInstance3D.new()
+	lines.mesh = mesh
+	_room.add_child(lines)
 
 
 ## The camera ray through screen point `at`, in room coordinates (x from the left edge).
