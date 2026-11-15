@@ -3,6 +3,9 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## CC-BY props (2026-11-15)
+- 2026-11-15: Eilam approved CC-BY models with a credit line. Added art/kits/office_pack_cc_by/ (CCTV Camera, File Cabinet, Office Chair from Poly Pizza's Office Pack) and art/kits/CREDITS.md, the list the game's credits screen must show. Not used in the game yet.
+
 ## Art kits (2026-11-15)
 - 2026-11-15: art/kits/ added with two CC0 furniture packs for the Artist: kaykit_restaurant_bits (144 gltf, CC0, Kay Lousberg) and house_interior_pack (82 glb, CC0, Quaternius, from poly.pizza). Not used in the game yet. The Office Pack was left out: its models are 42 CC0 and about 85 CC-BY, so it needs a credits file first.
 
