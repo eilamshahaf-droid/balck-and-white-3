@@ -146,11 +146,11 @@ func why_not(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> String
 ## What `kind` costs in building `index` now: each room already bought there makes the
 ## next one dearer (RoomSettings.price_step); the gift room is free.
 func money_of(index: int, kind: RoomKind) -> float:
-	return 0.0 if is_gift(kind) else kind.money * _escalation(index)
+	return 0.0 if is_gift(kind) else kind.money * _escalation(index, kind)
 
 
 func paperwork_of(index: int, kind: RoomKind) -> float:
-	return 0.0 if is_gift(kind) else kind.paperwork * _escalation(index)
+	return 0.0 if is_gift(kind) else kind.paperwork * _escalation(index, kind)
 
 
 ## The first room the planner offers (RoomSettings.first_offer) is free, once.
@@ -288,7 +288,9 @@ func _furnish_office(layout: BuildingLayout) -> void:
 			layout.add(kind, Vector2i(spot.x, spot.y), spot.z).bought = false
 
 
-func _escalation(index: int) -> float:
+func _escalation(index: int, kind: RoomKind) -> float:
+	if settings.price_step_exempt.has(kind.id):
+		return 1.0
 	return 1.0 + settings.price_step * bought_in(index)
 
 
