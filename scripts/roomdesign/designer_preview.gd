@@ -79,6 +79,7 @@ func _ready() -> void:
 	_outline.mesh = box
 	_outline.visible = false
 	_viewport.add_child(_outline)
+	resized.connect(_frame)
 
 
 ## Build the room and its furniture again from the design.
@@ -116,10 +117,7 @@ func rebuild() -> void:
 		_room.add_child(holder)
 		_nodes[o] = holder
 		_place(o)
-	# Far enough to see the whole room, across and up, at this view's shape.
-	var aspect := size.x / maxf(size.y, 1.0) if size.y > 0.0 else 1.0
-	var fit := maxf(w / maxf(aspect, 0.1), _rows() * fh) / (2.0 * tan(deg_to_rad(FOV) / 2.0))
-	_dist = clampf(fit * FIT_MARGIN, MIN_DIST, MAX_DIST)
+	_frame()
 	_update_camera()
 	refresh_selection()
 
@@ -298,6 +296,17 @@ func _item_box(o: RoomDesign.Item) -> AABB:
 	var s := catalog.size_of(o)
 	var base := Vector3(o.x - _width() / 2.0, o.row * settings.floor_height + o.y, o.z)
 	return AABB(base - Vector3(s.x / 2.0, 0, s.z / 2.0), s)
+
+
+## Far enough to see the whole room, across and up, at this view's shape.
+func _frame() -> void:
+	if kind == null:
+		return
+	var aspect := size.x / size.y if size.x > 0.0 and size.y > 0.0 else 1.0
+	var fit := maxf(_width() / aspect, _rows() * settings.floor_height) \
+			/ (2.0 * tan(deg_to_rad(FOV) / 2.0))
+	_dist = clampf(fit * FIT_MARGIN, MIN_DIST, MAX_DIST)
+	_update_camera()
 
 
 func _update_camera() -> void:

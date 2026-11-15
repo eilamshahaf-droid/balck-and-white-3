@@ -34,6 +34,7 @@ func _ready() -> void:
 	_panel.offset_left = -200
 	_panel.offset_top = 150  # below the help text
 	_panel.offset_right = -10
+	_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN   # the log widens it leftwards
 	_panel.visible = false  # a tester's tool: F1 brings it up
 	add_child(_panel)
 	var box := VBoxContainer.new()
