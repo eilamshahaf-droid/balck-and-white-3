@@ -247,17 +247,16 @@ func _build_dof() -> void:
 	_dof.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_dof.extra_cull_margin = 16384.0
 	_dof.add_to_group(&"no_toon")
+	add_child(_dof)
 
 
-## The depth-of-field quad rides on whichever camera is drawing.
+## The depth-of-field quad rides in front of whichever camera is drawing. It stays our
+## own child (not the camera's), so a scene change that frees the camera leaves it be.
 func _follow_camera() -> void:
 	var cam := get_viewport().get_camera_3d()
-	if cam == null or _dof.get_parent() == cam:
-		return
-	if _dof.get_parent():
-		_dof.get_parent().remove_child(_dof)
-	cam.add_child(_dof)
-	_dof.position = Vector3(0.0, 0.0, -1.0)
+	_dof.visible = cam != null and enabled and S.dof_blur > 0.0
+	if cam:
+		_dof.global_transform = cam.global_transform.translated_local(Vector3(0.0, 0.0, -1.0))
 
 
 ## The god looks down on a sunny toy town: a fixed sun angle and crisp, long
