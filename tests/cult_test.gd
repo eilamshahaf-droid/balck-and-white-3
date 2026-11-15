@@ -563,9 +563,13 @@ func _test_shop_homes_and_upkeep() -> void:
 	_rooms._physics_process(_rooms.settings.upkeep_tick + 1.0)
 	_check(is_equal_approx(appeal.value(d), draw + laundry.attraction),
 			"and opens again when there is money")
-	_check(_followers.upkeep_rate(true) < _followers.upkeep_rate() \
-			and is_equal_approx(_followers.upkeep_rate(true), _rooms.upkeep() / 60.0),
-			"under $%d the buildings cost nothing to keep, only the rooms" % roundi(F.poor_below))
+	var rooms_only := _rooms.upkeep() / 60.0
+	_check(is_equal_approx(_followers.upkeep_rate(0.0), rooms_only) \
+			and is_equal_approx(_followers.upkeep_rate(F.full_upkeep_at / 2.0) - rooms_only,
+				(_followers.upkeep_rate() - rooms_only) / 2.0) \
+			and is_equal_approx(_followers.upkeep_rate(F.full_upkeep_at), _followers.upkeep_rate()),
+			"the buildings' upkeep grows with money, nothing at $0, all of it at $%d"
+				% roundi(F.full_upkeep_at))
 
 
 ## The Fixer opens a key building: the wheel's actions cost paperwork, money and exposure
@@ -595,6 +599,7 @@ func _test_fixer() -> void:
 		if not _districts.borders_yours(key):
 			_districts.convert_near(b.global_position, 2)
 	var fs := breaches.settings
+	print("  (guarded at the start of the Fixer test: %s)" % breaches.guarded())
 	await _put_at_door(breaches, b)
 	var quiet: FixerAction = null
 	var noisy: FixerAction = null
@@ -612,7 +617,8 @@ func _test_fixer() -> void:
 	_faith.exposure = 0.0
 	_treasury.money = PLENTY
 	_check(breaches.act(b, quiet) and is_equal_approx(_faith.belief_pool, 1000.0 - fs.quiet_paperwork)
-			and is_equal_approx(_faith.exposure, fs.quiet_exposure) and not breaches.act(b, quiet),
+			and is_equal_approx(_faith.exposure, breaches.exposure_of(quiet)) \
+			and not breaches.act(b, quiet),
 			"a quiet action costs paperwork and exposure, and he does one at a time")
 	_tick_breaches(breaches, fs.quiet_seconds)
 	_check(is_equal_approx(breaches.bar_of(b), fs.quiet_progress) and breaches.doing == null,
@@ -629,15 +635,29 @@ func _test_fixer() -> void:
 	_check(is_equal_approx(breaches.bar_of(b), bar), "and fills more of the bar")
 	_faith.belief_pool = 0.0
 	inspectors._arrive(inspectors.out[-1])
-	_check(breaches.target == null and is_equal_approx(breaches.bar_of(b), bar - fs.caught_loss),
+	var loss := fs.guarded_caught_loss if breaches.guarded() else fs.caught_loss
+	_check(breaches.target == null and is_equal_approx(breaches.bar_of(b), bar - loss),
 			"with no papers for the inspector the Fixer is sent back and the bar drops")
-	bar -= fs.caught_loss
+	bar -= loss
 	_tick_breaches(breaches, 60.0)
 	_check(is_equal_approx(breaches.bar_of(b), bar - fs.left_fade_per_minute),
 			"and while he is away the bar falls back %d%% a minute" % roundi(fs.left_fade_per_minute * 100.0))
 	_faith.belief_pool = 1000.0
 	_faith.exposure = 0.0
 	_check(breaches.send(b), "he can be sent again")
+	await _put_at_door(breaches, b)
+	if not breaches.guarded():
+		_treasury.money = PLENTY
+		_fit(_districts.headquarters, &"guard")
+	bar = breaches.bar_of(b)
+	breaches.caught(b)
+	_check(breaches.guarded() and is_equal_approx(breaches.exposure_of(quiet),
+				fs.quiet_exposure * fs.guarded_exposure_share)
+			and is_equal_approx(breaches.bar_of(b), maxf(bar - fs.guarded_caught_loss, 0.0)),
+			"a Guard Room covers for him: %d%% less exposure, %d%% of the bar lost instead of %d%%"
+				% [roundi((1.0 - fs.guarded_exposure_share) * 100.0),
+				roundi(fs.guarded_caught_loss * 100.0), roundi(fs.caught_loss * 100.0)])
+	_check(breaches.send(b), "and he goes back")
 	await _put_at_door(breaches, b)
 	for round in 20:
 		if breaches.target == null:
