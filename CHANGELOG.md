@@ -3,6 +3,21 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.24.0 (2026-11-15): the playtest round
+Approved by Eilam, from the Designer's corrections list after his playtest.
+- **Homes are worth buying.** A Family Flat takes 2 places and houses 5, a Row Flat 3 places and 9 (a plain place is still 1). Prices are the same. A new home brings half the people it adds at once; the rest grow in.
+- **A better start.** You start with $350, and the first room the planner offers (the Desk Room) is free.
+- **Rooms cost more the more you buy in one building:** +25% for each room already bought there, money and paperwork alike. The Office's starting rooms don't count, and another building starts at the base price again. Number: `price_step` in `data/rooms.tres`.
+- **Attractiveness:** each ordinary building past the first two needs 2.2 more (was 2). `attraction_step` in `data/districts.tres`.
+- **The inspector holds a Rep back instead of sending him home.** With no paperwork when he arrives, he stays at the door and cancels one Rep's worth of filling, with a note over the building; a second Rep keeps the bar moving. Lift him away, or he gives up after 2.5 minutes. The first inspector comes at 2.5 minutes (was 5).
+- **Training shows.** A meter over the Office says who is training, how far and how long is left, and Reps and the Fixer wear a badge.
+- **The next-step card** shows one step at a time and follows what you really did: fit the free room, send the Rep (hold on a building, Send a Rep; setting him down is the faster way), take the first building, throw the inspector when one is out, the Fixer. A done step never comes back. It also says that a home adds people.
+- **The cursor shows during the opening.**
+- **F1 log:** the debug panel lists, each minute, money and paperwork with what came in and went out.
+- Bot, 90 minutes, gate and hand, no loans, four runs: two won (78 and 87 minutes), two reached 87% of the bar with 72 and 75 buildings at 90 minutes. None stopped below 45 buildings. Money mostly sat between $470 and $530.
+- Two things the bot ran into, sent to the Designer: if the start money goes on Office rooms before a second Shop, money settles near $160 (the upkeep eats what two sellers bring) and never reaches a $225 Shop, so the run stalls at 20 buildings; and with +25% a room, the Training Room passes the $600 purse after two Office rooms. The bot now buys Shops first, keeps a Shop's price in hand while one is due, and skips rooms dearer than its purse.
+- Try it: start fresh (`--briefing`), fit the free Desk Room, then send the Rep by holding on a building next to the Office.
+
 ## Pre-Alpha 0.23.0 (2026-11-15): the opening scene
 Approved by Eilam, from the Designer's brief.
 - **A new opening** in place of the Secretary's minute: five text panels on the first run. The narrator, the Secretary quitting City Hall over his holiday, the altar in his closet, the god's answer (the necessary forms are missing), and "Bureaucracy. Even God cannot defeat it." **Next** steps through them, **Skip** ends them, and then the mission card says to take the first building. No animation yet, so the camera dropping through the clouds is a line of stage direction for now. The lines are in `data/districts.tres` ("opening"), ready for Eilam to rewrite.

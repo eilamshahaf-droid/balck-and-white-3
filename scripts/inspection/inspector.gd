@@ -23,6 +23,9 @@ const LOST_BELOW := -30.0
 var building: Node3D
 var audit := false
 var arrived := false
+## At a Rep's door with no papers shown: he stands there and holds one Rep's work back
+## until the hand lifts him or his patience runs out.
+var holding := false
 ## Seconds since he left his office.
 var age := 0.0
 ## Fell off the world.
@@ -93,6 +96,7 @@ func _physics_process(delta: float) -> void:
 func on_grabbed() -> void:
 	_state = State.HELD
 	arrived = false
+	holding = false
 	freeze = false
 
 
@@ -108,6 +112,7 @@ func lie_down(seconds: float) -> void:
 	_state = State.FLYING
 	freeze = false
 	arrived = false
+	holding = false
 	_rest = 0.0
 	_down = seconds
 

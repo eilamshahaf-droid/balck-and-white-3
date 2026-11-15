@@ -39,6 +39,7 @@ func _ready() -> void:
 	districts.building_changed.connect(_on_building_changed)
 	decrees.decree_issued.connect(func(_kind: StringName, _building: Node3D) -> void: recount())
 	rooms.changed.connect(func(_index: int) -> void: recount())
+	rooms.placed.connect(_on_room_placed)
 
 
 func _physics_process(delta: float) -> void:
@@ -240,6 +241,15 @@ func _on_building_changed(index: int, yours: bool) -> void:
 		_limit[index] = AUTO
 	_fill_roles()
 	changed.emit()
+
+
+## A new home brings part of the people it adds over plain flats at once, as a building
+## taken does (start_share); the rest grow in.
+func _on_room_placed(index: int, kind: RoomKind) -> void:
+	var extra := kind.followers - kind.cells.size() * rooms.settings.followers_per_cell
+	if extra > 0 and not _count.is_empty() and districts.is_yours(index):
+		_count[index] = minf(_count[index] + extra * F.start_share, room_of(index))
+		recount()
 
 
 func _grow(minutes: float) -> void:

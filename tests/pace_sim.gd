@@ -32,7 +32,7 @@ const LOUD_UNDER := 0.4
 const FIXER_RESERVE := 30.0   # paperwork: one Rep's training
 const CARRY_SUCCESS := 0.6
 const RETURN_SECONDS := 60.0
-const OFFICE_ROOMS: Array[StringName] = [&"training", &"desks", &"archive", &"vault"]
+const OFFICE_ROOMS: Array[StringName] = [&"desks", &"training", &"archive", &"vault"]
 
 var _main: Node3D
 var _population: Population
@@ -49,7 +49,7 @@ var _appeal: Attractiveness
 var _rooms: Rooms
 var _breaches: Breaches
 var _papers := 0
-var _reps_lost := 0
+var _reps_held := 0
 var _habits := PackedStringArray()
 var _minutes := 40.0
 var _clock := 0.0
@@ -71,6 +71,7 @@ var _gave_up := 0
 var _keys_opened := 0
 var _fixer_caught := 0
 var _laundries := 0
+var _skipped := 0
 var _throws := {}          # Inspector instance id -> times the stand-in threw him
 
 
@@ -97,7 +98,7 @@ func _ready() -> void:
 	_appeal = _main.get_node("Attractiveness")
 	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
 	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _papers += 1)
-	_inspectors.rep_sent_home.connect(func(_b: Node3D, _r: Resident) -> void: _reps_lost += 1)
+	_inspectors.rep_held.connect(func(_b: Node3D) -> void: _reps_held += 1)
 	_inspectors.sent.connect(func(_i: Inspector, _f: Node3D) -> void: _sent += 1)
 	_inspectors.papers_shown.connect(func(_b: Node3D, _c: float) -> void: _paid += 1)
 	_inspectors.audit_passed.connect(func(_b: Node3D, _c: float) -> void: _audits += 1)
@@ -130,14 +131,14 @@ func _physics_process(delta: float) -> void:
 	var blocks := 0
 	for b in _districts.block_count():
 		blocks += 1 if _districts.is_block_complete(b) else 0
-	print("PACE %3d min  followers %4d (%2d sellers %2d clerks)  reps %d/%d  buildings %3d (%2.0f%%, won %d lost %d)  blocks %2d  bar %3.0f%%  core %s  $%5.0f %+.1f/s  paperwork %4.0f %+.2f/s  exposure %3.0f%%  paid %d  reps lost %d  keys %d/%d" % [
+	print("PACE %3d min  followers %4d (%2d sellers %2d clerks)  reps %d/%d  buildings %3d (%2.0f%%, won %d lost %d)  blocks %2d  bar %3.0f%%  core %s  $%5.0f %+.1f/s  paperwork %4.0f %+.2f/s  exposure %3.0f%%  paid %d  reps held %d  keys %d/%d" % [
 			roundi(_clock / 60.0), _followers.total, _followers.sellers, _followers.clerks,
 			_population.reps_out, _followers.rep_cap(),
 			_districts.converted_buildings().size(), _districts.share(d) * 100.0, _won, _lost,
 			blocks, _progress.value(d) * 100.0,
 			"yes" if _districts.is_yours(_districts.core_of(d)) else "no",
 			_treasury.money, _treasury.income, _faith.belief_pool, _followers.paperwork_rate,
-			_faith.exposure * 100.0, _papers, _reps_lost,
+			_faith.exposure * 100.0, _papers, _reps_held,
 			roundi(_districts.key_share(d) * _districts.keys.size()), _districts.keys.size()])
 	if _clock >= _minutes * 60.0 or _districts.is_controlled(d):
 		print("PACE SIM END: %s" % ("district won" if _districts.is_controlled(d) else "time up"))
@@ -157,19 +158,28 @@ func _act() -> void:
 		_menus.choose(&"train_rep", office)
 	if _habits.has("bury") and _faith.exposure >= BURY_FROM:
 		_inspectors.bury()
+	# Shops first: a player who is short of money buys a seller before an Office room.
+	var held := _districts.converted_buildings()
+	var short := get_tree().get_nodes_in_group(Population.SHOPS).size() \
+			< floori(held.size() / float(SHOP_EVERY))
+	if _habits.has("shop") and short:
+		for b in held:
+			if not _followers.has_shop(_districts.index_of(b)) \
+					and _rooms.place_anywhere(_districts.index_of(b), _rooms.settings.kind(&"shop")):
+				break
 	if _habits.has("upgrade"):
+		var hq := _districts.headquarters
 		var kind := _rooms.settings.kind(OFFICE_ROOMS[_bought % OFFICE_ROOMS.size()])
-		if _rooms.place_anywhere(_districts.headquarters, kind):
+		var price := _rooms.money_of(hq, kind)
+		# While a Shop is due, keep its price in hand: spent below it, money settles where
+		# the upkeep eats what few sellers bring and never climbs back to a Shop.
+		var reserve := _rooms.settings.kind(&"shop").money if short else 0.0
+		if price > _followers.money_cap():
+			_skipped += 1   # dearer than the purse holds (prices rise with each room)
+			_bought += 1
+		elif _treasury.money - price >= reserve and _rooms.place_anywhere(hq, kind):
 			_bought += 1
 		_open_gate()
-	if _habits.has("shop"):
-		var held := _districts.converted_buildings()
-		var shops := get_tree().get_nodes_in_group(Population.SHOPS).size()
-		if shops < floori(held.size() / float(SHOP_EVERY)):
-			for b in held:
-				if not _followers.has_shop(_districts.index_of(b)) \
-						and _rooms.place_anywhere(_districts.index_of(b), _rooms.settings.kind(&"shop")):
-					break
 	if _habits.has("fixer"):
 		_use_fixer(office)
 	if not _habits.has("send"):
@@ -225,16 +235,23 @@ func _use_fixer(office: Node3D) -> void:
 
 
 ## The next ordinary building would be refused: fit a Laundry Room (+attractiveness)
-## into the first building of ours it fits in.
+## into the building of ours that has bought the fewest rooms (prices rise with each one
+## bought there) and has a place for it.
 func _open_gate() -> void:
 	var d := _districts.start_district()
 	if _appeal.value(d) >= _appeal.next_threshold(d):
 		return
 	var laundry := _rooms.settings.kind(&"laundry")
-	if _habits.has("loan") and not _treasury.can_afford(laundry.money):
-		_menus.choose(&"loan", _districts.start_building())
+	var order: Array[int] = []
 	for b in _districts.converted_buildings():
-		if _rooms.place_anywhere(_districts.index_of(b), laundry):
+		order.append(_districts.index_of(b))
+	order.sort_custom(func(a: int, b: int) -> bool: return _rooms.bought_in(a) < _rooms.bought_in(b))
+	if order.is_empty():
+		return
+	if _habits.has("loan") and not _treasury.can_afford(_rooms.money_of(order[0], laundry)):
+		_menus.choose(&"loan", _districts.start_building())
+	for i in order:
+		if _rooms.place_anywhere(i, laundry):
 			_laundries += 1
 			return
 
@@ -276,10 +293,11 @@ func _print_stats() -> void:
 	print("STATS %3d min  clerks %d  sellers %d  paperwork income %.1f/min  spent %.1f/min (%s)" % [
 			roundi(_clock / 60.0), _followers.clerks, _followers.sellers, income,
 			total / minutes, ", ".join(uses) if not uses.is_empty() else "nothing"])
-	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep lost) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d  Fixer caught %d  laundries %d  attractiveness %d of %d" % [
+	print("STATS %3d min  exposure %3.0f%%  inspectors out %d  totals: sent %d carried %d gave up %d  demands paid %d failed (Rep held) %d  audits paid %d failed (building lost) %d  buildings held %d won %d lost %d  keys opened %d  Fixer caught %d  laundries %d  office rooms %d (skipped %d, dearer than the purse)  attractiveness %d of %d" % [
 			roundi(_clock / 60.0), _faith.exposure * 100.0, _inspectors.out.size(), _sent,
-			_carried, _gave_up, _paid, _reps_lost, _audits, _turned_back,
+			_carried, _gave_up, _paid, _reps_held, _audits, _turned_back,
 			_districts.converted_buildings().size(), _won, _lost, _keys_opened, _fixer_caught, _laundries,
+			_bought - _skipped, _skipped,
 			floori(_appeal.value(_districts.start_district())),
 			ceili(_appeal.next_threshold(_districts.start_district()))])
 	_spent.clear()

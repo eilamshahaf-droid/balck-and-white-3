@@ -15,6 +15,7 @@ const U: UnitSettings = preload("res://data/units.tres")
 const DS: DistrictSettings = preload("res://data/districts.tres")
 const F: FollowersSettings = preload("res://data/followers.tres")
 const I: InspectorSettings = preload("res://data/inspectors.tres")
+const CS: CampaignSettings = preload("res://data/campaigns.tres")
 const PULL_MINUTES := 2.0
 const PLENTY := 100000.0
 
@@ -392,7 +393,15 @@ func _test_rooms() -> void:
 	_check(flights_ok and turns >= 1,
 			"every floor has one stairs place, in flights of two floors that change column (%d turns)" % turns)
 	var desks := _followers.clerk_slots()
-	_check(_fit(hq, &"desks") and _followers.clerk_slots() == desks + kinds.kind(&"desks").clerks,
+	var gift_money := _treasury.money
+	var gift_paper := _faith.belief_pool
+	var gifted := _rooms.is_gift(kinds.kind(&"desks"))
+	var fitted := _fit(hq, &"desks")
+	var free := is_equal_approx(_treasury.money, gift_money) \
+			and is_equal_approx(_faith.belief_pool, gift_paper)
+	_check(gifted and fitted and free, "the first Desk Room is a gift")
+	_check(not _rooms.is_gift(kinds.kind(&"desks")), "and only the first")
+	_check(fitted and _followers.clerk_slots() == desks + kinds.kind(&"desks").clerks,
 			"a Desk Room seats more clerks")
 	if _near < 0:
 		return
@@ -402,12 +411,20 @@ func _test_rooms() -> void:
 	var plain := _followers.room_of(_near)
 	_treasury.money = 1000.0
 	var family := kinds.kind(&"family")
+	var price := _rooms.money_of(_near, family)
+	var bought := _rooms.bought_in(_near)
+	_check(is_equal_approx(price, family.money * (1.0 + kinds.price_step * bought)),
+			"a room costs more for each room already bought in that building (%d bought)" % bought)
+	var people := _followers.count_of(_near)
 	_check(_fit(_near, &"family") and _followers.room_of(_near) == plain + family.followers - family.cells.size() \
-			and is_equal_approx(_treasury.money, 1000.0 - family.money),
+			and is_equal_approx(_treasury.money, 1000.0 - price),
 			"a Family Flat houses more than the plain flats it replaces, for money")
+	_check(_followers.count_of(_near) - people >= floori((family.followers - family.cells.size()) * F.start_share),
+			"and brings half the people it adds at once (%d more)" % (_followers.count_of(_near) - people))
+	_check(_rooms.money_of(_near, family) > price, "and the next room there costs more again")
 	var piece := layout.pieces[layout.pieces.size() - 1]
 	_check(_rooms.remove(_near, piece.cells()[0]) and _followers.room_of(_near) == plain \
-			and is_equal_approx(_treasury.money, 1000.0 - family.money * (1.0 - kinds.refund_share)),
+			and is_equal_approx(_treasury.money, 1000.0 - price * (1.0 - kinds.refund_share)),
 			"taking a room out gives part of its money back")
 
 
@@ -492,13 +509,18 @@ func _test_inspector_and_rep() -> void:
 	inspector = _inspectors.send_to(door, false)
 	inspector.arrived = true
 	var index := _districts.index_of(door)
-	_districts.add_meter(index, 0.5)
-	var meter := _districts.meter_of(index)
 	_inspectors._arrive(inspector)
-	_check(rep.rank == Resident.Rank.RESIDENT and _campaigns.reps_at(door).is_empty(),
-			"with no paperwork the Rep is sent home")
-	_check(is_equal_approx(_districts.meter_of(index), maxf(meter - I.failed_demand_meter, 0.0)),
-			"and the building loses %d%% of its bar" % roundi(I.failed_demand_meter * 100.0))
+	_check(_inspectors.out.has(inspector) and inspector.holding and rep.rank == Resident.Rank.MISSIONARY
+			and _campaigns.held_at(door) == 1 and _campaigns.stalled_on(door) == CS.held_note,
+			"with no paperwork he stays at the door and holds the Rep back, with a note over it")
+	var meter := _districts.meter_of(index)
+	_campaigns._step(_campaigns._campaign_on(door))
+	_check(is_equal_approx(_districts.meter_of(index), meter), "and the bar stands still")
+	inspector.on_grabbed()
+	_inspectors._count_holds()
+	_check(_campaigns.held_at(door) == 0, "lifted by the hand, he holds nobody back")
+	_inspectors._remove(inspector)
+	_campaigns.clear(door)
 
 
 ## An inspector audits a building of yours: paperwork passes it (less with Security);

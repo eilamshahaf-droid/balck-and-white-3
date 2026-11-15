@@ -64,8 +64,8 @@ func remedy() -> String:
 	if utility == null:
 		return "take more buildings"
 	if treasury.can_afford(utility.money):
-		return "fit a %s ($%d)" % [utility.title, roundi(utility.money)]
-	return "needs a %s ($%d): take a loan at the Office" % [utility.title, roundi(utility.money)]
+		return "fit a %s (from $%d)" % [utility.title, roundi(utility.money)]
+	return "needs a %s (from $%d): take a loan at the Office" % [utility.title, roundi(utility.money)]
 
 
 func _ordinary(index: int) -> bool:

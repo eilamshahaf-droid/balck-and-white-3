@@ -57,6 +57,23 @@ extends Resource
 ## cult's base, this long, for this much money, so many at once.
 @export var agent_time := 120.0
 
+@export_group("Training meter and badges")
+## Over the Office while someone trains: who, how far, how long still.
+@export var training_line := "Training a %s: %d%% (%d s left)"
+@export var training_color := Color(0.75, 0.95, 1.0)
+@export var training_font_size := 30
+@export var training_pixel_size := 0.0012
+## Over the head of every Rep (and the Fixer) out in the street.
+@export var badge_texts := PackedStringArray(["", "", "REP", "", "FIXER", ""])
+@export var badge_color := Color(1.0, 0.85, 0.3)
+@export var badge_font_size := 22
+@export var badge_pixel_size := 0.001
+@export var badge_lift := 2.3
+
+
+func badge(rank: int) -> String:
+	return badge_texts[rank] if rank < badge_texts.size() else ""
+
 
 # Accessors rather than indexing the arrays from a const preload: in the editor the
 # parser folds a const resource's unsaved arrays to null and rejects the index.
