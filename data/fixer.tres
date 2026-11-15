@@ -1,0 +1,239 @@
+[gd_resource type="Resource" script_class="FixerSettings" load_steps=45 format=3]
+
+[ext_resource type="Script" path="res://scripts/fixer/fixer_settings.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/fixer/fixer_action.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/fixer/fixer_action_set.gd" id="3"]
+
+[sub_resource type="Resource" id="a2"]
+script = ExtResource("2")
+title = "Misfile a form"
+joke = "Form 27-B now lives under Z. So does the lease."
+loud = false
+
+[sub_resource type="Resource" id="a3"]
+script = ExtResource("2")
+title = "Borrow the stamp"
+joke = "Their pens are chained to the desk. The stamp was not."
+loud = false
+
+[sub_resource type="Resource" id="a4"]
+script = ExtResource("2")
+title = "Tick every box"
+joke = "One form, every box ticked 'Yes'. The queue has questions."
+loud = true
+
+[sub_resource type="Resource" id="s5"]
+script = ExtResource("3")
+key = "Bureau of Forms"
+actions = Array[ExtResource("2")]([SubResource("a2"), SubResource("a3"), SubResource("a4")])
+
+[sub_resource type="Resource" id="a6"]
+script = ExtResource("2")
+title = "Permit a permit"
+joke = "A permit to issue permits, approved by itself."
+loud = false
+
+[sub_resource type="Resource" id="a7"]
+script = ExtResource("2")
+title = "Swap the trays"
+joke = "In-tray, out-tray. Everything is finished; nothing is done."
+loud = false
+
+[sub_resource type="Resource" id="a8"]
+script = ExtResource("2")
+title = "Announce free permits"
+joke = "A queue round the block. The clerks lock themselves in."
+loud = true
+
+[sub_resource type="Resource" id="s9"]
+script = ExtResource("3")
+key = "Permit Office"
+actions = Array[ExtResource("2")]([SubResource("a6"), SubResource("a7"), SubResource("a8")])
+
+[sub_resource type="Resource" id="a10"]
+script = ExtResource("2")
+title = "Renew a licence"
+joke = "The clerk's licence now runs out every Tuesday. A kindness."
+loud = false
+
+[sub_resource type="Resource" id="a11"]
+script = ExtResource("2")
+title = "Laminate the rules"
+joke = "Laminated, nothing can change. Not even the lock."
+loud = false
+
+[sub_resource type="Resource" id="a12"]
+script = ExtResource("2")
+title = "License the pigeons"
+joke = "Two hundred pigeons, each with a licence to enter."
+loud = true
+
+[sub_resource type="Resource" id="s13"]
+script = ExtResource("3")
+key = "Licence Desk"
+actions = Array[ExtResource("2")]([SubResource("a10"), SubResource("a11"), SubResource("a12")])
+
+[sub_resource type="Resource" id="a14"]
+script = ExtResource("2")
+title = "Redraw a line"
+joke = "On paper the building is now a park bench."
+loud = false
+
+[sub_resource type="Resource" id="a15"]
+script = ExtResource("2")
+title = "Rezone the kettle"
+joke = "Commercial use. It charges the board for tea."
+loud = false
+
+[sub_resource type="Resource" id="a16"]
+script = ExtResource("2")
+title = "Call a public hearing"
+joke = "Everyone has a view. The board hides in the archive."
+loud = true
+
+[sub_resource type="Resource" id="s17"]
+script = ExtResource("3")
+key = "Zoning Board"
+actions = Array[ExtResource("2")]([SubResource("a14"), SubResource("a15"), SubResource("a16")])
+
+[sub_resource type="Resource" id="a18"]
+script = ExtResource("2")
+title = "Lose the file"
+joke = "It is somewhere safe. Nobody knows where."
+loud = false
+
+[sub_resource type="Resource" id="a19"]
+script = ExtResource("2")
+title = "File by colour"
+joke = "Very pretty. Very lost."
+loud = false
+
+[sub_resource type="Resource" id="a20"]
+script = ExtResource("2")
+title = "Open the archive"
+joke = "History, free for all. The inspectors run to stop it."
+loud = true
+
+[sub_resource type="Resource" id="s21"]
+script = ExtResource("3")
+key = "Records Annex"
+actions = Array[ExtResource("2")]([SubResource("a18"), SubResource("a19"), SubResource("a20")])
+
+[sub_resource type="Resource" id="a22"]
+script = ExtResource("2")
+title = "Whisper a complaint"
+joke = "About the noise of complaints."
+loud = false
+
+[sub_resource type="Resource" id="a23"]
+script = ExtResource("2")
+title = "Oil the doors"
+joke = "Without the creak they can't hear anyone coming."
+loud = false
+
+[sub_resource type="Resource" id="a24"]
+script = ExtResource("2")
+title = "Book a brass band"
+joke = "Measured, logged, fined, and nobody can hear the phone."
+loud = true
+
+[sub_resource type="Resource" id="s25"]
+script = ExtResource("3")
+key = "Noise Bureau"
+actions = Array[ExtResource("2")]([SubResource("a22"), SubResource("a23"), SubResource("a24")])
+
+[sub_resource type="Resource" id="a26"]
+script = ExtResource("2")
+title = "Ink the stamps"
+joke = "Invisible ink. All approved, none of it shows."
+loud = false
+
+[sub_resource type="Resource" id="a27"]
+script = ExtResource("2")
+title = "Swap two stamps"
+joke = "'Denied' and 'Approved': same size, same handle."
+loud = false
+
+[sub_resource type="Resource" id="a28"]
+script = ExtResource("2")
+title = "Stamp the stampers"
+joke = "'Received' on every forehead. They file themselves away."
+loud = true
+
+[sub_resource type="Resource" id="s29"]
+script = ExtResource("3")
+key = "Stamp Office"
+actions = Array[ExtResource("2")]([SubResource("a26"), SubResource("a27"), SubResource("a28")])
+
+[sub_resource type="Resource" id="a30"]
+script = ExtResource("2")
+title = "Take a number"
+joke = "Number 1. The board has said 4,000 for years."
+loud = false
+
+[sub_resource type="Resource" id="a31"]
+script = ExtResource("2")
+title = "Move the rope"
+joke = "The queue now ends inside our building."
+loud = false
+
+[sub_resource type="Resource" id="a32"]
+script = ExtResource("2")
+title = "Start a second queue"
+joke = "Two queues, one window. A riot of politeness."
+loud = true
+
+[sub_resource type="Resource" id="s33"]
+script = ExtResource("3")
+key = "Queue Management"
+actions = Array[ExtResource("2")]([SubResource("a30"), SubResource("a31"), SubResource("a32")])
+
+[sub_resource type="Resource" id="a34"]
+script = ExtResource("2")
+title = "Ticket their car"
+joke = "Parked where they drew a no-parking line."
+loud = false
+
+[sub_resource type="Resource" id="a35"]
+script = ExtResource("2")
+title = "Paint a yellow line"
+joke = "Across the front door. No stopping."
+loud = false
+
+[sub_resource type="Resource" id="a36"]
+script = ExtResource("2")
+title = "Tow the car park"
+joke = "Every car, the tow truck too."
+loud = true
+
+[sub_resource type="Resource" id="s37"]
+script = ExtResource("3")
+key = "Parking Authority"
+actions = Array[ExtResource("2")]([SubResource("a34"), SubResource("a35"), SubResource("a36")])
+
+[sub_resource type="Resource" id="a38"]
+script = ExtResource("2")
+title = "Found a sub-department"
+joke = "The Department of This Building. It reports to us."
+loud = false
+
+[sub_resource type="Resource" id="a39"]
+script = ExtResource("2")
+title = "Rename an office"
+joke = "The director's office is now 'Cupboard 4'. He can't find it."
+loud = false
+
+[sub_resource type="Resource" id="a40"]
+script = ExtResource("2")
+title = "Merge it with itself"
+joke = "Every form must now be filed twice, to itself."
+loud = true
+
+[sub_resource type="Resource" id="s41"]
+script = ExtResource("3")
+key = "Department of Departments"
+actions = Array[ExtResource("2")]([SubResource("a38"), SubResource("a39"), SubResource("a40")])
+
+[resource]
+script = ExtResource("1")
+sets = Array[ExtResource("3")]([SubResource("s5"), SubResource("s9"), SubResource("s13"), SubResource("s17"), SubResource("s21"), SubResource("s25"), SubResource("s29"), SubResource("s33"), SubResource("s37"), SubResource("s41")])

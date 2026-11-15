@@ -8,7 +8,6 @@ extends Node3D
 const M: MiracleSettings = preload("res://data/miracles.tres")
 const U: UnitSettings = preload("res://data/units.tres")
 const I: InspectorSettings = preload("res://data/inspectors.tres")
-const S: DistrictSettings = preload("res://data/districts.tres")
 const ABOVE := Vector3(0, 2.6, 0)
 const LOST_COLOR := Color(0.7, 0.7, 0.75)
 
@@ -39,10 +38,12 @@ func _ready() -> void:
 		_over(districts.buildings[i], "%s closed: no money for upkeep" % kind.title, I.bad_color))
 	rooms.room_reopened.connect(func(i: int, kind: RoomKind) -> void:
 		_over(districts.buildings[i], "%s open again" % kind.title, I.good_color))
-	breaches.action_started.connect(func(b: Node3D, step: int) -> void:
-		_over(b, "%s: -%d paperwork" % [S.breach_action(step), roundi(S.breach_action_paperwork)],
-				S.breach_line_color))
-	breaches.opened.connect(func(b: Node3D) -> void: _over(b, S.breach_open_note, I.good_color))
+	breaches.action_started.connect(func(b: Node3D, action: FixerAction) -> void:
+		_over(b, "%s\n%s" % [action.title, action.joke], breaches.settings.line_color))
+	breaches.opened.connect(func(b: Node3D) -> void:
+		_over(b, breaches.settings.open_note, I.good_color))
+	inspectors.fixer_caught.connect(func(b: Node3D) -> void:
+		_over(b, breaches.settings.caught_note, I.bad_color))
 	inspectors.gave_up.connect(func(at: Vector3) -> void:
 		FloatingNote.pop(self, at + ABOVE, I.gave_up_note, I.good_color))
 

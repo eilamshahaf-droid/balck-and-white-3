@@ -47,6 +47,8 @@ extends Resource
 @export_range(0.0, 1.0) var awareness_over_seats_max := 0.5
 
 @export_group("Training")
+## Reps the Committee starts with, out and ready (the first one is free).
+@export var start_reps := 1
 ## Seconds in a sermon house to train a believer into a missionary, and a
 ## missionary into a priest (the priest only where the high priest serves).
 @export var missionary_time := 90.0

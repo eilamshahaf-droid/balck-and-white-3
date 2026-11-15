@@ -50,26 +50,6 @@ extends Resource
 @export var key_label_font_size := 64
 @export var key_label_color := Color(1.0, 0.95, 0.85)
 
-@export_group("Key buildings: the Fixer opens them")
-@export var breach_tick := 1.0
-## Actions the Fixer must carry out at a key building before a Rep can take it, and
-## their names in order (they wrap round).
-@export var breach_actions := 3
-@export var breach_action_names := PackedStringArray(["Copy the keys", "Lose the file",
-		"Change the locks"])
-## Paperwork to start an action, seconds it takes, and the exposure it adds.
-@export var breach_action_paperwork := 40.0
-@export var breach_action_money := 50.0
-@export var breach_action_seconds := 40.0
-@export var breach_action_exposure := 0.07
-## Paperwork a minute the Fixer costs while he stands at a key building.
-@export var breach_presence_paperwork := 12.0
-@export var breach_line := "Nothing to see here."
-@export var breach_line_color := Color(0.75, 0.6, 1.0)
-@export var breach_open_note := "Open: send a Rep"
-@export var breach_label_font_size := 34
-@export var breach_label_pixel_size := 0.0012
-
 @export_group("Borders and blocks")
 ## Buildings whose walls stand this close border each other (next door, or across a street).
 @export var border_gap := 12.0
@@ -77,8 +57,8 @@ extends Resource
 @export_group("The stage")
 ## The start screen: a title and the Secretary's briefing.
 @export var start_title := "Stage 1: The Slums"
-@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the Secretary (taking these minutes), a kettle.\n\nItem 1: City Hall has turned down our god's application to be recognised as a god. A form was missing. The Committee will appeal, street by street.\nItem 2: our office is at the edge of the Slums. A Rep at a building's door fills the bar over it; when it is full the building is ours and the Rep stays to manage it, so every building needs a Rep of its own. Buildings next to ours in the same block come round by themselves, slowly, and then only need a Rep. Only next to a building we already hold. A whole block of ours (the ring on the ground) is safe and pays better.\nItem 3: the district is ours when its bar is full. A wide membership that lives well fills it; so do the core in the middle and every landmark our Fixer marks. Either way alone is hard; together they leave us room.\nItem 4: the Hand places people. Where it sets a member down is what that member does. A worn-out member still goes, and lets everyone know.\n\nKeep it quiet: the neighbours complain, City Hall condemns, the police close streets."
-@export var start_button := "Open the meeting"
+@export_multiline var start_briefing := "Minutes of the founding meeting. Present: the Secretary (taking these minutes), a kettle.\n\nItem 1: our god applied to City Hall to be recognised as a god. The application was refused. A form was missing.\nItem 2: the Committee will appeal, one building at a time, starting here in the Slums.\nItem 3: the Committee has one Rep. The Rep is waiting by the Office.\n\nAction: take the first building."
+@export var start_button := "Close the minutes"
 @export_group("Missions: the card that says what to do next")
 @export var mission_width := 380.0
 @export var mission_train := "Train a Rep"
@@ -87,12 +67,21 @@ extends Resource
 @export var mission_send_hint := "Hold the button on a building next to one of yours and choose Send a Rep, or lift the Rep and set them down at its door. Two Reps at one door work twice as fast."
 @export var mission_take := "Take the building"
 @export var mission_take_hint := "The bar over the building fills while a Rep is at its door, faster while your hand is over it. When it is full the building is yours and the Rep stays as its Manager."
-## The block mission starts once this many buildings are yours.
-@export var mission_block_from := 2
-@export var mission_block := "Complete the Office's block: %d of %d"
-@export var mission_block_hint := "Take every building in the ring round the Office. A complete block draws followers faster; green bars are buildings that already want you and only need a Rep."
-@export var mission_district := "Win the district"
-@export var mission_district_hint := "Two ways to win, shown bottom left: most of the key buildings (train a Fixer to open them), or a few of them and most of the people. Plan your buildings with Rooms to house more followers."
+@export var mission_first := "Take the first building"
+@export var mission_first_hint := "Lift your Rep (by the Office, the gold roof) and set them down at the door of a building next to it. The bar over the building fills while the Rep is there, twice as fast with your hand over it."
+@export var mission_rooms := "Plan the Office"
+@export var mission_rooms_hint := "Double click the Office and fit a Desk Room: more clerks, more paperwork. Esc closes the plan; a building never planned still works."
+@export var mission_inspector := "An inspector!"
+@export var mission_inspector_hint := "He walks from a key building (red sign) to demand paperwork from your Rep; with none, the Rep is sent home. Lift him and throw him far away. He comes back, but it buys time."
+## Reps first: the Fixer's missions start once this many buildings are yours.
+@export var mission_fixer_from := 3
+@export var mission_fixer := "Train the Fixer"
+@export var mission_fixer_hint := "Key buildings (red signs) send the inspectors and are locked to Reps. Only the Fixer opens them: hold the button on the Office and choose Train Fixer."
+@export var mission_open := "Open a key building"
+@export var mission_open_hint := "Set the Fixer down at a red-signed building, then hold the button on it for his actions. Quiet ones are cheap; a loud one fills more and sends an inspector. From 70% exposure he lies low."
+## %d of %d: the key buildings of the district that are yours, and all of them.
+@export var mission_keys := "Key buildings: %d of %d"
+@export var mission_district_hint := "Two ways to win, shown bottom left: most of the key buildings, or a few of them and most of the people. Open key buildings with the Fixer, then take them with a Rep."
 @export var mission_won := "The district is yours"
 
 @export_group("District captured")
@@ -147,6 +136,3 @@ func minute_for(d: int) -> String:
 func key_name(k: int) -> String:
 	return key_names[k % key_names.size()] if k >= 0 else ""
 
-
-func breach_action(step: int) -> String:
-	return breach_action_names[step % breach_action_names.size()]

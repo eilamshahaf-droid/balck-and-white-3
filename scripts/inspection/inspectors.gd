@@ -5,7 +5,8 @@ extends Node3D
 ## past some exposure toward a building of yours. The hand can lift an inspector and set
 ## him down far away, which buys time; one who arrives demands paperwork. A Rep with no
 ## papers is sent home; a building that fails its audit is lost. Paperwork also buries
-## the file, which lowers the exposure.
+## the file, which lowers the exposure. A loud action of the Fixer's sends one to his door,
+## and with no papers there he is sent back.
 
 ## An inspector left `from` (a key building).
 signal sent(inspector: Inspector, from: Node3D)
@@ -17,6 +18,10 @@ signal rep_sent_home(building: Node3D, rep: Resident)
 signal audit_passed(building: Node3D, cost: float)
 ## A building of yours failed its audit and is lost.
 signal turned_back(building: Node3D)
+## There was no paperwork: the Fixer was sent back from key building `building`.
+signal fixer_caught(building: Node3D)
+## The hand threw an inspector (or set him down somewhere).
+signal thrown(inspector: Inspector)
 ## An inspector ran out of patience at `at`.
 signal gave_up(at: Vector3)
 
@@ -28,6 +33,7 @@ const SIDEWALK_GAP := 1.5
 @export var population: Population
 @export var followers: Followers
 @export var faith: Faith
+@export var breaches: Breaches
 
 ## The inspectors out now.
 var out: Array[Inspector] = []
@@ -45,6 +51,7 @@ func _ready() -> void:
 	_coat.albedo_color = I.coat_color
 	_skin.albedo_color = I.skin_color
 	districts.building_changed.connect(_on_building_changed)
+	breaches.loud.connect(func(b: Node3D) -> void: send_to(b, false))
 
 
 func _physics_process(delta: float) -> void:
@@ -105,16 +112,18 @@ func bury() -> bool:
 	return true
 
 
-## Send one inspector to `building` now (to audit it, or to a Rep at its door), from the
-## key building nearest to it. Null when there is no key building left to send one.
+## Send one inspector to `building` now (to audit it, or to a Rep or the Fixer at its
+## door), from the key building nearest to it other than itself. Null when there is no key
+## building left to send one.
 func send_to(building: Node3D, audit: bool) -> Inspector:
-	var from := _nearest_key(building.global_position)
+	var from := _nearest_key(building)
 	if from == null:
 		return null
 	var inspector := Inspector.new()
 	inspector.build(_coat, _skin)
 	inspector.building = building
 	inspector.audit = audit
+	inspector.thrown.connect(func() -> void: thrown.emit(inspector))
 	add_child(inspector)
 	inspector.global_position = _door_of(from)
 	inspector.head_for(city, _door_of(building))
@@ -182,6 +191,14 @@ func _arrive(inspector: Inspector) -> void:
 					districts.add_meter(i, -I.failed_demand_meter)
 				faith.add_exposure(-I.satisfied_exposure)
 				rep_sent_home.emit(b, rep)
+		elif breaches.target == b:
+			var cost := demand_cost()
+			if faith.spend(cost, &"demand"):
+				papers_shown.emit(b, cost)
+			else:
+				breaches.caught(b)
+				faith.add_exposure(-I.satisfied_exposure)
+				fixer_caught.emit(b)
 	_remove(inspector)
 
 
@@ -209,14 +226,16 @@ func _is_target(building: Node3D) -> bool:
 	return false
 
 
-func _nearest_key(p: Vector3) -> Node3D:
+## The key building nearest to `to` that is not yours, and not `to` itself (the Fixer is
+## at a key building's door: someone has to walk over from another).
+func _nearest_key(to: Node3D) -> Node3D:
 	var best: Node3D = null
 	var best_d := INF
 	for k in districts.keys:
 		var b := districts.buildings[k]
-		if b == null or districts.is_yours(k):
+		if b == null or b == to or districts.is_yours(k):
 			continue
-		var d := b.global_position.distance_squared_to(p)
+		var d := b.global_position.distance_squared_to(to.global_position)
 		if d < best_d:
 			best_d = d
 			best = b

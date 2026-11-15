@@ -19,7 +19,7 @@ extends Resource
 @export var spawn_seconds := 50.0
 @export var spawn_seconds_min := 15.0
 ## Seconds before the very first one, so the first building is taken in peace.
-@export var first_seconds := 90.0
+@export var first_seconds := 300.0
 ## Inspectors out at once with no exposure, and how many more at full exposure.
 @export var max_base := 1
 @export var max_extra := 3

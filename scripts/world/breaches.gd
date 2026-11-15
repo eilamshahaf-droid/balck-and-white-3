@@ -1,20 +1,23 @@
 class_name Breaches
 extends Node
 ## The Fixer at a key building (round C of the model). A key building can't be taken by
-## a Rep until the Fixer has opened it: he stands at its door and carries out a few
-## actions one after the other. Each costs paperwork to start, takes time and raises the
-## exposure, and as long as he is there he costs paperwork to keep. With no paperwork he
-## waits. When the last action is done the building is open: a Rep can take it like any
-## other, and once taken it is an office of yours.
+## a Rep until the Fixer has filled its bar. The hand sets him down at its door (or the
+## wheel sends him), and there the wheel offers that building's own actions
+## (data/fixer.tres): each costs paperwork, money and exposure, takes a while, and fills
+## part of the bar. Quiet ones are small; loud ones are big and send an inspector to his
+## door. Past a certain exposure he starts nothing. Opening is his talent: he goes to any
+## key building, next to yours or not (taking it still needs a Rep next door). A full bar opens the building: a Rep
+## can take it like any other, and once taken it is an office of yours.
 
-## The Fixer started action number `step` (from 0) at `building`.
-signal action_started(building: Node3D, step: int)
+## The Fixer started `action` at `building`.
+signal action_started(building: Node3D, action: FixerAction)
+## A loud action at `building`: City Hall sends someone to the door.
+signal loud(building: Node3D)
 ## The Fixer finished at `building`: Reps can take it now.
 signal opened(building: Node3D)
-## What the Fixer is at changed (he arrived, left, ran out of paperwork).
+## What the Fixer is at changed (he arrived, left, finished an action, the bar moved).
 signal changed(building: Node3D)
 
-const S: DistrictSettings = preload("res://data/districts.tres")
 const F: FollowersSettings = preload("res://data/followers.tres")
 const SIDEWALK_GAP := 1.5
 
@@ -24,14 +27,15 @@ const SIDEWALK_GAP := 1.5
 @export var hand: GodHand
 @export var treasury: Treasury
 
+var settings: FixerSettings = load("res://data/fixer.tres")
 ## The key building the Fixer is at or on his way to, and the Fixer; null when idle.
 var target: Node3D
 var fixer: Resident
-## What holds him up, "" while he works.
-var stalled := ""
+## The action in hand; null when he waits for the next order.
+var doing: FixerAction
 
-var _done := {}        # building -> actions finished there
-var _left := 0.0       # seconds left of the action in hand; 0 when none is
+var _bar := {}         # building -> share of its bar filled, 0..1
+var _left := 0.0       # seconds left of the action in hand
 var _timer := 0.0
 
 
@@ -43,34 +47,19 @@ func _physics_process(delta: float) -> void:
 	_timer -= delta
 	if _timer > 0.0 or target == null:
 		return
-	_timer = S.breach_tick
+	_timer = settings.tick
 	if not is_instance_valid(fixer.body) or not fixer.body.on_errand:
 		_leave()   # the hand lifted him away
 		return
-	if not fixer.body.errand_arrived:
-		_stall("on the way")
+	if doing == null:
 		return
-	if not faith.spend(S.breach_presence_paperwork * S.breach_tick / 60.0, &"fixer_presence"):
-		_stall("no paperwork: the Fixer waits")
-		return
-	if _left <= 0.0:
-		if not treasury.can_afford(S.breach_action_money):
-			_stall("needs $%d" % roundi(S.breach_action_money))
-			return
-		if not faith.spend(S.breach_action_paperwork, &"fixer_action"):
-			_stall("needs %d paperwork" % roundi(S.breach_action_paperwork))
-			return
-		treasury.spend_money(S.breach_action_money)
-		_left = S.breach_action_seconds
-		faith.add_exposure(S.breach_action_exposure)
-		action_started.emit(target, actions_done(target))
-	_stall("")
-	_left -= S.breach_tick * (F.attention if hand.pointed_part == target else 1.0)
+	_left -= settings.tick * (F.attention if hand.pointed_part == target else 1.0)
 	if _left > 0.0:
 		return
-	_done[target] = actions_done(target) + 1
+	_bar[target] = minf(bar_of(target) + settings.progress(doing), 1.0)
+	doing = null
 	changed.emit(target)
-	if actions_done(target) >= S.breach_actions:
+	if bar_of(target) >= 1.0:
 		var building := target
 		districts.open_key(districts.index_of(building))
 		fixer.body.end_errand()
@@ -78,14 +67,24 @@ func _physics_process(delta: float) -> void:
 		opened.emit(building)
 
 
-## Actions finished at key building `building` so far.
-func actions_done(building: Node3D) -> int:
-	return _done.get(building, 0)
+## How much of key building `building`'s bar the Fixer has filled, 0..1.
+func bar_of(building: Node3D) -> float:
+	return _bar.get(building, 0.0)
 
 
 ## How far the action in hand is, 0..1.
 func action_progress() -> float:
-	return 1.0 - _left / S.breach_action_seconds if _left > 0.0 else 0.0
+	return 1.0 - _left / settings.seconds(doing) if doing else 0.0
+
+
+## The Fixer stands at `building`'s door, ready for orders.
+func is_at(building: Node3D) -> bool:
+	return target == building and is_instance_valid(fixer.body) and fixer.body.errand_arrived
+
+
+## The Fixer's actions at key building `building`.
+func actions_at(building: Node3D) -> Array[FixerAction]:
+	return settings.actions_for(districts.key_name(districts.index_of(building)))
 
 
 ## Why the Fixer can't be sent to `building` now; "" when he can.
@@ -95,18 +94,55 @@ func why_not(building: Node3D) -> String:
 		return "not a key building"
 	if districts.is_key_open(i):
 		return "open already: send a Rep"
-	if not districts.borders_yours(i):
-		return "must border a building of yours"
 	if _free_fixer() == null:
 		return "train a Fixer at the Office first"
 	return ""
 
 
+## Why the Fixer can't do `action` at `building` now; "" when he can.
+func why_not_act(building: Node3D, action: FixerAction) -> String:
+	if target != building:
+		return "the Fixer isn't here"
+	if not is_at(building):
+		return "on the way"
+	if doing:
+		return "busy: %s" % doing.title
+	if faith.exposure >= settings.gate_exposure:
+		return "exposure %d%%: lie low" % roundi(faith.exposure * 100.0)
+	if faith.belief_pool < settings.paperwork(action):
+		return "needs %d paperwork" % roundi(settings.paperwork(action))
+	if not treasury.can_afford(settings.money(action)):
+		return "needs $%d" % roundi(settings.money(action))
+	return ""
+
+
+## "20 paperwork, $20: +15%" for the wheel.
+func price_of(action: FixerAction) -> String:
+	return "%d paperwork, $%d: +%d%%%s" % [roundi(settings.paperwork(action)),
+			roundi(settings.money(action)), roundi(settings.progress(action) * 100.0),
+			", loud" if action.loud else ""]
+
+
+## The Fixer carries out `action` at `building`. True when he started it.
+func act(building: Node3D, action: FixerAction) -> bool:
+	if why_not_act(building, action) != "" \
+			or not faith.spend(settings.paperwork(action), &"fixer_action"):
+		return false
+	treasury.spend_money(settings.money(action))
+	faith.add_exposure(settings.exposure(action))
+	doing = action
+	_left = settings.seconds(action)
+	action_started.emit(building, action)
+	changed.emit(building)
+	if action.loud:
+		loud.emit(building)
+	return true
+
+
 ## Send the Fixer to `building`; the same again calls him back.
 func send(building: Node3D) -> bool:
 	if target == building:
-		fixer.body.end_errand()
-		_leave()
+		call_back()
 		return true
 	if why_not(building) != "":
 		return false
@@ -115,20 +151,34 @@ func send(building: Node3D) -> bool:
 	if not is_instance_valid(who.body):
 		return false
 	_assign(who, building)
-	who.body.send_on_errand(_door_of(building), building.global_position, INF,
-			S.breach_line, S.breach_line_color)
 	return true
+
+
+## The Fixer leaves his key building and goes back to the Office.
+func call_back() -> void:
+	if target == null:
+		return
+	if is_instance_valid(fixer.body):
+		fixer.body.end_errand()
+	_leave()
+
+
+## An inspector at the door found no paperwork: the Fixer is sent back and part of the
+## bar is lost.
+func caught(building: Node3D) -> void:
+	if target != building:
+		return
+	_bar[building] = maxf(bar_of(building) - settings.caught_loss, 0.0)
+	call_back()
 
 
 ## The hand set the Fixer down at key building `building`: he goes to work on it.
 func _on_fixer_set_down(r: Resident, building: Node3D) -> void:
 	var i := districts.index_of(building)
 	if i < 0 or not districts.is_key(i) or districts.is_key_open(i) \
-			or not districts.borders_yours(i) or not is_instance_valid(r.body):
+			or not is_instance_valid(r.body):
 		return
 	_assign(r, building)
-	r.body.send_on_errand(_door_of(building), building.global_position, INF,
-			S.breach_line, S.breach_line_color)
 
 
 func _assign(who: Resident, building: Node3D) -> void:
@@ -136,7 +186,9 @@ func _assign(who: Resident, building: Node3D) -> void:
 		_leave()
 	fixer = who
 	target = building
-	_left = 0.0
+	doing = null
+	who.body.send_on_errand(_door_of(building), building.global_position, INF,
+			settings.line, settings.line_color)
 	changed.emit(building)
 
 
@@ -144,15 +196,8 @@ func _leave() -> void:
 	var building := target
 	target = null
 	fixer = null
-	_left = 0.0   # an action he walked away from is started again
-	stalled = ""
+	doing = null   # an action he walked away from is lost, and so is what it cost
 	changed.emit(building)
-
-
-func _stall(why: String) -> void:
-	if stalled != why:
-		stalled = why
-		changed.emit(target)
 
 
 func _free_fixer() -> Resident:

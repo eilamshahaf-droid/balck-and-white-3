@@ -94,13 +94,14 @@ districts = NodePath("../Districts")
 script = ExtResource("72_keys")
 districts = NodePath("../Districts")
 
-[node name="Inspectors" type="Node3D" parent="." node_paths=PackedStringArray("districts", "campaigns", "population", "followers", "faith")]
+[node name="Inspectors" type="Node3D" parent="." node_paths=PackedStringArray("districts", "campaigns", "population", "followers", "faith", "breaches")]
 script = ExtResource("71_inspectors")
 districts = NodePath("../Districts")
 campaigns = NodePath("../Campaigns")
 population = NodePath("../Population")
 followers = NodePath("../Followers")
 faith = NodePath("../Faith")
+breaches = NodePath("../Breaches")
 
 [node name="PriestMarker" type="Node3D" parent="." node_paths=PackedStringArray("population")]
 script = ExtResource("41_priest")
@@ -191,7 +192,7 @@ script = ExtResource("10_debug")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="Mission" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("districts", "population", "campaigns", "progress")]
+[node name="Mission" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("districts", "population", "campaigns", "progress", "inspectors", "breaches", "menus")]
 offset_left = 12.0
 offset_top = 96.0
 offset_right = 412.0
@@ -201,6 +202,9 @@ districts = NodePath("../../Districts")
 population = NodePath("../../Population")
 campaigns = NodePath("../../Campaigns")
 progress = NodePath("../../DistrictProgress")
+inspectors = NodePath("../../Inspectors")
+breaches = NodePath("../../Breaches")
+menus = NodePath("../../BuildingMenus")
 
 [node name="Help" type="Label" parent="HUD"]
 anchors_preset = 1

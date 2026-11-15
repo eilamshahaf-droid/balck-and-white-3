@@ -41,6 +41,10 @@ extends Resource
 ## The rooms the main Office opens with, each fitted into the first place it goes.
 @export var office_start: Array[StringName] = [&"desks", &"shop"]
 
+## The first time the Office's rooms are opened only this kind is offered, so the first
+## look teaches one thing ("" offers everything).
+@export var first_offer: StringName = &"desks"
+
 @export_group("Editor")
 @export var cell_pixels := 76.0
 @export var flat_color := Color(0.32, 0.34, 0.42)
