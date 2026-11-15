@@ -151,6 +151,12 @@ Budget: every room in a building shares models, so draw calls stay low by mergin
 
 **Open for the Designer:** the rooms have a `tier` only for homes today. Do shops, offices and fear rooms also have levels (upgrades), or is "level" a home-only idea? The table above assumes every kind can have three levels.
 
+### The room designer and furniture (built 2026-11-15, game 0.27.0)
+- In the game: F1, Room designer. 3D only (the front cut-away is gone). Room files are format 1 (JSON per room kind and level); the room files store unscaled sizes in metres.
+- Numbers, all in `data/room_designer.tres`: `furniture_scale` 3.0 (Kenney pieces are about half true size; at 3.0 a desk is about 1.15 m wide), `snap` 0.25 m when placing or dragging (Shift = free), grid lines every 0.5 m on each floor (`grid_step`).
+- Model sources and licences: Kenney Furniture Kit (CC0, in `assets/models/kenney_furniture/`); `art/kits/` holds KayKit Restaurant Bits and Quaternius House Interior (both CC0) and three CC-BY props (CCTV Camera, File Cabinet, Office Chair) in `office_pack_cc_by/`. Every CC-BY model that ships must be listed in `art/kits/CREDITS.md` and in the Credits screen (`data/title.tres`, `credits`). Never use the Gundam model from the Office Pack.
+- Meshy props are paused (Eilam, 2026-11-15; Blender later). Approved so far: CCTV camera and barrier gate (version a), in the shared project files. Lesson: Meshy fakes floors, makes paper-thin shelves and cracks on flat panels; use it only for complex shapes and check every model close up from several sides. Still missing: cash register, display case, safe, shop counter (build in Blender).
+
 ## Facade styles (catalog, first four: New York)
 
 Source: Eilam's reference photos (Wikimedia Commons, CC BY-SA: reference only, never in the game),
