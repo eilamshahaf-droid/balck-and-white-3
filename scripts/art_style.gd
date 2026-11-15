@@ -37,7 +37,7 @@ var _shot_frames := 120
 
 func _ready() -> void:
 	process_priority = 1000  # after gameplay scripts have made their meshes this frame
-	# The briefing pauses the tree at startup; the city behind it still needs its look.
+	# The opening pauses the tree at startup; the city behind it still needs its look.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	enabled = S.enabled
 	_screen_mat.shader = SCREEN

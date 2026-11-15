@@ -6,7 +6,7 @@ extends CanvasLayer
 
 ## What keeps working while the player has the game paused.
 @export var keep_awake: Array[Node] = []
-## The briefing pauses the whole tree itself; Space does nothing until it is closed.
+## The opening pauses the whole tree itself; Space does nothing until it is closed.
 @export var screens: StageScreens
 @export var text := "PAUSED  (Space)"
 
