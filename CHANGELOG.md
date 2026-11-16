@@ -10,6 +10,12 @@ Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-
 ## Realistic furniture, first 26 pieces (2026-11-16, Artist)
 - New folder `assets/models/artist_furniture/` with 26 pieces and icons: a modular shop counter (ends, straight, corner, register segment), display case, safe, shelf with goods, filing cabinet, armchair, sofa, coffee table, chair, stool, lamps, tall bookcase, rug, three framed pictures, a clock, three plants (alpha leaf cards). Built by `tools/blender/build_furniture.py`. Direction and budget are in `docs/ART.md`. Not in the room designer's list yet: the Programmer adds the folder and names.
 
+## Pre-Alpha 0.30.0 (2026-11-16): a Windows build, and the Artist's furniture
+Asked by Eilam: test the richer art on a PC.
+- **Windows build.** Every Alpha now also builds a Windows version: download https://eilamshahaf-droid.github.io/balck-and-white-3/Godministration-windows.zip, unzip, and run Godministration.exe (one file, about 120 MB, no install). Windows may warn that the file is from an unknown publisher: More info, then Run anyway. The browser build stays for quick checks.
+- **The Artist's furniture in the room designer.** 26 pieces made in Blender (counters and a till, a display case, a safe, shelves of goods, a file cabinet, plants, an armchair, a sofa, lamps, pictures, a clock and more) beside Kenney's, with a new "shop" group. Counters, the display case, the safe and the shelf take things on top; pictures and the clock hang on the wall.
+- Try it: on the PC build, Room Designer, Market, the "shop" group.
+
 ## Pre-Alpha 0.29.0 (2026-11-16): real sounds
 Asked by Eilam: much better sound, from a free pack for now.
 - **Recorded sounds** from three Kenney packs (CC0: Interface Sounds, RPG Audio, Impact Sounds), 49 files in `assets/audio/kenney/`. The old sounds made in code are kept only where no file is set (rain, fire, the miracles' chimes).
