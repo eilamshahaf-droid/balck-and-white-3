@@ -157,6 +157,15 @@ Budget: every room in a building shares models, so draw calls stay low by mergin
 - Model sources and licences: Kenney Furniture Kit (CC0, in `assets/models/kenney_furniture/`); `art/kits/` holds KayKit Restaurant Bits and Quaternius House Interior (both CC0) and three CC-BY props (CCTV Camera, File Cabinet, Office Chair) in `office_pack_cc_by/`. Every CC-BY model that ships must be listed in `art/kits/CREDITS.md` and in the Credits screen (`data/title.tres`, `credits`). Never use the Gundam model from the Office Pack.
 - Meshy props are paused (Eilam, 2026-11-15; Blender later). Approved so far: CCTV camera and barrier gate (version a), in the shared project files. Lesson: Meshy fakes floors, makes paper-thin shelves and cracks on flat panels; use it only for complex shapes and check every model close up from several sides. Still missing: cash register, display case, safe, shop counter (build in Blender).
 
+## Realistic furniture (decided 2026-11-16, Eilam)
+
+Eilam wants furniture more realistic than the flat Kenney kit, even at some cost in performance, because the game is tested as a Windows build on a modern PC, not in the browser.
+- **Look:** saturated toy/dollhouse colours (stronger than Kenney), real materials (wood grain image, brushed steel, glass with a round profile, leather inlay), rounded edges (bevels), pieces built from several shapes rather than boxes. Plants are crossed alpha leaf cards, never lumps. Wall pictures are framed with a mat; goods sit on shelves and in display cases.
+- **Modular where players build:** the shop counter is a kit on a 0.43 grid (end left, end right, straight, corner, register segment); display case, safe, shelf, filing cabinet, armchair, sofa, coffee table, chairs, stool, lamps, tall bookcase, rug, three pictures, clock, three plants. 26 pieces in `assets/models/artist_furniture/`, made by `tools/blender/build_furniture.py` (headless `bpy`, so any piece can be changed and rebuilt).
+- **Budget per piece (proposal for the PC build, to confirm with the Programmer):** up to about 3,000 faces (the bookcase is the largest), one embedded 256 px texture, materials shared by colour. Weight today: 2.4 MB for all 26.
+- **Replacing Kenney:** gradually, most seen first: shop counter and register (done), display case (done), sofa and armchair (done), beds, desks and chairs for the offices, kitchen run, washers and dryers, then the rest. Kenney stays for what has no replacement yet.
+- **Open:** a few pieces still look simple (shelf goods, bin); wood is a flat tiled image, not a real photo.
+
 ## Facade styles (catalog, first four: New York)
 
 Source: Eilam's reference photos (Wikimedia Commons, CC BY-SA: reference only, never in the game),
