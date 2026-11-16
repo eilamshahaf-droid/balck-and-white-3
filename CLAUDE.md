@@ -35,6 +35,7 @@ scripts/planning/    the city-planning sandbox (model, roads, terrain, visuals, 
 scripts/maplab/      the map lab: districts' street styles, blocks, land use, menu
 data/                every tunable number, as .tres resources (one per system); data/maps/ the stage maps
 shaders/             toon (cel) shading, ghost fade, depth of field, tilt-shift + colour grade
+assets/audio/kenney/ Kenney CC0 sounds (Interface Sounds, RPG Audio, Impact Sounds), with a licence note
 assets/models/       third-party models (Kenney CC0, the god's glove from the WebXR hand, MIT) and our Meshy props (meshy/), with licence notes
 tests/               headless tests that drive the real game (run before pushing), and pace_sim (a bot that plays the Slums fast, for balance)
 tools/maplab/        the Map Lab generator and the stage map exporter (Node)
@@ -79,6 +80,7 @@ The scene is small; most nodes are built in code at startup.
 | `StageScreens` | `world/stage_screens.gd` | The opening scene: a few text panels (who speaks, what is seen, the line; `DistrictSettings.opening_*`, read through `opening_count`, `opening_speaker`, `opening_direction`, `opening_line`), Next and Skip, over the dimmed, paused world on its own high layer. First run only, remembered in `user://opening_seen`; skipped headless or with `--no-briefing`, shown again with `--briefing`. |
 | `ResidentCard` | `people/resident_card.gd` | Debug (B): hover a person to see who they are and lines to family, friends, home, work. |
 | `TrainingMarks` | `props/training_marks.gd` | The training meter over the Office (who, percent, seconds left) and a badge over every Rep and Fixer (`UnitSettings.badge`, "Training meter and badges"). |
+| `SoundCues` | `sound_cues.gd` (`SoundCues`) | Plays what happened, from the systems' signals: rooms placed, closed and reopened; coins when `Treasury.money` jumps by `coins_min` or more at once; pages when paperwork is spent (not the Reps' upkeep); an inspector sent, stamping (`papers_shown`), short, thrown, giving up; a building taken, a Rep or the Fixer trained, a block complete, a key building opened, a district won, a mark refused. Keeps a low city hum looping (made in code, swelling slowly; not when headless) and makes every button click (`Sfx.watch_buttons`). Sound only. |
 | `DebugPanel` | `debug_panel.gd` | Testing shortcuts and a per-minute log of money and paperwork in and out, hidden until F1. Not part of the game. |
 | `HUD` | `hud.gd` (+ `help_label.gd`, `mission_card.gd`, `world/building_tooltip.gd`) | The numbers the player may see (paperwork, money, followers with sellers and clerks, Reps free and out of the cap, buildings), the controls folded into one hint line (H opens them), `MissionCard`: one step at a time with a progress bar, following what really happened and never repeating a done step (plan the Office's free room, send the Rep, take the first building, throw the inspector when one is out, train the Fixer, open a key building, then "Key buildings: 1 of 9"; texts in `data/districts.tres`, "Missions"), and the card over the building under the hand (followers of room, clerks and sellers and whether homes are short, Manager, or what it takes to take it: reach, impression). |
 
@@ -87,7 +89,7 @@ World objects, each self-contained and built in code: `citizen.gd`, `taxi.gd`, `
 `building_visual.gd` merges Kenney facade modules into one mesh per building.
 `building_box.gd` (`BuildingBox.size_of`) reads a building's box from its collision shape.
 `shared_meshes.gd` (`SharedMeshes`) hands out low-poly primitive meshes shared by every instance.
-`sfx.gd` makes placeholder sounds in code.
+`sfx.gd` plays every sound: `play(tree, where, event)` in the world, `ui(tree, event)` on the screen; an event plays a random one of its files in `data/sounds.tres` (`SoundSettings`), or, with none set, the old sound made in code (surfaces, rain, fire, chimes). `watch_buttons(tree)` makes every button click; `ambience(seconds)` the city hum. The wheel (`HandTools`) and the room editor call it directly.
 
 Groups used for lookups: `citizens`, `buildings`, `doors`, `god_grabbable`, `shops`,
 `wind_reactive`, `no_toon`.
@@ -208,6 +210,7 @@ Tunables: `data/planning.tres`.
 | `data/inspectors.tres` | `InspectorSettings` | exposure from work and takings, the inspectors' timer and how many at once, coming back, the inspector's walk, patience and look, what he demands, burying the file, the notes |
 | `data/followers.tres` | `FollowersSettings` | the economy: growth, seller and clerk rates, the base Rep cap, training costs, what Reps cost in paperwork a second, the influence radius, the pull inside a block, building upkeep, the god's attention, the loan |
 | `data/rooms.tres` | `RoomSettings` (+ `RoomKind`s) | the room kinds (shape, price, upkeep, what each gives, where it fits, what it must be next to), the stairs, upkeep and reopening, the grid (bay width, floor height, limits), the stores with no room built, the refund, the Office's first rooms and its steady prices, the editor's look |
+| `data/sounds.tres` | `SoundSettings` | which files each sound event plays, volumes, pitch spread, how far sounds carry, the city hum, when money clinks |
 | `data/title.tres` | `TitleSettings` | title screen: subtitle, colours, sizes, credit lines |
 | `data/room_designer.tres` | `RoomDesignerSettings` | room designer: furniture scale, snap and grid, a place's size, the furniture list and groups, surfaces, wall heights, category colours |
 | `data/mapgen.tres` | `MapGenSettings` (+ `Archetype`s) | the neighbourhood kinds the map generator places |
