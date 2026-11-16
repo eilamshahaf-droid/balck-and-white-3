@@ -1,9 +1,10 @@
 # Builds the web version of the Alpha and publishes it on GitHub Pages, so Eilam can play
-# every Alpha in the browser without the Godot editor. It always builds the `alpha` branch,
+# every Alpha in the browser without the Godot editor, and beside it a Windows build (one
+# .exe in Godministration-windows.zip) for judging heavier art on a PC. It always builds the `alpha` branch,
 # but runs from `main`: GitHub only lets the default branch deploy to Pages, so a run
 # started by a push to `alpha` builds and then has its deploy refused. Push `alpha` first,
 # then `main`.
-name: Alpha web build
+name: Alpha web and Windows build
 
 on:
   push:
@@ -30,16 +31,16 @@ jobs:
         with:
           ref: alpha
 
-      - name: Cache Godot and the web templates
+      - name: Cache Godot and the export templates
         id: cache
         uses: actions/cache@v4
         with:
           path: |
             ~/godot
             ~/.local/share/godot/export_templates
-          key: godot-${{ env.GODOT_VERSION }}-web
+          key: godot-${{ env.GODOT_VERSION }}-web-windows
 
-      - name: Download Godot and the web templates
+      - name: Download Godot and the web and Windows templates
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           base=https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable
@@ -50,7 +51,8 @@ jobs:
           curl -sSL -o templates.tpz $base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz
           dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
           mkdir -p $dest
-          unzip -qj templates.tpz templates/web_nothreads_release.zip templates/version.txt -d $dest
+          unzip -qj templates.tpz templates/web_nothreads_release.zip \
+            templates/windows_release_x86_64.exe templates/version.txt -d $dest
 
       - name: Export the web build
         run: |
@@ -58,6 +60,13 @@ jobs:
           mkdir -p build/web
           ~/godot/godot --headless --path . --export-release Web build/web/index.html
           test -s build/web/index.pck
+
+      - name: Export the Windows build
+        run: |
+          mkdir -p build/windows
+          ~/godot/godot --headless --path . --export-release "Windows Desktop" build/windows/Godministration.exe
+          test -s build/windows/Godministration.exe
+          (cd build/windows && zip -q -9 ../web/Godministration-windows.zip Godministration.exe)
 
       - uses: actions/configure-pages@v5
         with:

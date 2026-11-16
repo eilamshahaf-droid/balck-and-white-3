@@ -159,7 +159,7 @@ Artist's browser editor used). `room_designer.gd` (`RoomDesigner`, a CanvasLayer
 style's screen layer) is the screen; `designer_preview.gd` the 3D view in its own world, always
 editing: put a piece on a floor, drag it across it, snapped to `snap` (Shift for free), with grid
 lines every `grid_step` on each floor; models are drawn `furniture_scale` times (the Kenney pieces
-are about half true size, and the room files store unscaled sizes); `furniture_catalog.gd` each model's scene, icon, size from its meshes, groups, what
+are about half true size, and the room files store unscaled sizes); `furniture_catalog.gd` each model's scene (Kenney's in `model_folder`, the Artist's Blender pieces, `artist_models`, in `artist_folder`), icon, size from its meshes, groups, what
 is a surface and what hangs on a wall, `new_item` and `rest_height` (stacking);
 `room_design.gd` (`RoomDesign`, `Item`) the design and its file, format 1 as the Artist set it
 (x per cell to the item's middle, y above that floor, z from the room's middle, back negative);
@@ -283,6 +283,10 @@ editor, so every Alpha must be playable in the browser.
   its web templates, exports the `Web` preset (`export_presets.cfg`, no threads so GitHub
   Pages needs no special headers; the web always uses the Compatibility renderer) and
   publishes it on GitHub Pages. Check that the run is green after each Alpha push.
+- **Windows (for the heavier art):** https://eilamshahaf-droid.github.io/balck-and-white-3/Godministration-windows.zip,
+  built by the same workflow from the `Windows Desktop` preset (one .exe with the pack embedded,
+  `application/modify_resources=false` so no rcedit is needed) and published next to the web build.
+  To export it locally, put `windows_release_x86_64.exe` from the 4.4.1 templates beside the web template.
 - **Download (fallback):** https://github.com/eilamshahaf-droid/balck-and-white-3/archive/refs/heads/alpha.zip
   always gives the branch's newest commit. Also keep `/mnt/project-files/builds/alpha.zip`
   in step with it.

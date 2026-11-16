@@ -1,7 +1,7 @@
 extends Node
 ## Drives the room designer headless: furniture is put in, stacks on a surface, turns,
-## undoes, survives a save and a reload in format 1, snaps to the grid, and the 3D view
-## builds. Prints ROOM DESIGNER TEST: PASS or FAILED; with --shot=<path> it leaves the
+## undoes, survives a save and a reload in format 1, snaps to the grid, offers the
+## Artist's pieces, and the 3D view builds. Prints ROOM DESIGNER TEST: PASS or FAILED; with --shot=<path> it leaves the
 ## view up for a screenshot instead of quitting.
 
 const SCENE := preload("res://scenes/room_designer.tscn")
@@ -51,6 +51,16 @@ func _ready() -> void:
 	d._preview._free = true
 	_check(is_equal_approx(d._preview._snap(1.13), 1.13), "Shift places freely")
 	d._preview._free = false
+	var missing := PackedStringArray()
+	for m in d.settings.artist_models:
+		if d.catalog.scene(m) == null or d.catalog.icon(m) == null:
+			missing.append(m)
+	_check(missing.is_empty() and d.catalog.models_in("all", "counter").size() == 5,
+			"the Artist's pieces are on offer beside Kenney's %s" % missing)
+	_check(d.catalog.is_surface(&"counter_register") and d.catalog.is_surface(&"display_case") \
+			and d.catalog.wall_height(&"picture_landscape") > 1.0 \
+			and d.catalog.wall_height(&"wall_clock") > 1.0,
+			"counters and display cases take things on top; pictures and the clock hang")
 	d.selected = screen
 	d._sync(false)
 	print("ROOM DESIGNER TEST: %s" % ("PASS" if _failed == 0 else "%d FAILED" % _failed))
