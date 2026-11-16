@@ -57,21 +57,34 @@ extends Resource
 		&"televisionAntenna", &"televisionModern", &"televisionVintage", &"toaster", &"toilet",
 		&"toiletSquare", &"trashcan", &"washer", &"washerDryerStacked"
 ]
+## The Artist's own pieces (made in Blender, same units and origin as Kenney's), offered
+## beside them; their files and icons are in this folder.
+@export var artist_folder := "res://assets/models/artist_furniture/"
+@export var artist_models: Array[StringName] = [
+		&"counter_straight", &"counter_end_l", &"counter_end_r", &"counter_corner",
+		&"counter_register", &"display_case", &"safe", &"shelf_goods", &"file_cabinet",
+		&"desk_lamp", &"wastebin", &"plant_fern", &"plant_ficus", &"plant_bigleaf", &"armchair",
+		&"sofa_two", &"coffee_table_round", &"chair_plain", &"stool_round", &"floor_lamp",
+		&"bookcase_tall", &"rug_round", &"picture_landscape", &"picture_portrait",
+		&"picture_stripes", &"wall_clock",
+]
 ## Each group is a regular expression on the model's name.
 @export var groups := {
 	"all": ".",
 	"beds": "(?i)^bed|bunk",
 	"seats": "(?i)chair|sofa|lounge|bench|stool|ottoman",
 	"tables": "(?i)table|desk|bar|counter",
+	"shop": "(?i)counter|display|shelf_goods|register|safe",
 	"kitchen": "(?i)kitchen|toaster|hood|fridge|washer|dryer|trashcan",
 	"bath": "(?i)bath|toilet|shower|sink",
-	"storage": "(?i)cabinet|bookcase|shelf|drawer|coat",
-	"decor": "(?i)lamp|plant|rug|pillow|bear|book|cardboard",
+	"storage": "(?i)cabinet|bookcase|shelf|drawer|coat|safe",
+	"decor": "(?i)lamp|plant|rug|pillow|bear|book|cardboard|picture|clock|wastebin",
 	"tech": "(?i)computer|laptop|radio|speaker|keyboard|mouse|television",
 }
 ## Things with a top other things can stand on, unless the name also matches surface_not
 ## or the thing is taller than surface_max_height.
-@export var surface := "(?i)table|desk|cabinet|kitchenBar|sideTable|bench|drawer"
+@export var surface := \
+		"(?i)table|desk|cabinet|kitchenBar|sideTable|bench|drawer|counter|safe|shelf_goods|display"
 @export var surface_not := "upper|Corner|Mirror"
 @export var surface_max_height := 1.2
 ## Things that hang on the back wall at a height: name pattern -> metres above the floor.
@@ -79,6 +92,7 @@ extends Resource
 	"(?i)lampWall|Mirror": 1.7,
 	"(?i)upper": 1.5,
 	"(?i)ceiling": 2.4,
+	"(?i)picture|clock": 1.6,
 }
 ## Things stacked on a surface must leave this much room under the ceiling.
 @export var ceiling_gap := 0.3

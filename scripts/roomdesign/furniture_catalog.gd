@@ -49,7 +49,7 @@ func group_names() -> Array[String]:
 func models_in(group: String, search: String) -> Array[StringName]:
 	var re: RegEx = _groups.get(group, _groups.get("all"))
 	var out: Array[StringName] = []
-	for m in settings.models:
+	for m in settings.models + settings.artist_models:
 		if re.search(m) and (search == "" or String(m).to_lower().contains(search.to_lower())):
 			out.append(m)
 	return out
@@ -57,13 +57,13 @@ func models_in(group: String, search: String) -> Array[StringName]:
 
 func scene(model: StringName) -> PackedScene:
 	if not _scenes.has(model):
-		_scenes[model] = load(settings.model_folder + String(model) + ".glb")
+		_scenes[model] = load(_folder_of(model) + String(model) + ".glb")
 	return _scenes[model]
 
 
 func icon(model: StringName) -> Texture2D:
 	if not _icons.has(model):
-		_icons[model] = load(settings.model_folder + "icons/" + String(model) + ".png")
+		_icons[model] = load(_folder_of(model) + "icons/" + String(model) + ".png")
 	return _icons[model]
 
 
@@ -153,3 +153,8 @@ func _bounds(node: Node, xf: Transform3D) -> AABB:
 		box = b if first else box.merge(b)
 		first = false
 	return box
+
+
+## The Kenney kit's folder, or the Artist's for a piece of theirs.
+func _folder_of(model: StringName) -> String:
+	return settings.artist_folder if settings.artist_models.has(model) else settings.model_folder
