@@ -1,0 +1,63 @@
+[gd_resource type="Resource" script_class="SoundSettings" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/sound_settings.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+files = {
+&"click": PackedStringArray("click_002.ogg", "click_003.ogg"),
+&"open": PackedStringArray("open_001.ogg"),
+&"close": PackedStringArray("close_001.ogg"),
+&"error": PackedStringArray("error_003.ogg"),
+&"wheel": PackedStringArray("maximize_003.ogg"),
+&"choose": PackedStringArray("select_002.ogg"),
+&"room_placed": PackedStringArray("impact_wood_medium_000.ogg", "impact_wood_medium_001.ogg", "impact_wood_medium_002.ogg"),
+&"room_removed": PackedStringArray("back_002.ogg"),
+&"room_closed": PackedStringArray("minimize_003.ogg"),
+&"room_reopened": PackedStringArray("drop_003.ogg"),
+&"coins": PackedStringArray("handle_coins.ogg", "handle_coins_2.ogg"),
+&"pages": PackedStringArray("book_flip_1.ogg", "book_flip_2.ogg", "book_flip_3.ogg"),
+&"ran_dry": PackedStringArray("error_007.ogg"),
+&"inspector_out": PackedStringArray("question_002.ogg"),
+&"inspector_arrives": PackedStringArray("bong_001.ogg"),
+&"stamp": PackedStringArray("impact_soft_heavy_000.ogg"),
+&"short": PackedStringArray("error_002.ogg"),
+&"thrown": PackedStringArray("cloth_3.ogg"),
+&"gave_up": PackedStringArray("minimize_005.ogg"),
+&"taken": PackedStringArray("confirmation_002.ogg"),
+&"trained": PackedStringArray("maximize_006.ogg"),
+&"block": PackedStringArray("confirmation_004.ogg"),
+&"district": PackedStringArray("maximize_009.ogg"),
+&"key_open": PackedStringArray("confirmation_003.ogg"),
+&"caught": PackedStringArray("error_005.ogg"),
+&"reverted": PackedStringArray("drop_002.ogg"),
+&"set_down": PackedStringArray("book_place_1.ogg"),
+&"cloth": PackedStringArray("cloth_1.ogg", "cloth_2.ogg", "cloth_4.ogg"),
+&"concrete": PackedStringArray("footstep_concrete_000.ogg", "footstep_concrete_001.ogg", "footstep_concrete_002.ogg"),
+&"asphalt": PackedStringArray("footstep_concrete_000.ogg", "footstep_concrete_002.ogg"),
+&"wood": PackedStringArray("impact_wood_light_000.ogg", "impact_wood_light_001.ogg"),
+&"metal": PackedStringArray("impact_metal_light_000.ogg", "impact_metal_light_001.ogg"),
+&"glass": PackedStringArray("impact_glass_light_000.ogg", "impact_glass_light_001.ogg"),
+&"grass": PackedStringArray("footstep_grass_000.ogg", "footstep_grass_001.ogg"),
+&"paper": PackedStringArray("book_flip_1.ogg", "book_flip_2.ogg"),
+&"soft": PackedStringArray("impact_soft_medium_000.ogg", "impact_soft_medium_001.ogg")
+}
+volumes = {
+&"click": -8.0,
+&"choose": -6.0,
+&"wheel": -10.0,
+&"open": -6.0,
+&"close": -6.0,
+&"error": -6.0,
+&"room_placed": -2.0,
+&"coins": -4.0,
+&"pages": -4.0,
+&"inspector_out": -4.0,
+&"stamp": 0.0,
+&"cloth": -6.0,
+&"concrete": -4.0,
+&"asphalt": -6.0,
+&"taken": -2.0,
+&"trained": -4.0,
+&"district": 0.0
+}

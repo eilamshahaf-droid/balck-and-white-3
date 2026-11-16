@@ -1,4 +1,4 @@
-[gd_scene load_steps=43 format=3]
+[gd_scene load_steps=44 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
@@ -42,6 +42,7 @@
 [ext_resource type="Script" path="res://scripts/world/stage_screens.gd" id="66_stage"]
 [ext_resource type="Script" path="res://scripts/props/training_marks.gd" id="81_training_marks"]
 [ext_resource type="Script" path="res://scripts/people/unit_upkeep.gd" id="82_unit_upkeep"]
+[ext_resource type="Script" path="res://scripts/sound_cues.gd" id="83_sound_cues"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_city")
@@ -311,5 +312,18 @@ screens = NodePath("../StageScreens")
 layer = 5
 script = ExtResource("60_won")
 districts = NodePath("../Districts")
+
+
+[node name="SoundCues" type="Node" parent="." node_paths=PackedStringArray("districts", "rooms", "treasury", "faith", "campaigns", "inspectors", "population", "breaches", "unit_upkeep")]
+script = ExtResource("83_sound_cues")
+districts = NodePath("../Districts")
+rooms = NodePath("../Rooms")
+treasury = NodePath("../Treasury")
+faith = NodePath("../Faith")
+campaigns = NodePath("../Campaigns")
+inspectors = NodePath("../Inspectors")
+population = NodePath("../Population")
+breaches = NodePath("../Breaches")
+unit_upkeep = NodePath("../UnitUpkeep")
 
 [connection signal="cult_founded" from="Population" to="CameraRig" method="start_at"]

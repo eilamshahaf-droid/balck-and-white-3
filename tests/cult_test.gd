@@ -100,6 +100,13 @@ func _test_opening() -> void:
 ## needs a Rep of its own, so each is a decision), in about ten large blocks, and the
 ## base far enough from the core.
 func _test_stage_map() -> void:
+	var sounds: SoundSettings = load("res://data/sounds.tres")
+	var missing := PackedStringArray()
+	for event: StringName in sounds.files:
+		for file: String in sounds.files[event]:
+			if not ResourceLoader.exists(sounds.folder + file):
+				missing.append(file)
+	_check(missing.is_empty(), "every sound file named in data/sounds.tres is there %s" % missing)
 	var city: City = _main
 	var count := _districts.buildings.size()
 	var blocks := _districts.block_count()
