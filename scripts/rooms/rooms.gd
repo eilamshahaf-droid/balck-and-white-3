@@ -119,8 +119,8 @@ func is_office(index: int) -> bool:
 	return index == districts.headquarters or districts.is_key(index)
 
 
-## Why `kind`, turned `turns`, can't go at `origin` in building `index`; "" when it can.
-func why_not(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> String:
+## Why `kind` can't go at `origin` in building `index`; "" when it can.
+func why_not(index: int, kind: RoomKind, origin: Vector2i) -> String:
 	if not districts.is_yours(index):
 		return "not your building"
 	if kind.office_only and not is_office(index):
@@ -128,10 +128,10 @@ func why_not(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> String
 	if not offers(index, kind):
 		return "not in this district"
 	var layout := layout_of(index)
-	if not layout.fits(kind, origin, turns):
-		if not _free(index, kind, origin, turns):
+	if not layout.fits(kind, origin):
+		if not _free(index, kind, origin):
 			return "does not fit there"
-		if kind.needs_next != &"" and not layout.touches(kind.turned(turns), origin, kind.needs_next):
+		if kind.needs_next != &"" and not layout.touches(kind.cells, origin, kind.needs_next):
 			return "must be next to a %s" % String(kind.needs_next).capitalize()
 		return "must touch the ground floor"
 	if not treasury.can_afford(money_of(index, kind)):
@@ -198,23 +198,23 @@ func why_not_remove(index: int, cell: Vector2i) -> String:
 
 
 ## Fit `kind` into building `index` and pay for it. False when it can't be done.
-func place(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> bool:
-	if why_not(index, kind, origin, turns) != "":
+func place(index: int, kind: RoomKind, origin: Vector2i) -> bool:
+	if why_not(index, kind, origin) != "":
 		return false
 	var money := money_of(index, kind)
 	treasury.spend_money(money)
 	faith.spend(paperwork_of(index, kind), &"room")
-	layout_of(index).add(kind, origin, turns).paid = money
+	layout_of(index).add(kind, origin).paid = money
 	_count(index)
 	placed.emit(index, kind)
 	return true
 
 
-## Fit `kind` into the first place of building `index` it goes, trying every turn, and
-## pay for it. False when there is no place or no money.
+## Fit `kind` into the first place of building `index` it goes and pay for it. False
+## when there is no place or no money.
 func place_anywhere(index: int, kind: RoomKind) -> bool:
 	var spot := _first_fit(layout_of(index), kind)
-	return spot.z >= 0 and place(index, kind, Vector2i(spot.x, spot.y), spot.z)
+	return spot.x >= 0 and place(index, kind, spot)
 
 
 ## Take out the room covering `cell` of building `index`; part of its money comes back.
@@ -235,16 +235,14 @@ func room_of(index: int) -> int:
 	return totals_of(index).followers + layout_of(index).free_cells() * settings.followers_per_cell
 
 
-## The first place `kind` goes in `layout`, from the ground floor up: column, row and
-## quarter turns, or turns -1 when there is none.
-func _first_fit(layout: BuildingLayout, kind: RoomKind) -> Vector3i:
-	# As drawn before turned: a shop lies along the street when it can.
-	for turns in 4:
-		for y in layout.rows:
-			for x in layout.columns:
-				if layout.fits(kind, Vector2i(x, y), turns):
-					return Vector3i(x, y, turns)
-	return Vector3i(0, 0, -1)
+## The first place `kind` goes in `layout`, from the ground floor up, or (-1, -1) when
+## there is none.
+func _first_fit(layout: BuildingLayout, kind: RoomKind) -> Vector2i:
+	for y in layout.rows:
+		for x in layout.columns:
+			if layout.fits(kind, Vector2i(x, y)):
+				return Vector2i(x, y)
+	return Vector2i(-1, -1)
 
 
 ## Followers building `index` would hold with no rooms fitted: what lives in a building
@@ -255,9 +253,9 @@ func plain_room(index: int) -> int:
 	return layout.free_cells() * settings.followers_per_cell
 
 
-func _free(index: int, kind: RoomKind, origin: Vector2i, turns: int) -> bool:
+func _free(index: int, kind: RoomKind, origin: Vector2i) -> bool:
 	var layout := layout_of(index)
-	for c in kind.turned(turns):
+	for c in kind.cells:
 		if not layout.is_free(origin + c):
 			return false
 	return true
@@ -293,12 +291,12 @@ func _furnish_office(layout: BuildingLayout) -> void:
 	for id in settings.office_start:
 		var kind := settings.kind(id)
 		var spot := _first_fit(layout, kind)
-		if spot.z >= 0:
-			layout.add(kind, Vector2i(spot.x, spot.y), spot.z).bought = false
+		if spot.x >= 0:
+			layout.add(kind, spot).bought = false
 
 
 func _escalation(index: int, kind: RoomKind) -> float:
-	if settings.price_step_exempt.has(kind.id):
+	if settings.price_step_exempt.has(kind.id) or settings.price_step_exempt.has(kind.group):
 		return 1.0
 	var steps := bought_in(index)
 	if index == districts.headquarters:

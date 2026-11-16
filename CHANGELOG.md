@@ -3,6 +3,13 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.28.0 (2026-11-16): rooms are never turned
+Eilam's decision through the Designer.
+- **No turning.** The room planner no longer turns rooms (the right button now puts the picked room down). Each way round is a room of its own in the list, with the same price and numbers.
+- **Six new shapes:** Tall Family Flat (1 bay by 2 floors), Tall Laundry Room (1 by 2), Desk Room (mirrored), Training Room (flipped, the bar on top), Wide Archive (3 bays by 1 floor) and Tall Shop (1 by 2, from the ground floor, 2 sellers). The Tall Shop keeps the Vault possible in the Office: its stairs leave no place for a Vault beside a Shop lying along the ground. A mirrored Desk Room counts as a Desk Room for the Archive and the card, and the price rules follow each room's family (`group` in `data/rooms.tres`).
+- The planner's list shrinks its rows to fit the screen, and is a little wider.
+- Try it: double click the Office, pick Tall Shop and put it up the left wall, then a Vault right above it.
+
 ## Pre-Alpha 0.27.0 (2026-11-15): a title screen, and the room designer in 3D
 Asked by Eilam.
 - **Title screen.** The game opens on a menu: New Game, Room Designer, Settings, Credits (and Quit on a PC), with the version in the corner. Settings: volume, full screen (PC), the art style on or off, and "Show the opening scene again". Credits name the kits and licences; CC-BY lines from `art/kits/CREDITS.md` go into `data/title.tres` once those models are used. The room designer's "Back to title" returns here; the debug panel no longer has the designer button.

@@ -1,7 +1,8 @@
 class_name RoomKind
 extends Resource
 ## One kind of room the player can fit into a building: its shape on the building's
-## grid of bays and floors, what it costs, and what it gives.
+## grid of bays and floors, what it costs, and what it gives. Rooms are never turned
+## (Eilam, 2026-11-16): each way round is a kind of its own, sharing a `group`.
 
 @export var id := &""
 @export var title := ""
@@ -38,7 +39,8 @@ extends Resource
 ## It must touch (side by side or one above the other) a room of this kind or group;
 ## &"" for none.
 @export var needs_next := &""
-## The family it belongs to for other rooms' needs_next (every shop is a &"shop").
+## The family it belongs to for other rooms' needs_next, the price exemptions and the
+## mission card (every shop is a &"shop"; the Desk Room either way round is &"desks").
 @export var group := &""
 ## Only in an office (today: the main Office).
 @export var office_only := false
@@ -48,19 +50,3 @@ extends Resource
 
 func is_a(what: StringName) -> bool:
 	return id == what or (group != &"" and group == what)
-
-
-## Its cells turned a quarter turn `turns` times, moved back so the lowest and leftmost
-## are at 0.
-func turned(turns: int) -> Array[Vector2i]:
-	var out: Array[Vector2i] = []
-	var low := Vector2i(1 << 20, 1 << 20)
-	for cell in cells:
-		var c := cell
-		for t in posmod(turns, 4):
-			c = Vector2i(-c.y, c.x)
-		out.append(c)
-		low = Vector2i(mini(low.x, c.x), mini(low.y, c.y))
-	for k in out.size():
-		out[k] -= low
-	return out
