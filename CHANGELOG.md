@@ -7,6 +7,9 @@ Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-
 - Level-1 designs for Tall Family Flat, Tall Laundry Room, Tall Shop, Desk Room (mirrored), Training Room (flipped) and Wide Archive, in `data/rooms/designs/`. Made with the Kenney kit and checked by script (inside the room and its cells); not yet seen in the designer, so adjust by eye. The new kinds got their colour category in `room_designer_settings.gd`.
 - Try it: title screen, Room Designer, pick one of the six.
 
+## Realistic furniture, first 26 pieces (2026-11-16, Artist)
+- New folder `assets/models/artist_furniture/` with 26 pieces and icons: a modular shop counter (ends, straight, corner, register segment), display case, safe, shelf with goods, filing cabinet, armchair, sofa, coffee table, chair, stool, lamps, tall bookcase, rug, three framed pictures, a clock, three plants (alpha leaf cards). Built by `tools/blender/build_furniture.py`. Direction and budget are in `docs/ART.md`. Not in the room designer's list yet: the Programmer adds the folder and names.
+
 ## Pre-Alpha 0.29.0 (2026-11-16): real sounds
 Asked by Eilam: much better sound, from a free pack for now.
 - **Recorded sounds** from three Kenney packs (CC0: Interface Sounds, RPG Audio, Impact Sounds), 49 files in `assets/audio/kenney/`. The old sounds made in code are kept only where no file is set (rain, fire, the miracles' chimes).
