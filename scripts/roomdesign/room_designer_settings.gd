@@ -89,7 +89,9 @@ extends Resource
 	&"family": "home", &"tenement": "home", &"duplex": "home", &"common": "home",
 	&"guard": "fear", &"shop": "shop", &"corner": "shop", &"market": "shop", &"stock": "shop",
 	&"desks": "office", &"archive": "office", &"vault": "office", &"training": "office",
-	&"laundry": "util",
+	&"laundry": "util", &"family_tall": "home", &"laundry_tall": "util",
+	&"shop_tall": "shop", &"desks_mirrored": "office", &"archive_wide": "office",
+	&"training_down": "office",
 }
 @export var colors := {
 	"home": [Color("bcd0f0"), Color("8fb0e8"), Color("5b8dd9")],

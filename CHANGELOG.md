@@ -3,6 +3,10 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Furniture for the six new rooms (2026-11-16, Artist)
+- Level-1 designs for Tall Family Flat, Tall Laundry Room, Tall Shop, Desk Room (mirrored), Training Room (flipped) and Wide Archive, in `data/rooms/designs/`. Made with the Kenney kit and checked by script (inside the room and its cells); not yet seen in the designer, so adjust by eye. The new kinds got their colour category in `room_designer_settings.gd`.
+- Try it: title screen, Room Designer, pick one of the six.
+
 ## Pre-Alpha 0.28.0 (2026-11-16): rooms are never turned
 Eilam's decision through the Designer.
 - **No turning.** The room planner no longer turns rooms (the right button now puts the picked room down). Each way round is a room of its own in the list, with the same price and numbers.

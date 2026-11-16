@@ -1,0 +1,277 @@
+{
+ "bay_width": 4.0,
+ "category": "office",
+ "cells": [
+  [
+   1,
+   0
+  ],
+  [
+   0,
+   1
+  ],
+  [
+   1,
+   1
+  ],
+  [
+   2,
+   1
+  ]
+ ],
+ "depth": 6.0,
+ "floor_height": 3.2,
+ "format": 1,
+ "items": [
+  {
+   "cell": [
+    1,
+    1
+   ],
+   "depth": 0,
+   "model": "cabinetTelevision",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    1,
+    1
+   ],
+   "depth": 0,
+   "model": "televisionModern",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.93,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 1,
+   "model": "table",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": 0.5
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 2,
+   "model": "chair",
+   "rot": 2,
+   "scale": 1.0,
+   "x": 1.3,
+   "y": 0.0,
+   "z": 1.5
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 2,
+   "model": "chair",
+   "rot": 2,
+   "scale": 1.0,
+   "x": 2.7,
+   "y": 0.0,
+   "z": 1.5
+  },
+  {
+   "cell": [
+    1,
+    1
+   ],
+   "depth": 1,
+   "model": "table",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": 0.5
+  },
+  {
+   "cell": [
+    1,
+    1
+   ],
+   "depth": 2,
+   "model": "chair",
+   "rot": 2,
+   "scale": 1.0,
+   "x": 1.3,
+   "y": 0.0,
+   "z": 1.5
+  },
+  {
+   "cell": [
+    1,
+    1
+   ],
+   "depth": 2,
+   "model": "chair",
+   "rot": 2,
+   "scale": 1.0,
+   "x": 2.7,
+   "y": 0.0,
+   "z": 1.5
+  },
+  {
+   "cell": [
+    2,
+    1
+   ],
+   "depth": 1,
+   "model": "table",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": 0.5
+  },
+  {
+   "cell": [
+    2,
+    1
+   ],
+   "depth": 2,
+   "model": "chair",
+   "rot": 2,
+   "scale": 1.0,
+   "x": 1.3,
+   "y": 0.0,
+   "z": 1.5
+  },
+  {
+   "cell": [
+    2,
+    1
+   ],
+   "depth": 2,
+   "model": "chair",
+   "rot": 2,
+   "scale": 1.0,
+   "x": 2.7,
+   "y": 0.0,
+   "z": 1.5
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 0,
+   "model": "bookcaseOpen",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.8,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    2,
+    1
+   ],
+   "depth": 0,
+   "model": "bookcaseOpen",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.2,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 0,
+   "model": "bench",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 1.2,
+   "y": 0.0,
+   "z": -2.4
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 0,
+   "model": "bench",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.8,
+   "y": 0.0,
+   "z": -2.4
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 1,
+   "model": "rugRound",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": 0.2
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 2,
+   "model": "coatRack",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": 2.5
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 2,
+   "model": "pottedPlant",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.6,
+   "y": 0.0,
+   "z": 2.3
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 2,
+   "model": "lampRoundFloor",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.5,
+   "y": 0.0,
+   "z": 2.3
+  }
+ ],
+ "level": 1,
+ "room": "training_down",
+ "title": "Training Room (flipped)"
+}
