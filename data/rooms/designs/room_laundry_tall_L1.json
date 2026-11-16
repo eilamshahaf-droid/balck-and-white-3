@@ -1,0 +1,178 @@
+{
+ "bay_width": 4.0,
+ "category": "util",
+ "cells": [
+  [
+   0,
+   0
+  ],
+  [
+   0,
+   1
+  ]
+ ],
+ "depth": 6.0,
+ "floor_height": 3.2,
+ "format": 1,
+ "items": [
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 0,
+   "model": "washer",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.7,
+   "y": 0.0,
+   "z": -2.3
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 0,
+   "model": "washer",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": -2.3
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 0,
+   "model": "washer",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.3,
+   "y": 0.0,
+   "z": -2.3
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 1,
+   "model": "table",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": 0.3
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 2,
+   "model": "trashcan",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.5,
+   "y": 0.0,
+   "z": 2.3
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 2,
+   "model": "cardboardBoxOpen",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.8,
+   "y": 0.0,
+   "z": 2.2
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 0,
+   "model": "dryer",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.7,
+   "y": 0.0,
+   "z": -2.3
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 0,
+   "model": "dryer",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": -2.3
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 0,
+   "model": "dryer",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.3,
+   "y": 0.0,
+   "z": -2.3
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 2,
+   "model": "bench",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": 1.6
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 1,
+   "model": "cardboardBoxClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.7,
+   "y": 0.0,
+   "z": 0.4
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 1,
+   "model": "cardboardBoxClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.4,
+   "y": 0.0,
+   "z": 0.4
+  }
+ ],
+ "level": 1,
+ "room": "laundry_tall",
+ "title": "Tall Laundry Room"
+}

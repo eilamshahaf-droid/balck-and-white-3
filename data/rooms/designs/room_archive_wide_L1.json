@@ -1,0 +1,221 @@
+{
+ "bay_width": 4.0,
+ "category": "office",
+ "cells": [
+  [
+   0,
+   0
+  ],
+  [
+   1,
+   0
+  ],
+  [
+   2,
+   0
+  ]
+ ],
+ "depth": 6.0,
+ "floor_height": 3.2,
+ "format": 1,
+ "items": [
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 0,
+   "model": "bookcaseClosedWide",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 1.3,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 0,
+   "model": "bookcaseClosedWide",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.8,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 0,
+   "model": "bookcaseClosedWide",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.3,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    2,
+    0
+   ],
+   "depth": 0,
+   "model": "bookcaseClosedWide",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.8,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    2,
+    0
+   ],
+   "depth": 0,
+   "model": "bookcaseClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.9,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 1,
+   "model": "bookcaseClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.5,
+   "y": 0.0,
+   "z": 0.0
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 1,
+   "model": "bookcaseClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.8,
+   "y": 0.0,
+   "z": 0.0
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 1,
+   "model": "bookcaseClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.5,
+   "y": 0.0,
+   "z": 0.0
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 1,
+   "model": "bookcaseClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.8,
+   "y": 0.0,
+   "z": 0.0
+  },
+  {
+   "cell": [
+    2,
+    0
+   ],
+   "depth": 1,
+   "model": "cardboardBoxClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.6,
+   "y": 0.0,
+   "z": 0.6
+  },
+  {
+   "cell": [
+    2,
+    0
+   ],
+   "depth": 1,
+   "model": "cardboardBoxClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.3,
+   "y": 0.0,
+   "z": 0.6
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 2,
+   "model": "desk",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 1.3,
+   "y": 0.0,
+   "z": 1.9
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 2,
+   "model": "chairDesk",
+   "rot": 2,
+   "scale": 1.0,
+   "x": 1.3,
+   "y": 1.153,
+   "z": 2.3
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 2,
+   "model": "laptop",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 1.3,
+   "y": 1.153,
+   "z": 1.9
+  },
+  {
+   "cell": [
+    1,
+    0
+   ],
+   "depth": 2,
+   "model": "lampRoundFloor",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 1.0,
+   "y": 0.0,
+   "z": 2.3
+  }
+ ],
+ "level": 1,
+ "room": "archive_wide",
+ "title": "Wide Archive"
+}
