@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RoomSettings" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="RoomSettings" load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://scripts/rooms/room_settings.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/rooms/room_kind.gd" id="2"]
@@ -13,6 +13,7 @@ cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)])
 money = 90.0
 followers = 5
 impression = 1.0
+group = &"family"
 
 [sub_resource type="Resource" id="Kind_1"]
 script = ExtResource("2")
@@ -84,6 +85,7 @@ money = 270.0
 paperwork = 30.0
 clerks = 2
 office_only = true
+group = &"desks"
 
 [sub_resource type="Resource" id="Kind_7"]
 script = ExtResource("2")
@@ -96,6 +98,7 @@ money = 225.0
 paperwork_cap = 150.0
 office_only = true
 needs_next = &"desks"
+group = &"archive"
 
 [sub_resource type="Resource" id="Kind_8"]
 script = ExtResource("2")
@@ -121,6 +124,7 @@ money = 450.0
 paperwork = 40.0
 reps = 1
 office_only = true
+group = &"training"
 
 [sub_resource type="Resource" id="Kind_10"]
 script = ExtResource("2")
@@ -171,7 +175,85 @@ cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)])
 money = 210.0
 impression = 5.0
 upkeep = 30.00
+group = &"laundry"
+
+[sub_resource type="Resource" id="Kind_14"]
+script = ExtResource("2")
+id = &"family_tall"
+title = "Tall Family Flat"
+note = "houses 5 on two floors"
+color = Color(0.95, 0.8, 0.25, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
+money = 90.0
+followers = 5
+impression = 1.0
+group = &"family"
+
+[sub_resource type="Resource" id="Kind_15"]
+script = ExtResource("2")
+id = &"laundry_tall"
+title = "Tall Laundry Room"
+note = "utility: +5 impression; $30 a minute"
+color = Color(0.45, 0.8, 0.75, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
+money = 210.0
+impression = 5.0
+upkeep = 30.00
+group = &"laundry"
+
+[sub_resource type="Resource" id="Kind_16"]
+script = ExtResource("2")
+id = &"desks_mirrored"
+title = "Desk Room (mirrored)"
+note = "2 clerks"
+color = Color(0.92, 0.92, 1.0, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2)])
+money = 270.0
+paperwork = 30.0
+clerks = 2
+office_only = true
+group = &"desks"
+
+[sub_resource type="Resource" id="Kind_17"]
+script = ExtResource("2")
+id = &"archive_wide"
+title = "Wide Archive"
+note = "150 paperwork more; by a Desk Room"
+color = Color(0.7, 0.6, 0.9, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+money = 225.0
+paperwork_cap = 150.0
+office_only = true
+needs_next = &"desks"
+group = &"archive"
+
+[sub_resource type="Resource" id="Kind_18"]
+script = ExtResource("2")
+id = &"training_down"
+title = "Training Room (flipped)"
+note = "one more Rep at a time"
+color = Color(0.45, 0.6, 1.0, 1)
+cells = Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)])
+money = 450.0
+paperwork = 40.0
+reps = 1
+office_only = true
+group = &"training"
+
+[sub_resource type="Resource" id="Kind_19"]
+script = ExtResource("2")
+id = &"shop_tall"
+title = "Tall Shop"
+note = "2 sellers, on two floors from the ground"
+color = Color(0.95, 0.45, 0.6, 1)
+cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
+money = 150.0
+paperwork = 20.0
+sellers = 2
+ground_only = true
+group = &"shop"
+impression = 2.0
 
 [resource]
 script = ExtResource("1")
-kinds = Array[ExtResource("2")]([SubResource("Kind_0"), SubResource("Kind_1"), SubResource("Kind_2"), SubResource("Kind_3"), SubResource("Kind_13"), SubResource("Kind_4"), SubResource("Kind_10"), SubResource("Kind_5"), SubResource("Kind_11"), SubResource("Kind_12"), SubResource("Kind_6"), SubResource("Kind_7"), SubResource("Kind_8"), SubResource("Kind_9")])
+kinds = Array[ExtResource("2")]([SubResource("Kind_0"), SubResource("Kind_14"), SubResource("Kind_1"), SubResource("Kind_2"), SubResource("Kind_3"), SubResource("Kind_13"), SubResource("Kind_15"), SubResource("Kind_4"), SubResource("Kind_10"), SubResource("Kind_5"), SubResource("Kind_19"), SubResource("Kind_11"), SubResource("Kind_12"), SubResource("Kind_6"), SubResource("Kind_16"), SubResource("Kind_7"), SubResource("Kind_17"), SubResource("Kind_8"), SubResource("Kind_9"), SubResource("Kind_18")])
