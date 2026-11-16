@@ -6,6 +6,7 @@ extends CanvasLayer
 ## ("Rooms"); the game goes on behind it unless the player paused it. Placeholder look:
 ## coloured blocks until the rooms have models.
 
+const Sfx := preload("res://scripts/sfx.gd")
 const PALETTE_WIDTH := 440.0
 const ROW := 52.0
 const MIN_ROW := 36.0
@@ -66,11 +67,14 @@ func open(building: Node3D) -> void:
 			_shown.append(kind)
 	_picked = NOTHING
 	visible = true
+	Sfx.ui(get_tree(), &"open")
 	_pointer = _board.get_local_mouse_position()
 	_board.queue_redraw()
 
 
 func close() -> void:
+	if visible:
+		Sfx.ui(get_tree(), &"close")
 	visible = false
 	_index = -1
 
@@ -105,17 +109,19 @@ func _click(at: Vector2) -> void:
 	for k in _shown.size():
 		if _palette_rect(k).has_point(at):
 			_picked = k
+			Sfx.ui(get_tree(), &"click")
 			return
 	if _palette_rect(_shown.size()).has_point(at):
 		_picked = REMOVE
+		Sfx.ui(get_tree(), &"click")
 		return
 	var cell := _cell_at(at)
 	if cell.x < 0:
 		return
 	if _picked == REMOVE:
-		rooms.remove(_index, cell)
-	elif _picked >= 0:
-		rooms.place(_index, _shown[_picked], cell)
+		Sfx.ui(get_tree(), &"room_removed" if rooms.remove(_index, cell) else &"error")
+	elif _picked >= 0 and not rooms.place(_index, _shown[_picked], cell):
+		Sfx.ui(get_tree(), &"error")
 
 
 # --- Layout ---

@@ -5,6 +5,7 @@ extends CanvasLayer
 ## start. Headless, or with --shot, it goes straight into the game, so the checks and the
 ## screenshot in CLAUDE.md still run the game.
 
+const Sfx := preload("res://scripts/sfx.gd")
 const GAME := "res://scenes/main.tscn"
 const DESIGNER := "res://scenes/room_designer.tscn"
 const GAP := 10
@@ -28,6 +29,7 @@ func _ready() -> void:
 		get_tree().change_scene_to_file.call_deferred(GAME)
 		return
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Sfx.watch_buttons(get_tree())
 	_build()
 
 
