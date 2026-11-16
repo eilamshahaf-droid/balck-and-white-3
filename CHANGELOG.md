@@ -3,6 +3,18 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Furniture for the six new rooms (2026-11-16, Artist)
+- Level-1 designs for Tall Family Flat, Tall Laundry Room, Tall Shop, Desk Room (mirrored), Training Room (flipped) and Wide Archive, in `data/rooms/designs/`. Made with the Kenney kit and checked by script (inside the room and its cells); not yet seen in the designer, so adjust by eye. The new kinds got their colour category in `room_designer_settings.gd`.
+- Try it: title screen, Room Designer, pick one of the six.
+
+## Pre-Alpha 0.29.0 (2026-11-16): real sounds
+Asked by Eilam: much better sound, from a free pack for now.
+- **Recorded sounds** from three Kenney packs (CC0: Interface Sounds, RPG Audio, Impact Sounds), 49 files in `assets/audio/kenney/`. The old sounds made in code are kept only where no file is set (rain, fire, the miracles' chimes).
+- **What you hear in the first ten minutes:** cloth when the hand lifts a Rep or an inspector; a thud when you knock on a wall; the wheel opening, a click when you choose and a buzz when you can't; every button clicks; the room planner opens and closes, a room going in knocks like wood, a room taken out, an error when it doesn't fit; coins when money goes or comes at once (a purchase, not the takings); pages when paperwork is handed over; an inspector setting out ("hm?") and stamping at your door; a buzz when he takes less than he wanted; a cheer when a building is yours, a Rep trained, a block complete, a key building opened.
+- **The city hums** under it all: a low traffic roar that swells and falls back.
+- Every event, its files and its volume are in `data/sounds.tres` (`SoundSettings`); the credits name the packs.
+- Try it: start a game with the sound on, fit a Shop in the Office, send the Rep, and wait for the first inspector.
+
 ## Pre-Alpha 0.28.0 (2026-11-16): rooms are never turned
 Eilam's decision through the Designer.
 - **No turning.** The room planner no longer turns rooms (the right button now puts the picked room down). Each way round is a room of its own in the list, with the same price and numbers.

@@ -1,28 +1,86 @@
 extends RefCounted
-## Placeholder sounds, made in code so there are no audio files yet: one short
-## sound per surface (concrete, glass, metal, wood, cloth...). The original
-## games used the mouse's rumble here; we use a different sound per material.
-## Real recorded sounds can replace _make() later; callers only use play().
+## Every sound the game plays. An event (a surface the hand touches, or something that
+## happened: "coins", "stamp", "click") plays one of its recorded files from
+## `data/sounds.tres` (Kenney's CC0 packs); an event with no files is made here in code,
+## as all of them were before (one short sound per surface, rain, fire, chimes).
 
 const RATE := 22050
 
 static var _cache := {}
+static var _settings: SoundSettings
+static var _watching := false
 
 
-## Play the sound of `surface` at `where`. loudness 0..1.
-static func play(tree: SceneTree, where: Vector3, surface: StringName, loudness := 1.0) -> void:
+## Play `event` at `where` in the world. loudness 0..1.
+static func play(tree: SceneTree, where: Vector3, event: StringName, loudness := 1.0) -> void:
 	if tree.current_scene == null:
 		return
+	var s := settings()
 	var player := AudioStreamPlayer3D.new()
-	player.stream = _stream(surface)
-	player.volume_db = linear_to_db(clampf(loudness, 0.05, 1.0))
-	player.pitch_scale = randf_range(0.9, 1.1)
-	player.unit_size = 25.0
-	player.max_distance = 400.0
+	player.stream = _stream(event)
+	player.volume_db = linear_to_db(clampf(loudness, 0.05, 1.0)) + s.volumes.get(event, 0.0)
+	player.pitch_scale = randf_range(1.0 - s.pitch_spread, 1.0 + s.pitch_spread)
+	player.unit_size = s.unit_size
+	player.max_distance = s.max_distance
 	tree.current_scene.add_child(player)
 	player.global_position = where
 	player.finished.connect(player.queue_free)
 	player.play()
+
+
+## Play `event` as part of the screen (a click, a confirmation), not from a place.
+static func ui(tree: SceneTree, event: StringName, loudness := 1.0) -> void:
+	var s := settings()
+	var player := AudioStreamPlayer.new()
+	player.stream = _stream(event)
+	player.volume_db = linear_to_db(clampf(loudness, 0.05, 1.0)) + s.volumes.get(event, 0.0)
+	player.pitch_scale = randf_range(1.0 - s.pitch_spread * 0.5, 1.0 + s.pitch_spread * 0.5)
+	tree.root.add_child(player)
+	player.finished.connect(player.queue_free)
+	player.play()
+
+
+## Every button that enters `tree` from now on clicks when pressed.
+static func watch_buttons(tree: SceneTree) -> void:
+	if _watching:
+		return
+	_watching = true
+	tree.node_added.connect(func(node: Node) -> void:
+		if node is BaseButton and not node.has_meta(&"sfx"):
+			node.set_meta(&"sfx", true)
+			(node as BaseButton).pressed.connect(ui.bind(tree, &"click", 1.0)))
+
+
+static func settings() -> SoundSettings:
+	if _settings == null:
+		_settings = load("res://data/sounds.tres")
+	return _settings
+
+
+## A loop of the city far off: a low, soft roar of traffic, `seconds` long.
+static func ambience(seconds: float) -> AudioStreamWAV:
+	var smoothing := settings().ambience_smoothing
+	var count := int(seconds * RATE)
+	var data := PackedByteArray()
+	data.resize(count * 2)
+	var smooth := 0.0
+	var fade := int(0.5 * RATE)
+	for i in count:
+		smooth = lerpf(randf_range(-1.0, 1.0), smooth, smoothing)
+		var v := smooth / (1.0 - smoothing * 0.95) * 0.5
+		# The ends fade into each other so the loop has no seam.
+		if i < fade:
+			v *= float(i) / fade
+		elif i > count - fade:
+			v *= float(count - i) / fade
+		data.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = RATE
+	wav.data = data
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_end = count
+	return wav
 
 
 ## What something sounds like when touched or hit.
@@ -39,10 +97,18 @@ static func surface_of(obj: Object) -> StringName:
 	return &"asphalt"
 
 
-static func _stream(surface: StringName) -> AudioStreamWAV:
-	if not _cache.has(surface):
-		_cache[surface] = _make(surface)
-	return _cache[surface]
+## The stream for `event`: one of its files at random, or the sound made in code.
+static func _stream(event: StringName) -> AudioStream:
+	var s := settings()
+	var names: PackedStringArray = s.files.get(event, PackedStringArray())
+	if names.is_empty():
+		if not _cache.has(event):
+			_cache[event] = _make(event)
+		return _cache[event]
+	var path := s.folder + names[randi() % names.size()]
+	if not _cache.has(path):
+		_cache[path] = load(path)
+	return _cache[path]
 
 
 static func _make(surface: StringName) -> AudioStreamWAV:

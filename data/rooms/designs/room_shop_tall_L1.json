@@ -1,0 +1,178 @@
+{
+ "bay_width": 4.0,
+ "category": "shop",
+ "cells": [
+  [
+   0,
+   0
+  ],
+  [
+   0,
+   1
+  ]
+ ],
+ "depth": 6.0,
+ "floor_height": 3.2,
+ "format": 1,
+ "items": [
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 0,
+   "model": "bookcaseClosedWide",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 1,
+   "model": "kitchenBar",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.75,
+   "y": 0.0,
+   "z": 0.4
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 1,
+   "model": "kitchenBar",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.05,
+   "y": 0.0,
+   "z": 0.4
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 1,
+   "model": "kitchenBar",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.35,
+   "y": 0.0,
+   "z": 0.4
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 2,
+   "model": "cardboardBoxClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.7,
+   "y": 0.0,
+   "z": 2.3
+  },
+  {
+   "cell": [
+    0,
+    0
+   ],
+   "depth": 2,
+   "model": "pottedPlant",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.5,
+   "y": 0.0,
+   "z": 2.3
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 0,
+   "model": "bookcaseOpen",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.7,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 0,
+   "model": "bookcaseOpen",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.0,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 0,
+   "model": "bookcaseOpen",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.3,
+   "y": 0.0,
+   "z": -2.5
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 1,
+   "model": "cardboardBoxClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 0.8,
+   "y": 0.0,
+   "z": 0.0
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 1,
+   "model": "cardboardBoxOpen",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 2.3,
+   "y": 0.0,
+   "z": 0.4
+  },
+  {
+   "cell": [
+    0,
+    1
+   ],
+   "depth": 2,
+   "model": "cardboardBoxClosed",
+   "rot": 0,
+   "scale": 1.0,
+   "x": 3.4,
+   "y": 0.0,
+   "z": 1.6
+  }
+ ],
+ "level": 1,
+ "room": "shop_tall",
+ "title": "Tall Shop"
+}

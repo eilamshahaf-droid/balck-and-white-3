@@ -115,7 +115,6 @@ func _open(hit: Dictionary, at: Vector2) -> void:
 	if building:
 		_mode = Mode.BUILDING
 		_set_outline(building, true)
-		Sfx.play(get_tree(), hit.position, Sfx.surface_of(building), 0.4)
 		_wheel.open(at, _building_items(building))
 	else:
 		_mode = Mode.MIRACLES
@@ -138,25 +137,25 @@ func _choose() -> void:
 			Mode.BUILDING:
 				if building and id == &"send":
 					campaigns.send(building)
-					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+					Sfx.ui(get_tree(), &"choose")
 				elif building and id == &"fixer":
 					breaches.send(building)
-					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+					Sfx.ui(get_tree(), &"choose")
 				elif building and String(id).begins_with(FIXER_ACT):
 					var actions := breaches.actions_at(building)
 					var n := String(id).trim_prefix(FIXER_ACT).to_int()
-					if n < actions.size() and breaches.act(building, actions[n]):
-						Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+					var done := n < actions.size() and breaches.act(building, actions[n])
+					Sfx.ui(get_tree(), &"choose" if done else &"error")
 				elif building and GROUPS.has(id):
 					# A second wheel in the same place; the next click picks from it.
 					_mode = Mode.SECOND
 					_wheel.open(_wheel.center, menus.items(building, id))
 					return
-				elif building and menus.choose(id, building):
-					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+				elif building:
+					Sfx.ui(get_tree(), &"choose" if menus.choose(id, building) else &"error")
 			Mode.SECOND:
-				if building and menus.choose(id, building):
-					Sfx.play(get_tree(), _target.position, &"chime", 0.5)
+				if building:
+					Sfx.ui(get_tree(), &"choose" if menus.choose(id, building) else &"error")
 	_close()
 
 
