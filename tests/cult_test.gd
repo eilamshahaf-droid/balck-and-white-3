@@ -375,12 +375,20 @@ func _test_rooms() -> void:
 		if piece.kind.id == &"training":
 			_rooms.remove(hq, piece.cells()[0])
 	var taken := office.pieces[0].cells()[0]
-	_check(not office.fits(kinds.kind(&"guard"), taken, 0), "a room can't go where another is")
-	_check(not office.fits(kinds.kind(&"shop"), Vector2i(office.columns - 2, office.rows - 1), 0),
+	_check(not office.fits(kinds.kind(&"guard"), taken), "a room can't go where another is")
+	_check(not office.fits(kinds.kind(&"shop"), Vector2i(office.columns - 2, office.rows - 1)),
 			"a Shop must touch the ground floor")
-	_check(not office.fits(kinds.kind(&"archive"), Vector2i(office.columns - 1, office.rows - 2), 0) \
-			and kinds.kind(&"archive").turned(1).size() == 3,
-			"a room must fit inside the grid, and can be turned")
+	_check(not office.fits(kinds.kind(&"archive"), Vector2i(office.columns - 1, office.rows - 2)),
+			"a room must fit inside the grid")
+	var ways_ok := true
+	for pair: Array in [[&"family_tall", &"family"], [&"laundry_tall", &"laundry"],
+			[&"desks_mirrored", &"desks"], [&"training_down", &"training"],
+			[&"archive_wide", &"archive"], [&"shop_tall", &"shop"]]:
+		var other_way := kinds.kind(pair[0])
+		ways_ok = ways_ok and other_way != null and other_way.is_a(pair[1]) \
+				and other_way.cells != kinds.kind(pair[1]).cells \
+				and other_way.cells.size() == kinds.kind(pair[1]).cells.size()
+	_check(ways_ok, "rooms are never turned: each way round is a kind of its own, in the same group")
 	_treasury.money = PLENTY
 	_faith.belief_pool = PLENTY
 	var cap := _followers.paperwork_cap()
@@ -390,13 +398,13 @@ func _test_rooms() -> void:
 	_faith._physics_process(5.0)
 	_check(is_equal_approx(_faith.belief_pool, _followers.paperwork_cap()),
 			"the clerks stop when the archives are full")
-	# The first lesson's rooms and the stairs hem the Shop in; the Vault below needs a
-	# place by it, so the Shop moves to the left wall, stood on end.
+	# The first lesson's rooms and the stairs hem a Shop in: no Vault place touches one
+	# on the ground floor alone, so a Tall Shop goes up the left wall.
 	for id: StringName in [&"family", &"archive", &"desks", &"shop"]:
 		for piece in office.pieces.duplicate():
 			if piece.kind.id == id:
 				_rooms.remove(hq, piece.cells()[0])
-	_rooms.place(hq, kinds.kind(&"shop"), Vector2i.ZERO, 1)
+	_rooms.place(hq, kinds.kind(&"shop_tall"), Vector2i.ZERO)
 	var purse := _followers.money_cap()
 	var kinds_vault := kinds.kind(&"vault")
 	var lone := Vector2i(-1, -1)
@@ -406,12 +414,12 @@ func _test_rooms() -> void:
 					and office.is_free(Vector2i(x, y + 1)) and office.is_free(Vector2i(x + 1, y + 1)) \
 					and not office.touches(kinds_vault.cells, Vector2i(x, y), &"shop"):
 				lone = Vector2i(x, y)
-	_check(lone.x >= 0 and _rooms.why_not(hq, kinds_vault, lone, 0).contains("next to"),
+	_check(lone.x >= 0 and _rooms.why_not(hq, kinds_vault, lone).contains("next to"),
 			"a Vault must be next to a Shop")
 	_check(_fit(hq, &"vault") and _followers.money_cap() > purse, "and next to one it keeps more money")
 	var shop_cell := Vector2i(-1, -1)
 	for piece in office.pieces:
-		if piece.kind.id == &"shop":
+		if piece.kind.is_a(&"shop"):
 			shop_cell = piece.cells()[0]
 	_check(_rooms.why_not_remove(hq, shop_cell) != "" and not _rooms.remove(hq, shop_cell),
 			"the Shop can't be taken out while the Vault leans on it")
@@ -431,7 +439,7 @@ func _test_rooms() -> void:
 			"a Desk Room seats more clerks")
 	if _near < 0:
 		return
-	_check(_rooms.why_not(_near, kinds.kind(&"desks"), Vector2i.ZERO, 0) != "",
+	_check(_rooms.why_not(_near, kinds.kind(&"desks"), Vector2i.ZERO) != "",
 			"office rooms go only in an office")
 	var layout := _rooms.layout_of(_near)
 	var plain := _followers.room_of(_near)

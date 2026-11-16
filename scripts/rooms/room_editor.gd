@@ -1,13 +1,14 @@
 class_name RoomEditor
 extends CanvasLayer
 ## The room editor: the front of one building of yours as a grid of bays and floors, and
-## a palette of rooms to fit into it. Pick a room, turn it (right click or the wheel),
-## click a free place. Opened from the building wheel ("Rooms"); the game goes on behind
-## it unless the player paused it. Placeholder look: coloured blocks until the rooms
-## have models.
+## a palette of rooms to fit into it. Pick a room, click a free place (rooms are never
+## turned: each way round is its own kind in the palette). Opened from the building wheel
+## ("Rooms"); the game goes on behind it unless the player paused it. Placeholder look:
+## coloured blocks until the rooms have models.
 
-const PALETTE_WIDTH := 330.0
+const PALETTE_WIDTH := 440.0
 const ROW := 52.0
+const MIN_ROW := 36.0
 const MINI := 11.0
 const MARGIN := 28.0
 const TITLE_SIZE := 26
@@ -28,7 +29,6 @@ const POINTER: Array[Vector2] = [Vector2(0, 0), Vector2(0, 24), Vector2(6, 18), 
 var _board := Control.new()
 var _index := -1
 var _picked := NOTHING   # index into the kinds, REMOVE, or NOTHING
-var _turns := 0
 var _hover := Vector2i(-1, -1)
 var _pointer := Vector2.ZERO
 var _shown: Array[RoomKind] = []   # the kinds on offer for this building, in palette order
@@ -65,7 +65,6 @@ func open(building: Node3D) -> void:
 		if rooms.offers(_index, kind):
 			_shown.append(kind)
 	_picked = NOTHING
-	_turns = 0
 	visible = true
 	_pointer = _board.get_local_mouse_position()
 	_board.queue_redraw()
@@ -92,13 +91,10 @@ func _on_gui_input(event: InputEvent) -> void:
 		_pointer = event.position
 		_board.queue_redraw()
 	elif event is InputEventMouseButton and event.pressed:
-		match event.button_index:
-			MOUSE_BUTTON_LEFT:
-				_click(event.position)
-			MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_WHEEL_UP:
-				_turns = posmod(_turns + 1, 4)
-			MOUSE_BUTTON_WHEEL_DOWN:
-				_turns = posmod(_turns - 1, 4)
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			_click(event.position)
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			_picked = NOTHING
 		_board.queue_redraw()
 
 
@@ -109,7 +105,6 @@ func _click(at: Vector2) -> void:
 	for k in _shown.size():
 		if _palette_rect(k).has_point(at):
 			_picked = k
-			_turns = 0
 			return
 	if _palette_rect(_shown.size()).has_point(at):
 		_picked = REMOVE
@@ -120,7 +115,7 @@ func _click(at: Vector2) -> void:
 	if _picked == REMOVE:
 		rooms.remove(_index, cell)
 	elif _picked >= 0:
-		rooms.place(_index, _shown[_picked], cell, _turns)
+		rooms.place(_index, _shown[_picked], cell)
 
 
 # --- Layout ---
@@ -158,7 +153,15 @@ func _cell_at(at: Vector2) -> Vector2i:
 
 
 func _palette_rect(row: int) -> Rect2:
-	return Rect2(_board.size.x - PALETTE_WIDTH - MARGIN, 108.0 + row * ROW, PALETTE_WIDTH, ROW - 4.0)
+	var height := _row_height()
+	return Rect2(_board.size.x - PALETTE_WIDTH - MARGIN, 108.0 + row * height, PALETTE_WIDTH,
+			height - 4.0)
+
+
+## A palette row: ROW high, smaller when the kinds on offer (and "Take a room out") would
+## run off the screen.
+func _row_height() -> float:
+	return clampf((_board.size.y - 108.0 - MARGIN) / (_shown.size() + 1), MIN_ROW, ROW)
 
 
 func _close_rect() -> Rect2:
@@ -176,7 +179,7 @@ func _draw_board() -> void:
 	_text(Vector2(MARGIN, 52.0), "%s: rooms  (%d bays, %d floors)" % [title, layout.columns, layout.rows],
 			TITLE_SIZE, Color.WHITE)
 	_text(Vector2(MARGIN, 80.0),
-			"Pick a room, turn it with the right button or the wheel, click a free place. An empty place is a plain flat; nothing goes over the stairs. Esc closes.",
+			"Pick a room and click a free place; the right button puts it down. An empty place is a plain flat; nothing goes over the stairs. Esc closes.",
 			SMALL_SIZE, Color(1, 1, 1, 0.7))
 	for y in layout.rows:
 		for x in layout.columns:
@@ -193,7 +196,7 @@ func _draw_board() -> void:
 			_board.draw_rect(_cell_rect(cell), color)
 		for cell in cells:
 			_outline(cell, cells)
-		_text(_cell_rect(piece.origin + piece.kind.turned(piece.turns)[0]).position + Vector2(5.0, 17.0),
+		_text(_cell_rect(piece.origin + piece.kind.cells[0]).position + Vector2(5.0, 17.0),
 				piece.kind.title if piece.open else piece.kind.title + " (closed)", SMALL_SIZE,
 				_s.grid_color if piece.open else Color.WHITE)
 	_draw_ghost()
@@ -245,9 +248,9 @@ func _draw_ghost() -> void:
 				_text(_grid_origin() + Vector2(0.0, -12.0), stuck, TEXT_SIZE, _s.bad_color.lightened(0.3))
 		return
 	var kind := _shown[_picked]
-	var why := rooms.why_not(_index, kind, _hover, _turns)
+	var why := rooms.why_not(_index, kind, _hover)
 	var layout := rooms.layout_of(_index)
-	for c in kind.turned(_turns):
+	for c in kind.cells:
 		var cell := _hover + c
 		if cell.x >= 0 and cell.y >= 0 and cell.x < layout.columns and cell.y < layout.rows \
 				and not layout.is_stairs(cell):
@@ -261,20 +264,25 @@ func _draw_palette() -> void:
 		var kind := _shown[k]
 		var rect := _palette_rect(k)
 		_board.draw_rect(rect, Color(1, 1, 1, 0.22 if k == _picked else 0.08))
-		for c in kind.turned(_turns if k == _picked else 0):
-			var at := rect.position + Vector2(8.0 + c.x * MINI, rect.size.y - 8.0 - (c.y + 1) * MINI)
-			_board.draw_rect(Rect2(at, Vector2(MINI - 1.0, MINI - 1.0)), kind.color)
+		var block := minf(MINI, (rect.size.y - 6.0) / 3.0)
+		for c in kind.cells:
+			var at := rect.position \
+					+ Vector2(8.0 + c.x * block, rect.size.y - 3.0 - (c.y + 1) * block)
+			_board.draw_rect(Rect2(at, Vector2(block - 1.0, block - 1.0)), kind.color)
 		var money := rooms.money_of(_index, kind)
 		var paperwork := rooms.paperwork_of(_index, kind)
 		var price := "$%d" % roundi(money)
 		if paperwork > 0.0:
 			price += " + %d paperwork" % roundi(paperwork)
-		_text(rect.position + Vector2(64.0, 20.0), "%s   %s" % [kind.title, price], TEXT_SIZE, Color.WHITE)
-		_text(rect.position + Vector2(64.0, 38.0), kind.note, SMALL_SIZE, Color(1, 1, 1, 0.65))
+		_text(rect.position + Vector2(64.0, rect.size.y * 0.42), "%s   %s" % [kind.title, price],
+				TEXT_SIZE, Color.WHITE)
+		_text(rect.position + Vector2(64.0, rect.size.y * 0.82), kind.note, SMALL_SIZE,
+				Color(1, 1, 1, 0.65))
 	var remove := _palette_rect(_shown.size())
 	_board.draw_rect(remove, Color(1, 0.4, 0.4, 0.3 if _picked == REMOVE else 0.12))
-	_text(remove.position + Vector2(64.0, 20.0), "Take a room out", TEXT_SIZE, Color.WHITE)
-	_text(remove.position + Vector2(64.0, 38.0), "%d%% of its money back" % roundi(_s.refund_share * 100.0),
+	_text(remove.position + Vector2(64.0, remove.size.y * 0.42), "Take a room out", TEXT_SIZE,
+			Color.WHITE)
+	_text(remove.position + Vector2(64.0, remove.size.y * 0.82), "%d%% of its money back" % roundi(_s.refund_share * 100.0),
 			SMALL_SIZE, Color(1, 1, 1, 0.65))
 
 

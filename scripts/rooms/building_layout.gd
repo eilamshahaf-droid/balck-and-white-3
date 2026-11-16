@@ -8,7 +8,6 @@ extends RefCounted
 class Piece:
 	var kind: RoomKind
 	var origin := Vector2i.ZERO
-	var turns := 0
 	## Closed for want of upkeep: it gives nothing until there is money again.
 	var open := true
 	## What it cost (part comes back when it is taken out); a room given at the start
@@ -18,7 +17,7 @@ class Piece:
 
 	func cells() -> Array[Vector2i]:
 		var out: Array[Vector2i] = []
-		for c in kind.turned(turns):
+		for c in kind.cells:
 			out.append(origin + c)
 		return out
 
@@ -39,18 +38,18 @@ func piece_at(cell: Vector2i) -> Piece:
 	return null
 
 
-## Could `kind`, turned `turns`, go with its corner at `origin`: inside the grid, on free
-## cells, and on the ground floor if it must be.
-func fits(kind: RoomKind, origin: Vector2i, turns: int) -> bool:
+## Could `kind` go with its corner at `origin`: inside the grid, on free cells, and on
+## the ground floor if it must be.
+func fits(kind: RoomKind, origin: Vector2i) -> bool:
 	var grounded := false
-	for c in kind.turned(turns):
+	for c in kind.cells:
 		var cell := origin + c
 		if not is_free(cell):
 			return false
 		grounded = grounded or cell.y == 0
 	if kind.ground_only and not grounded:
 		return false
-	return kind.needs_next == &"" or touches(kind.turned(turns), origin, kind.needs_next)
+	return kind.needs_next == &"" or touches(kind.cells, origin, kind.needs_next)
 
 
 ## `cell` is inside the grid, off the stairs and has no room in it.
@@ -83,17 +82,16 @@ func leaning_on(piece: Piece) -> Array[Piece]:
 	pieces.erase(piece)
 	for p in pieces:
 		if p.kind.needs_next != &"" and piece.kind.is_a(p.kind.needs_next) \
-				and not touches(p.kind.turned(p.turns), p.origin, p.kind.needs_next):
+				and not touches(p.kind.cells, p.origin, p.kind.needs_next):
 			out.append(p)
 	pieces.append(piece)
 	return out
 
 
-func add(kind: RoomKind, origin: Vector2i, turns: int) -> Piece:
+func add(kind: RoomKind, origin: Vector2i) -> Piece:
 	var p := Piece.new()
 	p.kind = kind
 	p.origin = origin
-	p.turns = turns
 	pieces.append(p)
 	return p
 
