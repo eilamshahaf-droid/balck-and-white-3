@@ -15,7 +15,9 @@ def mat(name,col,rough=0.5,metal=0,wood=None,alpha=1.0):
     if key in _mc: return _mc[key]
     h,sa,v=colorsys.rgb_to_hsv(*col[:3]);col=colorsys.hsv_to_rgb(h,min(1,sa*1.55+0.05*(sa>0.05)),min(1,v*0.92))
     m=bpy.data.materials.new(name);m.use_nodes=True
-    b=m.node_tree.nodes['Principled BSDF'];b.inputs['Roughness'].default_value=rough;b.inputs['Metallic'].default_value=metal
+    b=m.node_tree.nodes['Principled BSDF'];b.inputs['Roughness'].default_value=rough
+    # Compatibility renders full metal black (no reflections to show), so keep it low.
+    b.inputs['Metallic'].default_value=min(metal,0.25)
     if wood:
         n=m.node_tree.nodes;l=m.node_tree.links
         t=n.new('ShaderNodeTexImage');t.image=bpy.data.images.load(TEX+('wood_oak.png' if col[0]>0.5 else 'wood_walnut.png'))
@@ -23,7 +25,7 @@ def mat(name,col,rough=0.5,metal=0,wood=None,alpha=1.0):
     else:
         b.inputs['Base Color'].default_value=(*col,1)
     if alpha<1:
-        b.inputs['Alpha'].default_value=alpha;b.inputs['Transmission Weight'].default_value=0.9;b.inputs['IOR'].default_value=1.45
+        m.blend_method='BLEND';b.inputs['Alpha'].default_value=alpha;b.inputs['Transmission Weight'].default_value=0.9;b.inputs['IOR'].default_value=1.45
     _mc[key]=m
     return m
 def box(name,loc,size,m,bevel=0.008):
