@@ -14,6 +14,7 @@ extends Resource
 @export var credits := PackedStringArray([
 	"Made by Eilam, with Claude",
 	"Furniture and city modules: Kenney (kenney.nl), CC0",
+	"Sounds: Kenney's Interface Sounds, RPG Audio and Impact Sounds (kenney.nl), CC0",
 	"The god's glove: from the WebXR hand model, Copyright (c) 2019 Amazon, MIT licence",
 	"Props: made with Meshy",
 	"Engine: Godot (godotengine.org), MIT licence",
