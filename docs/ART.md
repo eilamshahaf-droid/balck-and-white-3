@@ -166,6 +166,51 @@ Eilam wants furniture more realistic than the flat Kenney kit, even at some cost
 - **Replacing Kenney:** gradually, most seen first: shop counter and register (done), display case (done), sofa and armchair (done), beds, desks and chairs for the offices, kitchen run, washers and dryers, then the rest. Kenney stays for what has no replacement yet.
 - **Open:** a few pieces still look simple (shelf goods, bin); wood is a flat tiled image, not a real photo.
 
+### Furniture rules (from the Sims 4 and Paralives study, 2026-11-17; awaiting Eilam's approval)
+
+Researched by the coordinator, adapted by the Artist. Tags: **S** = from a source (Sims 4 Marketplace creator guidelines, Maxis June 2017 dev update, Paralives Steam post and wiki), **P** = proposal. Where the Artist changed a rule, it says so.
+
+**Shape**
+1. Thin parts (legs, armrests, tops, handles) a bit thicker than real, **1.15-1.3x** (P; the study said 1.3-2x, cut because Eilam chose "more realistic" and the room view already draws pieces 3x).
+2. The silhouette reads at thumbnail size from the game camera; drop detail under about 2 cm (P).
+3. Every piece lives inside a per-type block: footprint, build volume, decoration slots; geometry never leaves the footprint (S).
+4. No rotation in our game, so spend effort on front, top and one side; keep the back simple (P).
+
+**Modelling**
+5. Budget (P, from S: Sims 4 uses 800 tris per tile): 800-1,500 tris per tile of footprint, up to 3,000 for a hero piece, 150-400 for clutter.
+6. Bevel every visible hard edge, 1-2 segments, a little wider than real (P).
+7. Origin centred on the footprint, bottom at Y=0; wall objects: bottom middle at the back; merged vertices, outward normals, scale applied (S).
+8. Footprints in whole or half cells, real metres (S: Sims snap to full, half and quarter tiles).
+9. One level of detail; a second (about 50%) only above 2,000 tris (P).
+10. Named empty nodes as decoration slots on tables, shelves, desks and sills (S: small, medium, large slots; P: empties in glTF). Needs the Programmer.
+
+**UV**
+11. One texel density across the catalogue: **256 px per metre**, 512 px for hero pieces (P, from S: Sims 4 about 256 px per tile). A 2 m sofa gets 512 px, a mug 128 px.
+12. One unique, non-overlapping 0-1 UV set per piece so AO can be baked; mirror only hidden parts (P).
+13. UV islands grouped by material zone (cushions, legs, top, frame), **at most 4 zones** (S: Paralives recolours per part). Artist change: a zone is its own Godot surface and material, so it can be swapped at runtime without a mask shader; the Programmer confirms this.
+14. Leaf cards share one plant atlas (P).
+
+**Texture and material**
+15. Diffuse, a normal map from bevels only, packed roughness/metal at half size (S: Sims uses diffuse, normal, quarter-size specular).
+16. Soft baked AO at 50-70% in the albedo (P).
+17. Wood grain and weave scaled up slightly, no photo noise (P; the study said "simplified", the Artist keeps real materials because of the realistic decision).
+18. Saturated mid-values, no pure black or white; wear is only a slight lightening of edges (P, matches the saturated decision).
+19. Zones that change colour are painted neutral grey at 60-70% value and tinted; **wood zones swap the texture instead of tinting** (Artist change: tinting a real wood image looks muddy).
+
+**Colour and sets**
+20. Every colour and pattern variant is fixed with exact values before modelling (S: Maxis).
+21. One global palette: about 6 woods, 4 metals, 12-16 fabric and paint colours; 6-10 swatches per piece, always including white, black, light wood and dark wood (P). Reason (S): the top Sims 4 complaint is wood tones that do not match across sets.
+
+**Catalogue**
+22. Design in sets (seat, table, storage, light, textile, wall piece) that share the palette (P).
+23. Clutter is the long tail of the fun (books, mugs, plants, frames, cushions, rugs, lamps): aim for 2 clutter pieces per furniture piece (P).
+24. Never block a placement; reward with snap and sound (S: Unpacking's pillars are contemplation, discovery, expression, no fail states).
+25. No free resize; 2-3 size variants instead (P).
+
+**From a photo to a piece:** pick the type and its block; sketch front, side and top over the block with the thickness exaggerated; model, bevel, check the budget; set origin, scale and slot empties; unwrap by zone at the fixed density; bake AO, paint grey albedo; assign palette swatches; check in the game at the game camera beside three existing pieces; render the thumbnail.
+
+**Artist's stance on the tension (stylised Sims vs "more realistic"):** the pipeline rules (3, 7, 8, 10-13, 20-25) apply in full because they make furniture mixable and recolourable. The shape and surface rules (1, 17) are applied in a milder form. A bought pack such as the ithappy one can be judged by the same yardstick: it passes on budget and footprint, but its single palette texture cannot be recoloured by zone, so each piece used needs a UV and material pass. The rules do not make the pack unnecessary: they let the Artist make hero pieces, while a pack gives volume.
+
 ## Facade styles (catalog, first four: New York)
 
 Source: Eilam's reference photos (Wikimedia Commons, CC BY-SA: reference only, never in the game),
