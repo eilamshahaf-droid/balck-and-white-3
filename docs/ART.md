@@ -215,6 +215,37 @@ Researched by the coordinator, adapted by the Artist. Tags: **S** = from a sourc
 
 **Artist's stance on the tension (stylised Sims vs "more realistic"):** the pipeline rules (3, 7, 8, 10-13, 20-25) apply in full because they make furniture mixable and recolourable. The shape and surface rules (1, 17) are applied in a milder form. A bought pack such as the ithappy one can be judged by the same yardstick: it passes on budget and footprint, but its single palette texture cannot be recoloured by zone, so each piece used needs a UV and material pass. The rules do not make the pack unnecessary: they let the Artist make hero pieces, while a pack gives volume.
 
+## Models from Eilam and from photos: the low-poly protocol (tested 2026-11-17)
+
+Two cases. **A photo only**: image-to-3D (Meshy, one run, `should_remesh: false`, shape only),
+then the steps below with our own fabric on the high-poly (see the upholstery recipe above;
+the full photo steps are in `/mnt/project-files/art/PHOTO-TO-MODEL-PROTOCOL.md`).
+**A ready model** (a ~95,000-triangle GLB with its own textures): keep its look and textures,
+and only reduce it. Judge every result in Godot (Compatibility, warm light) beside the original.
+
+1. Look first: delete junk parts (a floor slab came inside one sofa: split into loose parts,
+   remove the flat ones).
+2. Pick the method by what the object is built like:
+
+| Object | Examples | Method | Budget |
+| --- | --- | --- | --- |
+| Hard and simple | fridge, side table, sofa, wooden chair | plain Decimate (UV-delimited), keeps the original UVs and textures | 3,000 |
+| Hard and simple, tiny budget | same | clean method (below) | 500 |
+| Soft and round | armchair, soft bed | clean method | 500 to 3,500 |
+| Layered or recessed | carved dresser, duvet in layers | clean method, finer voxels, with the cage | 1,500 or more |
+| Thin and open (ropes, wicker) | rattan lamp | alpha shell: a lathe shell of about 900 triangles with a baked colour + alpha texture (misses are transparent, glTF `MASK` 0.5), plus the bulb and base as a small normal mesh | about 1,400 |
+| Leaves | monstera | plain Decimate keeps UV and alpha texture | 2,000 |
+
+3. **The clean method**: voxel remesh the original (size = longest side / 220, finer = 450 for
+   layers), Decimate to the budget, Smart UV, then bake normal and colour from the original at
+   2048 with a **cage** (the low mesh pushed out by about longest side / 120, rays 2.5 times
+   that), export 1024 WebP.
+4. Tested and rejected, do not repeat: Shrinkwrap after decimating (snaps points to the wrong
+   layer and makes spikes and blotches), QuadriFlow retopology (collapses layered models),
+   curvature-weighted Decimate (breaks the drawers and leaves black patches), plain Decimate
+   below about 3,000 on a soft model (ragged), a Smart UV on a ragged mesh (shards).
+5. Show one picture: original beside reduced, same camera, in Godot. Say what is different.
+
 ## Facade styles (catalog, first four: New York)
 
 Source: Eilam's reference photos (Wikimedia Commons, CC BY-SA: reference only, never in the game),
