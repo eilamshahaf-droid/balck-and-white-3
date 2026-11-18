@@ -14,6 +14,7 @@ const LAYER_PROPS := 4
 const LAYER_CRITTERS := 8
 
 const S: CitySettings = preload("res://data/city.tres")
+const L: LightingSettings = preload("res://data/lighting.tres")
 const TaxiScript := preload("res://scripts/taxi.gd")
 const LitterScript := preload("res://scripts/litter.gd")
 const PigeonScript := preload("res://scripts/pigeon.gd")
@@ -132,11 +133,8 @@ func _build_environment() -> void:
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.5
-	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.tonemap_exposure = 0.8
-	env.fog_enabled = true
-	env.fog_density = 0.0008
+	env.tonemap_mode = L.tonemap as Environment.ToneMapper
+	env.tonemap_exposure = L.exposure
 	var world_env := WorldEnvironment.new()
 	world_env.environment = env
 	add_child(world_env)
@@ -151,16 +149,16 @@ func _build_environment() -> void:
 
 ## 0 = night, 1 = full day.
 func set_daylight(t: float) -> void:
-	var horizon := Color(0.1, 0.1, 0.18).lerp(Color(0.74, 0.86, 0.97), t)
-	_sky_mat.sky_top_color = Color(0.03, 0.04, 0.1).lerp(Color(0.22, 0.5, 0.92), t)
+	var horizon := L.night_sky_horizon.lerp(L.sky_horizon, t)
+	_sky_mat.sky_top_color = L.night_sky_top.lerp(L.sky_top, t)
 	_sky_mat.sky_horizon_color = horizon
 	# Below the horizon the sky matches the fog, so the land melts into it with no edge.
 	_sky_mat.ground_horizon_color = horizon
 	_sky_mat.ground_bottom_color = horizon
 	env.fog_light_color = horizon
-	env.ambient_light_energy = lerpf(0.4, 0.5, t)
-	sun.light_energy = lerpf(0.3, 0.9, t)
-	sun.light_color = Color(0.6, 0.7, 1.0).lerp(Color.WHITE, t)
+	env.ambient_light_energy = lerpf(L.night_ambient_energy, L.ambient_energy, t)
+	sun.light_energy = lerpf(L.night_sun_energy, L.sun_energy, t)
+	sun.light_color = L.night_sun_color.lerp(L.sun_color, t)
 
 
 func _build_ground() -> void:

@@ -6,7 +6,7 @@ config_version=5
 [application]
 
 config/name="Godministration"
-config/version="0.33.0"
+config/version="0.34.0"
 config/release_stage="Pre-Alpha"
 run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")

@@ -139,8 +139,6 @@ func _on_node_added(node: Node) -> void:
 		var label := node as Label3D
 		label.render_priority = Material.RENDER_PRIORITY_MAX
 		label.outline_render_priority = Material.RENDER_PRIORITY_MAX - 1
-	elif node is WorldEnvironment:
-		_style_environment.call_deferred(node)
 	elif node is DirectionalLight3D:
 		_style_sun.call_deferred(node)
 
@@ -226,15 +224,6 @@ func _update_tilt_shift() -> void:
 
 ## Only the tone mapping: sky, ambient, fog and sun belong to the city's
 ## day/night cycle and are left to it.
-func _style_environment(world_env: WorldEnvironment) -> void:
-	var env := world_env.environment
-	if env == null or not enabled:
-		return
-	if S.tonemap_filmic:
-		env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure = S.exposure
-
-
 func _build_dof() -> void:
 	var quad := QuadMesh.new()
 	quad.size = Vector2(1.0, 1.0)
@@ -271,6 +260,6 @@ func _style_sun(sun: DirectionalLight3D) -> void:
 		return
 	sun.rotation = Vector3(deg_to_rad(S.sun_pitch), deg_to_rad(S.sun_yaw), 0.0)
 	sun.shadow_enabled = true
-	sun.shadow_blur = 0.0
+	sun.shadow_blur = S.shadow_blur
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.directional_shadow_max_distance = S.shadow_distance
