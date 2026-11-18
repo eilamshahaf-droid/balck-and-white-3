@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LightingSettings" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/lighting_settings.gd" id="1_light"]
+
+[resource]
+script = ExtResource("1_light")
+tonemap = 3
+exposure = 1.0
+sun_energy = 0.85
+sun_color = Color(1, 0.95, 0.86, 1)
+ambient_energy = 0.75
+sky_top = Color(0.22, 0.5, 0.92, 1)
+sky_horizon = Color(0.74, 0.86, 0.97, 1)
+night_sun_energy = 0.3
+night_sun_color = Color(0.6, 0.7, 1, 1)
+night_ambient_energy = 0.4
+night_sky_top = Color(0.03, 0.04, 0.1, 1)
+night_sky_horizon = Color(0.1, 0.1, 0.18, 1)

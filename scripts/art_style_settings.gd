@@ -22,6 +22,7 @@ extends Resource
 @export_range(-180.0, 180.0) var sun_yaw := 35.0
 @export_range(0.0, 1.0) var shadow_level := 0.3     # how much colour stays in a cast shadow
 @export_range(0.0, 0.5) var shadow_softness := 0.06 # 0 = razor-sharp shadow edges
+@export_range(0.0, 4.0) var shadow_blur := 0.0      # the shadow map's own blur (softer edges)
 @export var shadow_distance := 260.0                # metres from the camera that get shadows
 @export var key_tint := Color(1.0, 0.93, 0.8)      # lit faces lean this way (warm sun)
 @export_range(0.0, 1.0) var rim_strength := 0.22    # toy-like bright edge on sunlit sides
@@ -46,6 +47,3 @@ extends Resource
 @export var wash_color := Color(1.0, 0.93, 0.82)     # a soft wash over the whole picture, like The Sims
 @export_range(0.0, 0.5) var wash := 0.1
 
-@export_group("Tone")
-@export var tonemap_filmic := false        # leave off to keep the city's own tone mapping
-@export var exposure := 1.0
