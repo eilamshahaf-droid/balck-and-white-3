@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=17 format=3]
+[gd_resource type="Theme" load_steps=19 format=3]
 
 [ext_resource type="FontFile" path="res://assets/fonts/SpecialElite-Regular.woff2" id="1_body"]
 [ext_resource type="FontFile" path="res://assets/fonts/CourierPrime-Bold.woff2" id="2_num"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://assets/ui/tape.png" id="5_tape"]
 [ext_resource type="Texture2D" path="res://assets/ui/index-card.png" id="6_card"]
 [ext_resource type="Texture2D" path="res://assets/ui/kraft-tag.png" id="7_tag"]
+[ext_resource type="Texture2D" path="res://assets/ui/kraft-tag-flip.png" id="8_tagflip"]
 
 [sub_resource type="StyleBoxTexture" id="tape_strip"]
 texture = ExtResource("5_tape")
@@ -48,6 +49,17 @@ content_margin_top = 12.0
 content_margin_right = 18.0
 content_margin_bottom = 12.0
 
+[sub_resource type="StyleBoxTexture" id="tag_flip"]
+texture = ExtResource("8_tagflip")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 92.0
+texture_margin_bottom = 16.0
+content_margin_left = 18.0
+content_margin_top = 12.0
+content_margin_right = 84.0
+content_margin_bottom = 12.0
+
 [sub_resource type="StyleBoxFlat" id="bar_back"]
 bg_color = Color(1, 1, 1, 0.25)
 border_width_left = 1
@@ -82,6 +94,8 @@ SlipLabel/styles/normal = SubResource("slip")
 TagLabel/base_type = &"Label"
 TagLabel/font_sizes/font_size = 13
 TagLabel/styles/normal = SubResource("tag")
+TagLabelFlip/base_type = &"TagLabel"
+TagLabelFlip/styles/normal = SubResource("tag_flip")
 SlipTitle/base_type = &"Label"
 SlipTitle/font_sizes/font_size = 17
 SlipText/base_type = &"Label"

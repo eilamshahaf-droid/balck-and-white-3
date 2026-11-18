@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="UiSettings" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="UiSettings" load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/ui_settings.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/ui/button.png" id="2"]
 [ext_resource type="Texture2D" path="res://assets/ui/push-pin.png" id="3"]
 [ext_resource type="Texture2D" path="res://assets/ui/kraft-tile.jpg" id="4"]
 [ext_resource type="Texture2D" path="res://assets/ui/peg.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/ui/kraft-tag.png" id="6"]
 
 [resource]
 script = ExtResource("1")
@@ -12,3 +13,4 @@ coin_texture = ExtResource("2")
 pin_texture = ExtResource("3")
 dial_paper = ExtResource("4")
 peg_texture = ExtResource("5")
+tag_texture = ExtResource("6")

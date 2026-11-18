@@ -173,6 +173,14 @@ func _test_wheel_focus_loss() -> void:
 			break
 		await _release()
 	_check(_hand.get("_point_anchor") != Vector3.INF, "holding still opens a wheel")
+	var tags: ActionTags = (_tools as HandTools).get("_wheel")
+	var spots: Array[Vector2] = tags.get("_spots")
+	var apart := spots.size() == tags.items.size() and spots.size() > 1
+	for i in spots.size():
+		for j in range(i + 1, spots.size()):
+			apart = apart and spots[i].distance_to(spots[j]) > 10.0
+	tags.point_at(spots[1] if spots.size() > 1 else Vector2.ZERO)
+	_check(apart and tags.highlighted == 1, "its tags hang apart, and pointing at one lights it")
 	get_tree().root.propagate_notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	await _frames(2)
 	_check(_hand.get("_point_anchor") == Vector3.INF, "focus loss closes the wheel")
