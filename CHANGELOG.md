@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.34.0 (2026-11-18): softer, warmer light
+Approved by Eilam, from the Artist's lighting pass.
+- **Shaded sides keep their colour.** More light from the sky fills the shadows (the sun is about three times the sky fill on a lit wall, it was about six), cast shadows keep more colour and lean cool blue, their edges are softer, and the sun is warmer.
+- Every light number is now in data: `data/lighting.tres` (tone mapping, exposure, sun and sky by day and night) and `data/art_style.tres` (bands, shadow levels and tints, shadow blur).
+- Try it: look at the street side of a building in the shade, and the shadows on the street.
+
 ## Pre-Alpha 0.33.0 (2026-11-18): the god's desk, step 2: tags at the fingertip
 From the UI brief "the god's desk" (step 2 of 5).
 - **Action tags in place of the round wheel.** Hold the button still on a building (or the ground): the choices hang as kraft paper tags on strings, in a column on an arc beside the glove's fingertip, on the side with open screen. Each action keeps its own place in the column on every building (Rooms first, then +Floors, Sellers, Train Rep, Train Fixer, Loan, Bury the File), so the hand learns where things are. The tag the hand points at grows; one that can't be had is dimmed and says why in red. Long notes shrink to fit the tag.

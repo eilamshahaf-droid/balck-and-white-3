@@ -4,3 +4,10 @@
 
 [resource]
 script = ExtResource("1_style")
+band_low = 0.5
+shadow_tint = Color(0.78, 0.8, 0.98, 1)
+ambient_amount = 0.45
+shadow_level = 0.38
+shadow_softness = 0.14
+shadow_blur = 1.5
+key_tint = Color(1, 0.91, 0.76, 1)
