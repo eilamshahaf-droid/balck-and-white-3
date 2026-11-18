@@ -3,6 +3,15 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.31.0 (2026-11-18): furniture takes grid squares
+Asked by Eilam, designed by the Game Designer: Sims-style placement in the room designer.
+- **Furniture takes whole squares.** Beds, sofas, tables, cabinets and the like take whole squares of the floor grid (half a metre each), always snap to it, and never overlap. Put one where there is no room and it goes to the nearest free squares, or doesn't go in at all (a buzz). Dragging only moves it to squares that are free. R turns it a quarter turn if it fits turned. The picked piece shows the squares it takes, and the panel says how many.
+- **Pictures stay on the wall.** Pictures, the clock, wall lamps and upper cabinets slide along the back wall only; they have a height and a size, no turning.
+- **Small things go anywhere.** What goes on a table (screens, lamps, plants, the toaster), chairs and stools (so they tuck under desks and tables) and rugs (so furniture stands on them) take no squares, snap finer and rest on desks and counters as before. Decoration only.
+- Shift no longer places freely.
+- For the Artist: a model can have a `<model>.place.json` file beside it that says how it is placed (`type`: floor, small or wall; `scale`; `footprint` in metres; `front`; `wall_height`; `slots` for a later round). It wins over the name lists.
+- Try it: title screen, Room Designer, Family Flat: put in two double beds, then try to drag one onto the other.
+
 ## Display case and metals fixed (2026-11-16, Artist)
 - The display case rendered almost black in the Compatibility renderer because full metal has nothing to reflect there. The Artist furniture now uses low metal and a blended glass material (`tools/blender/build_furniture.py`), and the 26 pieces and icons were rebuilt.
 
