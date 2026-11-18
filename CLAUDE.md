@@ -157,10 +157,16 @@ to title" returns. It furnishes each room kind (`data/rooms.tres`) at levels 1 t
 Kenney Furniture Kit (`assets/models/kenney_furniture/`, CC0, with the side-view icons the
 Artist's browser editor used). `room_designer.gd` (`RoomDesigner`, a CanvasLayer above the art
 style's screen layer) is the screen; `designer_preview.gd` the 3D view in its own world, always
-editing: put a piece on a floor, drag it across it, snapped to `snap` (Shift for free), with grid
-lines every `grid_step` on each floor; models are drawn `furniture_scale` times (the Kenney pieces
-are about half true size, and the room files store unscaled sizes); `furniture_catalog.gd` each model's scene (Kenney's in `model_folder`, the Artist's Blender pieces, `artist_models`, in `artist_folder`), icon, size from its meshes, groups, what
-is a surface and what hangs on a wall, `new_item` and `rest_height` (stacking);
+editing: put a piece on a floor and drag it, with grid lines every `grid_step` on each floor.
+How a piece is placed (`FurnitureCatalog.Place`, `place_of`): FLOOR pieces take whole grid squares
+(their footprint, turned in quarter turns) on lit places of their row and never overlap
+(`furniture_spots.gd`, `FurnitureSpots`: `squares`, `area`, `fits`, `move_to`, `settle`); WALL pieces
+slide along the back wall (`hang`); SMALL things (the `small` name pattern, or no wider than
+`small_max`) snap to `snap` anywhere and rest on surfaces. A model may have a sidecar
+`<model>.place.json` beside its glb (`type` floor/small/wall, `scale`, `footprint` [x, z] metres,
+`front` quarter turns, `wall_height`, `surface`, `slots`), which wins over the settings' lists.
+Models are drawn their place's `scale` times (default `furniture_scale`: the Kenney pieces are
+about half true size, and the room files store unscaled sizes); `furniture_catalog.gd` each model's scene (Kenney's in `model_folder`, the Artist's Blender pieces, `artist_models`, in `artist_folder`), icon, size from its meshes, groups, its `Place`, `new_item` and `rest_height` (stacking);
 `room_design.gd` (`RoomDesign`, `Item`) the design and its file, format 1 as the Artist set it
 (x per cell to the item's middle, y above that floor, z from the room's middle, back negative);
 `design_store.gd` keeps every design in `user://room_designs.json` at once, starts from shipped
@@ -212,7 +218,7 @@ Tunables: `data/planning.tres`.
 | `data/rooms.tres` | `RoomSettings` (+ `RoomKind`s) | the room kinds (shape, price, upkeep, what each gives, where it fits, what it must be next to), the stairs, upkeep and reopening, the grid (bay width, floor height, limits), the stores with no room built, the refund, the Office's first rooms and its steady prices, the editor's look |
 | `data/sounds.tres` | `SoundSettings` | which files each sound event plays, volumes, pitch spread, how far sounds carry, the city hum, when money clinks |
 | `data/title.tres` | `TitleSettings` | title screen: subtitle, colours, sizes, credit lines |
-| `data/room_designer.tres` | `RoomDesignerSettings` | room designer: furniture scale, snap and grid, a place's size, the furniture list and groups, surfaces, wall heights, category colours |
+| `data/room_designer.tres` | `RoomDesignerSettings` | room designer: furniture scale, snap and grid, small things, a place's size, the furniture list and groups, surfaces, wall heights, category colours |
 | `data/mapgen.tres` | `MapGenSettings` (+ `Archetype`s) | the neighbourhood kinds the map generator places |
 | `data/map_lab.tres` | `MapLabSettings` (+ `LabParams`, `LabSlider`s, `LandUseMix`es) | map lab menu, land use per archetype, block finding, colours |
 

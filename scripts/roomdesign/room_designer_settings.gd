@@ -21,10 +21,21 @@ extends Resource
 ## 1.15 m, a doll's-house scale that reads in the room. An item's own scale is on top of
 ## it, so files keep metres of the room.
 @export var furniture_scale := 3.0
-## Placing and dragging snap across and deep to this many metres (Shift: free), and the
-## floor shows grid lines this far apart.
+## Small things and wall pieces snap to this many metres.
 @export var snap := 0.25
+## Furniture on the floor takes whole squares of this many metres (the lines drawn) and
+## no two pieces share one.
 @export var grid_step := 0.5
+## A piece no bigger than this across (metres, as drawn) is a small thing: it stands on
+## the floor or on a surface anywhere, taking no squares.
+@export var small_max := 0.6
+## Small things whatever their size: what goes on a table, chairs and stools (they tuck
+## under desks and tables) and rugs (furniture stands on them).
+@export var small := "^(chair|stool|rug|pillow|computer|laptop|radio|toaster|books|plantSmall" \
+		+ "|television|kitchen(Microwave|CoffeeMachine|Blender)|lamp(Round|Square)Table" \
+		+ "|desk_lamp|wastebin|cardboardBox)"
+## How high a wall piece hangs when its sidecar says "wall" and gives no height.
+@export var default_wall_height := 1.6
 @export var grid_color := Color(0, 0, 0, 0.18)
 @export var model_folder := "res://assets/models/kenney_furniture/"
 @export var models: Array[StringName] = [

@@ -166,6 +166,86 @@ Eilam wants furniture more realistic than the flat Kenney kit, even at some cost
 - **Replacing Kenney:** gradually, most seen first: shop counter and register (done), display case (done), sofa and armchair (done), beds, desks and chairs for the offices, kitchen run, washers and dryers, then the rest. Kenney stays for what has no replacement yet.
 - **Open:** a few pieces still look simple (shelf goods, bin); wood is a flat tiled image, not a real photo.
 
+### Furniture rules (from the Sims 4 and Paralives study, 2026-11-17; awaiting Eilam's approval)
+
+Researched by the coordinator, adapted by the Artist. Tags: **S** = from a source (Sims 4 Marketplace creator guidelines, Maxis June 2017 dev update, Paralives Steam post and wiki), **P** = proposal. Where the Artist changed a rule, it says so.
+
+**Shape**
+1. Thin parts (legs, armrests, tops, handles) a bit thicker than real, **1.15-1.3x** (P; the study said 1.3-2x, cut because Eilam chose "more realistic" and the room view already draws pieces 3x).
+2. The silhouette reads at thumbnail size from the game camera; drop detail under about 2 cm (P).
+3. Every piece lives inside a per-type block: footprint, build volume, decoration slots; geometry never leaves the footprint (S).
+4. No rotation in our game, so spend effort on front, top and one side; keep the back simple (P).
+
+**Modelling**
+5. Budget (P, from S: Sims 4 uses 800 tris per tile): 800-1,500 tris per tile of footprint, up to 3,000 for a hero piece, 150-400 for clutter.
+6. Bevel every visible hard edge, 1-2 segments, a little wider than real (P).
+7. Origin centred on the footprint, bottom at Y=0; wall objects: bottom middle at the back; merged vertices, outward normals, scale applied (S).
+8. Footprints in whole or half cells, real metres (S: Sims snap to full, half and quarter tiles).
+9. One level of detail; a second (about 50%) only above 2,000 tris (P).
+10. Named empty nodes as decoration slots on tables, shelves, desks and sills (S: small, medium, large slots; P: empties in glTF). Needs the Programmer.
+
+**UV**
+11. One texel density across the catalogue: **256 px per metre**, 512 px for hero pieces (P, from S: Sims 4 about 256 px per tile). A 2 m sofa gets 512 px, a mug 128 px.
+12. One unique, non-overlapping 0-1 UV set per piece so AO can be baked; mirror only hidden parts (P).
+13. UV islands grouped by material zone (cushions, legs, top, frame), **at most 4 zones** (S: Paralives recolours per part). Artist change: a zone is its own Godot surface and material, so it can be swapped at runtime without a mask shader; the Programmer confirms this.
+14. Leaf cards share one plant atlas (P).
+
+**Texture and material**
+15. Diffuse, a normal map from bevels only, packed roughness/metal at half size (S: Sims uses diffuse, normal, quarter-size specular).
+16. Soft baked AO at 50-70% in the albedo (P).
+17. Wood grain and weave scaled up slightly, no photo noise (P; the study said "simplified", the Artist keeps real materials because of the realistic decision).
+18. Saturated mid-values, no pure black or white; wear is only a slight lightening of edges (P, matches the saturated decision).
+19. Zones that change colour are painted neutral grey at 60-70% value and tinted; **wood zones swap the texture instead of tinting** (Artist change: tinting a real wood image looks muddy).
+
+**Colour and sets**
+20. Every colour and pattern variant is fixed with exact values before modelling (S: Maxis).
+21. One global palette: about 6 woods, 4 metals, 12-16 fabric and paint colours; 6-10 swatches per piece, always including white, black, light wood and dark wood (P). Reason (S): the top Sims 4 complaint is wood tones that do not match across sets.
+
+**Catalogue**
+22. Design in sets (seat, table, storage, light, textile, wall piece) that share the palette (P).
+23. Clutter is the long tail of the fun (books, mugs, plants, frames, cushions, rugs, lamps): aim for 2 clutter pieces per furniture piece (P).
+24. Never block a placement; reward with snap and sound (S: Unpacking's pillars are contemplation, discovery, expression, no fail states).
+25. No free resize; 2-3 size variants instead (P).
+
+**Upholstery recipe (tried on the pink sofa, 2026-11-17).** A flat colour with a faint weave reads as plastic. Every upholstered piece gets: (1) a 512 px twill weave (diagonal ribs about 9 px, a second finer cross-weave, only a faint slub, and no cloudy colour variation: blotches on the cushion tops draw the eye at game distance), with a matching roughness map (0.65-1.0, rougher in the ribs) and a normal map at strength about 0.45; (2) real tufting where there are buttons: a gridded front face (about 20 cuts), puffed in the middle, each button pulled in with a smooth pit (depth about 0.018, sigma about 0.019 in raw units; deeper pits become dark spots that pull the eye) and soft valleys (depth 0.008) between neighbouring buttons, faded to zero at the cushion edge so no crease shows; (3) ambient occlusion in vertex colour (`Col`, multiplied into the base colour, at most 12% darker) in pits and valleys; every other mesh of the piece gets a white `Col` so the material works; (4) a welt (a 5-sided tube, tube radius 3 mm, 5 points per corner) along the top and front edges of every cushion, sitting just inside the bevel; (5) bevels of 5 segments. In Blender the material also has Sheen (weight 0.7, rough 0.45, pinkish tint), but the glTF importer in Godot drops it. What survives in Godot Compatibility: albedo, normal, roughness, vertex colour as albedo, shadows. What does not: sheen. A soft rim light (`rim` 0.22, `rim_tint` 0.6) on the material in Godot does work in Compatibility and fakes the fuzz, but it must be set in code (the art style pass), not in the file. Cost: the sofa is 3,536 faces (grids of 18 cuts on the backrests, pillows decimated to 8%), still 18% over the 3,000 hero budget. Test lighting that suits it in Godot Compatibility (tried 2026-11-17, not yet in the game): sun 0.24, flat warm ambient 0.36, a faint upward bounce light, contrast 0.9, saturation 0.92; a sky as ambient source ignores its energy in Compatibility. Script: `/mnt/project-files/art/sofa-pink/pink_material.py` (not in the repo).
+
+**Soft parts and cloth simulation (tried 2026-11-17, not adopted).** A Blender cloth sim (subdivided box, pressure, dropped on the seat with collision, baked) gives real fabric wrinkles, but headless it is hard to control: the cushion slid off, fell through the colliders, or pinched against the arm, and it took many parameter runs per cushion. Inflating without collision gave a blocky pillow. Until a tuned setup exists, soft parts are built as rounded boxes with a few pleats, and heavily soft pieces should come from a bought pack. Script: `/mnt/project-files/art/sofa-pink/pink_cloth.py` (not in the repo).
+
+**From a photo to a piece:** pick the type and its block; sketch front, side and top over the block with the thickness exaggerated; model, bevel, check the budget; set origin, scale and slot empties; unwrap by zone at the fixed density; bake AO, paint grey albedo; assign palette swatches; check in the game at the game camera beside three existing pieces; render the thumbnail.
+
+**Artist's stance on the tension (stylised Sims vs "more realistic"):** the pipeline rules (3, 7, 8, 10-13, 20-25) apply in full because they make furniture mixable and recolourable. The shape and surface rules (1, 17) are applied in a milder form. A bought pack such as the ithappy one can be judged by the same yardstick: it passes on budget and footprint, but its single palette texture cannot be recoloured by zone, so each piece used needs a UV and material pass. The rules do not make the pack unnecessary: they let the Artist make hero pieces, while a pack gives volume.
+
+## Models from Eilam and from photos: the low-poly protocol (tested 2026-11-17)
+
+Two cases. **A photo only**: image-to-3D (Meshy, one run, `should_remesh: false`, shape only),
+then the steps below with our own fabric on the high-poly (see the upholstery recipe above;
+the full photo steps are in `/mnt/project-files/art/PHOTO-TO-MODEL-PROTOCOL.md`).
+**A ready model** (a ~95,000-triangle GLB with its own textures): keep its look and textures,
+and only reduce it. Judge every result in Godot (Compatibility, warm light) beside the original.
+
+1. Look first: delete junk parts (a floor slab came inside one sofa: split into loose parts,
+   remove the flat ones).
+2. Pick the method by what the object is built like:
+
+| Object | Examples | Method | Budget |
+| --- | --- | --- | --- |
+| Hard and simple | fridge, side table, sofa, wooden chair | plain Decimate (UV-delimited), keeps the original UVs and textures | 3,000 |
+| Hard and simple, tiny budget | same | clean method (below) | 500 |
+| Soft and round | armchair, soft bed | clean method | 500 to 3,500 |
+| Layered or recessed | carved dresser, duvet in layers | clean method, finer voxels, with the cage | 1,500 or more |
+| Thin and open (ropes, wicker) | rattan lamp | alpha shell: a lathe shell of about 900 triangles with a baked colour + alpha texture (misses are transparent, glTF `MASK` 0.5), plus the bulb and base as a small normal mesh | about 1,400 |
+| Leaves | monstera | plain Decimate keeps UV and alpha texture | 2,000 |
+
+3. **The clean method**: voxel remesh the original (size = longest side / 220, finer = 450 for
+   layers), Decimate to the budget, Smart UV, then bake normal and colour from the original at
+   2048 with a **cage** (the low mesh pushed out by about longest side / 120, rays 2.5 times
+   that), export 1024 WebP.
+4. Tested and rejected, do not repeat: Shrinkwrap after decimating (snaps points to the wrong
+   layer and makes spikes and blotches), QuadriFlow retopology (collapses layered models),
+   curvature-weighted Decimate (breaks the drawers and leaves black patches), plain Decimate
+   below about 3,000 on a soft model (ragged), a Smart UV on a ragged mesh (shards).
+5. Show one picture: original beside reduced, same camera, in Godot. Say what is different.
+
 ## Facade styles (catalog, first four: New York)
 
 Source: Eilam's reference photos (Wikimedia Commons, CC BY-SA: reference only, never in the game),
