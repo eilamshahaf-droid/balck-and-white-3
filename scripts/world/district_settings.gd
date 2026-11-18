@@ -148,7 +148,6 @@ extends Resource
 @export var core_color := Color(0.62, 0.3, 0.85)           # beacon on each district's core building
 @export var core_beacon := Vector3(1.2, 7.0, 1.2)          # its size, above the roof
 @export var tooltip_interval := 0.1                        # seconds between looks under the cursor
-@export var tooltip_offset := Vector2(18.0, 18.0)          # pixels from the cursor
 @export var roof_color := Color(1.0, 0.7, 0.0)              # the plate on a building of yours
 @export var border_color := Color(1.0, 1.0, 1.0, 0.85)
 @export var controlled_border_color := Color(1.0, 0.7, 0.0, 1.0)

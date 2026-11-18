@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.33.0 (2026-11-18): the god's desk, step 2: tags at the fingertip
+From the UI brief "the god's desk" (step 2 of 5).
+- **Action tags in place of the round wheel.** Hold the button still on a building (or the ground): the choices hang as kraft paper tags on strings, in a column on an arc beside the glove's fingertip, on the side with open screen. Each action keeps its own place in the column on every building (Rooms first, then +Floors, Sellers, Train Rep, Train Fixer, Loan, Bury the File), so the hand learns where things are. The tag the hand points at grows; one that can't be had is dimmed and says why in red. Long notes shrink to fit the tag.
+- **The cuff tag.** The card about the building under the hand is a luggage tag on a short string from the glove's cuff, beside the hand so it doesn't cover the building, and on the other side near the right edge. It hides while the tags are open.
+- Try it: hold the button still on the Office, point at the tags, let go on one.
+
 ## Pre-Alpha 0.32.0 (2026-11-18): the god's desk, first step
 Asked by Eilam, from the UI brief "the god's desk" (step 1 of 5): the interface becomes stationery on a model-maker's table.
 - **One look for the interface.** Every look is in one Theme, `data/ui_theme.tres` (masking tape, an index card and a kraft tag as 9-slice paper; typewriter fonts), and its numbers in `data/ui.tres`. Fonts: Special Elite for text, Courier Prime for numbers, Permanent Marker for headings (free licences, `assets/fonts/`). Textures from Eilam in `assets/ui/`.

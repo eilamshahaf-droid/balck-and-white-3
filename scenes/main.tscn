@@ -278,7 +278,7 @@ districts = NodePath("../../../Districts")
 followers = NodePath("../../../Followers")
 rig = NodePath("../../../CameraRig")
 
-[node name="Tooltip" type="Label" parent="HUD/Desk" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera", "impression")]
+[node name="Tooltip" type="Label" parent="HUD/Desk" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera", "impression", "hand")]
 script = ExtResource("22_tooltip")
 districts = NodePath("../../../Districts")
 followers = NodePath("../../../Followers")
@@ -286,6 +286,7 @@ decrees = NodePath("../../../Decrees")
 population = NodePath("../../../Population")
 camera = NodePath("../../../CameraRig/Camera3D")
 impression = NodePath("../../../Impression")
+hand = NodePath("../../../GodHand")
 
 [node name="Breaches" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "hand", "treasury", "rooms")]
 script = ExtResource("76_breaches")
