@@ -1,10 +1,13 @@
-[gd_scene load_steps=44 format=3]
+[gd_scene load_steps=47 format=3]
 
 [ext_resource type="Script" path="res://scripts/city.gd" id="1_city"]
 [ext_resource type="Script" path="res://scripts/god_camera.gd" id="2_cam"]
 [ext_resource type="Script" path="res://scripts/god_hand.gd" id="3_hand"]
 [ext_resource type="Script" path="res://scripts/faith.gd" id="4_faith"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="5_hud"]
+[ext_resource type="Theme" path="res://data/ui_theme.tres" id="90_ui_theme"]
+[ext_resource type="Script" path="res://scripts/ui/desk.gd" id="90_desk"]
+[ext_resource type="Script" path="res://scripts/ui/exposure_dial.gd" id="90_dial"]
 [ext_resource type="Script" path="res://scripts/help_label.gd" id="5_help"]
 [ext_resource type="Script" path="res://scripts/mission_card.gd" id="5_mission"]
 [ext_resource type="Script" path="res://scripts/miracles.gd" id="7_miracles"]
@@ -207,33 +210,48 @@ script = ExtResource("10_debug")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="Mission" type="PanelContainer" parent="HUD" node_paths=PackedStringArray("districts", "population", "campaigns", "progress", "inspectors", "breaches", "rooms", "treasury")]
-offset_left = 12.0
-offset_top = 96.0
-offset_right = 412.0
-offset_bottom = 196.0
-script = ExtResource("5_mission")
-districts = NodePath("../../Districts")
-population = NodePath("../../Population")
-campaigns = NodePath("../../Campaigns")
-progress = NodePath("../../DistrictProgress")
-inspectors = NodePath("../../Inspectors")
-breaches = NodePath("../../Breaches")
-rooms = NodePath("../../Rooms")
-treasury = NodePath("../../Treasury")
-
-[node name="Help" type="Label" parent="HUD"]
-anchors_preset = 1
-anchor_left = 1.0
+[node name="Desk" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = -700.0
-offset_top = 10.0
-offset_right = -12.0
-offset_bottom = 120.0
-grow_horizontal = 0
-horizontal_alignment = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
-theme_override_constants/outline_size = 5
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("90_ui_theme")
+script = ExtResource("90_desk")
+
+[node name="Stats" type="PanelContainer" parent="HUD/Desk" node_paths=PackedStringArray("faith", "tools", "followers", "treasury", "districts", "population", "upkeep")]
+offset_left = 14.0
+offset_top = 8.0
+script = ExtResource("5_hud")
+faith = NodePath("../../../Faith")
+tools = NodePath("../../../HandTools")
+followers = NodePath("../../../Followers")
+treasury = NodePath("../../../Treasury")
+districts = NodePath("../../../Districts")
+population = NodePath("../../../Population")
+upkeep = NodePath("../../../UnitUpkeep")
+
+[node name="Dial" type="Control" parent="HUD/Desk" node_paths=PackedStringArray("faith", "inspectors")]
+script = ExtResource("90_dial")
+faith = NodePath("../../../Faith")
+inspectors = NodePath("../../../Inspectors")
+
+[node name="Mission" type="PanelContainer" parent="HUD/Desk" node_paths=PackedStringArray("districts", "population", "campaigns", "progress", "inspectors", "breaches", "rooms", "treasury")]
+offset_left = 16.0
+offset_top = 86.0
+script = ExtResource("5_mission")
+districts = NodePath("../../../Districts")
+population = NodePath("../../../Population")
+campaigns = NodePath("../../../Campaigns")
+progress = NodePath("../../../DistrictProgress")
+inspectors = NodePath("../../../Inspectors")
+breaches = NodePath("../../../Breaches")
+rooms = NodePath("../../../Rooms")
+treasury = NodePath("../../../Treasury")
+
+[node name="Help" type="Label" parent="HUD/Desk"]
 script = ExtResource("5_help")
 text = "Left-drag the ground: move the city    Left-drag a person or taxi: pick up, flick to throw
 Click: tap / knock on a wall    Double-click: fly there    Middle-drag: orbit    Wheel: zoom    Keys: WASD, Q/E, R/F    B: who is this (debug)    F1: debug panel
@@ -243,36 +261,31 @@ Inspectors (red !) walk from key buildings to your Reps and want paperwork: lift
 Space: pause (the hand, the wheels and the room editor still work)
 Key buildings (red sign): train a Fixer at the Office and send him there; when he has opened one, send a Rep"
 
-[node name="Stats" type="Label" parent="HUD"]
-offset_left = 12.0
-offset_top = 62.0
-offset_right = 900.0
-offset_bottom = 92.0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
-theme_override_constants/outline_size = 5
-script = ExtResource("5_hud")
-
-[node name="District" type="Label" parent="HUD"]
-anchors_preset = 2
+[node name="District" type="Label" parent="HUD/Desk" node_paths=PackedStringArray("districts", "followers", "rig")]
+anchors_preset = 3
+anchor_left = 1.0
 anchor_top = 1.0
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = -64.0
-offset_right = 900.0
-offset_bottom = -12.0
+offset_left = -14.0
+offset_top = -58.0
+offset_right = -14.0
+offset_bottom = -58.0
+grow_horizontal = 0
 grow_vertical = 0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
-theme_override_constants/outline_size = 5
 script = ExtResource("16_district_hud")
+districts = NodePath("../../../Districts")
+followers = NodePath("../../../Followers")
+rig = NodePath("../../../CameraRig")
 
-[node name="Tooltip" type="Label" parent="HUD" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera", "impression")]
+[node name="Tooltip" type="Label" parent="HUD/Desk" node_paths=PackedStringArray("districts", "followers", "decrees", "population", "camera", "impression")]
 script = ExtResource("22_tooltip")
-districts = NodePath("../../Districts")
-followers = NodePath("../../Followers")
-decrees = NodePath("../../Decrees")
-population = NodePath("../../Population")
-camera = NodePath("../../CameraRig/Camera3D")
-impression = NodePath("../../Impression")
+districts = NodePath("../../../Districts")
+followers = NodePath("../../../Followers")
+decrees = NodePath("../../../Decrees")
+population = NodePath("../../../Population")
+camera = NodePath("../../../CameraRig/Camera3D")
+impression = NodePath("../../../Impression")
 
 [node name="Breaches" type="Node" parent="." node_paths=PackedStringArray("districts", "population", "faith", "hand", "treasury", "rooms")]
 script = ExtResource("76_breaches")

@@ -1,0 +1,108 @@
+[gd_resource type="Theme" load_steps=17 format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/SpecialElite-Regular.woff2" id="1_body"]
+[ext_resource type="FontFile" path="res://assets/fonts/CourierPrime-Bold.woff2" id="2_num"]
+[ext_resource type="FontFile" path="res://assets/fonts/CourierPrime-Regular.woff2" id="3_rate"]
+[ext_resource type="FontFile" path="res://assets/fonts/PermanentMarker-Regular.woff2" id="4_head"]
+[ext_resource type="Texture2D" path="res://assets/ui/tape.png" id="5_tape"]
+[ext_resource type="Texture2D" path="res://assets/ui/index-card.png" id="6_card"]
+[ext_resource type="Texture2D" path="res://assets/ui/kraft-tag.png" id="7_tag"]
+
+[sub_resource type="StyleBoxTexture" id="tape_strip"]
+texture = ExtResource("5_tape")
+texture_margin_left = 18.0
+texture_margin_right = 18.0
+content_margin_left = 30.0
+content_margin_top = 10.0
+content_margin_right = 30.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxTexture" id="hint_tape"]
+texture = ExtResource("5_tape")
+texture_margin_left = 18.0
+texture_margin_right = 18.0
+content_margin_left = 34.0
+content_margin_top = 8.0
+content_margin_right = 34.0
+content_margin_bottom = 9.0
+
+[sub_resource type="StyleBoxTexture" id="slip"]
+texture = ExtResource("6_card")
+texture_margin_left = 14.0
+texture_margin_top = 14.0
+texture_margin_right = 14.0
+texture_margin_bottom = 14.0
+content_margin_left = 22.0
+content_margin_top = 16.0
+content_margin_right = 22.0
+content_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxTexture" id="tag"]
+texture = ExtResource("7_tag")
+texture_margin_left = 92.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+content_margin_left = 84.0
+content_margin_top = 12.0
+content_margin_right = 18.0
+content_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxFlat" id="bar_back"]
+bg_color = Color(1, 1, 1, 0.25)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.169, 0.149, 0.125, 1)
+
+[sub_resource type="StyleBoxFlat" id="bar_fill"]
+bg_color = Color(0.169, 0.149, 0.125, 0.8)
+
+[sub_resource type="StyleBoxEmpty" id="none"]
+
+[resource]
+default_font = ExtResource("1_body")
+default_font_size = 15
+Label/colors/font_color = Color(0.169, 0.149, 0.125, 1)
+RichTextLabel/colors/default_color = Color(0.169, 0.149, 0.125, 1)
+RichTextLabel/styles/normal = SubResource("none")
+TapeStrip/base_type = &"PanelContainer"
+TapeStrip/styles/panel = SubResource("tape_strip")
+Slip/base_type = &"PanelContainer"
+Slip/styles/panel = SubResource("slip")
+Tag/base_type = &"PanelContainer"
+Tag/styles/panel = SubResource("tag")
+HintTape/base_type = &"Label"
+HintTape/font_sizes/font_size = 14
+HintTape/styles/normal = SubResource("hint_tape")
+SlipLabel/base_type = &"Label"
+SlipLabel/font_sizes/font_size = 13
+SlipLabel/styles/normal = SubResource("slip")
+TagLabel/base_type = &"Label"
+TagLabel/font_sizes/font_size = 13
+TagLabel/styles/normal = SubResource("tag")
+SlipTitle/base_type = &"Label"
+SlipTitle/font_sizes/font_size = 17
+SlipText/base_type = &"Label"
+SlipText/font_sizes/font_size = 13
+Number/base_type = &"Label"
+Number/fonts/font = ExtResource("2_num")
+Number/font_sizes/font_size = 22
+Rate/base_type = &"Label"
+Rate/fonts/font = ExtResource("3_rate")
+Rate/font_sizes/font_size = 12
+RateUp/base_type = &"Rate"
+RateUp/colors/font_color = Color(0.239, 0.478, 0.208, 1)
+RateDown/base_type = &"Rate"
+RateDown/colors/font_color = Color(0.702, 0.149, 0.118, 1)
+Rate/colors/font_color = Color(0.435, 0.4, 0.353, 1)
+Caption/base_type = &"Label"
+Caption/colors/font_color = Color(0.435, 0.4, 0.353, 1)
+Caption/font_sizes/font_size = 11
+Heading/base_type = &"Label"
+Heading/fonts/font = ExtResource("4_head")
+Heading/font_sizes/font_size = 18
+InkBar/base_type = &"ProgressBar"
+InkBar/styles/background = SubResource("bar_back")
+InkBar/styles/fill = SubResource("bar_fill")

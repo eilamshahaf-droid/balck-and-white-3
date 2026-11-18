@@ -22,6 +22,7 @@ var _timer := 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	theme_type_variation = &"TagLabel"
 	visible = false
 
 

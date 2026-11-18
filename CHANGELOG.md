@@ -3,6 +3,16 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.32.0 (2026-11-18): the god's desk, first step
+Asked by Eilam, from the UI brief "the god's desk" (step 1 of 5): the interface becomes stationery on a model-maker's table.
+- **One look for the interface.** Every look is in one Theme, `data/ui_theme.tres` (masking tape, an index card and a kraft tag as 9-slice paper; typewriter fonts), and its numbers in `data/ui.tres`. Fonts: Special Elite for text, Courier Prime for numbers, Permanent Marker for headings (free licences, `assets/fonts/`). Textures from Eilam in `assets/ui/`.
+- **Tape strip, top left**, in place of the six dark cards: paperwork, money (a sewing button), followers with sellers and clerks, Reps free out of the cap (a push pin), and your buildings as a bar. Each number has its rate a second beside it, green when it grows and red when it falls.
+- **Exposure dial, top right**: a round kraft dial with a red rim; a red wedge grows with the exposure; under it the time to the next inspector, or ON HIS WAY while one is out.
+- **Minutes slip**: the mission card is a lined slip under a clothes peg, "MINUTES · ITEM n". A done step is struck through in red pen; after 6 seconds the slip folds to the step alone, and the mouse over it opens it again.
+- **Hint tape, bottom**: the three controls that matter now; H opens them all on an index card. The district card moved bottom right, as an index card.
+- Pausing (Space) dims the paper a little.
+- Try it: start a game and watch the strip and the dial; plan the Office's Shop to see the slip strike a step.
+
 ## Pre-Alpha 0.31.0 (2026-11-18): furniture takes grid squares
 Asked by Eilam, designed by the Game Designer: Sims-style placement in the room designer.
 - **Furniture takes whole squares.** Beds, sofas, tables, cabinets and the like take whole squares of the floor grid (half a metre each), always snap to it, and never overlap. Put one where there is no room and it goes to the nearest free squares, or doesn't go in at all (a buzz). Dragging only moves it to squares that are free. R turns it a quarter turn if it fits turned. The picked piece shows the squares it takes, and the panel says how many.
