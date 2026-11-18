@@ -1,89 +1,98 @@
-extends Label
-## The numbers the player may see, as a row of cards along the top: paperwork (what
-## training, rooms and inspectors take, and what the Reps cost a second), money and what comes in, followers and how
-## many of them hold a role, Reps (free of the cap), buildings of yours, and the
-## exposure with the inspectors out. Under
-## them, what the hand holds.
+class_name Hud
+extends PanelContainer
+## Top left, one strip of masking tape with the numbers the player may see, each an
+## icon, a number and what comes in a second: paperwork (net of what the Reps cost, so a
+## falling pool shows before it is empty), money, followers (and how many sell and keep
+## the books), Reps free out of the cap, and the buildings of yours as a bar. The
+## exposure has its own dial (ExposureDial). Under the strip, what the hand holds.
 
-const REFRESH := 0.25   # seconds; the numbers don't need to change every frame
+const S: UiSettings = preload("res://data/ui.tres")
 const U: UnitSettings = preload("res://data/units.tres")
 
-var _timer := 0.0
-var _values: Array[Label] = []
+enum Item { PAPERWORK, MONEY, FOLLOWERS, REPS, BUILDINGS }
 
-@onready var faith: Faith = get_node("../../Faith")
-@onready var tools: HandTools = get_node("../../HandTools")
-@onready var followers: Followers = get_node("../../Followers")
-@onready var inspectors: Inspectors = get_node("../../Inspectors")
-@onready var treasury: Treasury = get_node("../../Treasury")
-@onready var districts: Districts = get_node("../../Districts")
-@onready var population: Population = get_node("../../Population")
-@onready var upkeep: UnitUpkeep = get_node("../../UnitUpkeep")
+@export var faith: Faith
+@export var tools: HandTools
+@export var followers: Followers
+@export var treasury: Treasury
+@export var districts: Districts
+@export var population: Population
+@export var upkeep: UnitUpkeep
+
+var _timer := 0.0
+var _numbers: Array[Label] = []
+var _rates: Array[Label] = []
+var _bar := ProgressBar.new()
+var _held := Label.new()
 
 
 func _ready() -> void:
-	var version := "%s %s" % [ProjectSettings.get_setting("application/config/release_stage"),
-			ProjectSettings.get_setting("application/config/version")]
-	DisplayServer.window_set_title("%s %s" % [ProjectSettings.get_setting("application/config/name"), version])
-	var corner_layer := CanvasLayer.new()  # this label is 0 px wide, so anchors need a layer of their own
-	add_child(corner_layer)
-	var corner := Label.new()
-	corner.text = version
-	corner.add_theme_font_size_override(&"font_size", 11)
-	corner.modulate = Color(1, 1, 1, 0.5)
-	corner.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	corner.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	corner.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	corner.offset_left = -8.0
-	corner.offset_top = -6.0
-	corner_layer.add_child(corner)
+	theme_type_variation = &"TapeStrip"
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 8)
-	row.position = Vector2(0.0, -52.0)
+	row.add_theme_constant_override(&"separation", 10)
 	add_child(row)
-	var titles := ["PAPERWORK", "MONEY", "FOLLOWERS", U.plural(Resident.Rank.MISSIONARY).to_upper(),
-			"BUILDINGS", "EXPOSURE"]
-	for title: String in titles:
-		var card := PanelContainer.new()
-		var box := VBoxContainer.new()
-		box.add_theme_constant_override(&"separation", -4)
-		card.add_child(box)
-		var caption := Label.new()
-		caption.text = title
-		caption.add_theme_font_size_override(&"font_size", 11)
-		caption.modulate = Color(1, 1, 1, 0.7)
-		box.add_child(caption)
-		var value := Label.new()
-		value.add_theme_font_size_override(&"font_size", 22)
-		box.add_child(value)
-		_values.append(value)
-		row.add_child(card)
+	var kinds := [UiIcon.Kind.PAPERWORK, UiIcon.Kind.MONEY, UiIcon.Kind.FOLLOWER, UiIcon.Kind.REP,
+			UiIcon.Kind.BUILDING]
+	for i in kinds.size():
+		var item := HBoxContainer.new()
+		item.add_theme_constant_override(&"separation", 5)
+		item.add_child(UiIcon.new(kinds[i]))
+		if i == Item.BUILDINGS:
+			_bar.theme_type_variation = &"InkBar"
+			_bar.show_percentage = false
+			_bar.custom_minimum_size = Vector2(S.buildings_bar_width, 10.0)
+			_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			item.add_child(_bar)
+		else:
+			var number := Label.new()
+			number.theme_type_variation = &"Number"
+			item.add_child(number)
+			_numbers.append(number)
+		var rate := Label.new()
+		rate.theme_type_variation = &"Rate"
+		rate.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		item.add_child(rate)
+		_rates.append(rate)
+		row.add_child(item)
+	_held.theme_type_variation = &"HintTape"
+	_held.visible = false
+	_held.top_level = true
+	_held.position = Vector2(S.strip_position.x, S.strip_position.y + S.held_below)
+	add_child(_held)
 
 
 func _process(delta: float) -> void:
 	_timer -= delta
 	if _timer > 0.0:
 		return
-	_timer = REFRESH
-	# Net of what the Reps and the Fixer cost, so a falling pool shows before it is empty.
-	_show(0, "%d of %d  %+.1f/s" % [floori(faith.belief_pool), roundi(followers.paperwork_cap()),
-			followers.paperwork_rate - upkeep.rate()])
-	_show(1, "$%d of %d  %+.1f/s" % [floori(treasury.money), roundi(followers.money_cap()),
-			treasury.income])
-	_show(2, "%d  (%d sellers, %d clerks)" % [followers.total, followers.sellers, followers.clerks])
-	_show(3, "%d free, %d of %d" % [population.free_rep_count, population.reps_out,
-			followers.rep_cap()])
-	_show(4, "%d" % districts.converted_buildings().size())
-	var count := inspectors.out.size()
-	_show(5, "%d%%  inspector in %ds" % [roundi(faith.exposure * 100.0), ceili(inspectors.next_in)]
-			if count == 0 else "%d%%  %d inspector%s out" % [roundi(faith.exposure * 100.0), count, "" if count == 1 else "s"])
+	_timer = S.refresh
+	var paperwork := followers.paperwork_rate - upkeep.rate()
+	_show(Item.PAPERWORK, "%d" % floori(faith.belief_pool),
+			"%+.1f/s  of %d" % [paperwork, roundi(followers.paperwork_cap())], paperwork)
+	_show(Item.MONEY, "$%d" % floori(treasury.money),
+			"%+.1f/s  of %d" % [treasury.income, roundi(followers.money_cap())], treasury.income)
+	_show(Item.FOLLOWERS, "%d" % followers.total,
+			"%d sell · %d clerk" % [followers.sellers, followers.clerks], 0.0)
+	_show(Item.REPS, "%d" % population.free_rep_count, "/ %d %s" % [followers.rep_cap(),
+			U.plural(Resident.Rank.MISSIONARY)], 0.0)
+	var mine := districts.converted_buildings().size()
+	_bar.max_value = maxi(districts.buildings.size(), 1)
+	_bar.value = mine
+	_show(Item.BUILDINGS, "", "%d / %d" % [mine, districts.buildings.size()], 0.0)
 	var line := ""
 	if tools.charged != &"":
-		line = "In the hand: %s (click to cast, right-click to drop)" % String(tools.charged).capitalize()
-	if text != line:
-		text = line
+		line = "In the hand: %s · click to cast · right click to drop" % String(tools.charged).capitalize()
+	if _held.text != line:
+		_held.text = line
+		_held.visible = line != ""
 
 
-func _show(i: int, value: String) -> void:
-	if _values[i].text != value:
-		_values[i].text = value
+## Item `i` reads `number` and `rate`; a rate in green when `trend` is above 0, red below.
+func _show(i: Item, number: String, rate: String, trend: float) -> void:
+	if i < _numbers.size() and _numbers[i].text != number:
+		_numbers[i].text = number
+	if _rates[i].text != rate:
+		_rates[i].text = rate
+		_rates[i].theme_type_variation = &"RateUp" if trend > 0.0 \
+				else (&"RateDown" if trend < 0.0 else &"Rate")
