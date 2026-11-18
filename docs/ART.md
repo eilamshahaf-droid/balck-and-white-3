@@ -215,6 +215,37 @@ Researched by the coordinator, adapted by the Artist. Tags: **S** = from a sourc
 
 **Artist's stance on the tension (stylised Sims vs "more realistic"):** the pipeline rules (3, 7, 8, 10-13, 20-25) apply in full because they make furniture mixable and recolourable. The shape and surface rules (1, 17) are applied in a milder form. A bought pack such as the ithappy one can be judged by the same yardstick: it passes on budget and footprint, but its single palette texture cannot be recoloured by zone, so each piece used needs a UV and material pass. The rules do not make the pack unnecessary: they let the Artist make hero pieces, while a pack gives volume.
 
+## Furniture checklist (every piece, before Eilam sees it; Eilam 2026-11-18)
+
+What the sofa rounds taught us, as one list. Each item is checked in a Godot screenshot, not in
+Blender.
+
+1. **Real size and origin.** Model at real-world size (the reference's own measurements). The
+   origin sits at the bottom of the legs and the leg tips touch y = 0. Legs are short and sunk a
+   little into the frame, never loose pieces with a gap.
+2. **Contact.** Dark AO where the legs meet the floor and the frame, and under the seat. Without it
+   the piece floats.
+3. **Cushions are pillows, not boxes.** Puffy in the middle, the edges pinched to the seam line, thin
+   corners; never one even bevel. A slight sag where people sit, a small random difference in shape
+   and angle between cushions, cushions leaning on each other and overhanging the frame a little,
+   piping or a seam where the reference has one.
+4. **Tufting** (where there are buttons): a 1-2 cm dent round each button with a soft falloff and
+   dark AO inside; the fabric puffs between buttons; 3-6 creases per button in the normal map, not
+   in geometry; small recessed buttons close to the fabric colour.
+5. **Fabric.** High roughness, a soft rim or sheen at the edges, a fine fibre or rib normal map
+   (corduroy ribs follow each panel's direction).
+6. **Materials baked.** Bake to albedo, normal, roughness and AO before the glTF export (Godot drops
+   Blender's procedural nodes and sheen). Export with modifiers applied and smooth normals. Unshaded
+   test: shown with no light, the albedo has no painted shadows or highlights (de-light it if it
+   does, typical of AI textures); if it is clean but still looks heavy, lower the AO and normal
+   strength.
+7. **Judged in the fixed Godot scene**: the same HDRI as the sky, AgX tonemap, matched exposure, the
+   Compatibility renderer. Blender renders are not shown as results.
+8. **Budget.** A few thousand triangles (large detailed 6-8k, normal 3k, small 500-900).
+9. **Soft upholstery starts from TRELLIS**, not from scripted primitives: the corduroy sofa (10
+   scripted rounds, binned 2026-11-17) showed code does not reach photo quality on soft furniture.
+   Eilam makes the image and the TRELLIS model; the Artist cleans, reduces and applies 1-8.
+
 ## Models from Eilam and from photos: the low-poly protocol (tested 2026-11-17)
 
 Two cases. **A photo only**: image-to-3D (Meshy, one run, `should_remesh: false`, shape only),
