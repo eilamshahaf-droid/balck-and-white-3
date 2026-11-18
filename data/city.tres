@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_c")
+asphalt_color = Color(0.27, 0.27, 0.29, 1)

@@ -5,7 +5,7 @@ Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-
 
 ## Pre-Alpha 0.34.0 (2026-11-18): softer, warmer light
 Approved by Eilam, from the Artist's lighting pass.
-- **Shaded sides keep their colour.** More light from the sky fills the shadows (the sun is about three times the sky fill on a lit wall, it was about six), cast shadows keep more colour and lean cool blue, their edges are softer, and the sun is warmer.
+- **Shaded sides keep their colour.** More light from the sky fills the shadows (the sun is about three times the sky fill on a lit wall, it was about six), cast shadows keep more colour and lean cool blue, their edges are softer, and the sun is warmer. The streets are a lighter grey, so they no longer pull the picture down.
 - Every light number is now in data: `data/lighting.tres` (tone mapping, exposure, sun and sky by day and night) and `data/art_style.tres` (bands, shadow levels and tints, shadow blur).
 - Try it: look at the street side of a building in the shade, and the shadows on the street.
 

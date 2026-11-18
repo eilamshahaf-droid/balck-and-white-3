@@ -12,7 +12,7 @@ extends Resource
 ## Gap left between buildings that share a wall, so their facades don't flicker.
 @export var party_wall_gap := 0.3
 @export_group("Streets")
-@export var asphalt_color := Color(0.18, 0.18, 0.2)
+@export var asphalt_color := Color(0.27, 0.27, 0.29)
 @export var sidewalk_color := Color(0.55, 0.55, 0.55)
 @export var line_color := Color(0.85, 0.82, 0.7)
 ## Height of the sidewalks and the asphalt above the ground, drawn only (no step to trip on).
