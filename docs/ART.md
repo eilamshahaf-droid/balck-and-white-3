@@ -300,6 +300,68 @@ Windows follow rules, not dice. Lab: https://claude.ai/artifact/Vn8t5saorTDnzZgo
 - **Cornice rule.** A cornice may only sit on an *anchor*: the exposed top edge of a street-facing wall, with sky or a setback above it. It is never on a side or back wall. When the top floor steps back, the cornice drops to the full wall below and the recessed floor gets only a thin band or parapet, so it never floats. The "cornice kept" meter (0-1) decides per building and per anchor: intact, partly lost (a shorter run), or stripped to a parapet or nothing. The profile (bracketed, band, heavy, parapet) is picked per building from a list per style. Projects get no cornice. Still to add: one run across neighbours of the same height, and a base band on prewar buildings.
 - **Still to add:** continuous sill bands (brownstone, prewar), a fixed fire-escape column, roofs that differ between neighbours, side walls and courtyards, signs.
 
+## Adding a floor: the animation (approved by Eilam 2026-11-18, for the Programmer)
+
+Reference: the Artist's prototype, version 14, page https://claude.ai/artifact/5q5PyP7DuDdNr9sQH9xmqi
+(close and far camera). Source in the project files: `art/craft-anim/godot/main.gd` (`--anim`),
+video `art/craft-anim/out/anim14.mp4`. Reached after 14 versions and seven review rounds. Eilam's
+rejections are binding: nothing falls or flies in from nowhere, no hand, no scaffold, no big slabs,
+no pieces passing through each other, no jitter, no stamp or price on the building (that is the UI
+designer's), and do not smooth it into an even lift (version 12 "felt less alive").
+
+The idea: the building itself grows. It squats, the roof is pushed up and the new floor comes out
+of the seam under it, overshoots, hangs, lands, bounces once. The whole thing is 1.1 s.
+
+Motion is stepped on twos: 12 poses a second, each held 2 frames (`floor(t * 12) / 12`). Times from
+the click (t = 0). "Roof" is the roof's height as a share of one floor (0 = old roof, 1 = new).
+"Squash" scales the building's height about its feet; its width and depth scale by
+`1 + (1 - squash) * 0.6` about its middle, so it bulges when it squashes and thins when it stretches.
+
+| t (s) | roof | squash | what happens |
+| --- | --- | --- | --- |
+| 0.000 | 0 | 1.00 | rest |
+| 0.083 | 0 | 0.975 | squat starts |
+| 0.167 | 0 | 0.955 | deeper; shudder: whole building 0.05 m sideways, alternating each pose |
+| 0.250 | 0 | 0.945 | deepest, shudder |
+| 0.333 | 0.40 | 1.07 | burst: stretched tall and thin; puffs come out of the seam; flag cloth bends down |
+| 0.417 | 0.90 | 1.05 | papers thrown from under the roof |
+| 0.500 | 1.10 | 1.00 | over its mark, hangs |
+| 0.583 | 1.08 | 1.00 | still hanging |
+| 0.667 | 0.97 | 0.975 | lands: contact squash, camera dips 0.12 m for this one pose only, brick flecks and crumbs |
+| 0.750 | 1.00 | 1.00 | rest; the new floor's windows light one by one, 0.04 s apart, left to right |
+| 1.100 | | | everything still; done |
+
+Between keys the values change linearly (the poses land on the keys). Never dip the roof below 0.97
+after the landing: a deeper settle reads as the floor collapsing.
+
+Effects (all look like craft material, hard edges, no smoke):
+- Puffs: 6 off-white felt balls (#F0E8D9), alpha-cut, uneven sizes (two about 2 m, the rest
+  0.7-1.1 m), bunched at the two ends of the seam between the old top and the new floor, not in a
+  row. They move 0.35 m outward and a little down over 3 poses, then shrink to nothing over 2.
+- Papers: 3 form sheets (0.8 x 1.0 m) from the roof's two ends, thrown sideways (4.5-6.5 m/s), up
+  (3-4 m/s) and slightly forward; they tumble, a new angle each pose, and land flat on the
+  neighbours' roofs and stay. They never fade in mid-air.
+- Flecks: 8 small brick and mortar chips (0.1-0.17 m) and 4 crumbs from the seam at the landing,
+  gone in about half a second.
+- Flag on the roof (a building of yours): the cloth bends with the roof's speed (down on the way
+  up, a little up on the overshoot), then one small whip after the landing.
+- Window lights: warm (1.0, 0.8, 0.48), a little brighter as each comes on, then steady.
+- Scale puffs and papers up with camera distance (the prototype uses distance / 32, never below 1);
+  at the game's far zoom they need about 1.5 times that.
+
+For the game (from the reviewers; the prototype cannot show these):
+- A click during the animation starts the next floor's squat at once; it never queues. Only the
+  newest burst of papers and puffs plays.
+- Vary each play a little: 2-4 papers, their directions, puff sizes +-20%, overshoot 1.06-1.10.
+- The game keeps running; nothing pauses.
+- Today `DecreeLooks.grow` stretches the building's mesh over `grow_time` (2.5 s) with an
+  ease-out-back. The table above can drive the same stretch (roof share to mesh height) as a first
+  step. The full look reveals the new floor under a roof that is pushed up: the prototype cuts the
+  new walls with a clip-plane uniform in the building shader (`clip`, discard above it) and moves
+  the roof as its own piece.
+- Sound is not designed yet (proposal: a creak on the squat, a cardboard pop on the burst, a paper
+  rustle).
+
 ## Assets in use (and rules)
 
 - Kenney modular buildings (CC0) for facades, merged per building by `building_visual.gd`.
