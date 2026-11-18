@@ -3,6 +3,12 @@
 One entry per update, newest first. Each entry says what changed and how to try it.
 Play the newest Alpha in the browser: https://eilamshahaf-droid.github.io/balck-and-white-3/
 
+## Pre-Alpha 0.33.0 (2026-11-18): the god's desk, step 2: tags at the fingertip
+From the UI brief "the god's desk" (step 2 of 5).
+- **Action tags in place of the round wheel.** Hold the button still on a building (or the ground): the choices hang as kraft paper tags on strings, in a column on an arc beside the glove's fingertip, on the side with open screen. Each action keeps its own place in the column on every building (Rooms first, then +Floors, Sellers, Train Rep, Train Fixer, Loan, Bury the File), so the hand learns where things are. The tag the hand points at grows; one that can't be had is dimmed and says why in red. Long notes shrink to fit the tag.
+- **The cuff tag.** The card about the building under the hand is a luggage tag on a short string from the glove's cuff, beside the hand so it doesn't cover the building, and on the other side near the right edge. It hides while the tags are open.
+- Try it: hold the button still on the Office, point at the tags, let go on one.
+
 ## Pre-Alpha 0.32.0 (2026-11-18): the god's desk, first step
 Asked by Eilam, from the UI brief "the god's desk" (step 1 of 5): the interface becomes stationery on a model-maker's table.
 - **One look for the interface.** Every look is in one Theme, `data/ui_theme.tres` (masking tape, an index card and a kraft tag as 9-slice paper; typewriter fonts), and its numbers in `data/ui.tres`. Fonts: Special Elite for text, Courier Prime for numbers, Permanent Marker for headings (free licences, `assets/fonts/`). Textures from Eilam in `assets/ui/`.
@@ -463,26 +469,14 @@ The first district of the core loop, built from the designer's brief (`docs/GDD.
 - Try it: open `scenes/map_preview.tscn` and press F6; R gives a new random map, Left / Right step the seed. Test: `godot --headless --path . res://tests/mapgen_test.tscn` prints `MAPGEN TEST: PASS`.
 - Not wired into the 3D city yet: `city.gd` still builds its own grid.
 
-## 2026-10-27: Pre-Alpha 0.6.3
-- Alpha refresh: Meshy models load lazily, so the game starts much faster, with smaller textures.
-
 ## 2026-10-27: Faster start for the Meshy props
 - The game started slowly because the props settings loaded all 46 Meshy models at once (6 s on a test machine). A model now loads the first time something needs it, so the models for uses, upgrades and abandoned buildings only load when they show up.
 - The textures are smaller too: 512 px instead of 1024, and the metal and roughness maps (the game ignores them) are cut to a few pixels. The Meshy folder went from 42 MB to 9.6 MB. At street scale it looks the same.
 - Numbers: `PropKind.model_path` in `data/city_props.tres` replaces the model scene.
 - Try it: press F5 and watch the time to the first frame.
-
-## 2026-10-27: Pre-Alpha 0.6.2
-- Alpha refresh: the skull crew grows with training-hall fighters and the dollar price drops with real estate offices, on top of 0.6.1.
-
 ## 2026-10-27: Gyms and real estate offices in the takeover marks
 - The skull (force) crew grows by the holy warriors the Combat Training building's gyms train (`Population.fighters_of`), up to `max_fighters` (`data/campaigns.tres`).
 - The dollar (buy) price is cut by the target building's real estate offices (`Population.buy_price_factor`).
-
-
-
-## 2026-10-27: Pre-Alpha 0.6.1
-- Alpha refresh: world police arrests and roadblock fixes, Meshy building-type models, upgrade effects (banners, storefront, training hall, real estate) on top of 0.6.0. No new features from the hand thread.
 
 ## 2026-10-27: Upgrades show on the building
 - An upgrade you buy now appears on the building and stays for good. Homes: an elevator shaft up the side, a garden with deck chairs on the roof, security cameras by the door, an iron gate at the street. Prayer houses: loudspeakers on the roof, the cult banner on the front, a lecture podium with chairs at the street. Shops: a striped awning, a gym corner, a for-sale sign, a bell tower on the roof (seminary), café tables.
@@ -493,9 +487,6 @@ The first district of the core loop, built from the designer's brief (`docs/GDD.
 - The core building of every district (the one nearest its middle, set by the world thread) now has a columned portico in front and a big gold-framed signboard on its roof with the district's name on it. When the core is demolished, both move to the next building that takes over.
 - Numbers: `data/city_props.tres` ("Core buildings": text size, colour, how far it shows).
 - Try it: press F5 and fly to the purple beacon over a district's centre.
-
-
-
 ## 2026-10-27: Faster start
 - The scenery past the grid (land, roads, outer neighbourhoods) now builds one step per frame, with the town of outer houses growing in over a few frames. The game window comes up about 1.4 s sooner on the test machine (5.4 s to about 3.9 s).
 - Number: `columns_per_frame` in `data/surroundings.tres`.

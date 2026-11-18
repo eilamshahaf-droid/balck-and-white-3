@@ -244,6 +244,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # --- Pointing at a wheel ---
 
+## Whether a wheel of tags is open and the hand points at it.
+func is_pointing() -> bool:
+	return _point_anchor != Vector3.INF
+
+
 ## Stay where the hand is and point from `screen_pos` toward the mouse.
 func start_pointing(screen_pos: Vector2) -> void:
 	_point_anchor = global_position

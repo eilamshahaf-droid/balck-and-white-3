@@ -1,6 +1,8 @@
 class_name BuildingTooltip
 extends Label
-## Follows the cursor and says what the building under it is: its kind, how many
+## A kraft luggage tag on a short string from the glove's cuff (the UI brief), beside
+## the hand so it never covers the building under it, and on the other side near the
+## screen's edge. It says what the building under the hand is: its kind, how many
 ## people live there and how many of them believe ("X of Y", from Population), its staff,
 ## what it yields and what it earns when it is yours. People work where they live, so
 ## desks and shop places with nobody living there to fill them say so (the housing rule).
@@ -8,6 +10,7 @@ extends Label
 ## A district's core building says so.
 
 const S: DistrictSettings = preload("res://data/districts.tres")
+const UI: UiSettings = preload("res://data/ui.tres")
 const RAY_LENGTH := 2000.0
 
 @export var districts: Districts
@@ -16,8 +19,10 @@ const RAY_LENGTH := 2000.0
 @export var population: Population
 @export var camera: Camera3D
 @export var impression: Impression
+@export var hand: GodHand
 
 var _timer := 0.0
+var _cuff := Vector2.ZERO   # the cuff on screen, from this label's corner
 
 
 func _ready() -> void:
@@ -29,18 +34,46 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	_timer -= delta
 	var mouse := get_viewport().get_mouse_position()
-	position = mouse + S.tooltip_offset
+	if visible:
+		_hang()
 	if _timer > 0.0:
 		return
 	_timer = S.tooltip_interval
 	var building := _building_under(mouse)
-	if building == null:
+	if building == null or hand.is_pointing():
 		visible = false
 		return
 	var line := _describe(building)
 	if text != line:
 		text = line
+		reset_size()
 	visible = true
+	_hang()
+
+
+func _draw() -> void:
+	var hole := Vector2(size.x - UI.cuff_hole_inset if _flipped() else UI.cuff_hole_inset,
+			size.y / 2.0)
+	draw_line(_cuff, hole, UI.ink.lightened(0.3), 1.5, true)
+
+
+## Hang beside the cuff: to its right, or to its left near the right edge.
+func _hang() -> void:
+	var cuff := camera.unproject_position(hand.global_position + Vector3.UP * UI.cuff_lift)
+	var right := cuff.x + UI.cuff_string.x + size.x < get_viewport_rect().size.x
+	var variation := &"TagLabel" if right else &"TagLabelFlip"
+	if theme_type_variation != variation:
+		theme_type_variation = variation
+	var at := cuff + Vector2(UI.cuff_string.x if right else -UI.cuff_string.x - size.x,
+			UI.cuff_string.y - size.y / 2.0)
+	if not at.is_equal_approx(position) or not (cuff - at).is_equal_approx(_cuff):
+		position = at
+		_cuff = cuff - at
+		queue_redraw()
+
+
+func _flipped() -> bool:
+	return theme_type_variation == &"TagLabelFlip"
 
 
 func _building_under(mouse: Vector2) -> Node3D:

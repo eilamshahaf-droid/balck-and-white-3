@@ -12,7 +12,6 @@ extends Node
 ## Dragging still moves the city. A circle drawn with the right button casts water
 ## straight away.
 
-const RadialWheel = preload("res://scripts/radial_wheel.gd")
 const Sfx = preload("res://scripts/sfx.gd")
 
 enum Mode { NONE, MIRACLES, BUILDING, SECOND }
@@ -32,7 +31,7 @@ const LOUD_TINT := Color(1.0, 0.4, 0.3)
 @onready var miracles: Miracles = get_node("../Miracles")
 @onready var faith: Faith = get_node("../Faith")
 
-var _wheel: RadialWheel
+var _wheel: ActionTags
 var _mode := Mode.NONE
 var _target := {}          # the raycast hit the wheel was opened on
 var _outline := StandardMaterial3D.new()
@@ -48,7 +47,7 @@ func _ready() -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 10  # above the HUD and the art style's screen pass
 	add_child(layer)
-	_wheel = RadialWheel.new()
+	_wheel = ActionTags.new()
 	layer.add_child(_wheel)
 	hand.own_building_double_clicked.connect(func(b: Node3D) -> void: menus.choose(&"rooms", b))
 
