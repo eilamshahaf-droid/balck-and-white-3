@@ -5,15 +5,22 @@ extends Label
 
 const S = preload("res://data/districts.tres")
 const F: FollowersSettings = preload("res://data/followers.tres")
+const UI: UiSettings = preload("res://data/ui.tres")
 const REFRESH := 0.25   # seconds; the text doesn't need to change every frame
 const POOR := 0.6       # district wealth below this reads "poor", above RICH "rich"
 const RICH := 1.4
 
 var _timer := 0.0
 
-@onready var districts: Districts = get_node("../../Districts")
-@onready var followers: Followers = get_node("../../Followers")
-@onready var rig: Node3D = get_node("../../CameraRig")
+@export var districts: Districts
+@export var followers: Followers
+@export var rig: GodCamera
+
+
+func _ready() -> void:
+	theme_type_variation = &"SlipLabel"
+	autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	custom_minimum_size.x = UI.district_width
 
 
 func _process(delta: float) -> void:
