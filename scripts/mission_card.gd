@@ -1,7 +1,9 @@
 class_name MissionCard
 extends PanelContainer
-## The one thing to do next, as a card with a progress bar, in place of paragraphs of
-## help. The first ten minutes teach one thing at a time (GDD "The first ten minutes"):
+## The one thing to do next, the "minutes": a lined paper slip held by a clothes peg
+## (the UI brief), with the item number, the step just done struck through in red pen,
+## the step now and a thin bar. After a while it folds back to the step alone; the mouse
+## over it opens it again. The first ten minutes teach one thing at a time (GDD "The first ten minutes"):
 ## plan the empty Office (a Shop, a Desk Room, two homes for the people who work there),
 ## send the free Rep, take the first building, fit a Training Room, throw the inspector,
 ## train the Fixer and open a key building; then the goal, the key buildings of the
@@ -10,7 +12,7 @@ extends PanelContainer
 
 const S: DistrictSettings = preload("res://data/districts.tres")
 const U: UnitSettings = preload("res://data/units.tres")
-const REFRESH := 0.25
+const UI: UiSettings = preload("res://data/ui.tres")
 
 @export var districts: Districts
 @export var population: Population
@@ -22,9 +24,14 @@ const REFRESH := 0.25
 @export var treasury: Treasury
 
 var _timer := 0.0
+var _item := 0
+var _caption := Label.new()
+var _done := StrikeLabel.new()
 var _title := Label.new()
 var _hint := Label.new()
 var _bar := ProgressBar.new()
+var _folded := false
+var _fold_in := 0.0
 # Steps done, latched so a step never shows twice.
 var _shop := false        # a Shop in the Office
 var _desks := false       # a Desk Room in the Office
@@ -42,25 +49,44 @@ func _ready() -> void:
 	campaigns.taken.connect(func(_b: Node3D, _rep: Resident) -> void: _first = true)
 	inspectors.thrown.connect(func(_i: Inspector) -> void: _threw = true)
 	breaches.opened.connect(func(_b: Node3D) -> void: _opened = true)
+	theme_type_variation = &"Slip"
+	custom_minimum_size.x = S.mission_width
+	mouse_entered.connect(_unfold)
 	var box := VBoxContainer.new()
+	box.add_theme_constant_override(&"separation", 2)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(box)
-	_title.add_theme_font_size_override(&"font_size", 20)
-	_title.add_theme_color_override(&"font_color", S.captured_color)
+	_caption.theme_type_variation = &"Caption"
+	box.add_child(_caption)
+	_done.theme_type_variation = &"Caption"
+	_done.visible = false
+	box.add_child(_done)
+	_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_title.theme_type_variation = &"SlipTitle"
 	box.add_child(_title)
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_hint.custom_minimum_size.x = S.mission_width
+	_hint.theme_type_variation = &"SlipText"
 	box.add_child(_hint)
+	_bar.theme_type_variation = &"InkBar"
 	_bar.max_value = 1.0
 	_bar.show_percentage = false
-	_bar.custom_minimum_size.y = 10.0
+	_bar.custom_minimum_size.y = 6.0
 	box.add_child(_bar)
 
 
+func _draw() -> void:
+	var peg := Rect2(Vector2(size.x * 0.62, -UI.peg_size.y * 0.55), UI.peg_size)
+	draw_texture_rect(UI.peg_texture, peg, false)
+
+
 func _process(delta: float) -> void:
+	_fold_in -= delta
+	if not _folded and _fold_in <= 0.0 and not _rect_has_mouse():
+		_fold(true)
 	_timer -= delta
 	if _timer > 0.0 or districts.buildings.is_empty():
 		return
-	_timer = REFRESH
+	_timer = UI.refresh
 	var d := districts.start_district()
 	var held := districts.converted_buildings().size() - 1   # the Office is not taken
 	_first = _first or held > 0
@@ -128,8 +154,32 @@ func _best_meter() -> float:
 
 func _show(title: String, hint: String, value: float) -> void:
 	if _title.text != title:
+		if _title.text != "":
+			_done.text = _title.text
+			_done.strike = 0.0
+			create_tween().tween_property(_done, ^"strike", 1.0, UI.strike_seconds)
+		_item += 1
+		_caption.text = "MINUTES · ITEM %d" % _item
 		_title.text = title
+		_unfold()
 	if _hint.text != hint:
 		_hint.text = hint
-		_hint.visible = hint != ""
+		_hint.visible = hint != "" and not _folded
 	_bar.value = clampf(value, 0.0, 1.0)
+
+
+## Open the slip again for a while: the step done, the hint.
+func _unfold() -> void:
+	_fold_in = UI.collapse_seconds
+	_fold(false)
+
+
+func _fold(on: bool) -> void:
+	_folded = on
+	_done.visible = not on and _done.text != ""
+	_hint.visible = not on and _hint.text != ""
+	reset_size()
+
+
+func _rect_has_mouse() -> bool:
+	return get_global_rect().has_point(get_global_mouse_position())
