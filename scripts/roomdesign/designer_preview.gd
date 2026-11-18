@@ -2,13 +2,16 @@ class_name DesignerPreview
 extends SubViewportContainer
 ## The room designer's view, in 3D: with a model picked, click a floor to put it there (or
 ## drag one in from the palette); click an item and drag it across its floor (left and
-## right, back and front). Places snap to a grid drawn on the floors (Shift: free). Drag
-## empty space to orbit, the wheel zooms.
+## right, back and front). Floor furniture takes whole squares of the grid drawn on the
+## floors and never overlaps (FurnitureSpots); pictures slide along the back wall; small things
+## snap finer. Drag empty space to orbit, the wheel zooms.
 
 signal edit_started
 signal edited
 signal picked(item: RoomDesign.Item)
 signal placed(item: RoomDesign.Item)
+
+const Sfx := preload("res://scripts/sfx.gd")
 
 const FLOOR_THICK := 0.15
 const WALL_THICK := 0.12
@@ -46,7 +49,6 @@ var _moving: RoomDesign.Item
 var _move_y := 0.0
 var _grab := Vector2.ZERO
 var _moved := false
-var _free := false   # Shift held: no snapping
 
 
 func _ready() -> void:
@@ -130,7 +132,7 @@ func _place(o: RoomDesign.Item) -> void:
 		return
 	holder.position = Vector3(o.x - _width() / 2.0, o.row * settings.floor_height + o.y, o.z)
 	holder.rotation.y = -o.rot * PI / 2.0
-	holder.scale = Vector3.ONE * o.scale * settings.furniture_scale
+	holder.scale = Vector3.ONE * o.scale * catalog.scale_of(o.model)
 
 
 func refresh_selection() -> void:
@@ -139,6 +141,13 @@ func refresh_selection() -> void:
 		return
 	_place(selected)
 	var box := _item_box(selected)
+	if FurnitureSpots.type_of(selected, catalog) == FurnitureCatalog.Place.Type.FLOOR:
+		# Show the squares it takes, which may be a little more than its box.
+		var r := FurnitureSpots.area(selected, catalog)
+		box.position.x = r.position.x - _width() / 2.0
+		box.position.z = r.position.y
+		box.size.x = r.size.x
+		box.size.z = r.size.y
 	_outline.visible = true
 	_outline.position = box.get_center()
 	_outline.scale = box.size + Vector3.ONE * 0.04
@@ -152,7 +161,6 @@ func _gui_input(event: InputEvent) -> void:
 			_dist = clampf(_dist * (1.0 + step), MIN_DIST, MAX_DIST)
 			_update_camera()
 		elif mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
-			_free = mb.shift_pressed
 			_press(mb.position)
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if _moving and _moved:
@@ -163,7 +171,6 @@ func _gui_input(event: InputEvent) -> void:
 			armed = &""
 	elif event is InputEventMouseMotion:
 		var mm := event as InputEventMouseMotion
-		_free = mm.shift_pressed
 		if _moving:
 			_drag_to(mm.position)
 		elif _orbiting:
@@ -198,18 +205,29 @@ func _press(at: Vector2) -> void:
 	_orbiting = true
 
 
-## Put a new `model` on the floor under screen point `at`; null when there is none.
+## Put a new `model` on the floor under screen point `at`; null when there is none or
+## a floor piece has no room there.
 func _put(model: StringName, at: Vector2) -> RoomDesign.Item:
 	var ray := _ray(at)
 	var spot := _floor_hit(ray[0], ray[1])
 	if spot.x < 0.0:
 		return null
-	edit_started.emit()
-	var bay := settings.bay_width
-	var col := floori(spot.x / bay)
 	var reach := settings.depth / 2.0 - settings.wall_margin
-	var x := clampf(_snap(spot.x), col * bay + 0.1, (col + 1) * bay - 0.1)
-	var o := catalog.new_item(model, int(spot.z), x, clampf(_snap(spot.y), -reach, reach), design.items)
+	var o := catalog.new_item(model, int(spot.z), spot.x, spot.y, design.items)
+	match FurnitureSpots.type_of(o, catalog):
+		FurnitureCatalog.Place.Type.FLOOR:
+			if not FurnitureSpots.settle(o, catalog, kind, design.items):
+				Sfx.ui(get_tree(), &"error")
+				return null
+		FurnitureCatalog.Place.Type.WALL:
+			FurnitureSpots.hang(o, spot.x, catalog, kind)
+		_:
+			var bay := settings.bay_width
+			var col := floori(spot.x / bay)
+			o.x = clampf(_snap(spot.x), col * bay + 0.1, (col + 1) * bay - 0.1)
+			o.z = clampf(_snap(spot.y), -reach, reach)
+			o.y = catalog.rest_height(o, design.items)
+	edit_started.emit()
 	design.items.append(o)
 	placed.emit(o)
 	edited.emit()
@@ -225,26 +243,26 @@ func _drag_to(at: Vector2) -> void:
 		edit_started.emit()
 		_moved = true
 	var o := _moving
-	var bay := settings.bay_width
-	var lo := INF
-	var hi := -INF
-	for c in kind.cells:
-		if c.y == o.row:
-			lo = minf(lo, c.x * bay + 0.1)
-			hi = maxf(hi, (c.x + 1) * bay - 0.1)
-	var reach := settings.depth / 2.0 - settings.wall_margin
 	var to := (p as Vector2) - _grab
-	o.x = clampf(_snap(to.x), lo, hi)
-	o.z = clampf(_snap(to.y), -reach, reach)
-	if not o.manual:
-		o.y = catalog.rest_height(o, design.items)
-		_move_y = o.row * settings.floor_height + o.y
+	match FurnitureSpots.type_of(o, catalog):
+		FurnitureCatalog.Place.Type.FLOOR:
+			FurnitureSpots.move_to(o, to.x, to.y, catalog, kind, design.items)
+		FurnitureCatalog.Place.Type.WALL:
+			FurnitureSpots.hang(o, to.x, catalog, kind)
+		_:
+			var span := FurnitureSpots.row_span(o.row, catalog, kind)
+			var reach := settings.depth / 2.0 - settings.wall_margin
+			o.x = clampf(_snap(to.x), span.x + 0.1, span.y - 0.1)
+			o.z = clampf(_snap(to.y), -reach, reach)
+			if not o.manual:
+				o.y = catalog.rest_height(o, design.items)
+				_move_y = o.row * settings.floor_height + o.y
 	picked.emit(o)
 
 
-## `v` metres on the grid, unless Shift is held.
+## `v` metres on the small things' grid.
 func _snap(v: float) -> float:
-	return v if _free or settings.snap <= 0.0 else snappedf(v, settings.snap)
+	return v if settings.snap <= 0.0 else snappedf(v, settings.snap)
 
 
 ## Grid lines on the floor of place `c` (the room `w` wide, centred on x = 0).

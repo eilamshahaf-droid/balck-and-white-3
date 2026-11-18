@@ -6,6 +6,8 @@ extends CanvasLayer
 ## Every change is kept at once (in the browser too); "Download room" hands out the file.
 ## Opened from the title screen; "Back to title" returns.
 
+const Sfx := preload("res://scripts/sfx.gd")
+
 const SETTINGS_PATH := "res://data/room_designer.tres"
 const ROOMS_PATH := "res://data/rooms.tres"
 const TITLE_SCENE := "res://scenes/title.tscn"
@@ -23,7 +25,7 @@ const INK := Color("2b2a28")
 const MUTED := Color("8a857b")
 const ACCENT := Color("d9534f")
 const DUPLICATE_STEP := 0.4
-const HELP := "Pick a piece on the left and click a floor, or drag it in. Click an item and drag it across its floor; it snaps to the grid (hold Shift for free). Desks and counters take things on top. Drag empty space to orbit, wheel to zoom. R turns, Delete removes, right click drops the piece."
+const HELP := "Pick a piece on the left and click a floor, or drag it in. Furniture takes whole squares of the grid and never overlaps; pictures slide along the back wall; small things go anywhere, and desks and counters take them on top. Click an item and drag it. Drag empty space to orbit, wheel to zoom. R turns, Delete removes, right click drops the piece."
 
 var settings: RoomDesignerSettings
 var catalog: FurnitureCatalog
@@ -172,10 +174,14 @@ func _delete() -> void:
 
 
 func _turn() -> void:
-	if selected == null:
+	if selected == null or _type() == FurnitureCatalog.Place.Type.WALL:
 		return
 	_snapshot()
 	selected.rot = (selected.rot + 1) % 4
+	if not _settle(selected):
+		selected.rot = (selected.rot + 3) % 4
+		_undo.pop_back()
+		return
 	_on_edited()
 
 
@@ -188,9 +194,33 @@ func _duplicate() -> void:
 	for c in kind.cells:
 		columns = maxi(columns, c.x + 1)
 	o.x = minf(o.x + DUPLICATE_STEP, columns * settings.bay_width - 0.1)
+	if _type() == FurnitureCatalog.Place.Type.WALL:
+		FurnitureSpots.hang(o, o.x, catalog, kind)
+	elif _type() == FurnitureCatalog.Place.Type.FLOOR \
+			and not FurnitureSpots.settle(o, catalog, kind, design.items):
+		Sfx.ui(get_tree(), &"error")
+		_undo.pop_back()
+		return
 	design.items.append(o)
 	selected = o
 	_on_edited()
+
+
+## How the picked item is placed.
+func _type() -> FurnitureCatalog.Place.Type:
+	return FurnitureSpots.type_of(selected, catalog)
+
+
+## A floor piece back on free squares after it turned or grew; false (with an error
+## sound) when there are none. Other pieces always settle.
+func _settle(o: RoomDesign.Item) -> bool:
+	if FurnitureSpots.type_of(o, catalog) == FurnitureCatalog.Place.Type.FLOOR \
+			and not FurnitureSpots.settle(o, catalog, kind, design.items):
+		Sfx.ui(get_tree(), &"error")
+		return false
+	if FurnitureSpots.type_of(o, catalog) == FurnitureCatalog.Place.Type.WALL:
+		FurnitureSpots.hang(o, o.x, catalog, kind)
+	return true
 
 
 func _rest() -> void:
@@ -398,29 +428,43 @@ func _show_picked() -> void:
 	name_label.text = String(selected.model)
 	name_label.add_theme_font_size_override("font_size", 16)
 	_picked_box.add_child(name_label)
-	var slots := HBoxContainer.new()
-	var slot := RoomDesign.depth_slot(selected.z, settings.depth_band)
-	for i in 3:
-		var b := _button(slots, ["Back", "Mid", "Front"][i], func() -> void:
-			_snapshot()
-			_set_depth(settings.preset(i))
-			_on_edited())
-		b.toggle_mode = true
-		b.button_pressed = i == slot
-	_picked_box.add_child(slots)
-	var reach := settings.depth / 2.0 - settings.wall_margin
-	_slider("Depth (back to front), m", -reach, reach, selected.z, func(v: float) -> void:
-		_set_depth(v))
-	_slider("Height above floor, m", 0.0, HEIGHT_MAX, selected.y, func(v: float) -> void:
-		selected.y = v
-		selected.manual = true)
+	var type := _type()
+	if type == FurnitureCatalog.Place.Type.FLOOR:
+		var n := FurnitureSpots.squares(selected, catalog)
+		var takes := Label.new()
+		takes.text = "Takes %d x %d squares of the floor" % [n.x, n.y]
+		takes.add_theme_color_override("font_color", MUTED)
+		_picked_box.add_child(takes)
+	if type == FurnitureCatalog.Place.Type.SMALL:
+		var slots := HBoxContainer.new()
+		var slot := RoomDesign.depth_slot(selected.z, settings.depth_band)
+		for i in 3:
+			var b := _button(slots, ["Back", "Mid", "Front"][i], func() -> void:
+				_snapshot()
+				_set_depth(settings.preset(i))
+				_on_edited())
+			b.toggle_mode = true
+			b.button_pressed = i == slot
+		_picked_box.add_child(slots)
+		var reach := settings.depth / 2.0 - settings.wall_margin
+		_slider("Depth (back to front), m", -reach, reach, selected.z, func(v: float) -> void:
+			_set_depth(v))
+	if type != FurnitureCatalog.Place.Type.FLOOR:
+		_slider("Height above floor, m", 0.0, HEIGHT_MAX, selected.y, func(v: float) -> void:
+			selected.y = v
+			selected.manual = true)
 	_slider("Size, x", SCALE_MIN, SCALE_MAX, selected.scale, func(v: float) -> void:
-		selected.scale = v)
+		var old := selected.scale
+		selected.scale = v
+		if not _settle(selected):
+			selected.scale = old)
 	var row := HFlowContainer.new()
-	_button(row, "Turn (R)", _turn)
+	if type != FurnitureCatalog.Place.Type.WALL:
+		_button(row, "Turn (R)", _turn)
 	_button(row, "Duplicate", _duplicate)
 	_button(row, "Delete", _delete)
-	_button(row, "Rest on floor/surface", _rest)
+	if type == FurnitureCatalog.Place.Type.SMALL:
+		_button(row, "Rest on floor/surface", _rest)
 	_picked_box.add_child(row)
 
 
